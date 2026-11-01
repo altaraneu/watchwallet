@@ -99,18 +99,12 @@ class SuiAdapter(
 
     private suspend fun balances(address: String): List<AssetAmount> {
         val nodes = query(BALANCES_QUERY, buildJsonObject { put("a", address) }).at("address", "balances", "nodes").asList
-        var sui = BigInteger.ZERO
-        val tokens = mutableListOf<AssetAmount>()
-        for (entry in nodes) {
-            val coinType = normalizeCoinType(entry.at("coinType").str("repr") ?: continue)
-            val raw = parseBigInteger(entry.str("totalBalance"))
-            if (coinType == SuiChain.SUI_COIN_TYPE) {
-                sui = raw
-                continue
-            }
-            if (raw.isZero()) continue
-            tokens += amountOf(coinAsset(coinType) ?: continue, raw)
+        val raw = nodes.mapNotNull { entry ->
+            entry.at("coinType").str("repr")?.let { normalizeCoinType(it) to parseBigInteger(entry.str("totalBalance")) }
         }
+        val sui = raw.firstOrNull { it.first == SuiChain.SUI_COIN_TYPE }?.second ?: BigInteger.ZERO
+        val tokens = raw.filter { (coinType, amount) -> coinType != SuiChain.SUI_COIN_TYPE && !amount.isZero() }
+            .mapNotNull { (coinType, amount) -> coinAsset(coinType)?.let { amountOf(it, amount) } }
         return listOf(amountOf(SuiChain.SUI, sui)) + tokens
     }
 
