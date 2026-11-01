@@ -15,6 +15,8 @@ import com.altaran.watchwallet.core.model.WatchTarget
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration.Companion.seconds
 
 /** Result of probing one candidate interpretation of the user's input. */
 data class CandidatePreview(
@@ -73,7 +75,7 @@ class AddWalletService(
             async {
                 val existing = walletRepository.findExisting(candidate.target)
                 val adapter = registry.adapter(candidate.target)
-                val probe = adapter?.let { runCatching { it.probe(candidate.target) }.getOrNull() }
+                val probe = adapter?.let { withTimeoutOrNull(PROBE_TIMEOUT) { runCatching { it.probe(candidate.target) }.getOrNull() } }
                 CandidatePreview(candidate, probe, failed = probe == null, existingWalletId = existing)
             }
         }.awaitAll()
@@ -103,3 +105,6 @@ class AddWalletService(
         }.awaitAll()
     }
 }
+
+/** Longest wait for the activity check when adding a wallet; afterwards it can be added unchecked. */
+private val PROBE_TIMEOUT = 10.seconds

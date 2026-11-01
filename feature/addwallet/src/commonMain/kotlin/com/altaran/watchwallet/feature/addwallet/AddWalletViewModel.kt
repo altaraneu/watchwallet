@@ -47,6 +47,8 @@ data class AddWalletUiState(
     val saving: Boolean = false,
     /** Set once the wallet is saved; the screen navigates away. */
     val savedWalletId: Long? = null,
+    /** The preview should be saved as soon as it appears (one-tap add). */
+    val autoSave: Boolean = false,
 )
 
 internal class AddWalletViewModel(
@@ -66,9 +68,13 @@ internal class AddWalletViewModel(
         _state.update { it.copy(name = value) }
     }
 
-    /** Classifies the current input. Called on paste and on the "Continue" action. */
-    fun onSubmit(text: String = _state.value.input) {
+    /**
+     * Classifies the input. With [saveWhenUnambiguous] (the "Add wallet" button) a single
+     * candidate is saved right after the check; otherwise the preview asks.
+     */
+    fun onSubmit(text: String = _state.value.input, saveWhenUnambiguous: Boolean = false) {
         probeJob?.cancel()
+        _state.update { it.copy(autoSave = false) }
         when (val result = service.classify(text)) {
             is Classification.Secret -> {
                 // Discard immediately: the secret is not kept in the field, state or anywhere else.
@@ -105,7 +111,9 @@ internal class AddWalletViewModel(
                     val previews = service.probe(result.candidates)
                     // Prefer candidates with activity; among them keep the classifier's order.
                     val selected = previews.indexOfFirst { it.probe?.hasActivity == true }.takeIf { it >= 0 } ?: 0
-                    _state.update { it.copy(phase = AddWalletPhase.Preview(previews, selected)) }
+                    _state.update {
+                        it.copy(phase = AddWalletPhase.Preview(previews, selected), autoSave = saveWhenUnambiguous && previews.size == 1)
+                    }
                 }
             }
         }

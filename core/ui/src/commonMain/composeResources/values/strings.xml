@@ -22,4 +22,6 @@
     <string name="chart_a11y_hidden">Chart for %1$s, amounts hidden</string>
     <!-- Accessibility description of a value chart; %1$s = range, for example "1Y". -->
     <string name="chart_description">Value chart, range %1$s. Touch and drag to see values.</string>
+    <!-- A Cardano stake address: covers every address of the wallet. Shown after the chain name. -->
+    <string name="target_cardano_wallet">whole wallet (stake key)</string>
 </resources>

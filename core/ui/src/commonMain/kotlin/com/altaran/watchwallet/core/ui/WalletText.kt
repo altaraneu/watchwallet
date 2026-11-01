@@ -14,6 +14,7 @@ import com.altaran.watchwallet.core.ui.generated.resources.script_p2tr
 import com.altaran.watchwallet.core.ui.generated.resources.script_p2wpkh
 import com.altaran.watchwallet.core.ui.generated.resources.script_p2wsh
 import com.altaran.watchwallet.core.ui.generated.resources.target_address
+import com.altaran.watchwallet.core.ui.generated.resources.target_cardano_wallet
 import com.altaran.watchwallet.core.ui.generated.resources.target_description
 import com.altaran.watchwallet.core.ui.generated.resources.target_xpub
 import org.jetbrains.compose.resources.stringResource
@@ -81,6 +82,8 @@ fun chainLabel(target: WatchTarget): String {
 fun targetDescription(target: WatchTarget): String {
     val kind = when (target) {
         is WatchTarget.ExtendedPublicKey -> stringResource(Res.string.target_xpub, scriptTypeLabel(target.scriptType))
+
+        is WatchTarget.Address if target.address.startsWith("stake1") -> stringResource(Res.string.target_cardano_wallet)
 
         is WatchTarget.Address -> target.scriptType?.let { stringResource(Res.string.target_address, scriptTypeLabel(it)) }
             ?: stringResource(Res.string.target_address, "").trim()

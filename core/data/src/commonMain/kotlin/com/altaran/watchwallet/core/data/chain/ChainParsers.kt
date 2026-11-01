@@ -39,8 +39,9 @@ object ChainParsers {
         if (keys.isNotEmpty()) return keys
 
         val cardano = CardanoAddresses.parse(input)?.let { payment ->
-            // A payment address belongs to a stake key that covers the whole wallet: offer that first.
-            listOfNotNull(CardanoAddresses.stakeAddressOf(payment.address)?.let(CardanoAddresses::parse), payment).distinct()
+            // A payment address belongs to a stake key that covers the whole wallet (all its
+            // addresses): track that instead. Addresses without a stake part stay as they are.
+            listOf(CardanoAddresses.stakeAddressOf(payment.address)?.let(CardanoAddresses::parse) ?: payment)
         }.orEmpty()
 
         val candidates = listOfNotNull(

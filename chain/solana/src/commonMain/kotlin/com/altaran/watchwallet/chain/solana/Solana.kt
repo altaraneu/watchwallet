@@ -123,25 +123,39 @@ class SolanaAdapter(
 
     override suspend fun probe(target: WatchTarget): ProbeResult = chainCall("Solana") {
         val address = address(target)
+        // Balance and one signature decide activity; token accounts (slow on the public RPC for
+        // big wallets) are loaded by the first sync.
         val lamports = balance(address)
         val signatures = signatures(address, before = null, limit = 1)
-        val tokens = tokenBalances(address)
-        val active = !lamports.isZero() || signatures.isNotEmpty() || tokens.isNotEmpty()
+        val active = !lamports.isZero() || signatures.isNotEmpty()
         ProbeResult(
             hasActivity = active,
             activeChains = if (active) listOf(SolanaChain.ID) else emptyList(),
-            balances = listOf(amountOf(SolanaChain.SOL, lamports)) + tokens,
+            balances = listOf(amountOf(SolanaChain.SOL, lamports)),
             transactionCount = null,
         )
     }
 
-    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("Solana") {
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult =
+        sync(target, knownTransactions, continueHistory = false)
+
+    /**
+     * Every transaction costs one rate-limited `getTransaction` call, so the first sync loads only
+     * the newest [FIRST_SYNC_SIGNATURES]; with [continueHistory] each later sync adds up to
+     * [BACKFILL_SIGNATURES] older ones (walking past the known signatures).
+     */
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, continueHistory: Boolean): SyncResult = chainCall("Solana") {
         val address = address(target)
         val balances = listOf(amountOf(SolanaChain.SOL, balance(address))) + tokenBalances(address)
         val tokenAssets = balances.associate { (it.asset.contract ?: "") to it.asset }
 
         // Signatures newest first; stop at the first known one.
-        val maxSignatures = if (knownTransactions.isEmpty()) FIRST_SYNC_SIGNATURES else MAX_SIGNATURES
+        val backfill = continueHistory && knownTransactions.isNotEmpty()
+        val maxSignatures = when {
+            backfill -> BACKFILL_SIGNATURES
+            knownTransactions.isEmpty() -> FIRST_SYNC_SIGNATURES
+            else -> MAX_SIGNATURES
+        }
         val newSignatures = mutableListOf<JsonElement>()
         var before: String? = null
         var truncated = false
@@ -149,7 +163,9 @@ class SolanaAdapter(
             val page = signatures(address, before, SIGNATURE_PAGE)
             for (entry in page) {
                 val signature = entry.str("signature") ?: continue
-                if (signature in knownTransactions) break@paging
+                if (signature in knownTransactions) {
+                    if (backfill) continue else break@paging
+                }
                 if (newSignatures.size >= maxSignatures) {
                     truncated = true
                     break@paging
@@ -246,7 +262,8 @@ class SolanaAdapter(
 
     private companion object {
         const val SIGNATURE_PAGE = 100
-        const val FIRST_SYNC_SIGNATURES = 100
+        const val FIRST_SYNC_SIGNATURES = 25
+        const val BACKFILL_SIGNATURES = 25
         const val MAX_SIGNATURES = 1_000
     }
 }

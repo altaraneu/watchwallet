@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -41,6 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
@@ -61,6 +64,7 @@ import com.altaran.watchwallet.core.ui.targetDescription
 import com.altaran.watchwallet.feature.addwallet.generated.resources.*
 import com.altaran.watchwallet.feature.addwallet.generated.resources.Res
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -83,6 +87,7 @@ internal fun AddWalletRoute(
         onSelectCandidate = viewModel::onSelectCandidate,
         onNameChange = viewModel::onNameChange,
         onSave = viewModel::onSave,
+        onAdd = { text -> viewModel.onSubmit(text, saveWhenUnambiguous = true) },
         onBatchImport = onBatchImport,
         onConfirmChain = viewModel::onConfirmChain,
         onConfirmUnused = viewModel::onConfirmUnused,
@@ -99,6 +104,7 @@ internal fun AddWalletScreen(
     onInputChange: (String) -> Unit,
     onSubmit: (String) -> Unit,
     onSelectCandidate: (Int) -> Unit,
+    onAdd: (String) -> Unit = onSubmit,
     onNameChange: (String) -> Unit,
     onSave: (defaultName: String) -> Unit,
     onBatchImport: (String) -> Unit = {},
@@ -108,11 +114,31 @@ internal fun AddWalletScreen(
 ) {
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    // Hide the keyboard on submit: the preview and its "Add wallet" button must be visible.
+    val submit: (String) -> Unit = { text ->
+        keyboard?.hide()
+        focusManager.clearFocus()
+        onSubmit(text)
+    }
+    val preview = state.phase as? AddWalletPhase.Preview
+    val selectedPreview = preview?.previews?.getOrNull(preview.selected)
+    val saveName = selectedPreview?.let { defaultName(it.candidate.target) }.orEmpty()
+    val save: () -> Unit = {
+        keyboard?.hide()
+        focusManager.clearFocus()
+        onSave(saveName)
+    }
+    // One-tap add: save as soon as an unambiguous preview is ready.
+    LaunchedEffect(selectedPreview, state.autoSave) {
+        if (state.autoSave && selectedPreview != null && !state.saving) save()
+    }
     var scanning by rememberSaveable { mutableStateOf(false) }
     if (scanning) {
         QrScannerDialog(onResult = { text ->
             scanning = false
-            onSubmit(text.trim())
+            submit(text.trim())
         }, onDismiss = { scanning = false })
     }
     Scaffold(
@@ -150,95 +176,42 @@ internal fun AddWalletScreen(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done,
                 ),
+                keyboardActions = KeyboardActions(onDone = { if (state.input.isNotBlank()) submit(state.input) }),
                 modifier = Modifier.fillMaxWidth(),
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                FilledTonalButton(onClick = {
+            InputActions(
+                onPaste = {
                     scope.launch {
                         val text = clipboard.getClipEntry()?.plainText()?.trim().orEmpty()
-                        if (text.isNotEmpty()) onSubmit(text)
+                        if (text.isNotEmpty()) submit(text)
                     }
-                }) {
-                    Icon(WwIcon.Copy.painter(), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-                    Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-                    Text(stringResource(Res.string.add_wallet_paste))
-                }
-                if (isQrScanningSupported) {
-                    FilledTonalButton(onClick = { scanning = true }) { Text(stringResource(Res.string.add_wallet_scan)) }
-                }
-                Button(onClick = { onSubmit(state.input) }, enabled = state.input.isNotBlank() && state.phase !is AddWalletPhase.Probing) {
-                    Text(stringResource(Res.string.add_wallet_continue))
-                }
-            }
-
-            when (val phase = state.phase) {
-                AddWalletPhase.Idle -> {
-                    Unit
-                }
-
-                AddWalletPhase.Probing -> {
-                    ProbingIndicator()
-                }
-
-                is AddWalletPhase.SecretRejected -> {
-                    SecretWarning(phase.kind)
-                }
-
-                is AddWalletPhase.Unsupported -> {
-                    InfoCard(
-                        stringResource(Res.string.add_wallet_unsupported_title, familyLabel(phase.family)),
-                        stringResource(Res.string.add_wallet_unsupported_message),
-                    )
-                }
-
-                is AddWalletPhase.ConfirmChain -> {
-                    WarningCard(
-                        title = stringResource(Res.string.confirm_chain_title),
-                        message = stringResource(Res.string.confirm_chain_message),
-                    ) {
-                        phase.options.forEach { family ->
-                            FilledTonalButton(onClick = { onConfirmChain(family) }) { Text(familyLabel(family)) }
-                        }
-                        androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
+                },
+                onScan = { scanning = true },
+                // Once the preview is ready the main button saves; otherwise it checks and adds.
+                primaryLabel = if (selectedPreview?.existingWalletId != null) Res.string.add_wallet_open_existing else Res.string.add_wallet_save,
+                primaryEnabled = if (selectedPreview != null) !state.saving else state.input.isNotBlank() && state.phase !is AddWalletPhase.Probing,
+                onPrimary = {
+                    if (selectedPreview != null) {
+                        save()
+                    } else {
+                        keyboard?.hide()
+                        focusManager.clearFocus()
+                        onAdd(state.input)
                     }
-                }
+                },
+            )
 
-                is AddWalletPhase.ConfirmUnused -> {
-                    WarningCard(
-                        title = stringResource(Res.string.confirm_unused_title),
-                        message = stringResource(Res.string.confirm_unused_message),
-                    ) {
-                        androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
-                        FilledTonalButton(onClick = onConfirmUnused) { Text(stringResource(Res.string.confirm_add_anyway)) }
-                    }
-                }
-
-                AddWalletPhase.WrongChecksum -> {
-                    InfoCard(
-                        stringResource(Res.string.add_wallet_checksum_title),
-                        stringResource(Res.string.add_wallet_checksum_message),
-                    )
-                }
-
-                AddWalletPhase.MultipleEntries -> {
-                    InfoCard(
-                        stringResource(Res.string.add_wallet_multiple_title),
-                        stringResource(Res.string.add_wallet_multiple_message),
-                    )
-                    FilledTonalButton(onClick = { onBatchImport(state.input) }) { Text(stringResource(Res.string.add_wallet_open_batch)) }
-                }
-
-                AddWalletPhase.Unrecognized -> {
-                    InfoCard(
-                        stringResource(Res.string.add_wallet_unrecognized_title),
-                        stringResource(Res.string.add_wallet_unrecognized_message),
-                    )
-                }
-
-                is AddWalletPhase.Preview -> {
-                    PreviewSection(phase, state, chainName, onSelectCandidate, onNameChange, onSave)
-                }
-            }
+            PhaseContent(
+                state = state,
+                chainName = chainName,
+                onSelectCandidate = onSelectCandidate,
+                onNameChange = onNameChange,
+                onSave = { save() },
+                onBatchImport = onBatchImport,
+                onConfirmChain = onConfirmChain,
+                onConfirmUnused = onConfirmUnused,
+                onClear = onClear,
+            )
         }
     }
 }
@@ -325,6 +298,8 @@ private fun PreviewSection(
                 label = { Text(stringResource(Res.string.add_wallet_name_label)) },
                 placeholder = { Text(defaultName) },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { onSave(defaultName) }),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -393,4 +368,108 @@ private fun defaultName(target: WatchTarget): String = when {
 private fun WatchTarget.chainId(): String = when (this) {
     is WatchTarget.Address -> chainId.value
     is WatchTarget.ExtendedPublicKey -> chainId.value
+}
+
+@Composable
+private fun InputActions(
+    onPaste: () -> Unit,
+    onScan: () -> Unit,
+    primaryLabel: StringResource,
+    primaryEnabled: Boolean,
+    onPrimary: () -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        FilledTonalButton(onClick = onPaste) {
+            Icon(WwIcon.Copy.painter(), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+            Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+            Text(stringResource(Res.string.add_wallet_paste))
+        }
+        if (isQrScanningSupported) {
+            FilledTonalButton(onClick = onScan) { Text(stringResource(Res.string.add_wallet_scan)) }
+        }
+        Button(onClick = onPrimary, enabled = primaryEnabled) { Text(stringResource(primaryLabel)) }
+    }
+}
+
+/** What follows the input: checking, warnings, or the preview to confirm. */
+@Composable
+private fun PhaseContent(
+    state: AddWalletUiState,
+    chainName: (com.altaran.watchwallet.core.model.ChainId) -> String,
+    onSelectCandidate: (Int) -> Unit,
+    onNameChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onBatchImport: (String) -> Unit,
+    onConfirmChain: (ChainFamily) -> Unit,
+    onConfirmUnused: () -> Unit,
+    onClear: () -> Unit,
+) {
+    when (val phase = state.phase) {
+        AddWalletPhase.Idle -> {
+            Unit
+        }
+
+        AddWalletPhase.Probing -> {
+            ProbingIndicator()
+        }
+
+        is AddWalletPhase.SecretRejected -> {
+            SecretWarning(phase.kind)
+        }
+
+        is AddWalletPhase.Unsupported -> {
+            InfoCard(
+                stringResource(Res.string.add_wallet_unsupported_title, familyLabel(phase.family)),
+                stringResource(Res.string.add_wallet_unsupported_message),
+            )
+        }
+
+        is AddWalletPhase.ConfirmChain -> {
+            WarningCard(
+                title = stringResource(Res.string.confirm_chain_title),
+                message = stringResource(Res.string.confirm_chain_message),
+            ) {
+                phase.options.forEach { family ->
+                    FilledTonalButton(onClick = { onConfirmChain(family) }) { Text(familyLabel(family)) }
+                }
+                androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
+            }
+        }
+
+        is AddWalletPhase.ConfirmUnused -> {
+            WarningCard(
+                title = stringResource(Res.string.confirm_unused_title),
+                message = stringResource(Res.string.confirm_unused_message),
+            ) {
+                androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
+                FilledTonalButton(onClick = onConfirmUnused) { Text(stringResource(Res.string.confirm_add_anyway)) }
+            }
+        }
+
+        AddWalletPhase.WrongChecksum -> {
+            InfoCard(
+                stringResource(Res.string.add_wallet_checksum_title),
+                stringResource(Res.string.add_wallet_checksum_message),
+            )
+        }
+
+        AddWalletPhase.MultipleEntries -> {
+            InfoCard(
+                stringResource(Res.string.add_wallet_multiple_title),
+                stringResource(Res.string.add_wallet_multiple_message),
+            )
+            FilledTonalButton(onClick = { onBatchImport(state.input) }) { Text(stringResource(Res.string.add_wallet_open_batch)) }
+        }
+
+        AddWalletPhase.Unrecognized -> {
+            InfoCard(
+                stringResource(Res.string.add_wallet_unrecognized_title),
+                stringResource(Res.string.add_wallet_unrecognized_message),
+            )
+        }
+
+        is AddWalletPhase.Preview -> {
+            PreviewSection(phase, state, chainName, onSelectCandidate, onNameChange, onSave = { onSave() })
+        }
+    }
 }

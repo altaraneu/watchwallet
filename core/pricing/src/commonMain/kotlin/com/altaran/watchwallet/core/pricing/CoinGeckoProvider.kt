@@ -7,11 +7,15 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
@@ -58,6 +62,10 @@ class CoinGeckoProvider(
     private val interactive = Throttle(maxConcurrent = 1, minInterval = 4_000.milliseconds)
     private val background = Throttle(maxConcurrent = 1, minInterval = 4_000.milliseconds)
 
+    /** Tokens CoinGecko has no price for (mostly spam), with the time to ask again. */
+    private val noPriceUntil = HashMap<String, Instant>()
+    private val noPriceLock = Mutex()
+
     override suspend fun current(priceIds: Collection<String>, currency: String): Map<String, CurrentPrice> {
         val (tokens, coins) = priceIds.distinct().partition { it.startsWith(TOKEN_PREFIX) }
         val result = mutableMapOf<String, CurrentPrice>()
@@ -69,11 +77,16 @@ class CoinGeckoProvider(
             }
             chunk.forEach { id -> parsePrice(body[id] as? JsonObject, id, currency)?.let { result[id] = it } }
         }
-        tokens.groupBy { it.removePrefix(TOKEN_PREFIX).substringBefore(':') }.forEach { (platform, ids) ->
-            ids.chunked(MAX_IDS_PER_CALL).forEach { chunk ->
+        // The keyless API accepts a single contract per token price request (2026); those calls go
+        // through the background lane, and tokens without a price are not asked again for a while.
+        val keyless = apiKey() == null
+        val now = Clock.System.now()
+        val pending = noPriceLock.withLock { tokens.filter { id -> noPriceUntil[id]?.let { now < it } != true } }
+        pending.groupBy { it.removePrefix(TOKEN_PREFIX).substringBefore(':') }.forEach { (platform, ids) ->
+            ids.chunked(if (keyless) 1 else MAX_IDS_PER_CALL).forEach { chunk ->
                 val contracts = chunk.map { it.substringAfterLast(':') }
                 val body: JsonObject = runCatching {
-                    call<JsonObject>("simple/token_price/$platform") {
+                    call<JsonObject>("simple/token_price/$platform", if (keyless) background else interactive) {
                         parameter("contract_addresses", contracts.joinToString(","))
                         parameter("vs_currencies", currency)
                         parameter("include_24hr_change", "true")
@@ -81,7 +94,8 @@ class CoinGeckoProvider(
                 }.getOrElse { JsonObject(emptyMap()) }
                 chunk.forEach { id ->
                     val contract = id.substringAfterLast(':')
-                    parsePrice(body[contract] as? JsonObject, id, currency)?.let { result[id] = it }
+                    val price = parsePrice(body[contract] as? JsonObject, id, currency)
+                    if (price != null) result[id] = price else noPriceLock.withLock { noPriceUntil[id] = now + NO_PRICE_RETRY }
                 }
             }
         }
@@ -162,6 +176,7 @@ class CoinGeckoProvider(
         const val DEFAULT_URL = "https://api.coingecko.com/api/v3"
         private const val TOKEN_PREFIX = "token:"
         private const val MAX_IDS_PER_CALL = 100
+        private val NO_PRICE_RETRY = 12.hours
         private const val MAX_KEYLESS_DAYS = 365
         private const val HOURLY_MAX_DAYS = 90
         private const val MAX_SEARCH_RESULTS = 25
