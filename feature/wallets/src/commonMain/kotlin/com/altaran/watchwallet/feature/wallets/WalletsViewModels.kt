@@ -65,16 +65,18 @@ internal class WalletsViewModel(
                 groups = groups.associate { it.id to it.name },
                 loading = false,
                 items = wallets.map { wallet ->
-                    WalletListItem(wallet, values[wallet.id], wallet.id in sync.syncingWallets, wallet.id in sync.errors)
+                    // A synced wallet without balances is empty (0), not unknown.
+                    val value = values[wallet.id] ?: 0.0.takeIf { wallet.lastSyncedAt != null }
+                    WalletListItem(wallet, value, wallet.id in sync.syncingWallets, wallet.id in sync.errors)
                 },
                 currency = currency,
-                refreshing = sync.running,
+                refreshing = sync.running && sync.manual,
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WalletsUiState())
 
     fun refresh() {
-        syncEngine.syncAll()
+        syncEngine.syncAll(manual = true)
     }
 }
 

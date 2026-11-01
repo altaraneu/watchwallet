@@ -29,6 +29,8 @@ import kotlin.time.Clock
 
 data class SyncState(
     val running: Boolean = false,
+    /** The running sync was requested by the user (pull to refresh); only then is a spinner shown. */
+    val manual: Boolean = false,
     /** Wallet ids currently syncing. */
     val syncingWallets: Set<Long> = emptySet(),
     /** Wallet id → last error (cleared on success). Messages are technical, not shown verbatim. */
@@ -49,11 +51,16 @@ class SyncEngine(
     private val _state = MutableStateFlow(SyncState())
     val state: StateFlow<SyncState> = _state.asStateFlow()
 
-    /** Starts a background sync of all wallets (no-op if one is running) and refreshes prices. */
-    fun syncAll(): Job = scope.launch {
+    /**
+     * Starts a background sync of all wallets (no-op if one is running) and refreshes prices.
+     * [manual] marks a user request, so the UI shows progress until the (possibly already
+     * running) sync finishes.
+     */
+    fun syncAll(manual: Boolean = false): Job = scope.launch {
+        if (manual && _state.value.running) _state.update { it.copy(manual = true) }
         if (mutex.isLocked) return@launch
         mutex.withLock {
-            _state.update { it.copy(running = true) }
+            _state.update { it.copy(running = true, manual = manual || it.manual) }
             try {
                 // Wallets sync in parallel (bounded) so one large wallet does not block the others;
                 // each result is stored as soon as it is ready.
@@ -63,7 +70,7 @@ class SyncEngine(
                 }
                 prices.refreshCurrentPrices()
             } finally {
-                _state.update { it.copy(running = false, syncingWallets = emptySet()) }
+                _state.update { it.copy(running = false, manual = false, syncingWallets = emptySet()) }
             }
         }
     }

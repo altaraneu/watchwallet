@@ -81,7 +81,7 @@ class PortfolioViewModel(
             snapshot = snap,
             chart = points,
             range = selected,
-            refreshing = sync.running,
+            refreshing = sync.running && sync.manual,
             groups = chartState.groups,
             selectedGroupId = chartState.selectedGroup,
         )
@@ -116,6 +116,6 @@ class PortfolioViewModel(
     }
 
     fun refresh() {
-        syncEngine.syncAll()
+        syncEngine.syncAll(manual = true)
     }
 }
