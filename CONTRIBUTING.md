@@ -38,8 +38,10 @@ Rules for translators:
 - Use `plurals` entries for counts; Czech and many other languages have several plural forms.
 - Read the `<!-- comments -->` above strings for context.
 
-We plan to host translations on [Weblate](https://weblate.org); the link will appear here once
-the project is set up.
+Translations will be hosted on [Weblate](https://weblate.org) once the repository is public;
+the link will appear here. The component setup is prepared in
+[docs/translations-weblate.md](docs/translations-weblate.md). Until then, pull requests with
+`strings.xml` files are welcome.
 
 ## Reporting bugs
 
