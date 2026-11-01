@@ -7,6 +7,7 @@ import com.altaran.watchwallet.core.data.repository.Holding
 import com.altaran.watchwallet.core.data.repository.PortfolioRepository
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.repository.WalletRepository
+import com.altaran.watchwallet.core.data.repository.historyPriceIds
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.designsystem.chart.ChartPoint
 import com.altaran.watchwallet.core.model.Asset
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -140,8 +142,8 @@ internal class WalletDetailViewModel(
         // Price history for the chart is fetched lazily when the range changes.
         viewModelScope.launch {
             combine(currency, range, portfolioRepository.snapshot(QuoteCurrency.DEFAULT, setOf(walletId))) { c, r, snap ->
-                Triple(c, r, snap.holdings.mapNotNull { it.priceId })
-            }.collect { (c, r, ids) -> portfolioRepository.ensureHistory(c, r, ids) }
+                Triple(c, r, snap.holdings.historyPriceIds())
+            }.distinctUntilChanged().collect { (c, r, ids) -> portfolioRepository.ensureHistory(c, r, ids) }
         }
     }
 

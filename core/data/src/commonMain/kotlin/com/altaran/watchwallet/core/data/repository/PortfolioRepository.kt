@@ -36,6 +36,13 @@ data class Holding(
     val walletIds: Set<Long>,
 )
 
+/**
+ * Price ids worth fetching chart history for: priced holdings only (unpriced spam tokens have no
+ * history), largest first so the chart fills in with what matters while the rest loads.
+ */
+fun List<Holding>.historyPriceIds(): List<String> =
+    filter { it.price != null }.sortedByDescending { it.value ?: 0.0 }.mapNotNull { it.priceId }.distinct()
+
 data class PortfolioSnapshot(
     val totalValue: Double,
     /** Value change over 24 hours, from current holdings and 24h price changes. */

@@ -53,8 +53,10 @@ class CoinGeckoProvider(
     private val baseUrl: String = DEFAULT_URL,
     private val apiKey: () -> String? = { null },
 ) : PriceProvider {
-    // The keyless tier allows only a handful of calls per minute.
-    private val throttle = Throttle(maxConcurrent = 1, minInterval = 2_500.milliseconds)
+    // The keyless tier allows about 30 calls per minute. Two lanes of 15/min each: chart history
+    // (many calls after a sync) can never delay what the user is looking at (prices, markets).
+    private val interactive = Throttle(maxConcurrent = 1, minInterval = 4_000.milliseconds)
+    private val background = Throttle(maxConcurrent = 1, minInterval = 4_000.milliseconds)
 
     override suspend fun current(priceIds: Collection<String>, currency: String): Map<String, CurrentPrice> {
         val (tokens, coins) = priceIds.distinct().partition { it.startsWith(TOKEN_PREFIX) }
@@ -93,7 +95,7 @@ class CoinGeckoProvider(
         } else {
             "coins/$priceId/market_chart"
         }
-        val chart: MarketChart = call(path) {
+        val chart: MarketChart = call(path, background) {
             parameter("vs_currency", currency)
             // The keyless API serves at most 365 days of history.
             parameter("days", (days ?: MAX_KEYLESS_DAYS).coerceAtMost(if (apiKey() == null) MAX_KEYLESS_DAYS else Int.MAX_VALUE))
@@ -131,7 +133,11 @@ class CoinGeckoProvider(
         return response.coins.take(MAX_SEARCH_RESULTS).map { CoinSearchResult(it.id, it.symbol.uppercase(), it.name, it.marketCapRank) }
     }
 
-    private suspend inline fun <reified T> call(path: String, crossinline block: HttpRequestBuilder.() -> Unit): T = try {
+    private suspend inline fun <reified T> call(
+        path: String,
+        throttle: Throttle = interactive,
+        crossinline block: HttpRequestBuilder.() -> Unit,
+    ): T = try {
         throttle.run {
             http.get("${baseUrl.trimEnd('/')}/$path") {
                 apiKey()?.takeIf { it.isNotBlank() }?.let { header("x-cg-demo-api-key", it) }

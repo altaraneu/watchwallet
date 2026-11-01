@@ -6,6 +6,7 @@ import com.altaran.watchwallet.core.data.repository.PortfolioRepository
 import com.altaran.watchwallet.core.data.repository.PortfolioSnapshot
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.repository.WalletRepository
+import com.altaran.watchwallet.core.data.repository.historyPriceIds
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.designsystem.chart.ChartPoint
 import com.altaran.watchwallet.core.model.ChartRange
@@ -89,7 +90,7 @@ class PortfolioViewModel(
     init {
         // Fetch price history needed for the visible range (cached; throttled by the repository).
         viewModelScope.launch {
-            combine(currency, range, snapshot) { c, r, snap -> Triple(c, r, snap.holdings.mapNotNull { it.priceId }) }
+            combine(currency, range, snapshot) { c, r, snap -> Triple(c, r, snap.holdings.historyPriceIds()) }
                 .distinctUntilChanged()
                 .collect { (c, r, ids) -> portfolioRepository.ensureHistory(c, r, ids) }
         }

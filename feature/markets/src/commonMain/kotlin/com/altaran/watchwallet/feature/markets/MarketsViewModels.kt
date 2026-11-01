@@ -29,7 +29,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 
 data class MarketsUiState(
     val loading: Boolean = true,
@@ -71,21 +73,34 @@ internal class MarketsViewModel(
     fun refresh() {
         viewModelScope.launch {
             _state.value = _state.value.copy(refreshing = true)
-            val currency = settingsRepository.settings.first().quoteCurrency
-            val holdings = portfolioRepository.snapshot(currency).first().holdings
-            val held = holdings.mapNotNull { it.priceId }.filterNot { it.startsWith("token:") }
-            val ids = (held + priceRepository.trackedPriceIds().filterNot { it.startsWith("token:") }).distinct()
-            val result = priceRepository.markets(currency, ids)
-            val rows = result.getOrNull().orEmpty().sortedBy { row -> held.indexOf(row.priceId).let { if (it < 0) Int.MAX_VALUE else it } }
-            _state.value = MarketsUiState(
-                loading = false,
-                refreshing = false,
-                failed = result.isFailure,
-                currency = currency,
-                rows = rows.ifEmpty { _state.value.rows },
-                heldIds = held.toSet(),
-            )
+            try {
+                // A slow or rate-limited price API must not leave the screen spinning forever.
+                val loaded = withTimeoutOrNull(REFRESH_TIMEOUT) { load() }
+                _state.value = loaded ?: _state.value.copy(loading = false, failed = true)
+            } finally {
+                _state.value = _state.value.copy(refreshing = false)
+            }
         }
+    }
+
+    private suspend fun load(): MarketsUiState {
+        val currency = settingsRepository.settings.first().quoteCurrency
+        val holdings = portfolioRepository.snapshot(currency).first().holdings
+        val held = holdings.mapNotNull { it.priceId }.filterNot { it.startsWith("token:") }
+        val ids = (held + priceRepository.trackedPriceIds().filterNot { it.startsWith("token:") }).distinct()
+        val result = priceRepository.markets(currency, ids)
+        val rows = result.getOrNull().orEmpty().sortedBy { row -> held.indexOf(row.priceId).let { if (it < 0) Int.MAX_VALUE else it } }
+        return MarketsUiState(
+            loading = false,
+            failed = result.isFailure,
+            currency = currency,
+            rows = rows.ifEmpty { _state.value.rows },
+            heldIds = held.toSet(),
+        )
+    }
+
+    private companion object {
+        val REFRESH_TIMEOUT = 20.seconds
     }
 }
 
