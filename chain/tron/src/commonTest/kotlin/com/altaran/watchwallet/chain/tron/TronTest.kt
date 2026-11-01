@@ -46,10 +46,14 @@ class TronTest {
 
     private val trxHistory = """{"data":[
         {"ret":[{"contractRet":"SUCCESS","fee":1100000}],"txID":"t2","net_usage":0,"energy_fee":1100000,"blockNumber":62000000,"block_timestamp":1717000000000,
-         "raw_data":{"contract":[{"parameter":{"value":{"data":"a9059cbb","owner_address":"${hex(ours)}","contract_address":"${hex(TronChain.USDT)}"},
+         "raw_data":{"contract":[{"parameter":{"value":{"data":"a9059cbb","owner_address":"${hex(
+        ours,
+    )}","contract_address":"${hex(TronChain.USDT)}"},
            "type_url":"type.googleapis.com/protocol.TriggerSmartContract"},"type":"TriggerSmartContract"}],"timestamp":1716999990000}},
         {"ret":[{"contractRet":"SUCCESS","fee":0}],"txID":"t1","blockNumber":61000000,"block_timestamp":1716000000000,
-         "raw_data":{"contract":[{"parameter":{"value":{"amount":10000000,"owner_address":"${hex(other)}","to_address":"${hex(ours)}"},
+         "raw_data":{"contract":[{"parameter":{"value":{"amount":10000000,"owner_address":"${hex(
+        other,
+    )}","to_address":"${hex(ours)}"},
            "type_url":"type.googleapis.com/protocol.TransferContract"},"type":"TransferContract"}]}},
         {"internal_tx_id":"x","data":{"note":"63616c6c"},"block_timestamp":1716000000000}],
         "success":true,"meta":{"at":1717000000000,"page_size":3}}"""
@@ -78,26 +82,30 @@ class TronTest {
     private val adapter = TronAdapter(createHttpClient(engine = engine), "https://tron.test")
 
     @Test
-    fun syncReturnsTrxTokensAndHistory() = runTest { withContext(Dispatchers.Default) {
-        val result = adapter.sync(assertNotNull(TronAddresses.parse(ours)), emptySet())
-        val balances = result.balances.associate { it.asset.symbol to it.amount.toPlainString() }
-        assertEquals("20", balances["TRX"], "12 liquid + 8 staked")
-        assertEquals("150", balances["USDT"])
-        assertEquals("tether", result.balances.single { it.asset.symbol == "USDT" }.asset.priceId)
-        assertEquals(2, result.balances.size, "fake USDT from another contract is ignored")
+    fun syncReturnsTrxTokensAndHistory() = runTest {
+        withContext(Dispatchers.Default) {
+            val result = adapter.sync(assertNotNull(TronAddresses.parse(ours)), emptySet())
+            val balances = result.balances.associate { it.asset.symbol to it.amount.toPlainString() }
+            assertEquals("20", balances["TRX"], "12 liquid + 8 staked")
+            assertEquals("150", balances["USDT"])
+            assertEquals("tether", result.balances.single { it.asset.symbol == "USDT" }.asset.priceId)
+            assertEquals(2, result.balances.size, "fake USDT from another contract is ignored")
 
-        val byKey = result.transactions.associateBy { it.hash + "/" + it.asset.symbol }
-        assertEquals(-1_100_000L, byKey.getValue("t2/TRX").delta.longValue(), "energy fee burned")
-        assertEquals(-50_000_000L, byKey.getValue("t2/USDT").delta.longValue())
-        assertEquals(10_000_000L, byKey.getValue("t1/TRX").delta.longValue())
-        assertEquals(200_000_000L, byKey.getValue("t0/USDT").delta.longValue())
-        assertFalse(result.transactions.any { it.hash == "poison" }, "address-poisoning token dropped")
-    } }
+            val byKey = result.transactions.associateBy { it.hash + "/" + it.asset.symbol }
+            assertEquals(-1_100_000L, byKey.getValue("t2/TRX").delta.longValue(), "energy fee burned")
+            assertEquals(-50_000_000L, byKey.getValue("t2/USDT").delta.longValue())
+            assertEquals(10_000_000L, byKey.getValue("t1/TRX").delta.longValue())
+            assertEquals(200_000_000L, byKey.getValue("t0/USDT").delta.longValue())
+            assertFalse(result.transactions.any { it.hash == "poison" }, "address-poisoning token dropped")
+        }
+    }
 
     @Test
-    fun unactivatedAccount() = runTest { withContext(Dispatchers.Default) {
-        val probe = adapter.probe(assertNotNull(TronAddresses.parse(other)))
-        assertFalse(probe.hasActivity)
-        assertTrue(probe.balances.single().amount.isZero)
-    } }
+    fun unactivatedAccount() = runTest {
+        withContext(Dispatchers.Default) {
+            val probe = adapter.probe(assertNotNull(TronAddresses.parse(other)))
+            assertFalse(probe.hasActivity)
+            assertTrue(probe.balances.single().amount.isZero)
+        }
+    }
 }

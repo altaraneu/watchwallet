@@ -69,7 +69,12 @@ object DogecoinAddresses {
     /** Dogecoin has no SegWit: every extended key is BIP44 P2PKH. */
     fun parseExtendedKey(input: String): WatchTarget.ExtendedPublicKey? {
         val (key, _) = parseExtendedPublicKey(input.trim(), KEY_VERSIONS) ?: return null
-        return WatchTarget.ExtendedPublicKey(ChainFamily.UTXO, DogecoinChain.ID, key.encode(DeterministicWallet.xpub), ScriptType.P2PKH)
+        return WatchTarget.ExtendedPublicKey(
+            ChainFamily.UTXO,
+            DogecoinChain.ID,
+            key.encode(DeterministicWallet.xpub),
+            ScriptType.P2PKH,
+        )
     }
 
     /** `true` for the Dogecoin-specific `dgub` prefix (an `xpub` may belong to any chain). */
@@ -86,8 +91,12 @@ class DogecoinAdapter(
     http: HttpClient,
     blockbookUrl: String = DogecoinChain.DEFAULT_BLOCKBOOK_URL,
 ) : UtxoAdapter(
-    chain = DogecoinChain.CHAIN,
-    asset = DogecoinChain.DOGE,
-    backend = BlockbookBackend(http, blockbookUrl, Throttle(maxConcurrent = 3, minInterval = 150.milliseconds, maxJitter = 150.milliseconds)),
-    deriver = { target -> { change, index -> DogecoinAddresses.derive(target.key, change, index) } },
-)
+        chain = DogecoinChain.CHAIN,
+        asset = DogecoinChain.DOGE,
+        backend = BlockbookBackend(
+            http,
+            blockbookUrl,
+            Throttle(maxConcurrent = 3, minInterval = 150.milliseconds, maxJitter = 150.milliseconds),
+        ),
+        deriver = { target -> { change, index -> DogecoinAddresses.derive(target.key, change, index) } },
+    )

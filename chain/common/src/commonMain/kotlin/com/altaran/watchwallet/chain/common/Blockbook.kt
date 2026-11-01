@@ -70,7 +70,11 @@ class BlockbookBackend(
             val txs = info.transactions.map { it.toUtxoTx() }
             collected += txs
             val reachedKnown = txs.any { it.confirmed && it.txid in known }
-            if (reachedKnown || page >= info.totalPages || txs.isEmpty()) return UtxoHistory(collected, truncated = false)
+            if (reachedKnown || page >= info.totalPages ||
+                txs.isEmpty()
+            ) {
+                return UtxoHistory(collected, truncated = false)
+            }
         }
         return UtxoHistory(collected, truncated = true)
     }

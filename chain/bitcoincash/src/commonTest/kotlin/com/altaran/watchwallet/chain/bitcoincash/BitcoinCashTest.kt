@@ -22,9 +22,11 @@ class BitcoinCashTest {
     fun addressValidation() {
         // CashAddr specification examples (legacy ↔ CashAddr pairs).
         val cases = listOf(
-            "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a" to "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
+            "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a" to
+                "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
             "qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a" to "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
-            "BITCOINCASH:QPM2QSZNHKS23Z7629MMS6S4CWEF74VCWVY22GDX6A" to "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
+            "BITCOINCASH:QPM2QSZNHKS23Z7629MMS6S4CWEF74VCWVY22GDX6A" to
+                "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
             "1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu" to "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
             "1KXrWXciRDZUpQwQmuM1DbwsKDLYAYsVLR" to "bitcoincash:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y0qverfuy",
             "16w1D5WRVKJuZUsSRzdLp9w3YGcgoxDXb" to "bitcoincash:qqq3728yw0y47sqn6l2na30mcw6zm78dzqre909m2r",
@@ -43,9 +45,15 @@ class BitcoinCashTest {
 
     @Test
     fun derivationProducesCashAddr() {
-        val seed = MnemonicCode.toSeed("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", "")
+        val seed = MnemonicCode.toSeed(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+            "",
+        )
         val account = DeterministicWallet.generate(seed).derivePrivateKey("m/44'/145'/0'")
-        val target = assertNotNull(BitcoinCashAddresses.parseExtendedKey(account.extendedPublicKey.encode(DeterministicWallet.xpub)))
+        val target =
+            assertNotNull(
+                BitcoinCashAddresses.parseExtendedKey(account.extendedPublicKey.encode(DeterministicWallet.xpub)),
+            )
         val derived = BitcoinCashAddresses.derive(target.key, false, 0)
         // Cross-check against the legacy P2PKH address of the same key.
         val pub = account.derivePrivateKey(0).derivePrivateKey(0).extendedPublicKey.publicKey
@@ -58,7 +66,10 @@ class BitcoinCashTest {
     @Test
     fun adapterNormalizesLegacyInput() = runTest {
         val engine = MockEngine { request ->
-            assertEquals("/api/v2/address/bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a", request.url.encodedPath.replace("%3A", ":"))
+            assertEquals(
+                "/api/v2/address/bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
+                request.url.encodedPath.replace("%3A", ":"),
+            )
             respond(
                 """{"page":1,"totalPages":1,"itemsOnPage":1000,"address":"bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
                    "balance":"12345","totalReceived":"12345","totalSent":"0","unconfirmedBalance":"0","unconfirmedTxs":0,"txs":1}""",

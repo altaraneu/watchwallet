@@ -130,9 +130,19 @@ class SuiAdapter(
                 }
             }
         }
-        val transactions = blocks.values.flatMap { block -> parseBlock(block, address) { coinType -> assets[coinType] ?: coinAsset(coinType) } }
+        val transactions = blocks.values.flatMap { block ->
+            parseBlock(block, address) { coinType ->
+                assets[coinType]
+                    ?: coinAsset(coinType)
+            }
+        }
         val active = transactions.isNotEmpty() || balances.any { !it.amount.isZero }
-        SyncResult(balances, transactions.filterNotNull(), activeChains = if (active) listOf(SuiChain.ID) else emptyList(), historyTruncated = truncated)
+        SyncResult(
+            balances,
+            transactions.filterNotNull(),
+            activeChains = if (active) listOf(SuiChain.ID) else emptyList(),
+            historyTruncated = truncated,
+        )
     }
 
     private fun address(target: WatchTarget): String =
@@ -159,7 +169,12 @@ class SuiAdapter(
     private suspend fun coinAsset(coinType: String): Asset? {
         if (coinType == SuiChain.SUI_COIN_TYPE) return SuiChain.SUI
         val metadata = metadataCache.getOrPut(coinType) {
-            rpc.call("suix_getCoinMetadata", buildJsonArray { add(JsonPrimitive(coinType)) }).takeIf { it is JsonObject }
+            rpc.call(
+                "suix_getCoinMetadata",
+                buildJsonArray {
+                    add(JsonPrimitive(coinType))
+                },
+            ).takeIf { it is JsonObject }
         } ?: return null
         val decimals = metadata.str("decimals")?.toIntOrNull() ?: return null
         return tokenAsset(
@@ -202,13 +217,18 @@ class SuiAdapter(
  * Per-coin deltas of one transaction block for [address] from `balanceChanges`. The gas fee
  * (computation + storage − rebate) is reported for the gas owner.
  */
-internal suspend fun parseBlock(block: JsonElement, address: String, assetOf: suspend (String) -> Asset?): List<ChainTransaction?> {
+internal suspend fun parseBlock(
+    block: JsonElement,
+    address: String,
+    assetOf: suspend (String) -> Asset?,
+): List<ChainTransaction?> {
     val digest = block.str("digest") ?: return emptyList()
     val time = block.long("timestampMs")?.let { Instant.fromEpochMilliseconds(it) } ?: Clock.System.now()
     val gasOwner = block.at("effects", "gasObject", "owner").str("AddressOwner")
     val gas = block.at("effects", "gasUsed")
     val fee = if (gasOwner == address) {
-        parseBigInteger(gas.str("computationCost")) + parseBigInteger(gas.str("storageCost")) - parseBigInteger(gas.str("storageRebate"))
+        parseBigInteger(gas.str("computationCost")) + parseBigInteger(gas.str("storageCost")) -
+            parseBigInteger(gas.str("storageRebate"))
     } else {
         null
     }

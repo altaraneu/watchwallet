@@ -98,7 +98,12 @@ class AlgorandAdapter(
 
     override suspend fun probe(target: WatchTarget): ProbeResult = chainCall("Algorand") {
         val account = account(address(target))
-            ?: return@chainCall ProbeResult(false, emptyList(), listOf(amountOf(AlgorandChain.ALGO, BigInteger.ZERO)), 0)
+            ?: return@chainCall ProbeResult(
+                false,
+                emptyList(),
+                listOf(amountOf(AlgorandChain.ALGO, BigInteger.ZERO)),
+                0,
+            )
         val balances = balances(account)
         val active = !balances.first().amount.isZero || (account.long("total-assets-opted-in") ?: 0L) > 0
         ProbeResult(active, if (active) listOf(AlgorandChain.ID) else emptyList(), balances, transactionCount = null)
@@ -139,7 +144,9 @@ class AlgorandAdapter(
     private fun address(target: WatchTarget): String =
         (target as? WatchTarget.Address)?.address ?: throw ChainDataException("Algorand supports addresses only")
 
-    private suspend fun account(address: String): JsonElement? = notFoundAsNull { get("$base/v2/accounts/$address") }?.at("account")
+    private suspend fun account(address: String): JsonElement? = notFoundAsNull {
+        get("$base/v2/accounts/$address")
+    }?.at("account")
 
     private suspend fun balances(account: JsonElement): List<AssetAmount> {
         val result = mutableListOf(amountOf(AlgorandChain.ALGO, account.str("amount")))
@@ -170,7 +177,11 @@ class AlgorandAdapter(
         }
     }
 
-    private suspend fun get(url: String, block: io.ktor.client.request.HttpRequestBuilder.() -> Unit = {}): JsonElement =
+    private suspend fun get(
+        url: String,
+        block: io.ktor.client.request.HttpRequestBuilder.() -> Unit = {
+        },
+    ): JsonElement =
         throttle.run { http.get(url, block).body<JsonElement>() }
 
     private companion object {
@@ -186,7 +197,11 @@ class AlgorandAdapter(
  * Net ALGO and ASA changes of [address] in one indexer transaction, including its inner
  * transactions (application calls). The fee is charged to the sender.
  */
-internal suspend fun parseAlgorandTransaction(tx: JsonElement, address: String, asaOf: suspend (String) -> Asset?): List<ChainTransaction> {
+internal suspend fun parseAlgorandTransaction(
+    tx: JsonElement,
+    address: String,
+    asaOf: suspend (String) -> Asset?,
+): List<ChainTransaction> {
     val id = tx.str("id") ?: return emptyList()
     val time = tx.long("round-time")?.let { Instant.fromEpochSeconds(it) } ?: Clock.System.now()
     val deltas = LinkedHashMap<String, BigInteger>() // "" = ALGO, otherwise asset id

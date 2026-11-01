@@ -90,7 +90,13 @@ class NearAdapter(
     http: HttpClient,
     rpcUrl: String = NearChain.DEFAULT_RPC_URL,
 ) : ChainAdapter {
-    private val rpc = JsonRpcClient(http, listOf(rpcUrl), Throttle(maxConcurrent = 2, minInterval = 150.milliseconds), rateLimitRetries = 2)
+    private val rpc =
+        JsonRpcClient(
+            http,
+            listOf(rpcUrl),
+            Throttle(maxConcurrent = 2, minInterval = 150.milliseconds),
+            rateLimitRetries = 2,
+        )
 
     override val family = ChainFamily.NEAR
     override val chains = listOf(NearChain.CHAIN)
@@ -99,7 +105,12 @@ class NearAdapter(
         val account = viewAccount(address(target))
         val balance = total(account)
         val active = account != null
-        ProbeResult(active, if (active) listOf(NearChain.ID) else emptyList(), listOf(amountOf(NearChain.NEAR, balance)), transactionCount = null)
+        ProbeResult(
+            active,
+            if (active) listOf(NearChain.ID) else emptyList(),
+            listOf(amountOf(NearChain.NEAR, balance)),
+            transactionCount = null,
+        )
     }
 
     override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("NEAR") {
@@ -115,7 +126,13 @@ class NearAdapter(
         (target as? WatchTarget.Address)?.address ?: throw ChainDataException("NEAR supports accounts only")
 
     private fun total(account: JsonElement?): BigInteger =
-        if (account == null) BigInteger.ZERO else parseBigInteger(account.str("amount")) + parseBigInteger(account.str("locked"))
+        if (account ==
+            null
+        ) {
+            BigInteger.ZERO
+        } else {
+            parseBigInteger(account.str("amount")) + parseBigInteger(account.str("locked"))
+        }
 
     /** `view_account` result, or `null` when the account does not exist. */
     private suspend fun viewAccount(accountId: String): JsonElement? {

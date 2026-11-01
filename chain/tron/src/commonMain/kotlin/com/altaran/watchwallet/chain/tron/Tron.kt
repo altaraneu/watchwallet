@@ -126,7 +126,18 @@ class TronAdapter(
     override suspend fun probe(target: WatchTarget): ProbeResult = chainCall("TronGrid") {
         val account = account(address(target))
         val balances = account?.let { balances(it, emptyMap()) } ?: listOf(amountOf(TronChain.TRX, BigInteger.ZERO))
-        ProbeResult(account != null, if (account != null) listOf(TronChain.ID) else emptyList(), balances, transactionCount = null)
+        ProbeResult(
+            account != null,
+            if (account !=
+                null
+            ) {
+                listOf(TronChain.ID)
+            } else {
+                emptyList()
+            },
+            balances,
+            transactionCount = null,
+        )
     }
 
     override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("TronGrid") {
@@ -135,7 +146,10 @@ class TronAdapter(
             ?: return@chainCall SyncResult(listOf(amountOf(TronChain.TRX, BigInteger.ZERO)), emptyList())
         val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES
 
-        val trc20 = pages("$base/v1/accounts/$address/transactions/trc20", maxPages) { it.str("transaction_id") in knownTransactions }
+        val trc20 = pages("$base/v1/accounts/$address/transactions/trc20", maxPages) {
+            it.str("transaction_id") in
+                knownTransactions
+        }
         val seenTokens = trc20.items.mapNotNull { item ->
             val info = item.at("token_info") ?: return@mapNotNull null
             val contract = info.str("address") ?: return@mapNotNull null
@@ -154,7 +168,13 @@ class TronAdapter(
                     ?: return@mapNotNull null
                 parseTrc20Transfer(item, address, asset)
             }
-        SyncResult(balances, transactions, activeChains = listOf(TronChain.ID), historyTruncated = trc20.truncated || trx.truncated)
+        SyncResult(
+            balances,
+            transactions,
+            activeChains = listOf(TronChain.ID),
+            historyTruncated =
+                trc20.truncated || trx.truncated,
+        )
     }
 
     private fun address(target: WatchTarget): String =
@@ -219,7 +239,11 @@ class TronAdapter(
         return Paged(items, truncated = true)
     }
 
-    private suspend fun get(url: String, block: io.ktor.client.request.HttpRequestBuilder.() -> Unit = {}): JsonElement =
+    private suspend fun get(
+        url: String,
+        block: io.ktor.client.request.HttpRequestBuilder.() -> Unit = {
+        },
+    ): JsonElement =
         withRateLimitBackoff(RATE_LIMIT_RETRIES) { throttle.run { http.get(url, block).body<JsonElement>() } }
 
     private companion object {
@@ -274,7 +298,16 @@ internal fun parseTrxTransaction(item: JsonElement, address: String): ChainTrans
     }
     delta -= fee
     if (delta.isZero() && !isOwner) return null
-    return accountTransaction(TronChain.ID, hash, time(item), TronChain.TRX, delta, if (isOwner) fee else null, isSelfTransfer = isOwner && receiver == address)
+    return accountTransaction(
+        TronChain.ID,
+        hash,
+        time(item),
+        TronChain.TRX,
+        delta,
+        if (isOwner) fee else null,
+        isSelfTransfer =
+            isOwner && receiver == address,
+    )
 }
 
 internal fun parseTrc20Transfer(item: JsonElement, address: String, asset: Asset): ChainTransaction? {

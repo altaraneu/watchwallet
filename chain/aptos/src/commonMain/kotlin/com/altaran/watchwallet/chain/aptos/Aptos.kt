@@ -105,7 +105,12 @@ class AptosAdapter(
         val balance = if (account != null) balance(address) else BigInteger.ZERO
         val sequence = account.long("sequence_number") ?: 0L
         val active = account != null && (sequence > 0 || !balance.isZero())
-        ProbeResult(active, if (active) listOf(AptosChain.ID) else emptyList(), listOf(amountOf(AptosChain.APT, balance)), sequence.toInt())
+        ProbeResult(
+            active,
+            if (active) listOf(AptosChain.ID) else emptyList(),
+            listOf(amountOf(AptosChain.APT, balance)),
+            sequence.toInt(),
+        )
     }
 
     override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("Aptos") {
@@ -138,7 +143,12 @@ class AptosAdapter(
             }
         }
         val active = transactions.isNotEmpty() || !balances.first().amount.isZero
-        SyncResult(balances, transactions, activeChains = if (active) listOf(AptosChain.ID) else emptyList(), historyTruncated = truncated)
+        SyncResult(
+            balances,
+            transactions,
+            activeChains = if (active) listOf(AptosChain.ID) else emptyList(),
+            historyTruncated = truncated,
+        )
     }
 
     private fun address(target: WatchTarget): String =
@@ -155,11 +165,21 @@ class AptosAdapter(
             if (e.response.status.value != 400) throw e
             null
         }
-        val value = coin ?: view("0x1::primary_fungible_store::balance", listOf("0x1::fungible_asset::Metadata"), listOf(address, "0xa"))
+        val value =
+            coin
+                ?: view(
+                    "0x1::primary_fungible_store::balance",
+                    listOf("0x1::fungible_asset::Metadata"),
+                    listOf(address, "0xa"),
+                )
         return parseBigInteger(value.asList.firstOrNull().content)
     }
 
-    private suspend fun view(function: String, typeArguments: List<String>, arguments: List<String>): JsonElement = throttle.run {
+    private suspend fun view(
+        function: String,
+        typeArguments: List<String>,
+        arguments: List<String>,
+    ): JsonElement = throttle.run {
         http.post("$base/view") {
             contentType(ContentType.Application.Json)
             setBody(
@@ -172,7 +192,11 @@ class AptosAdapter(
         }.body<JsonElement>()
     }
 
-    private suspend fun get(url: String, block: io.ktor.client.request.HttpRequestBuilder.() -> Unit = {}): JsonElement =
+    private suspend fun get(
+        url: String,
+        block: io.ktor.client.request.HttpRequestBuilder.() -> Unit = {
+        },
+    ): JsonElement =
         throttle.run { http.get(url, block).body<JsonElement>() }
 
     private companion object {
@@ -205,9 +229,14 @@ internal fun parseAptosTransaction(tx: JsonElement, address: String): ChainTrans
             }
         }
         when (function) {
-            "0x1::aptos_account::transfer" -> transfer(args.getOrNull(0).content, args.getOrNull(1).content)
-            "0x1::aptos_account::transfer_coins", "0x1::coin::transfer" ->
+            "0x1::aptos_account::transfer" -> {
+                transfer(args.getOrNull(0).content, args.getOrNull(1).content)
+            }
+
+            "0x1::aptos_account::transfer_coins", "0x1::coin::transfer" -> {
                 if (typeArg == AptosChain.APT_COIN_TYPE) transfer(args.getOrNull(0).content, args.getOrNull(1).content)
+            }
+
             "0x1::aptos_account::batch_transfer" -> {
                 val recipients = args.getOrNull(0).asList
                 val amounts = args.getOrNull(1).asList
@@ -215,5 +244,14 @@ internal fun parseAptosTransaction(tx: JsonElement, address: String): ChainTrans
             }
         }
     }
-    return accountTransaction(AptosChain.ID, hash, time, AptosChain.APT, BigInteger.ZERO - (sent + fee), fee, isSelfTransfer = self && sent.isZero())
+    return accountTransaction(
+        AptosChain.ID,
+        hash,
+        time,
+        AptosChain.APT,
+        BigInteger.ZERO - (sent + fee),
+        fee,
+        isSelfTransfer =
+            self && sent.isZero(),
+    )
 }

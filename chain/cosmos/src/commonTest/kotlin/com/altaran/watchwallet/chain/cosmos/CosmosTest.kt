@@ -1,3 +1,6 @@
+// Fixtures contain long real addresses and JSON payloads.
+@file:Suppress("ktlint:standard:max-line-length")
+
 package com.altaran.watchwallet.chain.cosmos
 
 import com.altaran.watchwallet.chain.common.Bech32Codec
@@ -45,7 +48,13 @@ class CosmosTest {
 
     @Test
     fun coinLists() {
-        assertEquals("1500", coinAmount("1000uatom,7ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2,500uatom", "uatom").toString())
+        assertEquals(
+            "1500",
+            coinAmount(
+                "1000uatom,7ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2,500uatom",
+                "uatom",
+            ).toString(),
+        )
     }
 
     @Test
@@ -53,15 +62,21 @@ class CosmosTest {
         val engine = MockEngine { request ->
             val path = request.url.encodedPath
             val body = when {
-                path == "/cosmoshub/cosmos/bank/v1beta1/balances/$ours" ->
+                path == "/cosmoshub/cosmos/bank/v1beta1/balances/$ours" -> {
                     """{"balances":[{"denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2","amount":"5"},{"denom":"uatom","amount":"2500000"}],
                        "pagination":{"next_key":null,"total":"2"}}"""
-                path == "/cosmoshub/cosmos/staking/v1beta1/delegations/$ours" ->
+                }
+
+                path == "/cosmoshub/cosmos/staking/v1beta1/delegations/$ours" -> {
                     """{"delegation_responses":[{"delegation":{"delegator_address":"$ours","validator_address":"cosmosvaloper1x","shares":"10000000.0"},
                        "balance":{"denom":"uatom","amount":"10000000"}}],"pagination":{"next_key":null,"total":"1"}}"""
-                path.endsWith("/unbonding_delegations") ->
+                }
+
+                path.endsWith("/unbonding_delegations") -> {
                     """{"unbonding_responses":[{"delegator_address":"$ours","validator_address":"cosmosvaloper1y","entries":[{"creation_height":"1","completion_time":"2024-06-01T00:00:00Z","initial_balance":"1000000","balance":"1000000"}]}]}"""
-                path == "/cosmoshub/cosmos/tx/v1beta1/txs" && "sender" in request.url.parameters["query"].orEmpty() ->
+                }
+
+                path == "/cosmoshub/cosmos/tx/v1beta1/txs" && "sender" in request.url.parameters["query"].orEmpty() -> {
                     """{"txs":[],"tx_responses":[{"height":"20000000","txhash":"AA11","code":0,"timestamp":"2024-05-01T10:00:00Z",
                        "tx":{"body":{"messages":[{"@type":"/cosmos.bank.v1beta1.MsgSend","from_address":"$ours","to_address":"cosmos1other","amount":[{"denom":"uatom","amount":"1000000"}]}]},
                          "auth_info":{"fee":{"amount":[{"denom":"uatom","amount":"5000"}],"gas_limit":"200000","payer":"","granter":""}}},
@@ -69,11 +84,17 @@ class CosmosTest {
                          {"type":"coin_spent","attributes":[{"key":"spender","value":"$ours","index":true},{"key":"amount","value":"1000000uatom","index":true}]},
                          {"type":"coin_received","attributes":[{"key":"receiver","value":"cosmos1other","index":true},{"key":"amount","value":"1000000uatom","index":true}]}]}],
                        "pagination":null,"total":"1"}"""
-                path == "/cosmoshub/cosmos/tx/v1beta1/txs" ->
+                }
+
+                path == "/cosmoshub/cosmos/tx/v1beta1/txs" -> {
                     """{"txs":[],"tx_responses":[{"height":"19000000","txhash":"BB22","code":0,"timestamp":"2024-04-01T10:00:00Z",
                        "tx":{"body":{"messages":[{"@type":"/cosmos.bank.v1beta1.MsgSend","from_address":"cosmos1other","to_address":"$ours"}]},"auth_info":{"fee":{"amount":[]}}},
                        "events":[{"type":"coin_received","attributes":[{"key":"receiver","value":"$ours"},{"key":"amount","value":"3500000uatom"}]}]}],"total":"1"}"""
-                else -> error("Unexpected $path")
+                }
+
+                else -> {
+                    error("Unexpected $path")
+                }
             }
             respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
         }

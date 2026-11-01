@@ -75,7 +75,11 @@ object StellarAddresses {
         val text = input.trim()
         val account = when {
             text.length == 56 && text.startsWith("G") -> decode(text, VERSION_ACCOUNT, 32)?.let { text }
-            text.length == 69 && text.startsWith("M") -> decode(text, VERSION_MUXED, 40)?.let { encode(VERSION_ACCOUNT, it.copyOfRange(0, 32)) }
+
+            text.length == 69 && text.startsWith("M") -> decode(text, VERSION_MUXED, 40)?.let {
+                encode(VERSION_ACCOUNT, it.copyOfRange(0, 32))
+            }
+
             else -> null
         } ?: return null
         return WatchTarget.Address(ChainFamily.STELLAR, StellarChain.ID, account)
@@ -138,11 +142,21 @@ class StellarAdapter(
         val assets = balances.associate { (it.asset.contract ?: "native") to it.asset }
         val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES
 
-        val payments = records("$base/accounts/$address/payments", maxPages) { it.str("transaction_hash") in knownTransactions }
+        val payments = records("$base/accounts/$address/payments", maxPages) {
+            it.str("transaction_hash") in
+                knownTransactions
+        }
         val txs = records("$base/accounts/$address/transactions", maxPages) { it.str("hash") in knownTransactions }
 
         val sums = LinkedHashMap<Pair<String, String>, Entry>()
-        fun add(hash: String, assetKey: String, asset: Asset, delta: BigInteger, time: Instant, fee: BigInteger? = null) {
+        fun add(
+            hash: String,
+            assetKey: String,
+            asset: Asset,
+            delta: BigInteger,
+            time: Instant,
+            fee: BigInteger? = null,
+        ) {
             val key = hash to assetKey
             val current = sums[key] ?: Entry(asset, BigInteger.ZERO, null, time)
             sums[key] = current.copy(delta = current.delta + delta, fee = fee ?: current.fee)
@@ -157,12 +171,24 @@ class StellarAdapter(
         for (payment in payments.items) {
             if (payment.bool("transaction_successful") == false) continue
             val hash = payment.str("transaction_hash") ?: continue
-            for ((assetKey, asset, delta) in paymentDeltas(payment, address, assets)) add(hash, assetKey, asset, delta, time(payment))
+            for ((assetKey, asset, delta) in paymentDeltas(
+                payment,
+                address,
+                assets,
+            )) {
+                add(hash, assetKey, asset, delta, time(payment))
+            }
         }
         val transactions: List<ChainTransaction> = sums.map { (key, entry) ->
             accountTransaction(StellarChain.ID, key.first, entry.time, entry.asset, entry.delta, entry.fee)
         }
-        SyncResult(balances, transactions, activeChains = listOf(StellarChain.ID), historyTruncated = payments.truncated || txs.truncated)
+        SyncResult(
+            balances,
+            transactions,
+            activeChains = listOf(StellarChain.ID),
+            historyTruncated =
+                payments.truncated || txs.truncated,
+        )
     }
 
     /**
@@ -171,7 +197,9 @@ class StellarAdapter(
      */
     suspend fun lockedReserve(target: WatchTarget): TokenAmount = chainCall("Horizon") {
         val account = account(address(target)) ?: return@chainCall TokenAmount.zero(StellarChain.XLM.decimals)
-        val entries = 2 + (account.long("subentry_count") ?: 0L) + (account.long("num_sponsoring") ?: 0L) - (account.long("num_sponsored") ?: 0L)
+        val entries =
+            2 + (account.long("subentry_count") ?: 0L) + (account.long("num_sponsoring") ?: 0L) -
+                (account.long("num_sponsored") ?: 0L)
         TokenAmount(BigInteger.fromLong(entries * StellarChain.BASE_RESERVE_STROOPS), StellarChain.XLM.decimals)
     }
 
@@ -187,7 +215,10 @@ class StellarAdapter(
         var native = BigInteger.ZERO
         for (entry in account.arr("balances")) {
             when (entry.str("asset_type")) {
-                "native" -> native = parseDecimalUnits(entry.str("balance"), StellarChain.XLM.decimals)
+                "native" -> {
+                    native = parseDecimalUnits(entry.str("balance"), StellarChain.XLM.decimals)
+                }
+
                 "credit_alphanum4", "credit_alphanum12" -> {
                     val code = entry.str("asset_code") ?: continue
                     val issuer = entry.str("asset_issuer") ?: continue
@@ -222,7 +253,11 @@ class StellarAdapter(
         return Records(items, truncated = true)
     }
 
-    private suspend fun get(url: String, block: io.ktor.client.request.HttpRequestBuilder.() -> Unit = {}): JsonElement =
+    private suspend fun get(
+        url: String,
+        block: io.ktor.client.request.HttpRequestBuilder.() -> Unit = {
+        },
+    ): JsonElement =
         throttle.run { http.get(url, block).body<JsonElement>() }
 
     private companion object {
@@ -234,7 +269,14 @@ class StellarAdapter(
 
 /** Trustline asset; contract id is `CODE-ISSUER` (asset ids must not contain colons). */
 internal fun stellarAsset(code: String, issuer: String): Asset =
-    tokenAsset(StellarChain.ID, "$code-$issuer", code, "$code ($issuer)", StellarChain.XLM.decimals, KNOWN_ASSETS["$code-$issuer"])
+    tokenAsset(
+        StellarChain.ID,
+        "$code-$issuer",
+        code,
+        "$code ($issuer)",
+        StellarChain.XLM.decimals,
+        KNOWN_ASSETS["$code-$issuer"],
+    )
 
 private val KNOWN_ASSETS = mapOf(
     "USDC-GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN" to "usd-coin",
@@ -253,9 +295,20 @@ private fun assetKeyOf(type: String?, code: String?, issuer: String?): String? =
 }
 
 /** Per-asset deltas of one Horizon payment record for [address] (fees are handled separately). */
-internal fun paymentDeltas(payment: JsonElement, address: String, assets: Map<String, Asset>): List<Triple<String, Asset, BigInteger>> {
+internal fun paymentDeltas(
+    payment: JsonElement,
+    address: String,
+    assets: Map<String, Asset>,
+): List<Triple<String, Asset, BigInteger>> {
     fun asset(key: String): Asset =
-        if (key == "native") StellarChain.XLM else assets[key] ?: stellarAsset(key.substringBefore('-'), key.substringAfter('-'))
+        if (key ==
+            "native"
+        ) {
+            StellarChain.XLM
+        } else {
+            assets[key]
+                ?: stellarAsset(key.substringBefore('-'), key.substringAfter('-'))
+        }
     val decimals = StellarChain.XLM.decimals
     val result = mutableListOf<Triple<String, Asset, BigInteger>>()
     when (payment.str("type")) {
@@ -264,17 +317,29 @@ internal fun paymentDeltas(payment: JsonElement, address: String, assets: Map<St
             if (payment.str("account") == address) result += Triple("native", StellarChain.XLM, amount)
             if (payment.str("funder") == address) result += Triple("native", StellarChain.XLM, -amount)
         }
+
         "payment", "path_payment_strict_send", "path_payment_strict_receive" -> {
             val from = payment.str("from")
             val to = payment.str("to")
-            val receivedKey = assetKeyOf(payment.str("asset_type"), payment.str("asset_code"), payment.str("asset_issuer"))
+            val receivedKey =
+                assetKeyOf(payment.str("asset_type"), payment.str("asset_code"), payment.str("asset_issuer"))
             val sentKey = if (payment.str("type") == "payment") {
                 receivedKey
             } else {
-                assetKeyOf(payment.str("source_asset_type"), payment.str("source_asset_code"), payment.str("source_asset_issuer"))
+                assetKeyOf(
+                    payment.str("source_asset_type"),
+                    payment.str("source_asset_code"),
+                    payment.str("source_asset_issuer"),
+                )
             }
             val received = parseDecimalUnits(payment.str("amount"), decimals)
-            val sent = if (payment.str("type") == "payment") received else parseDecimalUnits(payment.str("source_amount"), decimals)
+            val sent = if (payment.str("type") ==
+                "payment"
+            ) {
+                received
+            } else {
+                parseDecimalUnits(payment.str("source_amount"), decimals)
+            }
             if (to == address && receivedKey != null) result += Triple(receivedKey, asset(receivedKey), received)
             if (from == address && sentKey != null) result += Triple(sentKey, asset(sentKey), -sent)
         }

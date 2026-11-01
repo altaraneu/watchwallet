@@ -72,14 +72,69 @@ data class CosmosNetwork(
      * Delegated + unbonding native tokens, shown as a separate asset with the native price so
      * the portfolio value is complete while the liquid balance stays exact.
      */
-    val stakedAsset: Asset get() = tokenAsset(id, "staked-$denom", symbol, "$displayName (staked)", decimals, coingeckoId)
+    val stakedAsset: Asset get() = tokenAsset(
+        id,
+        "staked-$denom",
+        symbol,
+        "$displayName (staked)",
+        decimals,
+        coingeckoId,
+    )
 }
 
 object CosmosChains {
-    val COSMOS_HUB = CosmosNetwork("cosmoshub", "Cosmos Hub", "cosmos", "uatom", "ATOM", 6, "cosmos", 118, "https://www.mintscan.io/cosmos", 0xFF2E3148)
-    val OSMOSIS = CosmosNetwork("osmosis", "Osmosis", "osmo", "uosmo", "OSMO", 6, "osmosis", 118, "https://www.mintscan.io/osmosis", 0xFF750BBB)
-    val CELESTIA = CosmosNetwork("celestia", "Celestia", "celestia", "utia", "TIA", 6, "celestia", 118, "https://www.mintscan.io/celestia", 0xFF7B2BF9)
-    val INJECTIVE = CosmosNetwork("injective", "Injective", "inj", "inj", "INJ", 18, "injective-protocol", 60, "https://www.mintscan.io/injective", 0xFF0082FA)
+    val COSMOS_HUB =
+        CosmosNetwork(
+            "cosmoshub",
+            "Cosmos Hub",
+            "cosmos",
+            "uatom",
+            "ATOM",
+            6,
+            "cosmos",
+            118,
+            "https://www.mintscan.io/cosmos",
+            0xFF2E3148,
+        )
+    val OSMOSIS =
+        CosmosNetwork(
+            "osmosis",
+            "Osmosis",
+            "osmo",
+            "uosmo",
+            "OSMO",
+            6,
+            "osmosis",
+            118,
+            "https://www.mintscan.io/osmosis",
+            0xFF750BBB,
+        )
+    val CELESTIA =
+        CosmosNetwork(
+            "celestia",
+            "Celestia",
+            "celestia",
+            "utia",
+            "TIA",
+            6,
+            "celestia",
+            118,
+            "https://www.mintscan.io/celestia",
+            0xFF7B2BF9,
+        )
+    val INJECTIVE =
+        CosmosNetwork(
+            "injective",
+            "Injective",
+            "inj",
+            "inj",
+            "INJ",
+            18,
+            "injective-protocol",
+            60,
+            "https://www.mintscan.io/injective",
+            0xFF0082FA,
+        )
 
     val ALL = listOf(COSMOS_HUB, OSMOSIS, CELESTIA, INJECTIVE)
 
@@ -136,7 +191,9 @@ class CosmosAdapter(
         ProbeResult(active, if (active) listOf(network.id) else emptyList(), balances, transactionCount = null)
     }
 
-    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("Cosmos REST") {
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall(
+        "Cosmos REST",
+    ) {
         val (network, address) = resolve(target)
         val balances = balances(network, address)
         var truncated = false
@@ -144,16 +201,24 @@ class CosmosAdapter(
             history(network, address, knownTransactions)
         } catch (e: CancellationException) {
             throw e
-        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
             truncated = true
             emptyList()
         }
         val active = balances.any { !it.amount.isZero } || transactions.isNotEmpty()
-        SyncResult(balances, transactions, activeChains = if (active) listOf(network.id) else emptyList(), historyTruncated = truncated)
+        SyncResult(
+            balances,
+            transactions,
+            activeChains = if (active) listOf(network.id) else emptyList(),
+            historyTruncated = truncated,
+        )
     }
 
     private fun resolve(target: WatchTarget): Pair<CosmosNetwork, String> {
-        val address = (target as? WatchTarget.Address)?.address ?: throw ChainDataException("Cosmos supports addresses only")
+        val address =
+            (target as? WatchTarget.Address)?.address ?: throw ChainDataException("Cosmos supports addresses only")
         val hrp = Bech32Codec.decodeBytes(address)?.first
         val network = CosmosChains.byId((target as WatchTarget.Address).chainId) ?: hrp?.let { CosmosChains.byHrp(it) }
             ?: throw ChainDataException("Unsupported Cosmos chain")
@@ -166,7 +231,8 @@ class CosmosAdapter(
         val base = base(network)
         val bank = get("$base/cosmos/bank/v1beta1/balances/$address") { parameter("pagination.limit", 500) }
         val liquid = bank.arr("balances").firstOrNull { it.str("denom") == network.denom }?.str("amount")
-        val delegations = get("$base/cosmos/staking/v1beta1/delegations/$address") { parameter("pagination.limit", 500) }
+        val delegations =
+            get("$base/cosmos/staking/v1beta1/delegations/$address") { parameter("pagination.limit", 500) }
         var staked = delegations.arr("delegation_responses")
             .filter { it.at("balance").str("denom") == network.denom }
             .fold(BigInteger.ZERO) { sum, it -> sum + parseBigInteger(it.at("balance").str("amount")) }
@@ -184,7 +250,9 @@ class CosmosAdapter(
         true
     } catch (e: CancellationException) {
         throw e
-    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+    } catch (
+        @Suppress("TooGenericExceptionCaught") e: Exception,
+    ) {
         false
     }
 
@@ -243,6 +311,7 @@ internal fun parseCosmosTransaction(network: CosmosNetwork, response: JsonElemen
         for (attribute in event.arr("attributes")) {
             when (attribute.str("key")) {
                 "receiver", "spender" -> current = attribute.str("value")
+
                 "amount" -> if (current == address) {
                     val amount = coinAmount(attribute.str("value"), network.denom)
                     delta = if (type == "coin_received") delta + amount else delta - amount
@@ -255,7 +324,8 @@ internal fun parseCosmosTransaction(network: CosmosNetwork, response: JsonElemen
     val time = response.str("timestamp")?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: Clock.System.now()
     val feePayer = response.at("tx", "auth_info", "fee").str("payer").let { it.isNullOrEmpty() } &&
         response.at("tx", "body").arr("messages").firstOrNull().let { msg ->
-            msg.str("from_address") == address || msg.str("delegator_address") == address || msg.str("sender") == address
+            msg.str("from_address") == address || msg.str("delegator_address") == address ||
+                msg.str("sender") == address
         }
     val fee = if (feePayer) {
         response.at("tx", "auth_info", "fee").arr("amount").filter { it.str("denom") == network.denom }

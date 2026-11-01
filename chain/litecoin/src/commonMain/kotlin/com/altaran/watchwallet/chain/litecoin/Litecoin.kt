@@ -85,8 +85,16 @@ object LitecoinAddresses {
         val hash = payload.copyOfRange(1, 21)
         return when (payload[0]) {
             P2PKH -> WatchTarget.Address(ChainFamily.UTXO, LitecoinChain.ID, text, ScriptType.P2PKH)
+
             P2SH -> WatchTarget.Address(ChainFamily.UTXO, LitecoinChain.ID, text, ScriptType.P2SH)
-            P2SH_LEGACY -> WatchTarget.Address(ChainFamily.UTXO, LitecoinChain.ID, Base58Checks.encode(byteArrayOf(P2SH) + hash), ScriptType.P2SH)
+
+            P2SH_LEGACY -> WatchTarget.Address(
+                ChainFamily.UTXO,
+                LitecoinChain.ID,
+                Base58Checks.encode(byteArrayOf(P2SH) + hash),
+                ScriptType.P2SH,
+            )
+
             else -> null
         }
     }
@@ -99,7 +107,12 @@ object LitecoinAddresses {
         val (key, implied) = parseExtendedPublicKey(input.trim(), KEY_VERSIONS) ?: return null
         val type = scriptType ?: implied ?: ScriptType.P2PKH
         if (type !in DERIVABLE_SCRIPT_TYPES) return null
-        return WatchTarget.ExtendedPublicKey(ChainFamily.UTXO, LitecoinChain.ID, key.encode(DeterministicWallet.xpub), type)
+        return WatchTarget.ExtendedPublicKey(
+            ChainFamily.UTXO,
+            LitecoinChain.ID,
+            key.encode(DeterministicWallet.xpub),
+            type,
+        )
     }
 
     /** `true` when the prefix is Litecoin-specific (`Ltub`/`Mtub`) rather than shared with Bitcoin. */
@@ -123,9 +136,15 @@ class LitecoinAdapter(
     http: HttpClient,
     esploraUrl: String = LitecoinChain.DEFAULT_ESPLORA_URL,
 ) : UtxoAdapter(
-    chain = LitecoinChain.CHAIN,
-    asset = LitecoinChain.LTC,
-    backend = EsploraBackend(http, esploraUrl, Throttle(maxConcurrent = 4, minInterval = 100.milliseconds, maxJitter = 150.milliseconds)),
-    deriver = { target -> { change, index -> LitecoinAddresses.derive(target.key, target.scriptType, change, index) } },
-    normalize = { address -> LitecoinAddresses.parse(address)?.address ?: address },
-)
+        chain = LitecoinChain.CHAIN,
+        asset = LitecoinChain.LTC,
+        backend = EsploraBackend(
+            http,
+            esploraUrl,
+            Throttle(maxConcurrent = 4, minInterval = 100.milliseconds, maxJitter = 150.milliseconds),
+        ),
+        deriver = { target ->
+            { change, index -> LitecoinAddresses.derive(target.key, target.scriptType, change, index) }
+        },
+        normalize = { address -> LitecoinAddresses.parse(address)?.address ?: address },
+    )

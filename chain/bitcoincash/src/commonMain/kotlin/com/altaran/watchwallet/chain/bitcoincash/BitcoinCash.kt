@@ -97,7 +97,10 @@ object BitcoinCashAddresses {
         scriptType = if (type == TYPE_P2PKH) ScriptType.P2PKH else ScriptType.P2SH,
     )
 
-    private fun encode(type: Int, hash: ByteArray) = CashAddrCodec.encode(PREFIX, byteArrayOf((type shl 3).toByte()) + hash)
+    private fun encode(type: Int, hash: ByteArray) = CashAddrCodec.encode(
+        PREFIX,
+        byteArrayOf((type shl 3).toByte()) + hash,
+    )
 
     /** Canonical prefixed CashAddr, or the input unchanged when it is not a BCH address. */
     fun normalize(address: String): String = parse(address)?.address ?: address
@@ -105,7 +108,12 @@ object BitcoinCashAddresses {
     /** BIP44 coin 145 accounts are exported as plain `xpub`; P2PKH only. */
     fun parseExtendedKey(input: String): WatchTarget.ExtendedPublicKey? {
         val (key, _) = parseExtendedPublicKey(input.trim(), KEY_VERSIONS) ?: return null
-        return WatchTarget.ExtendedPublicKey(ChainFamily.UTXO, BitcoinCashChain.ID, key.encode(DeterministicWallet.xpub), ScriptType.P2PKH)
+        return WatchTarget.ExtendedPublicKey(
+            ChainFamily.UTXO,
+            BitcoinCashChain.ID,
+            key.encode(DeterministicWallet.xpub),
+            ScriptType.P2PKH,
+        )
     }
 
     fun derive(key: String, change: Boolean, index: Int): String {
@@ -119,14 +127,14 @@ class BitcoinCashAdapter(
     http: HttpClient,
     blockbookUrl: String = BitcoinCashChain.DEFAULT_BLOCKBOOK_URL,
 ) : UtxoAdapter(
-    chain = BitcoinCashChain.CHAIN,
-    asset = BitcoinCashChain.BCH,
-    backend = BlockbookBackend(
-        http,
-        blockbookUrl,
-        Throttle(maxConcurrent = 3, minInterval = 150.milliseconds, maxJitter = 150.milliseconds),
+        chain = BitcoinCashChain.CHAIN,
+        asset = BitcoinCashChain.BCH,
+        backend = BlockbookBackend(
+            http,
+            blockbookUrl,
+            Throttle(maxConcurrent = 3, minInterval = 150.milliseconds, maxJitter = 150.milliseconds),
+            normalize = BitcoinCashAddresses::normalize,
+        ),
+        deriver = { target -> { change, index -> BitcoinCashAddresses.derive(target.key, change, index) } },
         normalize = BitcoinCashAddresses::normalize,
-    ),
-    deriver = { target -> { change, index -> BitcoinCashAddresses.derive(target.key, change, index) } },
-    normalize = BitcoinCashAddresses::normalize,
-)
+    )

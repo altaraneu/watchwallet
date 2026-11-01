@@ -62,19 +62,23 @@ class KaspaTest {
     private val adapter = KaspaAdapter(createHttpClient(engine = engine), "https://kaspa.test")
 
     @Test
-    fun syncComputesUtxoDeltas() = runTest { withContext(Dispatchers.Default) {
-        val result = adapter.sync(assertNotNull(KaspaAddresses.parse(schnorr)), emptySet())
-        assertEquals("6.9999", result.balances.single().amount.toPlainString())
-        val byHash = result.transactions.associateBy { it.hash }
-        assertEquals(-300_010_000L, byHash.getValue("tx2").delta.longValue(), "3 KAS + 0.0001 KAS fee")
-        assertEquals(10_000L, byHash.getValue("tx2").fee?.longValue())
-        assertEquals(1_000_000_000L, byHash.getValue("tx1").delta.longValue())
-    } }
+    fun syncComputesUtxoDeltas() = runTest {
+        withContext(Dispatchers.Default) {
+            val result = adapter.sync(assertNotNull(KaspaAddresses.parse(schnorr)), emptySet())
+            assertEquals("6.9999", result.balances.single().amount.toPlainString())
+            val byHash = result.transactions.associateBy { it.hash }
+            assertEquals(-300_010_000L, byHash.getValue("tx2").delta.longValue(), "3 KAS + 0.0001 KAS fee")
+            assertEquals(10_000L, byHash.getValue("tx2").fee?.longValue())
+            assertEquals(1_000_000_000L, byHash.getValue("tx1").delta.longValue())
+        }
+    }
 
     @Test
-    fun probeUsesTransactionCount() = runTest { withContext(Dispatchers.Default) {
-        val probe = adapter.probe(assertNotNull(KaspaAddresses.parse(schnorr)))
-        assertTrue(probe.hasActivity)
-        assertEquals(2, probe.transactionCount)
-    } }
+    fun probeUsesTransactionCount() = runTest {
+        withContext(Dispatchers.Default) {
+            val probe = adapter.probe(assertNotNull(KaspaAddresses.parse(schnorr)))
+            assertTrue(probe.hasActivity)
+            assertEquals(2, probe.transactionCount)
+        }
+    }
 }

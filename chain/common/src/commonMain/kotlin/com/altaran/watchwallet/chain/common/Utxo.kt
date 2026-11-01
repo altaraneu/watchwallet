@@ -121,6 +121,7 @@ open class UtxoAdapter(
                 val info = backend.address(normalize(target.address))
                 probeResult(info.txCount, info.balance, usedAddresses = null)
             }
+
             is WatchTarget.ExtendedPublicKey -> {
                 val derive = deriver(target)
                 val quick = fetchAll((0 until QUICK_PROBE_ADDRESSES).map { derive(false, it) })
@@ -141,7 +142,10 @@ open class UtxoAdapter(
                 val address = normalize(target.address)
                 listOf(Scanned(address, change = false, index = 0, info = backend.address(address)))
             }
-            is WatchTarget.ExtendedPublicKey -> discover(target)
+
+            is WatchTarget.ExtendedPublicKey -> {
+                discover(target)
+            }
         }
         val ours = scanned.map { it.address }.toSet()
         var truncated = false

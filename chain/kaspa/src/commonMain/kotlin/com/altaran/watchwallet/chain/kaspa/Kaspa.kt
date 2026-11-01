@@ -68,7 +68,10 @@ object KaspaAddresses {
     }
 
     /** Encodes an address (used in tests). */
-    fun encode(version: Int, data: ByteArray): String = CashAddrCodec.encode(PREFIX, byteArrayOf(version.toByte()) + data)
+    fun encode(version: Int, data: ByteArray): String = CashAddrCodec.encode(
+        PREFIX,
+        byteArrayOf(version.toByte()) + data,
+    )
 }
 
 /**
@@ -90,7 +93,12 @@ class KaspaAdapter(
         val balance = get("$base/addresses/$address/balance").str("balance")
         val count = get("$base/addresses/$address/transactions-count").long("total") ?: 0L
         val active = count > 0
-        ProbeResult(active, if (active) listOf(KaspaChain.ID) else emptyList(), listOf(amountOf(KaspaChain.KAS, balance)), count.toInt())
+        ProbeResult(
+            active,
+            if (active) listOf(KaspaChain.ID) else emptyList(),
+            listOf(amountOf(KaspaChain.KAS, balance)),
+            count.toInt(),
+        )
     }
 
     override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("Kaspa") {
@@ -119,14 +127,23 @@ class KaspaAdapter(
         val ours = setOf(address)
         val transactions = txs.mapNotNull { utxoChainTransaction(KaspaChain.CHAIN, KaspaChain.KAS, it, ours) }
         val active = transactions.isNotEmpty() || !balances.first().amount.isZero
-        SyncResult(balances, transactions, activeChains = if (active) listOf(KaspaChain.ID) else emptyList(), historyTruncated = truncated)
+        SyncResult(
+            balances,
+            transactions,
+            activeChains = if (active) listOf(KaspaChain.ID) else emptyList(),
+            historyTruncated = truncated,
+        )
     }
 
     private fun address(target: WatchTarget): String =
         (target as? WatchTarget.Address)?.address?.let { KaspaAddresses.parse(it)?.address ?: it }
             ?: throw ChainDataException("Kaspa supports addresses only")
 
-    private suspend fun get(url: String, block: io.ktor.client.request.HttpRequestBuilder.() -> Unit = {}): JsonElement =
+    private suspend fun get(
+        url: String,
+        block: io.ktor.client.request.HttpRequestBuilder.() -> Unit = {
+        },
+    ): JsonElement =
         throttle.run { http.get(url, block).body<JsonElement>() }
 
     private companion object {
@@ -138,7 +155,12 @@ class KaspaAdapter(
 
 internal fun toUtxoTx(item: JsonElement): UtxoTx? {
     val id = item.str("transaction_id") ?: return null
-    val inputs = item.arr("inputs").map { UtxoIo(it.str("previous_outpoint_address"), it.long("previous_outpoint_amount") ?: 0L) }
+    val inputs = item.arr("inputs").map {
+        UtxoIo(
+            it.str("previous_outpoint_address"),
+            it.long("previous_outpoint_amount") ?: 0L,
+        )
+    }
     val outputs = item.arr("outputs").map { UtxoIo(it.str("script_public_key_address"), it.long("amount") ?: 0L) }
     val fee = (inputs.sumOf { it.value } - outputs.sumOf { it.value }).coerceAtLeast(0L)
     return UtxoTx(

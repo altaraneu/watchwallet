@@ -50,7 +50,8 @@ fun amountOf(asset: Asset, raw: String?): AssetAmount = amountOf(asset, parseBig
 
 /** Parses an integer string; blank or malformed values become zero. */
 fun parseBigInteger(raw: String?): BigInteger =
-    raw?.trim()?.takeIf { it.isNotEmpty() }?.let { runCatching { BigInteger.parseString(it) }.getOrNull() } ?: BigInteger.ZERO
+    raw?.trim()?.takeIf { it.isNotEmpty() }?.let { runCatching { BigInteger.parseString(it) }.getOrNull() }
+        ?: BigInteger.ZERO
 
 /** Parses a decimal string such as `12.5` or `1.2e-7` into base units with [decimals]. */
 fun parseDecimalUnits(value: String?, decimals: Int): BigInteger {

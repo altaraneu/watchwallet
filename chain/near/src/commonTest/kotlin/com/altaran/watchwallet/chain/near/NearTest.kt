@@ -54,14 +54,18 @@ class NearTest {
     private val adapter = NearAdapter(createHttpClient(engine = engine), "https://near.test")
 
     @Test
-    fun balanceIncludesLockedStake() = runTest { withContext(Dispatchers.Default) {
-        val result = adapter.sync(assertNotNull(NearAddresses.parse("example.near")), emptySet())
-        assertEquals("2", result.balances.single().amount.toPlainString())
-        assertTrue(result.transactions.isEmpty())
-    } }
+    fun balanceIncludesLockedStake() = runTest {
+        withContext(Dispatchers.Default) {
+            val result = adapter.sync(assertNotNull(NearAddresses.parse("example.near")), emptySet())
+            assertEquals("2", result.balances.single().amount.toPlainString())
+            assertTrue(result.transactions.isEmpty())
+        }
+    }
 
     @Test
-    fun unknownAccountHasNoActivity() = runTest { withContext(Dispatchers.Default) {
-        assertFalse(adapter.probe(assertNotNull(NearAddresses.parse("nobody.near"))).hasActivity)
-    } }
+    fun unknownAccountHasNoActivity() = runTest {
+        withContext(Dispatchers.Default) {
+            assertFalse(adapter.probe(assertNotNull(NearAddresses.parse("nobody.near"))).hasActivity)
+        }
+    }
 }

@@ -73,7 +73,11 @@ class StellarTest {
             else -> null
         }
         if (response == null) {
-            respond("""{"status":404}""", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
+            respond(
+                """{"status":404}""",
+                HttpStatusCode.NotFound,
+                headersOf(HttpHeaders.ContentType, "application/json"),
+            )
         } else {
             respond(response, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
         }
@@ -82,24 +86,32 @@ class StellarTest {
     private val adapter = StellarAdapter(createHttpClient(engine = engine), "https://horizon.test")
 
     @Test
-    fun syncReturnsBalancesAndDeltas() = runTest { withContext(Dispatchers.Default) {
-        val result = adapter.sync(assertNotNull(StellarAddresses.parse(ours)), emptySet())
-        assertEquals(listOf("XLM", "USDC"), result.balances.map { it.asset.symbol })
-        assertEquals("100.5", result.balances[0].amount.toPlainString())
-        assertEquals("usd-coin", result.balances[1].asset.priceId)
+    fun syncReturnsBalancesAndDeltas() = runTest {
+        withContext(Dispatchers.Default) {
+            val result = adapter.sync(assertNotNull(StellarAddresses.parse(ours)), emptySet())
+            assertEquals(listOf("XLM", "USDC"), result.balances.map { it.asset.symbol })
+            assertEquals("100.5", result.balances[0].amount.toPlainString())
+            assertEquals("usd-coin", result.balances[1].asset.priceId)
 
-        val byKey = result.transactions.associateBy { it.hash + "/" + it.asset.symbol }
-        assertEquals(-100_000_100L, byKey.getValue("h3/XLM").delta.longValue(), "10 XLM + 100 stroops fee")
-        assertEquals(100L, byKey.getValue("h3/XLM").fee?.longValue())
-        assertEquals(-100L, byKey.getValue("h4/XLM").delta.longValue(), "fee-only transaction")
-        assertEquals(2_500_000_000L, byKey.getValue("h2/USDC").delta.longValue())
-        assertEquals(1_105_000_100L, byKey.getValue("h1/XLM").delta.longValue())
-    } }
+            val byKey = result.transactions.associateBy { it.hash + "/" + it.asset.symbol }
+            assertEquals(-100_000_100L, byKey.getValue("h3/XLM").delta.longValue(), "10 XLM + 100 stroops fee")
+            assertEquals(100L, byKey.getValue("h3/XLM").fee?.longValue())
+            assertEquals(-100L, byKey.getValue("h4/XLM").delta.longValue(), "fee-only transaction")
+            assertEquals(2_500_000_000L, byKey.getValue("h2/USDC").delta.longValue())
+            assertEquals(1_105_000_100L, byKey.getValue("h1/XLM").delta.longValue())
+        }
+    }
 
     @Test
-    fun reserveAndUnfundedAccount() = runTest { withContext(Dispatchers.Default) {
-        assertEquals("2", adapter.lockedReserve(assertNotNull(StellarAddresses.parse(ours))).toPlainString(), "(2 + 2) × 0.5 XLM")
-        val probe = adapter.probe(assertNotNull(StellarAddresses.parse(other)))
-        assertFalse(probe.hasActivity)
-    } }
+    fun reserveAndUnfundedAccount() = runTest {
+        withContext(Dispatchers.Default) {
+            assertEquals(
+                "2",
+                adapter.lockedReserve(assertNotNull(StellarAddresses.parse(ours))).toPlainString(),
+                "(2 + 2) × 0.5 XLM",
+            )
+            val probe = adapter.probe(assertNotNull(StellarAddresses.parse(other)))
+            assertFalse(probe.hasActivity)
+        }
+    }
 }

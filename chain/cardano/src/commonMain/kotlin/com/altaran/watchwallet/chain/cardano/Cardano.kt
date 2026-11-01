@@ -82,12 +82,14 @@ object CardanoAddresses {
         val type = (bytes[0].toInt() and 0xF0) ushr 4
         val valid = when (hrp) {
             "stake" -> (type == 14 || type == 15) && bytes.size == 1 + HASH
+
             "addr" -> when (type) {
                 in 0..3 -> bytes.size == 1 + 2 * HASH
                 4, 5 -> bytes.size in (1 + HASH + 3)..(1 + HASH + 30)
                 6, 7 -> bytes.size == 1 + HASH
                 else -> false
             }
+
             else -> false
         }
         return if (valid) WatchTarget.Address(ChainFamily.CARDANO, CardanoChain.ID, text.lowercase()) else null
@@ -154,7 +156,13 @@ class CardanoAdapter(
             val rows = if (stake) {
                 post("account_txs", buildJsonObject { put("_stake_address", address) }, page)
             } else {
-                post("address_txs", buildJsonObject { put("_addresses", JsonArray(listOf(JsonPrimitive(address)))) }, page)
+                post(
+                    "address_txs",
+                    buildJsonObject {
+                        put("_addresses", JsonArray(listOf(JsonPrimitive(address))))
+                    },
+                    page,
+                )
             }.asList
             for (row in rows) {
                 val hash = row.str("tx_hash") ?: continue
@@ -191,11 +199,15 @@ class CardanoAdapter(
     private suspend fun state(address: String): State? {
         val list = JsonArray(listOf(JsonPrimitive(address)))
         return if (CardanoAddresses.isStakeAddress(address)) {
-            val info = post("account_info", buildJsonObject { put("_stake_addresses", list) }, null).asList.firstOrNull() ?: return null
+            val info =
+                post("account_info", buildJsonObject { put("_stake_addresses", list) }, null).asList.firstOrNull()
+                    ?: return null
             val tokens = post("account_assets", buildJsonObject { put("_stake_addresses", list) }, null).asList
             State(listOf(amountOf(CardanoChain.ADA, info.str("total_balance"))) + tokenBalances(tokens))
         } else {
-            val info = post("address_info", buildJsonObject { put("_addresses", list) }, null).asList.firstOrNull() ?: return null
+            val info =
+                post("address_info", buildJsonObject { put("_addresses", list) }, null).asList.firstOrNull()
+                    ?: return null
             val tokens = info.arr("utxo_set").flatMap { it.arr("asset_list") }
             State(listOf(amountOf(CardanoChain.ADA, info.str("balance"))) + tokenBalances(tokens))
         }
@@ -240,7 +252,9 @@ internal fun nativeToken(row: JsonElement): Asset? {
     val policy = row.str("policy_id") ?: return null
     val name = row.str("asset_name").orEmpty()
     val contract = policy + name
-    val decoded = Hex.decode(name)?.takeIf { bytes -> bytes.isNotEmpty() && bytes.all { it in 0x20..0x7E } }?.decodeToString()
+    val decoded = Hex.decode(name)?.takeIf { bytes ->
+        bytes.isNotEmpty() && bytes.all { it in 0x20..0x7E }
+    }?.decodeToString()
     val symbol = decoded ?: row.str("fingerprint")
     return tokenAsset(
         chainId = CardanoChain.ID,
@@ -253,10 +267,20 @@ internal fun nativeToken(row: JsonElement): Asset? {
 }
 
 /** Per-asset net effect of one `tx_info` entry on [address] (stake or payment address). */
-internal fun parseCardanoTransaction(tx: JsonElement, address: String, stake: Boolean, assets: Map<String, Asset>): List<ChainTransaction> {
+internal fun parseCardanoTransaction(
+    tx: JsonElement,
+    address: String,
+    stake: Boolean,
+    assets: Map<String, Asset>,
+): List<ChainTransaction> {
     val hash = tx.str("tx_hash") ?: return emptyList()
     val time = tx.long("block_time")?.let { Instant.fromEpochSeconds(it) } ?: Clock.System.now()
-    fun ours(io: JsonElement) = if (stake) io.str("stake_addr") == address else io.at("payment_addr", "bech32").content == address
+    fun ours(io: JsonElement) = if (stake) {
+        io.str("stake_addr") == address
+    } else {
+        io.at("payment_addr", "bech32").content ==
+            address
+    }
 
     val inputs = tx.arr("inputs").filter(::ours)
     val outputs = tx.arr("outputs").filter(::ours)
@@ -265,7 +289,10 @@ internal fun parseCardanoTransaction(tx: JsonElement, address: String, stake: Bo
     var ada = outputs.fold(BigInteger.ZERO) { s, io -> s + parseBigInteger(io.str("value")) } -
         inputs.fold(BigInteger.ZERO) { s, io -> s + parseBigInteger(io.str("value")) }
     if (stake) {
-        tx.arr("withdrawals").filter { it.str("stake_addr") == address }.forEach { ada -= parseBigInteger(it.str("amount")) }
+        tx.arr("withdrawals").filter { it.str("stake_addr") == address }.forEach {
+            ada -=
+                parseBigInteger(it.str("amount"))
+        }
     }
     val tokenDeltas = LinkedHashMap<String, Pair<Asset, BigInteger>>()
     fun collect(list: List<JsonElement>, sign: Int) = list.forEach { io ->
@@ -285,7 +312,8 @@ internal fun parseCardanoTransaction(tx: JsonElement, address: String, stake: Bo
     val result = mutableListOf<ChainTransaction>()
     if (!ada.isZero() || weFunded) {
         val fee = if (weFunded) parseBigInteger(tx.str("fee")) else null
-        result += accountTransaction(CardanoChain.ID, hash, time, CardanoChain.ADA, ada, fee, isSelfTransfer = selfTransfer)
+        result +=
+            accountTransaction(CardanoChain.ID, hash, time, CardanoChain.ADA, ada, fee, isSelfTransfer = selfTransfer)
     }
     tokenDeltas.values.filter { !it.second.isZero() }.forEach { (asset, delta) ->
         result += accountTransaction(CardanoChain.ID, hash, time, asset, delta, null)

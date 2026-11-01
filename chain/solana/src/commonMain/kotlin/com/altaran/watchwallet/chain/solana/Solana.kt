@@ -169,7 +169,13 @@ class SolanaAdapter(
         SyncResult(
             balances = balances,
             transactions = transactions,
-            activeChains = if (transactions.isNotEmpty() || balances.any { !it.amount.isZero }) listOf(SolanaChain.ID) else emptyList(),
+            activeChains = if (transactions.isNotEmpty() ||
+                balances.any { !it.amount.isZero }
+            ) {
+                listOf(SolanaChain.ID)
+            } else {
+                emptyList()
+            },
             historyTruncated = truncated,
         )
     }
@@ -203,7 +209,13 @@ class SolanaAdapter(
         for (program in listOf(SolanaChain.TOKEN_PROGRAM, SolanaChain.TOKEN_2022_PROGRAM)) {
             val result = rpc.call(
                 "getTokenAccountsByOwner",
-                params(address, buildJsonObject { put("programId", program) }, buildJsonObject { put("encoding", "jsonParsed") }),
+                params(
+                    address,
+                    buildJsonObject {
+                        put("programId", program)
+                    },
+                    buildJsonObject { put("encoding", "jsonParsed") },
+                ),
             )
             for (account in result.arr("value")) {
                 val info = account.at("account", "data", "parsed", "info") ?: continue
@@ -214,7 +226,9 @@ class SolanaAdapter(
                 byMint[mint] = (previous + parseBigInteger(amount)) to decimals
             }
         }
-        return byMint.filterValues { !it.first.isZero() }.map { (mint, value) -> amountOf(splAsset(mint, value.second), value.first) }
+        return byMint.filterValues { !it.first.isZero() }.map { (mint, value) ->
+            amountOf(splAsset(mint, value.second), value.first)
+        }
     }
 
     private fun params(vararg values: Any): JsonElement = buildJsonArray {

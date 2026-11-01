@@ -72,7 +72,11 @@ internal class EsploraBackend(
             val page: List<EsploraTx> = throttle.run { http.get("$base/address/$address/$path").body() }
             collected += page.map { it.toUtxoTx() }
             val confirmed = page.filter { it.status.confirmed }
-            if (confirmed.size < PAGE_SIZE || confirmed.any { it.txid in known }) return UtxoHistory(collected, truncated = false)
+            if (confirmed.size < PAGE_SIZE ||
+                confirmed.any { it.txid in known }
+            ) {
+                return UtxoHistory(collected, truncated = false)
+            }
             lastSeen = confirmed.last().txid
         }
         return UtxoHistory(collected, truncated = true)

@@ -42,17 +42,41 @@ class PolkadotTest {
     @Test
     fun xxHashAndStorageKey() {
         assertEquals(0xEF46DB3751D8E999uL, XxHash64.hash(ByteArray(0), 0uL))
-        assertEquals("26aa394eea5630e07c48ae0c9558cef7", Hex.encode(SubstrateStorage.twox128("System".encodeToByteArray())))
-        assertEquals("b99d880ec681799c0cf30e8886371da9", Hex.encode(SubstrateStorage.twox128("Account".encodeToByteArray())))
+        assertEquals(
+            "26aa394eea5630e07c48ae0c9558cef7",
+            Hex.encode(SubstrateStorage.twox128("System".encodeToByteArray())),
+        )
+        assertEquals(
+            "b99d880ec681799c0cf30e8886371da9",
+            Hex.encode(SubstrateStorage.twox128("Account".encodeToByteArray())),
+        )
         assertEquals(
             "26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9de1e86a9a8c739864cf3cc5ec2bea59f$aliceId",
             Hex.encode(SubstrateStorage.systemAccountKey(Hex.decode(aliceId)!!)),
         )
         // 40 bytes exercise the 32-byte stripe loop as well as the tail.
-        assertEquals(XxHash64.hash(ByteArray(40) { it.toByte() }, 0uL), XxHash64.hash(ByteArray(40) { it.toByte() }, 0uL))
+        assertEquals(
+            XxHash64.hash(
+                ByteArray(40) {
+                    it.toByte()
+                },
+                0uL,
+            ),
+            XxHash64.hash(ByteArray(40) { it.toByte() }, 0uL),
+        )
     }
 
-    private fun u128(value: Long) = Hex.encode(ByteArray(16) { if (it < 8) ((value shr (8 * it)) and 0xFF).toByte() else 0 })
+    private fun u128(value: Long) = Hex.encode(
+        ByteArray(16) {
+            if (it <
+                8
+            ) {
+                ((value shr (8 * it)) and 0xFF).toByte()
+            } else {
+                0
+            }
+        },
+    )
 
     @Test
     fun syncDecodesAccountInfo() = runTest {
@@ -62,7 +86,11 @@ class PolkadotTest {
         val engine = MockEngine { request ->
             val body = request.body.toByteArray().decodeToString()
             assertTrue("state_getStorage" in body && aliceId in body)
-            respond("""{"jsonrpc":"2.0","result":"$info","id":1}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+            respond(
+                """{"jsonrpc":"2.0","result":"$info","id":1}""",
+                HttpStatusCode.OK,
+                headersOf(HttpHeaders.ContentType, "application/json"),
+            )
         }
         val adapter = PolkadotAdapter(createHttpClient(engine = engine))
         val target = assertNotNull(PolkadotAddresses.parse(alicePolkadot))
@@ -76,9 +104,15 @@ class PolkadotTest {
     @Test
     fun missingAccountIsInactive() = runTest {
         val engine = MockEngine {
-            respond("""{"jsonrpc":"2.0","result":null,"id":1}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+            respond(
+                """{"jsonrpc":"2.0","result":null,"id":1}""",
+                HttpStatusCode.OK,
+                headersOf(HttpHeaders.ContentType, "application/json"),
+            )
         }
-        val probe = PolkadotAdapter(createHttpClient(engine = engine)).probe(assertNotNull(PolkadotAddresses.parse(aliceKusama)))
+        val probe = PolkadotAdapter(
+            createHttpClient(engine = engine),
+        ).probe(assertNotNull(PolkadotAddresses.parse(aliceKusama)))
         assertFalse(probe.hasActivity)
         assertNull(probe.transactionCount)
     }

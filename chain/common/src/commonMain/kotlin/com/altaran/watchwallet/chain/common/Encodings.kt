@@ -3,10 +3,8 @@ package com.altaran.watchwallet.chain.common
 import fr.acinq.bitcoin.Base58
 import fr.acinq.bitcoin.Crypto
 
-/**
- * Checksummed text encodings shared by several chain modules. These are encodings and
- * checksums only: no elliptic-curve math and no key material is ever handled here.
- */
+// Checksummed text encodings shared by several chain modules. These are encodings and
+// checksums only: no elliptic-curve math and no key material is ever handled here.
 
 // ---------------------------------------------------------------- Hex
 
@@ -188,7 +186,8 @@ object CashAddrCodec {
         return c xor 1L
     }
 
-    private fun prefixBits(prefix: String) = ByteArray(prefix.length) { (prefix[it].code and 0x1f).toByte() } + byteArrayOf(0)
+    private fun prefixBits(prefix: String) =
+        ByteArray(prefix.length) { (prefix[it].code and 0x1f).toByte() } + byteArrayOf(0)
 
     fun encode(prefix: String, payload: ByteArray): String {
         val data = Bech32Codec.convertBits(payload, 8, 5, pad = true)!!
@@ -318,7 +317,13 @@ object Base58Checks {
 
     fun encode(payload: ByteArray, alphabet: String = BITCOIN_ALPHABET): String {
         val text = Base58.encode(payload + Crypto.hash256(payload).copyOfRange(0, 4))
-        return if (alphabet == BITCOIN_ALPHABET) text else text.map { alphabet[BITCOIN_ALPHABET.indexOf(it)] }.joinToString("")
+        return if (alphabet ==
+            BITCOIN_ALPHABET
+        ) {
+            text
+        } else {
+            text.map { alphabet[BITCOIN_ALPHABET.indexOf(it)] }.joinToString("")
+        }
     }
 
     /** Plain Base58 decode (no checksum); `null` if malformed. */

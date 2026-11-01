@@ -37,27 +37,45 @@ class HederaTest {
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath
         val body = when {
-            path == "/api/v1/accounts/$ours" ->
+            path == "/api/v1/accounts/$ours" -> {
                 """{"account":"$ours","balance":{"balance":250000000,"timestamp":"1717000000.000000000",
                    "tokens":[{"token_id":"0.0.456858","balance":5000000},{"token_id":"0.0.999","balance":1}]},"deleted":false,"links":{"next":null}}"""
-            path == "/api/v1/tokens/0.0.456858" -> """{"token_id":"0.0.456858","symbol":"USDC","name":"USD Coin","decimals":"6","type":"FUNGIBLE_COMMON"}"""
-            path == "/api/v1/tokens/0.0.999" -> """{"token_id":"0.0.999","symbol":"NFT","name":"Art","decimals":"0","type":"NON_FUNGIBLE_UNIQUE"}"""
-            path == "/api/v1/transactions" && request.url.parameters["timestamp"] == null ->
+            }
+
+            path == "/api/v1/tokens/0.0.456858" -> {
+                """{"token_id":"0.0.456858","symbol":"USDC","name":"USD Coin","decimals":"6","type":"FUNGIBLE_COMMON"}"""
+            }
+
+            path == "/api/v1/tokens/0.0.999" -> {
+                """{"token_id":"0.0.999","symbol":"NFT","name":"Art","decimals":"0","type":"NON_FUNGIBLE_UNIQUE"}"""
+            }
+
+            path == "/api/v1/transactions" && request.url.parameters["timestamp"] == null -> {
                 """{"transactions":[
                    {"transaction_id":"0.0.1234-1717000000-000000001","consensus_timestamp":"1717000001.123456789","charged_tx_fee":83000,"result":"SUCCESS","name":"CRYPTOTRANSFER","nonce":0,
                     "transfers":[{"account":"0.0.3","amount":4000},{"account":"0.0.98","amount":79000},{"account":"$ours","amount":-100083000},{"account":"0.0.5555","amount":100000000}],
                     "token_transfers":[]}],
                    "links":{"next":"/api/v1/transactions?account.id=$ours&order=desc&limit=100&timestamp=lt:1717000001.123456789"}}"""
-            path == "/api/v1/transactions" ->
+            }
+
+            path == "/api/v1/transactions" -> {
                 """{"transactions":[
                    {"transaction_id":"0.0.5555-1716000000-000000001","consensus_timestamp":"1716000001.000000000","charged_tx_fee":90000,"result":"SUCCESS","name":"CRYPTOTRANSFER","nonce":0,
                     "transfers":[{"account":"0.0.5555","amount":-90000},{"account":"0.0.98","amount":90000}],
                     "token_transfers":[{"token_id":"0.0.456858","account":"0.0.5555","amount":-5000000},{"token_id":"0.0.456858","account":"$ours","amount":5000000}]}],
                    "links":{"next":null}}"""
-            else -> null
+            }
+
+            else -> {
+                null
+            }
         }
         if (body == null) {
-            respond("""{"_status":{"messages":[{"message":"Not found"}]}}""", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
+            respond(
+                """{"_status":{"messages":[{"message":"Not found"}]}}""",
+                HttpStatusCode.NotFound,
+                headersOf(HttpHeaders.ContentType, "application/json"),
+            )
         } else {
             respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
         }
@@ -66,21 +84,25 @@ class HederaTest {
     private val adapter = HederaAdapter(createHttpClient(engine = engine), "https://mirror.test/api/v1")
 
     @Test
-    fun syncFollowsNextLinks() = runTest { withContext(Dispatchers.Default) {
-        val result = adapter.sync(assertNotNull(HederaAddresses.parse(ours)), emptySet())
-        assertEquals(listOf("HBAR", "USDC"), result.balances.map { it.asset.symbol }, "NFT skipped")
-        assertEquals("2.5", result.balances[0].amount.toPlainString())
+    fun syncFollowsNextLinks() = runTest {
+        withContext(Dispatchers.Default) {
+            val result = adapter.sync(assertNotNull(HederaAddresses.parse(ours)), emptySet())
+            assertEquals(listOf("HBAR", "USDC"), result.balances.map { it.asset.symbol }, "NFT skipped")
+            assertEquals("2.5", result.balances[0].amount.toPlainString())
 
-        val byKey = result.transactions.associateBy { it.hash + "/" + it.asset.symbol }
-        val send = byKey.getValue("0.0.1234-1717000000-000000001/HBAR")
-        assertEquals(-100_083_000L, send.delta.longValue(), "1 HBAR + fee")
-        assertEquals(83_000L, send.fee?.longValue())
-        assertEquals(5_000_000L, byKey.getValue("0.0.5555-1716000000-000000001/USDC").delta.longValue())
-        assertFalse(byKey.containsKey("0.0.5555-1716000000-000000001/HBAR"), "no HBAR change for us")
-    } }
+            val byKey = result.transactions.associateBy { it.hash + "/" + it.asset.symbol }
+            val send = byKey.getValue("0.0.1234-1717000000-000000001/HBAR")
+            assertEquals(-100_083_000L, send.delta.longValue(), "1 HBAR + fee")
+            assertEquals(83_000L, send.fee?.longValue())
+            assertEquals(5_000_000L, byKey.getValue("0.0.5555-1716000000-000000001/USDC").delta.longValue())
+            assertFalse(byKey.containsKey("0.0.5555-1716000000-000000001/HBAR"), "no HBAR change for us")
+        }
+    }
 
     @Test
-    fun unknownAccount() = runTest { withContext(Dispatchers.Default) {
-        assertFalse(adapter.probe(assertNotNull(HederaAddresses.parse("0.0.2"))).hasActivity)
-    } }
+    fun unknownAccount() = runTest {
+        withContext(Dispatchers.Default) {
+            assertFalse(adapter.probe(assertNotNull(HederaAddresses.parse("0.0.2"))).hasActivity)
+        }
+    }
 }

@@ -95,8 +95,14 @@ class TezosAdapter(
         val address = address(target)
         val account = get("$base/accounts/$address")
         val active = account.str("type") != "empty"
-        val balances = listOf(amountOf(TezosChain.XTZ, account.str("balance"))) + if (active) tokens(address) else emptyList()
-        ProbeResult(active, if (active) listOf(TezosChain.ID) else emptyList(), balances, account.long("numTransactions")?.toInt())
+        val balances =
+            listOf(amountOf(TezosChain.XTZ, account.str("balance"))) + if (active) tokens(address) else emptyList()
+        ProbeResult(
+            active,
+            if (active) listOf(TezosChain.ID) else emptyList(),
+            balances,
+            account.long("numTransactions")?.toInt(),
+        )
     }
 
     override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("TzKT") {
@@ -130,7 +136,12 @@ class TezosAdapter(
                 break
             }
         }
-        SyncResult(balances, groupOperations(operations, address), activeChains = listOf(TezosChain.ID), historyTruncated = truncated)
+        SyncResult(
+            balances,
+            groupOperations(operations, address),
+            activeChains = listOf(TezosChain.ID),
+            historyTruncated = truncated,
+        )
     }
 
     private fun address(target: WatchTarget): String =
@@ -160,7 +171,11 @@ class TezosAdapter(
         }
     }
 
-    private suspend fun get(url: String, block: io.ktor.client.request.HttpRequestBuilder.() -> Unit = {}): JsonElement =
+    private suspend fun get(
+        url: String,
+        block: io.ktor.client.request.HttpRequestBuilder.() -> Unit = {
+        },
+    ): JsonElement =
         throttle.run { http.get(url, block).body<JsonElement>() }
 
     private companion object {
@@ -183,18 +198,35 @@ internal fun groupOperations(operations: List<JsonElement>, address: String): Li
         val time = op.str("timestamp")?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: Clock.System.now()
         val group = groups.getOrPut(hash) { Group(BigInteger.ZERO, null, time, true) }
         val applied = op.str("status") == "applied"
-        val amount = if (applied && op.str("type") == "transaction") parseBigInteger(op.str("amount")) else BigInteger.ZERO
+        val amount = if (applied &&
+            op.str("type") == "transaction"
+        ) {
+            parseBigInteger(op.str("amount"))
+        } else {
+            BigInteger.ZERO
+        }
         val sender = op.at("sender").str("address")
         val receiver = op.at("target").str("address")
         if (receiver == address) group.delta = group.delta + amount
         if (sender == address) {
-            val fee = parseBigInteger(op.str("bakerFee")) + parseBigInteger(op.str("storageFee")) + parseBigInteger(op.str("allocationFee"))
+            val fee =
+                parseBigInteger(op.str("bakerFee")) + parseBigInteger(op.str("storageFee")) +
+                    parseBigInteger(op.str("allocationFee"))
             group.delta = group.delta - amount - fee
             group.fee = (group.fee ?: BigInteger.ZERO) + fee
         }
     }
     return groups.mapNotNull { (hash, g) ->
         if (g.delta.isZero() && g.fee == null) return@mapNotNull null
-        accountTransaction(TezosChain.ID, hash, g.time, TezosChain.XTZ, g.delta, g.fee, g.confirmed, isSelfTransfer = false)
+        accountTransaction(
+            TezosChain.ID,
+            hash,
+            g.time,
+            TezosChain.XTZ,
+            g.delta,
+            g.fee,
+            g.confirmed,
+            isSelfTransfer = false,
+        )
     }
 }

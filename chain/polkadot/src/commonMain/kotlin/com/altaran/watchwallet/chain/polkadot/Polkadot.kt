@@ -56,10 +56,26 @@ data class PolkadotNetwork(
 
 object PolkadotChains {
     val POLKADOT = PolkadotNetwork(
-        ChainId("polkadot"), "Polkadot", 0, "DOT", 10, "polkadot", "https://rpc.polkadot.io", "https://polkadot.subscan.io", 0xFFE6007A,
+        ChainId("polkadot"),
+        "Polkadot",
+        0,
+        "DOT",
+        10,
+        "polkadot",
+        "https://rpc.polkadot.io",
+        "https://polkadot.subscan.io",
+        0xFFE6007A,
     )
     val KUSAMA = PolkadotNetwork(
-        ChainId("kusama"), "Kusama", 2, "KSM", 12, "kusama", "https://kusama-rpc.polkadot.io", "https://kusama.subscan.io", 0xFF000000,
+        ChainId("kusama"),
+        "Kusama",
+        2,
+        "KSM",
+        12,
+        "kusama",
+        "https://kusama-rpc.polkadot.io",
+        "https://kusama.subscan.io",
+        0xFF000000,
     )
     val ALL = listOf(POLKADOT, KUSAMA)
 
@@ -96,12 +112,18 @@ object PolkadotAddresses {
         if (bytes.isEmpty()) return null
         val first = bytes[0].toInt() and 0xFF
         val (prefix, prefixLength) = when {
-            first < 64 -> first to 1
+            first < 64 -> {
+                first to 1
+            }
+
             first < 128 && bytes.size > 1 -> {
                 val second = bytes[1].toInt() and 0xFF
                 (((first and 0x3F) shl 2) or (second shr 6) or ((second and 0x3F) shl 8)) to 2
             }
-            else -> return null
+
+            else -> {
+                return null
+            }
         }
         if (bytes.size != prefixLength + 32 + 2) return null
         val body = bytes.copyOfRange(0, bytes.size - 2)
@@ -138,7 +160,8 @@ class PolkadotAdapter(
 ) : ChainAdapter {
     private val networks = networks
     private val clients = networks.associate { network ->
-        network.id to JsonRpcClient(http, listOf(network.rpcUrl), Throttle(maxConcurrent = 2, minInterval = 100.milliseconds))
+        network.id to
+            JsonRpcClient(http, listOf(network.rpcUrl), Throttle(maxConcurrent = 2, minInterval = 100.milliseconds))
     }
 
     override val family = ChainFamily.POLKADOT
@@ -158,7 +181,9 @@ class PolkadotAdapter(
         )
     }
 
-    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("Substrate RPC") {
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall(
+        "Substrate RPC",
+    ) {
         val (network, balances) = load(target)
         SyncResult(
             balances = listOf(amountOf(network.asset, balances?.total ?: BigInteger.ZERO)),
@@ -168,7 +193,9 @@ class PolkadotAdapter(
     }
 
     /** Free / reserved / frozen breakdown (frozen = locked by staking, vesting, governance). */
-    suspend fun accountBalances(target: WatchTarget): PolkadotAccountBalances? = chainCall("Substrate RPC") { load(target).second }
+    suspend fun accountBalances(
+        target: WatchTarget,
+    ): PolkadotAccountBalances? = chainCall("Substrate RPC") { load(target).second }
 
     /** Locked (frozen) part of the balance, for display next to the total. */
     suspend fun lockedBalance(target: WatchTarget): TokenAmount = chainCall("Substrate RPC") {
@@ -177,7 +204,8 @@ class PolkadotAdapter(
     }
 
     private suspend fun load(target: WatchTarget): Pair<PolkadotNetwork, PolkadotAccountBalances?> {
-        val address = (target as? WatchTarget.Address)?.address ?: throw ChainDataException("Polkadot supports addresses only")
+        val address =
+            (target as? WatchTarget.Address)?.address ?: throw ChainDataException("Polkadot supports addresses only")
         val decoded = PolkadotAddresses.decode(address) ?: throw ChainDataException("Invalid SS58 address")
         val network = networks.firstOrNull { it.id == target.chainId }
             ?: networks.firstOrNull { it.ss58Prefix == decoded.prefix }
@@ -197,7 +225,8 @@ internal object SubstrateStorage {
     fun systemAccountKey(accountId: ByteArray): ByteArray =
         SYSTEM_ACCOUNT_PREFIX + BLAKE2b(128).digest(accountId) + accountId
 
-    fun twox128(data: ByteArray): ByteArray = XxHash64.hash(data, 0uL).toLittleEndian() + XxHash64.hash(data, 1uL).toLittleEndian()
+    fun twox128(data: ByteArray): ByteArray =
+        XxHash64.hash(data, 0uL).toLittleEndian() + XxHash64.hash(data, 1uL).toLittleEndian()
 
     /**
      * AccountInfo: nonce, consumers, providers, sufficients (u32 each), then AccountData: free,

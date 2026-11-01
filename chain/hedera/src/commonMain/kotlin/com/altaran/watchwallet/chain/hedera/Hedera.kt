@@ -148,7 +148,9 @@ class HederaAdapter(
     private fun address(target: WatchTarget): String =
         (target as? WatchTarget.Address)?.address ?: throw ChainDataException("Hedera supports account ids only")
 
-    private suspend fun account(id: String): JsonElement? = notFoundAsNull { get("$base/accounts/$id?transactions=false") }
+    private suspend fun account(id: String): JsonElement? = notFoundAsNull {
+        get("$base/accounts/$id?transactions=false")
+    }
 
     private suspend fun balances(account: JsonElement): List<AssetAmount> {
         val result = mutableListOf(amountOf(HederaChain.HBAR, account.at("balance").str("balance")))
@@ -169,7 +171,14 @@ class HederaAdapter(
         } else {
             val decimals = info.str("decimals")?.toIntOrNull()
             decimals?.let {
-                tokenAsset(HederaChain.ID, tokenId, info.str("symbol"), info.str("name"), it, tokenPriceId(HederaChain.COINGECKO_PLATFORM, tokenId))
+                tokenAsset(
+                    HederaChain.ID,
+                    tokenId,
+                    info.str("symbol"),
+                    info.str("name"),
+                    it,
+                    tokenPriceId(HederaChain.COINGECKO_PLATFORM, tokenId),
+                )
             }
         }
     }
@@ -192,9 +201,15 @@ internal fun transactionHash(tx: JsonElement): String? {
 }
 
 /** Net HBAR and token changes of [account] in one mirror-node transaction. */
-internal suspend fun parseHederaTransaction(tx: JsonElement, account: String, tokenOf: suspend (String) -> Asset?): List<ChainTransaction> {
+internal suspend fun parseHederaTransaction(
+    tx: JsonElement,
+    account: String,
+    tokenOf: suspend (String) -> Asset?,
+): List<ChainTransaction> {
     val hash = transactionHash(tx) ?: return emptyList()
-    val time = tx.str("consensus_timestamp")?.substringBefore('.')?.toLongOrNull()?.let { Instant.fromEpochSeconds(it) } ?: Clock.System.now()
+    val time =
+        tx.str("consensus_timestamp")?.substringBefore('.')?.toLongOrNull()?.let { Instant.fromEpochSeconds(it) }
+            ?: Clock.System.now()
     val payer = tx.str("transaction_id")?.substringBefore('-')
     val result = mutableListOf<ChainTransaction>()
 

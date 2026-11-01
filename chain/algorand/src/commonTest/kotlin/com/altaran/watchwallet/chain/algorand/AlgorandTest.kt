@@ -1,3 +1,6 @@
+// Fixtures contain long real addresses and JSON payloads.
+@file:Suppress("ktlint:standard:max-line-length")
+
 package com.altaran.watchwallet.chain.algorand
 
 import com.altaran.watchwallet.chain.common.Hex
@@ -56,14 +59,29 @@ class AlgorandTest {
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath
         val body = when {
-            path == "/v2/accounts/$ours" -> """{"current-round":40000000,"account":{"address":"$ours","amount":12500000,"total-assets-opted-in":2,
+            path == "/v2/accounts/$ours" -> {
+                """{"current-round":40000000,"account":{"address":"$ours","amount":12500000,"total-assets-opted-in":2,
                 "assets":[{"amount":7500000,"asset-id":31566704,"is-frozen":false},{"amount":0,"asset-id":999,"is-frozen":false}]}}"""
-            path == "/v2/accounts/$ours/transactions" -> transactions
-            path == "/v2/assets/31566704" -> """{"asset":{"index":31566704,"params":{"creator":"X","decimals":6,"name":"USDC","unit-name":"USDC","total":18446744073709551615}}}"""
-            else -> null
+            }
+
+            path == "/v2/accounts/$ours/transactions" -> {
+                transactions
+            }
+
+            path == "/v2/assets/31566704" -> {
+                """{"asset":{"index":31566704,"params":{"creator":"X","decimals":6,"name":"USDC","unit-name":"USDC","total":18446744073709551615}}}"""
+            }
+
+            else -> {
+                null
+            }
         }
         if (body == null) {
-            respond("""{"message":"no accounts found for address"}""", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
+            respond(
+                """{"message":"no accounts found for address"}""",
+                HttpStatusCode.NotFound,
+                headersOf(HttpHeaders.ContentType, "application/json"),
+            )
         } else {
             respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
         }
@@ -72,21 +90,25 @@ class AlgorandTest {
     private val adapter = AlgorandAdapter(createHttpClient(engine = engine), "https://idx.test")
 
     @Test
-    fun syncParsesPaymentsAssetsAndInnerTransactions() = runTest { withContext(Dispatchers.Default) {
-        val result = adapter.sync(assertNotNull(AlgorandAddresses.parse(ours)), emptySet())
-        assertEquals(listOf("ALGO", "USDC"), result.balances.map { it.asset.symbol })
-        assertEquals("12.5", result.balances[0].amount.toPlainString())
-        assertEquals("usd-coin", result.balances[1].asset.priceId)
+    fun syncParsesPaymentsAssetsAndInnerTransactions() = runTest {
+        withContext(Dispatchers.Default) {
+            val result = adapter.sync(assertNotNull(AlgorandAddresses.parse(ours)), emptySet())
+            assertEquals(listOf("ALGO", "USDC"), result.balances.map { it.asset.symbol })
+            assertEquals("12.5", result.balances[0].amount.toPlainString())
+            assertEquals("usd-coin", result.balances[1].asset.priceId)
 
-        val byKey = result.transactions.associateBy { it.hash + "/" + it.asset.symbol }
-        assertEquals(-1000L, byKey.getValue("TX2/ALGO").delta.longValue(), "fee of the asset transfer")
-        assertEquals(-2_500_000L, byKey.getValue("TX2/USDC").delta.longValue())
-        assertEquals(5_000_000L, byKey.getValue("TX1/ALGO").delta.longValue())
-        assertEquals(698_000L, byKey.getValue("TX0/ALGO").delta.longValue(), "inner payment minus app-call fee")
-    } }
+            val byKey = result.transactions.associateBy { it.hash + "/" + it.asset.symbol }
+            assertEquals(-1000L, byKey.getValue("TX2/ALGO").delta.longValue(), "fee of the asset transfer")
+            assertEquals(-2_500_000L, byKey.getValue("TX2/USDC").delta.longValue())
+            assertEquals(5_000_000L, byKey.getValue("TX1/ALGO").delta.longValue())
+            assertEquals(698_000L, byKey.getValue("TX0/ALGO").delta.longValue(), "inner payment minus app-call fee")
+        }
+    }
 
     @Test
-    fun unknownAccount() = runTest { withContext(Dispatchers.Default) {
-        assertFalse(adapter.probe(assertNotNull(AlgorandAddresses.parse(feeSink))).hasActivity)
-    } }
+    fun unknownAccount() = runTest {
+        withContext(Dispatchers.Default) {
+            assertFalse(adapter.probe(assertNotNull(AlgorandAddresses.parse(feeSink))).hasActivity)
+        }
+    }
 }

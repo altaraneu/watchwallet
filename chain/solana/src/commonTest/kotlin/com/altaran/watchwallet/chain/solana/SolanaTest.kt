@@ -1,3 +1,6 @@
+// Fixtures contain long real addresses and JSON payloads.
+@file:Suppress("ktlint:standard:max-line-length")
+
 package com.altaran.watchwallet.chain.solana
 
 import com.altaran.watchwallet.core.model.WatchTarget
@@ -62,21 +65,41 @@ class SolanaTest {
     private val engine = MockEngine { request ->
         val body = request.body.toByteArray().decodeToString()
         val response = when {
-            "getBalance" in body -> """{"jsonrpc":"2.0","result":{"context":{"slot":1},"value":1499995000},"id":1}"""
-            "getTokenAccountsByOwner" in body && "TokenzQd" in body -> """{"jsonrpc":"2.0","result":{"context":{"slot":1},"value":[]},"id":1}"""
-            "getTokenAccountsByOwner" in body -> """{"jsonrpc":"2.0","result":{"context":{"slot":1},"value":[
+            "getBalance" in body -> {
+                """{"jsonrpc":"2.0","result":{"context":{"slot":1},"value":1499995000},"id":1}"""
+            }
+
+            "getTokenAccountsByOwner" in body && "TokenzQd" in body -> {
+                """{"jsonrpc":"2.0","result":{"context":{"slot":1},"value":[]},"id":1}"""
+            }
+
+            "getTokenAccountsByOwner" in body -> {
+                """{"jsonrpc":"2.0","result":{"context":{"slot":1},"value":[
                 {"pubkey":"AtaOwner1111111111111111111111111111111111","account":{"data":{"parsed":{"info":{"isNative":false,"mint":"$usdc","owner":"$owner","state":"initialized",
                  "tokenAmount":{"amount":"15000000","decimals":6,"uiAmount":15.0,"uiAmountString":"15"}},"type":"account"},"program":"spl-token","space":165},
                  "executable":false,"lamports":2039280,"owner":"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA","rentEpoch":0}},
                 {"pubkey":"Dust1111111111111111111111111111111111111111","account":{"data":{"parsed":{"info":{"mint":"Spam1111111111111111111111111111111111111111","owner":"$owner",
                  "tokenAmount":{"amount":"0","decimals":0,"uiAmount":0.0,"uiAmountString":"0"}},"type":"account"},"program":"spl-token","space":165}}}]},"id":1}"""
-            "getSignaturesForAddress" in body -> """{"jsonrpc":"2.0","result":[
+            }
+
+            "getSignaturesForAddress" in body -> {
+                """{"jsonrpc":"2.0","result":[
                 {"signature":"sigSend","slot":268000000,"err":null,"memo":null,"blockTime":1717000000,"confirmationStatus":"finalized"},
                 {"signature":"sigReceive","slot":267000000,"err":null,"memo":null,"blockTime":1716000000,"confirmationStatus":"finalized"},
                 {"signature":"sigOld","slot":1,"err":null,"memo":null,"blockTime":1,"confirmationStatus":"finalized"}],"id":1}"""
-            "sigSend" in body -> sendTx
-            "sigReceive" in body -> receiveTx
-            else -> error("Unexpected request $body")
+            }
+
+            "sigSend" in body -> {
+                sendTx
+            }
+
+            "sigReceive" in body -> {
+                receiveTx
+            }
+
+            else -> {
+                error("Unexpected request $body")
+            }
         }
         respond(response, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
     }
@@ -85,26 +108,30 @@ class SolanaTest {
     private val target = assertNotNull(SolanaAddresses.parse(owner))
 
     @Test
-    fun syncReturnsBalancesAndDeltas() = runTest { withContext(Dispatchers.Default) {
-        val result = adapter.sync(target, knownTransactions = setOf("sigOld"))
-        assertEquals(listOf("SOL", "USDC"), result.balances.map { it.asset.symbol }, "zero spam balance skipped")
-        assertEquals("1.499995", result.balances[0].amount.toPlainString())
-        assertEquals("15", result.balances[1].amount.toPlainString())
-        assertEquals("usd-coin", result.balances[1].asset.priceId)
+    fun syncReturnsBalancesAndDeltas() = runTest {
+        withContext(Dispatchers.Default) {
+            val result = adapter.sync(target, knownTransactions = setOf("sigOld"))
+            assertEquals(listOf("SOL", "USDC"), result.balances.map { it.asset.symbol }, "zero spam balance skipped")
+            assertEquals("1.499995", result.balances[0].amount.toPlainString())
+            assertEquals("15", result.balances[1].amount.toPlainString())
+            assertEquals("usd-coin", result.balances[1].asset.priceId)
 
-        val send = result.transactions.filter { it.hash == "sigSend" }.associateBy { it.asset.symbol }
-        assertEquals(-500_005_000L, send.getValue("SOL").delta.longValue(), "0.5 SOL + 5000 lamports fee")
-        assertEquals(5000L, send.getValue("SOL").fee?.longValue())
-        assertEquals(-10_000_000L, send.getValue("USDC").delta.longValue())
-        val receive = result.transactions.single { it.hash == "sigReceive" }
-        assertEquals(2_000_000_000L, receive.delta.longValue())
-        assertEquals(null, receive.fee)
-        assertTrue(result.transactions.none { it.hash == "sigOld" })
-    } }
+            val send = result.transactions.filter { it.hash == "sigSend" }.associateBy { it.asset.symbol }
+            assertEquals(-500_005_000L, send.getValue("SOL").delta.longValue(), "0.5 SOL + 5000 lamports fee")
+            assertEquals(5000L, send.getValue("SOL").fee?.longValue())
+            assertEquals(-10_000_000L, send.getValue("USDC").delta.longValue())
+            val receive = result.transactions.single { it.hash == "sigReceive" }
+            assertEquals(2_000_000_000L, receive.delta.longValue())
+            assertEquals(null, receive.fee)
+            assertTrue(result.transactions.none { it.hash == "sigOld" })
+        }
+    }
 
     @Test
-    fun probeDetectsActivity() = runTest { withContext(Dispatchers.Default) {
-        val probe = adapter.probe(WatchTarget.Address(target.family, target.chainId, owner))
-        assertTrue(probe.hasActivity)
-    } }
+    fun probeDetectsActivity() = runTest {
+        withContext(Dispatchers.Default) {
+            val probe = adapter.probe(WatchTarget.Address(target.family, target.chainId, owner))
+            assertTrue(probe.hasActivity)
+        }
+    }
 }

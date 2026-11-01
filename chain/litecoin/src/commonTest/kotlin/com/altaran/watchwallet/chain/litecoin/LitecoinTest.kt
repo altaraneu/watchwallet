@@ -19,7 +19,10 @@ import kotlin.test.assertTrue
 
 /** Account keys of the public BIP39 test mnemonic ("abandon … about"), never a real wallet. */
 internal fun testAccountKey(path: String, version: Int): String {
-    val seed = MnemonicCode.toSeed("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", "")
+    val seed = MnemonicCode.toSeed(
+        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "",
+    )
     return DeterministicWallet.generate(seed).derivePrivateKey(path).extendedPublicKey.encode(version)
 }
 
@@ -39,7 +42,10 @@ class LitecoinTest {
             "DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC" to null, // Dogecoin
         )
         cases.forEach { (input, type) -> assertEquals(type, LitecoinAddresses.parse(input)?.scriptType, input) }
-        assertEquals("ltc1qjmxnz78nmc8nq77wuxh25n2es7rzm5c2rkk4wh", LitecoinAddresses.parse("LTC1QJMXNZ78NMC8NQ77WUXH25N2ES7RZM5C2RKK4WH")?.address)
+        assertEquals(
+            "ltc1qjmxnz78nmc8nq77wuxh25n2es7rzm5c2rkk4wh",
+            LitecoinAddresses.parse("LTC1QJMXNZ78NMC8NQ77WUXH25N2ES7RZM5C2RKK4WH")?.address,
+        )
     }
 
     @Test
@@ -56,7 +62,10 @@ class LitecoinTest {
         assertTrue(ltub.startsWith("Ltub"))
         val legacy = assertNotNull(LitecoinAddresses.parseExtendedKey(ltub))
         assertEquals(ScriptType.P2PKH, legacy.scriptType)
-        assertEquals("LUWPbpM43E2p7ZSh8cyTBEkvpHmr3cB8Ez", LitecoinAddresses.derive(legacy.key, legacy.scriptType, false, 0))
+        assertEquals(
+            "LUWPbpM43E2p7ZSh8cyTBEkvpHmr3cB8Ez",
+            LitecoinAddresses.derive(legacy.key, legacy.scriptType, false, 0),
+        )
 
         val mtub = testAccountKey("m/49'/2'/0'", 0x01B26EF6)
         val nested = assertNotNull(LitecoinAddresses.parseExtendedKey(mtub))
@@ -64,22 +73,45 @@ class LitecoinTest {
         val nestedAddress = LitecoinAddresses.derive(nested.key, nested.scriptType, false, 0)
         assertEquals("M7wtsL7wSHDBJVMWWhtQfTMSYYkyooAAXM", nestedAddress)
         // Cross-check: same script hash as bitcoin-kmp's BIP49 address of the same public key.
-        val pub = fr.acinq.bitcoin.DeterministicWallet.ExtendedPublicKey.decode(nested.key).second.derivePublicKey(0).derivePublicKey(0).publicKey
+        val pub = fr.acinq.bitcoin.DeterministicWallet.ExtendedPublicKey.decode(
+            nested.key,
+        ).second.derivePublicKey(0).derivePublicKey(0).publicKey
         val btc = fr.acinq.bitcoin.Bitcoin.computeBIP49Address(pub, fr.acinq.bitcoin.Block.LivenetGenesisBlock.hash)
-        assertTrue(Base58Checks.decode(btc)!!.copyOfRange(1, 21).contentEquals(Base58Checks.decode(nestedAddress)!!.copyOfRange(1, 21)))
+        assertTrue(
+            Base58Checks.decode(
+                btc,
+            )!!.copyOfRange(1, 21).contentEquals(Base58Checks.decode(nestedAddress)!!.copyOfRange(1, 21)),
+        )
 
         val zpub = testAccountKey("m/84'/2'/0'", 0x04B24746)
         val segwit = assertNotNull(LitecoinAddresses.parseExtendedKey(zpub))
         assertEquals(ScriptType.P2WPKH, segwit.scriptType)
-        assertEquals("ltc1qjmxnz78nmc8nq77wuxh25n2es7rzm5c2rkk4wh", LitecoinAddresses.derive(segwit.key, segwit.scriptType, false, 0))
+        assertEquals(
+            "ltc1qjmxnz78nmc8nq77wuxh25n2es7rzm5c2rkk4wh",
+            LitecoinAddresses.derive(segwit.key, segwit.scriptType, false, 0),
+        )
         assertTrue(segwit.key.startsWith("xpub"), "stored in canonical xpub form")
     }
 
     @Test
     fun extendedKeyValidation() {
         val ltub = testAccountKey("m/44'/2'/0'", 0x019DA462)
-        assertNull(LitecoinAddresses.parseExtendedKey(ltub.dropLast(1) + if (ltub.last() == 'a') 'b' else 'a'), "checksum")
-        assertNull(LitecoinAddresses.parseExtendedKey(testAccountKey("m/44'/3'/0'", 0x02FACAFD)), "dgub is not Litecoin")
+        assertNull(
+            LitecoinAddresses.parseExtendedKey(
+                ltub.dropLast(1) + if (ltub.last() ==
+                    'a'
+                ) {
+                    'b'
+                } else {
+                    'a'
+                },
+            ),
+            "checksum",
+        )
+        assertNull(
+            LitecoinAddresses.parseExtendedKey(testAccountKey("m/44'/3'/0'", 0x02FACAFD)),
+            "dgub is not Litecoin",
+        )
         assertNull(LitecoinAddresses.parseExtendedKey(ltub, ScriptType.P2TR), "taproot not derivable")
         assertTrue(LitecoinAddresses.isLitecoinSpecificKey(ltub))
     }
@@ -92,16 +124,25 @@ class LitecoinTest {
         val engine = MockEngine { request ->
             val path = request.url.encodedPath
             val body = when {
-                path == "/api/address/$first" ->
+                path == "/api/address/$first" -> {
                     """{"address":"$first","chain_stats":{"funded_txo_count":1,"funded_txo_sum":500000,"spent_txo_count":0,"spent_txo_sum":0,"tx_count":1},
                        "mempool_stats":{"funded_txo_count":0,"funded_txo_sum":0,"spent_txo_count":0,"spent_txo_sum":0,"tx_count":0}}"""
-                path == "/api/address/$first/txs" ->
+                }
+
+                path == "/api/address/$first/txs" -> {
                     """[{"txid":"aa","version":2,"locktime":0,"size":222,"weight":561,"fee":300,
                         "vin":[{"txid":"bb","vout":0,"prevout":{"scriptpubkey_address":"ltc1qsender","value":900000},"is_coinbase":false}],
                         "vout":[{"scriptpubkey_address":"$first","value":500000},{"scriptpubkey_address":"ltc1qsender","value":399700}],
                         "status":{"confirmed":true,"block_height":2700000,"block_time":1710000000}}]"""
-                path.endsWith("/txs") -> "[]"
-                else -> """{"chain_stats":{"funded_txo_sum":0,"spent_txo_sum":0,"tx_count":0},"mempool_stats":{"funded_txo_sum":0,"spent_txo_sum":0,"tx_count":0}}"""
+                }
+
+                path.endsWith("/txs") -> {
+                    "[]"
+                }
+
+                else -> {
+                    """{"chain_stats":{"funded_txo_sum":0,"spent_txo_sum":0,"tx_count":0},"mempool_stats":{"funded_txo_sum":0,"spent_txo_sum":0,"tx_count":0}}"""
+                }
             }
             respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
         }

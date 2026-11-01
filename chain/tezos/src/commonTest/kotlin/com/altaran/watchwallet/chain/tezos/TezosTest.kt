@@ -1,3 +1,6 @@
+// Fixtures contain long real addresses and JSON payloads.
+@file:Suppress("ktlint:standard:max-line-length")
+
 package com.altaran.watchwallet.chain.tezos
 
 import com.altaran.watchwallet.core.network.createHttpClient
@@ -49,15 +52,29 @@ class TezosTest {
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath
         val body = when {
-            path == "/v1/accounts/$ours" -> """{"type":"user","address":"$ours","alias":null,"counter":11,"balance":7599250,"numTransactions":3,"delegate":null}"""
-            path == "/v1/accounts/$other" -> """{"type":"empty","address":"$other","counter":0}"""
-            path == "/v1/accounts/$ours/operations" -> operations
-            path == "/v1/tokens/balances" -> """[
+            path == "/v1/accounts/$ours" -> {
+                """{"type":"user","address":"$ours","alias":null,"counter":11,"balance":7599250,"numTransactions":3,"delegate":null}"""
+            }
+
+            path == "/v1/accounts/$other" -> {
+                """{"type":"empty","address":"$other","counter":0}"""
+            }
+
+            path == "/v1/accounts/$ours/operations" -> {
+                operations
+            }
+
+            path == "/v1/tokens/balances" -> {
+                """[
                 {"id":1,"account":{"address":"$ours"},"token":{"id":2,"contract":{"address":"$tzbtc"},"tokenId":"0","standard":"fa1.2",
                  "metadata":{"name":"tzBTC","symbol":"tzBTC","decimals":"8"}},"balance":"150000000"},
                 {"id":3,"account":{"address":"$ours"},"token":{"id":4,"contract":{"address":"KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o"},"tokenId":"42","standard":"fa2",
                  "metadata":{"name":"Some NFT"}},"balance":"1"}]"""
-            else -> error("Unexpected $path")
+            }
+
+            else -> {
+                error("Unexpected $path")
+            }
         }
         respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
     }
@@ -65,21 +82,31 @@ class TezosTest {
     private val adapter = TezosAdapter(createHttpClient(engine = engine), "https://tzkt.test/v1")
 
     @Test
-    fun syncGroupsOperationsByHash() = runTest { withContext(Dispatchers.Default) {
-        val result = adapter.sync(assertNotNull(TezosAddresses.parse(ours)), emptySet())
-        assertEquals(listOf("XTZ", "tzBTC"), result.balances.map { it.asset.symbol }, "NFT without decimals skipped")
-        assertEquals("7.59925", result.balances[0].amount.toPlainString())
-        assertEquals("1.5", result.balances[1].amount.toPlainString())
+    fun syncGroupsOperationsByHash() = runTest {
+        withContext(Dispatchers.Default) {
+            val result = adapter.sync(assertNotNull(TezosAddresses.parse(ours)), emptySet())
+            assertEquals(
+                listOf("XTZ", "tzBTC"),
+                result.balances.map {
+                    it.asset.symbol
+                },
+                "NFT without decimals skipped",
+            )
+            assertEquals("7.59925", result.balances[0].amount.toPlainString())
+            assertEquals("1.5", result.balances[1].amount.toPlainString())
 
-        val byHash = result.transactions.associateBy { it.hash }
-        assertEquals(-2_000_700L, byHash.getValue("opB").delta.longValue(), "amount + transaction fee + reveal fee")
-        assertEquals(700L, byHash.getValue("opB").fee?.longValue())
-        assertEquals(10_000_000L, byHash.getValue("opA").delta.longValue(), "allocation fee is paid by the sender")
-        assertEquals(-450L, byHash.getValue("opFailed").delta.longValue(), "failed operation costs only the fee")
-    } }
+            val byHash = result.transactions.associateBy { it.hash }
+            assertEquals(-2_000_700L, byHash.getValue("opB").delta.longValue(), "amount + transaction fee + reveal fee")
+            assertEquals(700L, byHash.getValue("opB").fee?.longValue())
+            assertEquals(10_000_000L, byHash.getValue("opA").delta.longValue(), "allocation fee is paid by the sender")
+            assertEquals(-450L, byHash.getValue("opFailed").delta.longValue(), "failed operation costs only the fee")
+        }
+    }
 
     @Test
-    fun emptyAccount() = runTest { withContext(Dispatchers.Default) {
-        assertFalse(adapter.probe(assertNotNull(TezosAddresses.parse(other))).hasActivity)
-    } }
+    fun emptyAccount() = runTest {
+        withContext(Dispatchers.Default) {
+            assertFalse(adapter.probe(assertNotNull(TezosAddresses.parse(other))).hasActivity)
+        }
+    }
 }

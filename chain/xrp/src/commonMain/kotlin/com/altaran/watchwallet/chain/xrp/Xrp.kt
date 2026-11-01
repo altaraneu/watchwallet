@@ -119,7 +119,11 @@ object XrpAddresses {
 }
 
 /** XRPL JSON-RPC (`{"method":…, "params":[{…}]}`); errors are reported inside `result`. */
-internal class XrplClient(private val http: HttpClient, private val urls: List<String>, private val throttle: Throttle) {
+internal class XrplClient(
+    private val http: HttpClient,
+    private val urls: List<String>,
+    private val throttle: Throttle,
+) {
     suspend fun call(method: String, params: JsonObject): JsonElement {
         var last: Exception? = null
         for (url in urls) {
@@ -127,16 +131,20 @@ internal class XrplClient(private val http: HttpClient, private val urls: List<S
                 val response: JsonObject = throttle.run {
                     http.post(url) {
                         contentType(ContentType.Application.Json)
-                        setBody(buildJsonObject {
-                            put("method", method)
-                            put("params", buildJsonArray { add(params) })
-                        })
+                        setBody(
+                            buildJsonObject {
+                                put("method", method)
+                                put("params", buildJsonArray { add(params) })
+                            },
+                        )
                     }.body()
                 }
                 return response["result"] ?: throw ChainDataException("XRPL $method: no result")
             } catch (e: CancellationException) {
                 throw e
-            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
                 last = e
             }
         }
@@ -152,7 +160,12 @@ class XrpAdapter(
     http: HttpClient,
     rpcUrls: List<String> = XrpChain.DEFAULT_RPC_URLS,
 ) : ChainAdapter {
-    private val client = XrplClient(http, rpcUrls, Throttle(maxConcurrent = 2, minInterval = 120.milliseconds, maxJitter = 80.milliseconds))
+    private val client =
+        XrplClient(
+            http,
+            rpcUrls,
+            Throttle(maxConcurrent = 2, minInterval = 120.milliseconds, maxJitter = 80.milliseconds),
+        )
 
     override val family = ChainFamily.XRP
     override val chains = listOf(XrpChain.CHAIN)
@@ -301,7 +314,11 @@ private const val RIPPLE_EPOCH_OFFSET = 946_684_800L
  * Net balance changes of [account] from a transaction's metadata (`AffectedNodes`): AccountRoot
  * nodes give the XRP delta (fee included), RippleState nodes the trust-line token deltas.
  */
-internal fun parseXrpTransaction(entry: JsonElement, account: String, assets: Map<String, Asset>): List<ChainTransaction> {
+internal fun parseXrpTransaction(
+    entry: JsonElement,
+    account: String,
+    assets: Map<String, Asset>,
+): List<ChainTransaction> {
     val tx = entry.obj("tx") ?: entry.obj("tx_json") ?: return emptyList()
     val hash = tx.str("hash") ?: entry.str("hash") ?: return emptyList()
     val meta = entry.obj("meta") ?: return emptyList()
@@ -330,14 +347,22 @@ internal fun parseXrpTransaction(entry: JsonElement, account: String, assets: Ma
                 xrpDelta += after - before
                 touchedXrp = true
             }
+
             "RippleState" -> {
                 val low = final.at("LowLimit").str("issuer")
                 val high = final.at("HighLimit").str("issuer")
                 if (account != low && account != high) continue
                 val currency = final.at("Balance").str("currency") ?: continue
-                val after = if (kind == "DeletedNode") BigInteger.ZERO else parseDecimalUnits(final.at("Balance").str("value"), XrpChain.TOKEN_DECIMALS)
-                val before = previous?.at("Balance")?.str("value")?.let { parseDecimalUnits(it, XrpChain.TOKEN_DECIMALS) }
-                    ?: if (kind == "CreatedNode") BigInteger.ZERO else after
+                val after = if (kind ==
+                    "DeletedNode"
+                ) {
+                    BigInteger.ZERO
+                } else {
+                    parseDecimalUnits(final.at("Balance").str("value"), XrpChain.TOKEN_DECIMALS)
+                }
+                val before =
+                    previous?.at("Balance")?.str("value")?.let { parseDecimalUnits(it, XrpChain.TOKEN_DECIMALS) }
+                        ?: if (kind == "CreatedNode") BigInteger.ZERO else after
                 // RippleState balances are from the low account's perspective.
                 val change = if (account == low) after - before else before - after
                 val issuer = if (account == low) high else low

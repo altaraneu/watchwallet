@@ -1,3 +1,6 @@
+// Fixtures contain long real addresses and JSON payloads.
+@file:Suppress("ktlint:standard:max-line-length")
+
 package com.altaran.watchwallet.chain.xrp
 
 import com.altaran.watchwallet.core.network.createHttpClient
@@ -42,7 +45,10 @@ class XrpTest {
         val tagged = assertNotNull(XrpAddresses.toXAddress(ours, tag = 12345))
         assertTrue(tagged.startsWith("X"))
         assertEquals(ours, XrpAddresses.parse(tagged)?.address)
-        assertEquals("X7AcgcsBL6XDcUb289X4mJ8djcdyKaB5hJDWMArnXr61cqZ", XrpAddresses.toXAddress("r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59"))
+        assertEquals(
+            "X7AcgcsBL6XDcUb289X4mJ8djcdyKaB5hJDWMArnXr61cqZ",
+            XrpAddresses.toXAddress("r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59"),
+        )
         // Testnet X-addresses start with T and are rejected.
         assertNull(XrpAddresses.parse("T719a5UwUCnEs54UsxG9CJYYDhwmFCqkr7wxCcNcfZ6p5GZ"))
     }
@@ -73,13 +79,27 @@ class XrpTest {
     private val engine = MockEngine { request ->
         val body = request.body.toByteArray().decodeToString()
         val response = when {
-            "account_info" in body -> """{"result":{"account_data":{"Account":"$ours","Balance":"74999988","Flags":0,"LedgerEntryType":"AccountRoot","OwnerCount":1,"Sequence":5},
+            "account_info" in body -> {
+                """{"result":{"account_data":{"Account":"$ours","Balance":"74999988","Flags":0,"LedgerEntryType":"AccountRoot","OwnerCount":1,"Sequence":5},
                 "ledger_index":90000000,"status":"success","validated":true}}"""
-            "account_lines" in body -> """{"result":{"account":"$ours","lines":[{"account":"$issuer","balance":"40","currency":"USD","limit":"1000","limit_peer":"0","quality_in":0,"quality_out":0},
+            }
+
+            "account_lines" in body -> {
+                """{"result":{"account":"$ours","lines":[{"account":"$issuer","balance":"40","currency":"USD","limit":"1000","limit_peer":"0","quality_in":0,"quality_out":0},
                 {"account":"$other","balance":"0","currency":"EUR","limit":"10","limit_peer":"0"}],"status":"success","validated":true}}"""
-            "account_tx" in body -> accountTx
-            "server_state" in body -> """{"result":{"state":{"validated_ledger":{"base_fee":10,"close_time":770000000,"hash":"X","reserve_base":1000000,"reserve_inc":200000,"seq":90000000}},"status":"success"}}"""
-            else -> error("Unexpected $body")
+            }
+
+            "account_tx" in body -> {
+                accountTx
+            }
+
+            "server_state" in body -> {
+                """{"result":{"state":{"validated_ledger":{"base_fee":10,"close_time":770000000,"hash":"X","reserve_base":1000000,"reserve_inc":200000,"seq":90000000}},"status":"success"}}"""
+            }
+
+            else -> {
+                error("Unexpected $body")
+            }
         }
         respond(response, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
     }
@@ -88,32 +108,39 @@ class XrpTest {
     private val target = assertNotNull(XrpAddresses.parse(ours))
 
     @Test
-    fun syncParsesBalancesAndMetadataDeltas() = runTest { withContext(Dispatchers.Default) {
-        val result = adapter.sync(target, emptySet())
-        assertEquals(listOf("XRP", "USD"), result.balances.map { it.asset.symbol }, "zero trust lines skipped")
-        assertEquals("74.999988", result.balances[0].amount.toPlainString())
-        assertEquals("40", result.balances[1].amount.toPlainString())
+    fun syncParsesBalancesAndMetadataDeltas() = runTest {
+        withContext(Dispatchers.Default) {
+            val result = adapter.sync(target, emptySet())
+            assertEquals(listOf("XRP", "USD"), result.balances.map { it.asset.symbol }, "zero trust lines skipped")
+            assertEquals("74.999988", result.balances[0].amount.toPlainString())
+            assertEquals("40", result.balances[1].amount.toPlainString())
 
-        val tx2 = result.transactions.filter { it.hash == "HASH2" }.associateBy { it.asset.symbol }
-        assertEquals(-12L, tx2.getValue("XRP").delta.longValue(), "fee only")
-        assertEquals(12L, tx2.getValue("XRP").fee?.longValue())
-        assertEquals("-10", com.altaran.watchwallet.core.model.TokenAmount(tx2.getValue("USD").delta, 15).toPlainString())
-        val tx1 = result.transactions.single { it.hash == "HASH1" }
-        assertEquals(75_000_000L, tx1.delta.longValue(), "account creation")
-        assertNull(tx1.fee)
-    } }
+            val tx2 = result.transactions.filter { it.hash == "HASH2" }.associateBy { it.asset.symbol }
+            assertEquals(-12L, tx2.getValue("XRP").delta.longValue(), "fee only")
+            assertEquals(12L, tx2.getValue("XRP").fee?.longValue())
+            assertEquals(
+                "-10",
+                com.altaran.watchwallet.core.model.TokenAmount(tx2.getValue("USD").delta, 15).toPlainString(),
+            )
+            val tx1 = result.transactions.single { it.hash == "HASH1" }
+            assertEquals(75_000_000L, tx1.delta.longValue(), "account creation")
+            assertNull(tx1.fee)
+        }
+    }
 
     @Test
-    fun reserveAndUnfundedAccount() = runTest { withContext(Dispatchers.Default) {
-        assertEquals("1.2", adapter.lockedReserve(target).toPlainString(), "1 XRP base + 1 owned object × 0.2")
-        val unfunded = MockEngine {
-            respond(
-                """{"result":{"account":"$other","error":"actNotFound","error_code":19,"error_message":"Account not found.","status":"error","validated":true}}""",
-                HttpStatusCode.OK,
-                headersOf(HttpHeaders.ContentType, "application/json"),
-            )
+    fun reserveAndUnfundedAccount() = runTest {
+        withContext(Dispatchers.Default) {
+            assertEquals("1.2", adapter.lockedReserve(target).toPlainString(), "1 XRP base + 1 owned object × 0.2")
+            val unfunded = MockEngine {
+                respond(
+                    """{"result":{"account":"$other","error":"actNotFound","error_code":19,"error_message":"Account not found.","status":"error","validated":true}}""",
+                    HttpStatusCode.OK,
+                    headersOf(HttpHeaders.ContentType, "application/json"),
+                )
+            }
+            val probe = XrpAdapter(createHttpClient(engine = unfunded), listOf("https://xrpl.test")).probe(target)
+            assertFalse(probe.hasActivity)
         }
-        val probe = XrpAdapter(createHttpClient(engine = unfunded), listOf("https://xrpl.test")).probe(target)
-        assertFalse(probe.hasActivity)
-    } }
+    }
 }

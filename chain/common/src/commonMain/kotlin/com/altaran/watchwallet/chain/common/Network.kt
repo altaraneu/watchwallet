@@ -17,9 +17,9 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.json.put
 
 /**
  * Runs a data-source call and wraps every unexpected failure in [ChainDataException], as the
@@ -31,7 +31,9 @@ suspend fun <T> chainCall(source: String, block: suspend () -> T): T = try {
     throw e
 } catch (e: CancellationException) {
     throw e
-} catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+} catch (
+    @Suppress("TooGenericExceptionCaught") e: Exception,
+) {
     throw ChainDataException("$source data source failed: ${e.message}", e)
 }
 
@@ -86,7 +88,9 @@ class JsonRpcClient(
                 throw e
             } catch (e: CancellationException) {
                 throw e
-            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
                 last = e
             }
         }

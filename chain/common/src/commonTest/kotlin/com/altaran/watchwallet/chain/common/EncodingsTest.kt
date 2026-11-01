@@ -15,7 +15,9 @@ class EncodingsTest {
             "abcdef1qpzry9x8gf2tvdw0s3jn54khce6mua7lmqqqxw" to Bech32Codec.Variant.BECH32,
             "a1lqfn3a" to Bech32Codec.Variant.BECH32M,
             "abcdef1l7aum6echk45nj3s0wdvt2fg8x9yrzpqzd3ryx" to Bech32Codec.Variant.BECH32M,
-        ).forEach { (text, variant) -> assertEquals(variant, assertNotNull(Bech32Codec.decode(text), text).variant, text) }
+        ).forEach { (text, variant) ->
+            assertEquals(variant, assertNotNull(Bech32Codec.decode(text), text).variant, text)
+        }
         // Mixed case, bad checksum, bad character.
         listOf("A12uEL5L", "a12uel5m", "abcdef1qpzry9x8gf2tvdw0s3jn54khce6mua7lmqqqxx", "1nwldj5").forEach {
             assertNull(Bech32Codec.decode(it), it)
@@ -24,7 +26,9 @@ class EncodingsTest {
 
     @Test
     fun segwitRoundTrip() {
-        val (version, program) = assertNotNull(Bech32Codec.decodeSegwit("bc", "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"))
+        val (version, program) = assertNotNull(
+            Bech32Codec.decodeSegwit("bc", "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"),
+        )
         assertEquals(0, version)
         assertEquals("bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu", Bech32Codec.encodeSegwit("bc", 0, program))
         assertNull(Bech32Codec.decodeSegwit("ltc", "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"))
@@ -38,7 +42,9 @@ class EncodingsTest {
             "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
             CashAddrCodec.encode("bitcoincash", byteArrayOf(0) + legacyHash),
         )
-        val (prefix, payload) = assertNotNull(CashAddrCodec.decode("qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a", "bitcoincash"))
+        val (prefix, payload) = assertNotNull(
+            CashAddrCodec.decode("qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a", "bitcoincash"),
+        )
         assertEquals("bitcoincash", prefix)
         assertContentEquals(byteArrayOf(0) + legacyHash, payload)
         assertNull(CashAddrCodec.decode("bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6b", "bitcoincash"))

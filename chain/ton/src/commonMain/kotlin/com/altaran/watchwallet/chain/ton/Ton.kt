@@ -115,7 +115,9 @@ object TonAddresses {
     /** User-friendly URL-safe form (`EQ…` bounceable / `UQ…` non-bounceable). */
     fun toFriendly(address: String, bounceable: Boolean = false): String? {
         val account = decode(address.trim()) ?: return null
-        val body = byteArrayOf((if (bounceable) BOUNCEABLE else NON_BOUNCEABLE).toByte(), account.workchain.toByte()) + account.hash
+        val body =
+            byteArrayOf((if (bounceable) BOUNCEABLE else NON_BOUNCEABLE).toByte(), account.workchain.toByte()) +
+                account.hash
         val crc = Crc16.xmodem(body)
         return Base64Codec.encode(body + byteArrayOf((crc shr 8).toByte(), crc.toByte()), urlSafe = true)
     }
@@ -152,11 +154,14 @@ class TonAdapter(
         val address = address(target)
         val account = account(address)
         val active = account != null && account.str("status") != "nonexist"
-        val balances = listOf(amountOf(TonChain.TON, account.str("balance"))) + if (active) jettons(address).first else emptyList()
+        val balances =
+            listOf(amountOf(TonChain.TON, account.str("balance"))) + if (active) jettons(address).first else emptyList()
         ProbeResult(active, if (active) listOf(TonChain.ID) else emptyList(), balances, transactionCount = null)
     }
 
-    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("toncenter") {
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall(
+        "toncenter",
+    ) {
         val address = address(target)
         val raw = TonAddresses.toRaw(address) ?: throw ChainDataException("Invalid TON address")
         val account = account(address)
@@ -170,18 +175,27 @@ class TonAdapter(
         val txPages = pages("$base/transactions", "transactions", maxPages, { parameter("account", address) }) {
             hashHex(it.str("hash")) in knownTransactions
         }
-        val transferPages = pages("$base/jetton/transfers", "jetton_transfers", maxPages, { parameter("owner_address", address) }) {
-            hashHex(it.str("transaction_hash")) in knownTransactions
-        }
+        val transferPages =
+            pages("$base/jetton/transfers", "jetton_transfers", maxPages, { parameter("owner_address", address) }) {
+                hashHex(it.str("transaction_hash")) in knownTransactions
+            }
         val transactions = txPages.items.mapNotNull { parseTonTransaction(it) } +
             transferPages.items.mapNotNull { parseJettonTransfer(it, raw, jettonAssets) }
-        SyncResult(balances, transactions, activeChains = listOf(TonChain.ID), historyTruncated = txPages.truncated || transferPages.truncated)
+        SyncResult(
+            balances,
+            transactions,
+            activeChains = listOf(TonChain.ID),
+            historyTruncated =
+                txPages.truncated || transferPages.truncated,
+        )
     }
 
     private fun address(target: WatchTarget): String =
         (target as? WatchTarget.Address)?.address ?: throw ChainDataException("TON supports addresses only")
 
-    private suspend fun account(address: String): JsonElement? = notFoundAsNull { get("$base/account") { parameter("address", address) } }
+    private suspend fun account(address: String): JsonElement? = notFoundAsNull {
+        get("$base/account") { parameter("address", address) }
+    }
 
     /** Jetton balances plus the asset of every master seen (also zero balances, for history). */
     private suspend fun jettons(address: String): Pair<List<AssetAmount>, Map<String, Asset>> {
@@ -244,7 +258,9 @@ class TonAdapter(
 /** Jetton asset from the built-in list or toncenter's `metadata` map (keyed by raw address). */
 internal fun jettonAsset(masterRaw: String, metadata: JsonElement?): Asset {
     val known = TonJettons.KNOWN[masterRaw]
-    val info = metadata?.let { m -> (m as? JsonObject)?.entries?.firstOrNull { TonAddresses.toRaw(it.key) == masterRaw }?.value }
+    val info = metadata?.let { m ->
+        (m as? JsonObject)?.entries?.firstOrNull { TonAddresses.toRaw(it.key) == masterRaw }?.value
+    }
         ?.arr("token_info")?.firstOrNull()
     val decimals = known?.decimals
         ?: info.str("decimals")?.toIntOrNull()
@@ -256,7 +272,11 @@ internal fun jettonAsset(masterRaw: String, metadata: JsonElement?): Asset {
         symbol = known?.symbol ?: info.str("symbol"),
         name = known?.name ?: info.str("name"),
         decimals = decimals,
-        priceId = known?.coingeckoId ?: TonAddresses.toFriendly(masterRaw, bounceable = true)?.let { tokenPriceId(TonChain.COINGECKO_PLATFORM, it) },
+        priceId =
+            known?.coingeckoId
+                ?: TonAddresses.toFriendly(masterRaw, bounceable = true)?.let {
+                    tokenPriceId(TonChain.COINGECKO_PLATFORM, it)
+                },
     )
 }
 
@@ -286,8 +306,16 @@ internal fun parseTonTransaction(tx: JsonElement): ChainTransaction? {
     return accountTransaction(TonChain.ID, hash, time, TonChain.TON, delta, if (initiated) totalFees else null)
 }
 
-internal fun parseJettonTransfer(transfer: JsonElement, ownerRaw: String, assets: Map<String, Asset>): ChainTransaction? {
-    if ((transfer as? JsonObject)?.get("transaction_aborted")?.let { (it as? JsonPrimitive)?.booleanOrNull } == true) return null
+internal fun parseJettonTransfer(
+    transfer: JsonElement,
+    ownerRaw: String,
+    assets: Map<String, Asset>,
+): ChainTransaction? {
+    if ((transfer as? JsonObject)?.get("transaction_aborted")?.let { (it as? JsonPrimitive)?.booleanOrNull } ==
+        true
+    ) {
+        return null
+    }
     val hash = hashHex(transfer.str("transaction_hash")) ?: return null
     val master = transfer.str("jetton_master")?.let { TonAddresses.toRaw(it) } ?: return null
     val asset = assets[master] ?: jettonAsset(master, null)

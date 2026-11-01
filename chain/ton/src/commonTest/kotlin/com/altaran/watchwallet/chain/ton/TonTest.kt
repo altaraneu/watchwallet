@@ -71,12 +71,22 @@ class TonTest {
         val hashJetton = Base64Codec.encode(ByteArray(32) { 3 })
         val engine = MockEngine { request ->
             val body = when (request.url.encodedPath) {
-                "/api/v3/account" -> json("""{"balance":"4500000000","code":null,"data":null,"last_transaction_lt":"1","status":"active"}""")
-                "/api/v3/jetton/wallets" -> json(
-                    """{"jetton_wallets":[{"address":"0:${"CD".repeat(32)}","balance":"25000000","owner":"$oursRaw","jetton":"$usdtRaw","last_transaction_lt":"1"},
-                       {"address":"0:${"EF".repeat(32)}","balance":"7","owner":"$oursRaw","jetton":"0:${"99".repeat(32)}"}],
-                       "address_book":{},"metadata":{"0:${"99".repeat(32)}":{"is_indexed":true,"token_info":[{"name":"Some Jetton","symbol":"SJ","type":"jetton_masters","extra":{"decimals":"2"}}]}}}""",
+                "/api/v3/account" -> json(
+                    """{"balance":"4500000000","code":null,"data":null,"last_transaction_lt":"1","status":"active"}""",
                 )
+
+                "/api/v3/jetton/wallets" -> json(
+                    """{"jetton_wallets":[{"address":"0:${"CD".repeat(
+                        32,
+                    )}","balance":"25000000","owner":"$oursRaw","jetton":"$usdtRaw","last_transaction_lt":"1"},
+                       {"address":"0:${"EF".repeat(
+                        32,
+                    )}","balance":"7","owner":"$oursRaw","jetton":"0:${"99".repeat(32)}"}],
+                       "address_book":{},"metadata":{"0:${"99".repeat(
+                        32,
+                    )}":{"is_indexed":true,"token_info":[{"name":"Some Jetton","symbol":"SJ","type":"jetton_masters","extra":{"decimals":"2"}}]}}}""",
+                )
+
                 "/api/v3/transactions" -> json(
                     """{"transactions":[
                        {"account":"$oursRaw","hash":"$hashOut","lt":"3","now":1717000000,"total_fees":"5000000",
@@ -86,15 +96,20 @@ class TonTest {
                        {"account":"$oursRaw","hash":"$hashIn","lt":"2","now":1716000000,"total_fees":"100000",
                         "in_msg":{"source":"$other","destination":"$oursRaw","value":"2000000000"},"out_msgs":[]}],"address_book":{}}""",
                 )
+
                 "/api/v3/jetton/transfers" -> json(
-                    """{"jetton_transfers":[{"query_id":"0","source":"$other","destination":"$oursRaw","amount":"25000000","source_wallet":"0:${"11".repeat(32)}",
+                    """{"jetton_transfers":[{"query_id":"0","source":"$other","destination":"$oursRaw","amount":"25000000","source_wallet":"0:${"11".repeat(
+                        32,
+                    )}",
                        "jetton_master":"$usdtRaw","transaction_hash":"$hashJetton","transaction_lt":"1","transaction_now":1715000000,"transaction_aborted":false}]}""",
                 )
+
                 else -> error("Unexpected ${request.url}")
             }
             respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
         }
-        val adapter = TonAdapter(createHttpClient(engine = engine), "https://ton.test/api/v3", minInterval = 1.milliseconds)
+        val adapter =
+            TonAdapter(createHttpClient(engine = engine), "https://ton.test/api/v3", minInterval = 1.milliseconds)
         val result = adapter.sync(assertNotNull(TonAddresses.parse(ours)), emptySet())
         assertEquals(listOf("TON", "USDT", "SJ"), result.balances.map { it.asset.symbol })
         assertEquals("4.5", result.balances[0].amount.toPlainString())
@@ -104,7 +119,17 @@ class TonTest {
         val byHash = result.transactions.associateBy { it.hash }
         assertEquals(-1_005_000_000L, byHash.getValue(Hex.encode(ByteArray(32) { 1 })).delta.longValue())
         assertEquals(5_000_000L, byHash.getValue(Hex.encode(ByteArray(32) { 1 })).fee?.longValue())
-        assertEquals(1_999_900_000L, byHash.getValue(Hex.encode(ByteArray(32) { 2 })).delta.longValue(), "fallback: value − fees")
+        assertEquals(
+            1_999_900_000L,
+            byHash.getValue(
+                Hex.encode(
+                    ByteArray(32) {
+                        2
+                    },
+                ),
+            ).delta.longValue(),
+            "fallback: value − fees",
+        )
         val jetton = byHash.getValue(Hex.encode(ByteArray(32) { 3 }))
         assertEquals("USDT", jetton.asset.symbol)
         assertEquals(25_000_000L, jetton.delta.longValue())
@@ -112,8 +137,19 @@ class TonTest {
 
     @Test
     fun unknownAccountIsInactive() = runTest {
-        val engine = MockEngine { respond("""{"error":"not found"}""", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json")) }
-        val probe = TonAdapter(createHttpClient(engine = engine), "https://ton.test/api/v3", minInterval = 1.milliseconds)
+        val engine =
+            MockEngine {
+                respond(
+                    """{"error":"not found"}""",
+                    HttpStatusCode.NotFound,
+                    headersOf(HttpHeaders.ContentType, "application/json"),
+                )
+            }
+        val probe = TonAdapter(
+            createHttpClient(engine = engine),
+            "https://ton.test/api/v3",
+            minInterval = 1.milliseconds,
+        )
             .probe(assertNotNull(TonAddresses.parse(ours)))
         assertFalse(probe.hasActivity)
         assertNull(probe.transactionCount)

@@ -1,3 +1,6 @@
+// Fixtures contain long real addresses and JSON payloads.
+@file:Suppress("ktlint:standard:max-line-length")
+
 package com.altaran.watchwallet.chain.sui
 
 import com.altaran.watchwallet.core.network.createHttpClient
@@ -54,29 +57,58 @@ class SuiTest {
     private val engine = MockEngine { request ->
         val body = request.body.toByteArray().decodeToString()
         val result = when {
-            "suix_getAllBalances" in body -> """[{"coinType":"0x2::sui::SUI","coinObjectCount":2,"totalBalance":"3500000000","lockedBalance":{}},
+            "suix_getAllBalances" in body -> {
+                """[{"coinType":"0x2::sui::SUI","coinObjectCount":2,"totalBalance":"3500000000","lockedBalance":{}},
                 {"coinType":"$usdc","coinObjectCount":1,"totalBalance":"5000000","lockedBalance":{}},
                 {"coinType":"0xbad::spam::SPAM","coinObjectCount":1,"totalBalance":"100","lockedBalance":{}}]"""
-            "suix_getCoinMetadata" in body && "usdc" in body -> """{"decimals":6,"name":"USDC","symbol":"USDC","description":"USDC","iconUrl":null,"id":"0x1"}"""
-            "suix_getCoinMetadata" in body -> "null"
-            "FromAddress" in body -> """{"data":[$sendBlock],"nextCursor":"D2","hasNextPage":false}"""
-            "ToAddress" in body -> """{"data":[$sendBlock,$receiveBlock],"nextCursor":"D1","hasNextPage":false}"""
-            else -> error("Unexpected $body")
+            }
+
+            "suix_getCoinMetadata" in body && "usdc" in body -> {
+                """{"decimals":6,"name":"USDC","symbol":"USDC","description":"USDC","iconUrl":null,"id":"0x1"}"""
+            }
+
+            "suix_getCoinMetadata" in body -> {
+                "null"
+            }
+
+            "FromAddress" in body -> {
+                """{"data":[$sendBlock],"nextCursor":"D2","hasNextPage":false}"""
+            }
+
+            "ToAddress" in body -> {
+                """{"data":[$sendBlock,$receiveBlock],"nextCursor":"D1","hasNextPage":false}"""
+            }
+
+            else -> {
+                error("Unexpected $body")
+            }
         }
-        respond("""{"jsonrpc":"2.0","id":1,"result":$result}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        respond(
+            """{"jsonrpc":"2.0","id":1,"result":$result}""",
+            HttpStatusCode.OK,
+            headersOf(HttpHeaders.ContentType, "application/json"),
+        )
     }
 
     @Test
-    fun syncUsesBalanceChanges() = runTest { withContext(Dispatchers.Default) {
-        val adapter = SuiAdapter(createHttpClient(engine = engine), "https://sui.test")
-        val result = adapter.sync(assertNotNull(SuiAddresses.parse(ours)), emptySet())
-        assertEquals(listOf("SUI", "USDC"), result.balances.map { it.asset.symbol }, "coin without metadata skipped")
-        assertEquals("3.5", result.balances[0].amount.toPlainString())
+    fun syncUsesBalanceChanges() = runTest {
+        withContext(Dispatchers.Default) {
+            val adapter = SuiAdapter(createHttpClient(engine = engine), "https://sui.test")
+            val result = adapter.sync(assertNotNull(SuiAddresses.parse(ours)), emptySet())
+            assertEquals(
+                listOf("SUI", "USDC"),
+                result.balances.map {
+                    it.asset.symbol
+                },
+                "coin without metadata skipped",
+            )
+            assertEquals("3.5", result.balances[0].amount.toPlainString())
 
-        val byKey = result.transactions.associateBy { it.hash + "/" + it.asset.symbol }
-        assertEquals(2, byKey.size, "send block merged from both queries")
-        assertEquals(-1_001_747_880L, byKey.getValue("D2/SUI").delta.longValue())
-        assertEquals(1_747_880L, byKey.getValue("D2/SUI").fee?.longValue())
-        assertEquals(5_000_000L, byKey.getValue("D1/USDC").delta.longValue())
-    } }
+            val byKey = result.transactions.associateBy { it.hash + "/" + it.asset.symbol }
+            assertEquals(2, byKey.size, "send block merged from both queries")
+            assertEquals(-1_001_747_880L, byKey.getValue("D2/SUI").delta.longValue())
+            assertEquals(1_747_880L, byKey.getValue("D2/SUI").fee?.longValue())
+            assertEquals(5_000_000L, byKey.getValue("D1/USDC").delta.longValue())
+        }
+    }
 }

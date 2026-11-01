@@ -1,3 +1,6 @@
+// Fixtures contain long real addresses and JSON payloads.
+@file:Suppress("ktlint:standard:max-line-length")
+
 package com.altaran.watchwallet.chain.dogecoin
 
 import com.altaran.watchwallet.chain.common.Base58Checks
@@ -22,7 +25,10 @@ import kotlin.test.assertTrue
 class DogecoinTest {
     /** Account key of the public BIP39 test mnemonic ("abandon … about"), never a real wallet. */
     private fun testAccountKey(version: Int): String {
-        val seed = MnemonicCode.toSeed("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", "")
+        val seed = MnemonicCode.toSeed(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+            "",
+        )
         return DeterministicWallet.generate(seed).derivePrivateKey("m/44'/3'/0'").extendedPublicKey.encode(version)
     }
 
@@ -50,7 +56,10 @@ class DogecoinTest {
         // The same account exported as xpub gives the same addresses.
         val fromXpub = assertNotNull(DogecoinAddresses.parseExtendedKey(testAccountKey(DeterministicWallet.xpub)))
         assertEquals(target.key, fromXpub.key)
-        assertNull(DogecoinAddresses.parseExtendedKey(testAccountKey(DeterministicWallet.zpub)), "no SegWit on Dogecoin")
+        assertNull(
+            DogecoinAddresses.parseExtendedKey(testAccountKey(DeterministicWallet.zpub)),
+            "no SegWit on Dogecoin",
+        )
     }
 
     @Test
@@ -68,12 +77,24 @@ class DogecoinTest {
         val probe = adapter.probe(target)
         assertFalse(probe.hasActivity)
         assertEquals(3, engine.requestHistory.size)
-        assertTrue(engine.requestHistory.first().url.encodedPath.endsWith("/api/v2/address/DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC"))
+        assertTrue(
+            engine.requestHistory.first().url.encodedPath.endsWith(
+                "/api/v2/address/DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC",
+            ),
+        )
     }
 
     @Test
     fun singleAddressTarget() {
         val target = assertNotNull(DogecoinAddresses.parse("DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC"))
-        assertEquals(WatchTarget.Address(target.family, DogecoinChain.ID, "DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC", ScriptType.P2PKH), target)
+        assertEquals(
+            WatchTarget.Address(
+                target.family,
+                DogecoinChain.ID,
+                "DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC",
+                ScriptType.P2PKH,
+            ),
+            target,
+        )
     }
 }
