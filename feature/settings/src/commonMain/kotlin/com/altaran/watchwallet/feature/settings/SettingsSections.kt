@@ -88,11 +88,14 @@ internal fun AdvancedSettingsSections(
         checked = network.proxyEnabled,
         onCheckedChange = { enabled -> onNetworkChange(network.copy(proxyEnabled = enabled)) },
     )
-    SettingsItem(
-        title = stringResource(Res.string.settings_proxy_address),
-        summary = "${network.proxyHost}:${network.proxyPort}",
-        onClick = { dialog = NetworkDialog.PROXY },
-    )
+    // The address only matters while the proxy is on.
+    if (network.proxyEnabled) {
+        SettingsItem(
+            title = stringResource(Res.string.settings_proxy_address),
+            summary = "${network.proxyHost}:${network.proxyPort}",
+            onClick = { dialog = NetworkDialog.PROXY },
+        )
+    }
     SettingsItem(
         title = stringResource(Res.string.settings_esplora),
         summary = network.esploraUrl ?: stringResource(Res.string.settings_default_server),

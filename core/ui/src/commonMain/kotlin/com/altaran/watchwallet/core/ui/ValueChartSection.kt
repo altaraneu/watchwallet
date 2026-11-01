@@ -271,7 +271,9 @@ private fun headerValues(points: List<ChartPoint>?, inRange: List<ChartPoint>?, 
     val (from, to) = visible
     val first = points.firstOrNull { it.timeMillis >= from } ?: points.first()
     val last = points.lastOrNull { it.timeMillis <= to } ?: points.last()
-    val panned = last.timeMillis < points.last().timeMillis
+    // The window edge maps to a bar index with rounding; only a real pan back (more than one point
+    // before the end) counts as "panned".
+    val panned = points.indexOf(last) < points.lastIndex - 1
     return if (panned) {
         HeaderValues(first.value, last.value, last.timeMillis, true)
     } else {

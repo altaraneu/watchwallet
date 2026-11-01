@@ -243,6 +243,9 @@ object KnownAssets {
 
     private fun entry(priceId: String): Entry? = coins[priceId] ?: tokens[priceId]?.let { coins[it] }
 
+    /** CoinGecko coin id for a price id: itself for coins, the mapped coin for known tokens. */
+    fun coinIdOf(priceId: String): String? = if (priceId.startsWith("token:")) tokens[priceId] else priceId
+
     /** Exchange base symbol (BTC, ETH…) or `null` when no exchange lists the asset. */
     fun symbolOf(priceId: String): String? = entry(priceId)?.symbol
 

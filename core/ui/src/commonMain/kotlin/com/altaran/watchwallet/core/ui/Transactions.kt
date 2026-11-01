@@ -83,6 +83,13 @@ data class TxView(
 }
 
 private val USD = QuoteCurrency.USD
+
+/** "+" / "−" (typographic minus) prefix: gains and losses are never shown by color alone. */
+private fun signed(amount: Double): String = when {
+    amount > 0 -> "+"
+    amount < 0 -> "−"
+    else -> ""
+}
 private const val MAX_PRICE_CHARS = 14
 
 @Composable
@@ -113,14 +120,9 @@ fun TransactionRow(tx: TxView, onClick: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        val sign = when {
-            tx.amount > 0 -> "+"
-            tx.amount < 0 -> "−"
-            else -> ""
-        }
         Column(horizontalAlignment = Alignment.End) {
             AmountText(
-                sign + MoneyFormatter.formatCrypto(abs(tx.amount), tx.symbol),
+                signed(tx.amount) + MoneyFormatter.formatCrypto(abs(tx.amount), tx.symbol),
                 style = MaterialTheme.typography.titleSmall,
                 color = if (tx.amount > 0) colors.positive else MaterialTheme.colorScheme.onSurface,
             )
@@ -145,7 +147,7 @@ fun TransactionSheet(tx: TxView, onEditCost: () -> Unit, onOpenExplorer: (String
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(directionLabel(tx.direction), style = MaterialTheme.typography.titleLarge)
-            AmountText(MoneyFormatter.formatCrypto(tx.amount, tx.symbol), style = MaterialTheme.typography.headlineSmall)
+            AmountText(signed(tx.amount) + MoneyFormatter.formatCrypto(abs(tx.amount), tx.symbol), style = MaterialTheme.typography.headlineSmall)
             Text(
                 listOfNotNull(DateFormatter.dateTime(tx.time), tx.walletName, tx.chainName).joinToString(" · "),
                 style = MaterialTheme.typography.bodyMedium,

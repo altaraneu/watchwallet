@@ -86,8 +86,10 @@ internal class MarketsViewModel(
     private suspend fun load(): MarketsUiState {
         val currency = settingsRepository.settings.first().quoteCurrency
         val holdings = portfolioRepository.snapshot(currency).first().holdings
-        val held = holdings.mapNotNull { it.priceId }.filterNot { it.startsWith("token:") }
-        val ids = (held + priceRepository.trackedPriceIds().filterNot { it.startsWith("token:") }).distinct()
+        // Known tokens (SHIB on Ethereum…) are listed as their coin; unknown tokens have no market row.
+        val coinOf = com.altaran.watchwallet.core.pricing.KnownAssets::coinIdOf
+        val held = holdings.mapNotNull { h -> h.priceId?.let(coinOf) }.distinct()
+        val ids = (held + priceRepository.trackedPriceIds().mapNotNull(coinOf)).distinct()
         val result = priceRepository.markets(currency, ids)
         val rows = result.getOrNull().orEmpty().sortedBy { row -> held.indexOf(row.priceId).let { if (it < 0) Int.MAX_VALUE else it } }
         return MarketsUiState(
@@ -233,7 +235,9 @@ internal class AssetDetailViewModel(
                     val amount = rows.sumOf { it.amount.toDouble() }
                     WalletShare(walletId, names[walletId] ?: "?", amount, h.price?.let { it * amount })
                 }.sortedByDescending { it.amount }
-                val activity = txs.filter { it.assetId in ids }.sortedByDescending { it.timestamp }.take(MAX_ACTIVITY).map { tx ->
+                val relevantTxs = txs.filter { it.assetId in ids }
+                val manyChains = relevantTxs.map { it.chainId }.distinct().size > 1
+                val activity = relevantTxs.sortedByDescending { it.timestamp }.take(MAX_ACTIVITY).map { tx ->
                     val asset = assets[tx.assetId]
                     val chain = registry.chain(tx.chainId)
                     val cost = costs[com.altaran.watchwallet.core.data.repository.CostKey(tx.walletId, tx.hash, tx.assetId.value)]
@@ -246,7 +250,7 @@ internal class AssetDetailViewModel(
                         time = tx.timestamp,
                         amount = asset?.let { com.altaran.watchwallet.core.model.TokenAmount(tx.delta, it.decimals).toDouble() } ?: 0.0,
                         symbol = asset?.symbol ?: h.symbol,
-                        chainName = chain?.name,
+                        chainName = chain?.name?.takeIf { manyChains },
                         walletName = names[tx.walletId].takeIf { wallets.size > 1 },
                         costUsd = cost?.valueUsd,
                         costUserSet = cost?.userSet == true,

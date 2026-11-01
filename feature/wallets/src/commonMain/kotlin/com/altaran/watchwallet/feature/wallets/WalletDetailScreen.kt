@@ -401,7 +401,8 @@ private fun WalletTransaction.toView(state: WalletDetailUiState, chain: Chain?):
         time = timestamp,
         amount = asset?.let { TokenAmount(delta, it.decimals).toDouble() } ?: 0.0,
         symbol = asset?.symbol ?: "?",
-        chainName = chain?.name,
+        // Only multi-network wallets (EVM) need the network on each row.
+        chainName = chain?.name?.takeIf { state.wallet?.activeChains.orEmpty().size > 1 },
         walletName = null,
         costUsd = cost?.valueUsd,
         costUserSet = cost?.userSet == true,

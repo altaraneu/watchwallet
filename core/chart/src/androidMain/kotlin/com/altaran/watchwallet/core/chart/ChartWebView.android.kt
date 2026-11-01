@@ -108,8 +108,25 @@ internal actual fun ChartWebView(
                 }
                 // The chart owns horizontal pan and pinch gestures; the list can still be scrolled
                 // by dragging outside the chart.
+                // Horizontal drags pan the chart; vertical ones scroll the page. The decision is made
+                // once the finger has moved past the touch slop.
+                val slop = android.view.ViewConfiguration.get(context).scaledTouchSlop
+                var downX = 0f
+                var downY = 0f
                 setOnTouchListener { view, event ->
-                    if (event.actionMasked == MotionEvent.ACTION_DOWN) view.parent?.requestDisallowInterceptTouchEvent(true)
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            downX = event.x
+                            downY = event.y
+                            view.parent?.requestDisallowInterceptTouchEvent(true)
+                        }
+
+                        MotionEvent.ACTION_MOVE -> {
+                            val dx = kotlin.math.abs(event.x - downX)
+                            val dy = kotlin.math.abs(event.y - downY)
+                            if (dy > slop && dy > dx && event.pointerCount == 1) view.parent?.requestDisallowInterceptTouchEvent(false)
+                        }
+                    }
                     false
                 }
                 loadDataWithBaseURL(null, html, "text/html", "utf-8", null)

@@ -33,7 +33,7 @@
     <string name="settings_charts_attribution_summary">TradingView Lightweight Charts™, Copyright © 2025 TradingView, Inc.</string>
     <string name="settings_section_developer">Developer</string>
     <string name="settings_demo_wallets">Add demo wallets</string>
-    <string name="settings_demo_wallets_summary">Public wallets for two people (Alice and Bob), for testing</string>
+    <string name="settings_demo_wallets_summary">Public wallets of several people and chains, for testing</string>
     <string name="settings_app_lock">App lock</string>
     <string name="settings_app_lock_summary">Require fingerprint, face or screen lock to open the app</string>
     <string name="settings_secure_screen">Block screenshots</string>
