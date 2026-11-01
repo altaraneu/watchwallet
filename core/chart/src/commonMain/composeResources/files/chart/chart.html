@@ -57,7 +57,9 @@
       },
       grid: { vertLines: { color: o.colors.grid }, horzLines: { color: o.colors.grid } },
       rightPriceScale: { borderVisible: false, visible: !o.hideValues, mode: o.logScale ? 1 : 0, scaleMargins: { top: 0.12, bottom: 0.08 } },
-      timeScale: { borderVisible: false, timeVisible: o.intraday, secondsVisible: false, rightOffset: 4, minBarSpacing: 0.5, maxBarSpacing: 10,
+      timeScale: { borderVisible: false, timeVisible: o.intraday, secondsVisible: false, rightOffset: 0, minBarSpacing: 0.5, maxBarSpacing: 10,
+        // Panning stops at the first and the latest bar: no empty space before or after the data.
+        fixLeftEdge: true, fixRightEdge: true, lockVisibleTimeRangeOnResize: true,
         tickMarkFormatter: function (t, type) { return tickLabel(t, type, o.locale); } },
       crosshair: { mode: 0, vertLine: { labelBackgroundColor: o.colors.accent }, horzLine: { visible: !o.hideValues, labelVisible: !o.hideValues, labelBackgroundColor: o.colors.accent } },
       localization: { locale: o.locale, priceFormatter: formatter, timeFormatter: function (t) { return crosshairLabel(t, o); } },
@@ -85,6 +87,15 @@
       var from = series.dataByIndex(Math.max(0, Math.ceil(range.from)), 1);
       var to = series.dataByIndex(Math.floor(range.to), -1);
       if (from && to) post('onVisibleRange', JSON.stringify({ from: from.time, to: to.time }));
+      // A tapped (pinned) cursor stays inside the window while panning: it sticks to the edge.
+      if (pinnedTime !== null && from && to) {
+        var edge = pinnedTime < from.time ? from : (pinnedTime > to.time ? to : null);
+        if (edge) {
+          pinnedTime = edge.time;
+          chart.setCrosshairPosition(edge.close !== undefined ? edge.close : edge.value, edge.time, series);
+          postBar(edge.time, edge);
+        }
+      }
     });
     chart.subscribeCrosshairMove(function (param) {
       var d = param && param.time !== undefined ? param.seriesData.get(series) : null;
@@ -158,7 +169,7 @@
     series.setData(points);
     if (!fit) return;
     if (visibleBars && points.length > visibleBars) {
-      chart.timeScale().setVisibleLogicalRange({ from: points.length - visibleBars, to: points.length + 2 });
+      chart.timeScale().setVisibleLogicalRange({ from: points.length - visibleBars, to: points.length - 1 });
     } else {
       chart.timeScale().fitContent();
     }

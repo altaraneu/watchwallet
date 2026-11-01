@@ -118,23 +118,27 @@ class PortfolioRepository(
         }
 
     /** Total value over time for the range (all wallets or a subset), downsampled for rendering. */
-    fun valueSeries(currency: QuoteCurrency, range: ChartRange, walletIds: Set<Long>? = null): Flow<List<TimedValue>> =
-        visibleBalances(currency, walletIds).flatMapLatest { (balances, prices) ->
-            val priceIds = balances.mapNotNull { it.asset.priceId }.distinct()
+    fun valueSeries(currency: QuoteCurrency, range: ChartRange, walletIds: Set<Long>? = null): Flow<List<TimedValue>> {
+        val scoped = visibleBalances(currency, walletIds)
+        // Restart only when the set of assets changes; balance and price updates (every sync and
+        // minute) just trigger a recomputation, so a long computation is never cancelled forever.
+        return scoped.map { (balances, _) -> balances.mapNotNull { it.asset.priceId }.distinct().sorted() }.distinctUntilChanged().flatMapLatest { priceIds ->
             combine(
+                scoped,
                 walletRepository.allTransactions,
                 priceRepository.history(priceIds, currency).onStart { emit(emptyMap()) },
-            ) { transactions, history ->
+            ) { (balances, prices), transactions, history ->
                 val histories = buildHistories(balances, transactions.filter { walletIds == null || it.walletId in walletIds }, history, prices)
                 val first = transactions.minOfOrNull { it.timestamp }
                 val (samples, rangeStart) = displaySamples(range, first)
                 displayDownsample(Timeline.portfolio(histories, samples), rangeStart)
-            }
+            }.conflate()
         }.distinctUntilChanged()
             // Hundreds of samples over years of history: never compute on the main thread, and
             // skip intermediate states while prices stream in.
             .conflate()
             .flowOn(Dispatchers.Default)
+    }
 
     /**
      * Sample times for a chart of [range] that can be panned back in time: the selected range at
@@ -157,11 +161,19 @@ class PortfolioRepository(
     }
 
     /** Balance and value history of one holding (by [Holding.key]). */
-    fun holdingSeries(currency: QuoteCurrency, holdingKey: String, range: ChartRange): Flow<HoldingSeries> =
-        visibleBalances(currency, null).flatMapLatest { (balances, prices) ->
-            val rows = balances.filter { keyOf(it.asset) == holdingKey }
-            val priceIds = rows.mapNotNull { it.asset.priceId }.distinct()
-            combine(walletRepository.allTransactions, priceRepository.history(priceIds, currency).onStart { emit(emptyMap()) }) { txs, history ->
+    fun holdingSeries(currency: QuoteCurrency, holdingKey: String, range: ChartRange): Flow<HoldingSeries> {
+        val scoped = visibleBalances(currency, null)
+        return scoped.map { (balances, _) ->
+            balances.filter { keyOf(it.asset) == holdingKey }.mapNotNull { it.asset.priceId }.distinct().sorted()
+        }.distinctUntilChanged().flatMapLatest { priceIds ->
+            combine(
+                scoped,
+                walletRepository.allTransactions,
+                priceRepository.history(priceIds, currency).onStart {
+                    emit(emptyMap())
+                },
+            ) { (balances, prices), txs, history ->
+                val rows = balances.filter { keyOf(it.asset) == holdingKey }
                 val histories = buildHistories(rows, txs, history, prices)
                 val (samples, rangeStart) = displaySamples(
                     range,
@@ -181,8 +193,9 @@ class PortfolioRepository(
                         }.orEmpty(),
                     ),
                 )
-            }
+            }.conflate()
         }.conflate().flowOn(Dispatchers.Default)
+    }
 
     /** Price ids needed to draw [range] for everything visible; used to trigger history fetches. */
     suspend fun ensureHistory(currency: QuoteCurrency, range: ChartRange, priceIds: Collection<String>) =

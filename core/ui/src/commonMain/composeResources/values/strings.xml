@@ -26,4 +26,6 @@
     <string name="target_cardano_wallet">whole wallet (stake key)</string>
     <!-- Under a chart while price history is still downloading. -->
     <string name="chart_loading_prices">Loading price history… the chart fills in as prices arrive.</string>
+    <!-- Next to the change above a chart that was panned back in time. -->
+    <string name="chart_visible_range">in the visible range</string>
 </resources>

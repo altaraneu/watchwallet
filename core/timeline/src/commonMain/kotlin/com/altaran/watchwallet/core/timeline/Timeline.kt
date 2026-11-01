@@ -1,11 +1,11 @@
 package com.altaran.watchwallet.core.timeline
 
 import com.altaran.watchwallet.core.model.ChartRange
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import kotlin.math.pow
 import kotlin.time.Instant
 
 /** A balance change at a point in time, in the asset's smallest unit. */
@@ -62,21 +62,24 @@ object Timeline {
 
     /** Balance (as a decimal number) of one asset at every sample time. */
     fun balances(history: AssetHistory, samples: List<Instant>): List<Double> {
+        // Doubles are exact enough for a chart and avoid allocating a decimal per sample (charts
+        // have thousands of samples over years of history).
+        val scale = 10.0.pow(history.decimals)
         val sortedDeltas = history.deltas.sortedByDescending { it.time }
-        val scale = BigDecimal.TEN.pow(history.decimals.toLong())
-        val result = ArrayList<Double>(samples.size)
-        var running = history.currentBalance
+        val deltaValues = DoubleArray(sortedDeltas.size) { sortedDeltas[it].delta.doubleValue(exactRequired = false) / scale }
+        val result = DoubleArray(samples.size)
+        var running = history.currentBalance.doubleValue(exactRequired = false) / scale
         var index = 0
         // Walk samples from newest to oldest, removing deltas that happened after each sample.
-        for (sample in samples.asReversed()) {
+        for (i in samples.indices.reversed()) {
+            val sample = samples[i]
             while (index < sortedDeltas.size && sortedDeltas[index].time > sample) {
-                running -= sortedDeltas[index].delta
+                running -= deltaValues[index]
                 index++
             }
-            val value = BigDecimal.fromBigInteger(running).divide(scale, DECIMAL_MODE).doubleValue(exactRequired = false)
-            result += value.coerceAtLeast(0.0)
+            result[i] = running.coerceAtLeast(0.0)
         }
-        return result.asReversed()
+        return result.asList()
     }
 
     /** Price at [time]: the last known price at or before it (or the first one for earlier times). */
@@ -135,10 +138,6 @@ object Timeline {
         return result
     }
 
-    private val DECIMAL_MODE = com.ionspin.kotlin.bignum.decimal.DecimalMode(
-        decimalPrecision = 40,
-        roundingMode = com.ionspin.kotlin.bignum.decimal.RoundingMode.ROUND_HALF_AWAY_FROM_ZERO,
-    )
     private val DEFAULT_ALL_SPAN = kotlin.time.Duration.parse("365d")
     private const val MAX_POINTS = 1_500L
 }

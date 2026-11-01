@@ -42,6 +42,7 @@ import com.altaran.watchwallet.core.ui.generated.resources.chart_a11y_hidden
 import com.altaran.watchwallet.core.ui.generated.resources.chart_a11y_summary
 import com.altaran.watchwallet.core.ui.generated.resources.chart_loading_prices
 import com.altaran.watchwallet.core.ui.generated.resources.chart_no_data
+import com.altaran.watchwallet.core.ui.generated.resources.chart_visible_range
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -87,21 +88,27 @@ fun ValueChartSection(
     ranges: List<ChartRange> = ChartRange.entries,
 ) {
     var crosshair by remember(points) { mutableStateOf<CrosshairValue?>(null) }
-    val shown = crosshair?.value ?: currentValue
+    // Visible window after pan/zoom (epoch ms of the first and last visible point).
+    var visible by remember(range) { mutableStateOf<Pair<Long, Long>?>(null) }
     // Points cover the whole history (for panning back); the change refers to the selected range.
     val windowStart = remember(range, points) { rangeStartMillis(range) }
     val inRange = points?.filter { windowStart == null || it.timeMillis >= windowStart }
-    val start = inRange?.firstOrNull()?.value ?: points?.firstOrNull()?.value
-    val end = crosshair?.value ?: currentValue ?: points?.lastOrNull()?.value
+    val header = headerValues(points, inRange, visible, currentValue)
+    val shown = crosshair?.value ?: header.end
+    val start = header.start
+    val end = crosshair?.value ?: header.end
 
     Column(modifier.fillMaxWidth()) {
         ValueHeader(
-            label = crosshair?.let { DateFormatter.dateTime(Instant.fromEpochSeconds(it.time)) } ?: label,
+            // Panned back: the header follows the right edge of what is visible, not today.
+            label = crosshair?.let { DateFormatter.dateTime(Instant.fromEpochSeconds(it.time)) }
+                ?: header.endTime?.let { DateFormatter.dateTime(Instant.fromEpochMilliseconds(it)) }
+                ?: label,
             value = shown?.let(format),
             change = if (start != null && end != null) end - start else null,
             changePercent = if (start != null && end != null && start > 0) (end - start) / start else null,
             formatChange = formatChange,
-            rangeText = rangeLabel(range),
+            rangeText = if (header.panned) stringResource(Res.string.chart_visible_range) else rangeLabel(range),
             secondaryLine = secondaryLine,
         )
         LoadingHint(visible = LocalPriceHistoryLoading.current && points != null)
@@ -116,6 +123,7 @@ fun ValueChartSection(
             markerTimes = markerTimes,
             chartHeight = chartHeight,
             onCrosshair = { crosshair = it },
+            onVisibleRange = { from, to -> visible = from * MILLIS to to * MILLIS },
         )
         RangeSelector(selected = range, onSelect = onRangeChange, ranges = ranges)
     }
@@ -208,6 +216,7 @@ private fun ChartBody(
     markerTimes: List<Long>,
     chartHeight: Dp,
     onCrosshair: (CrosshairValue?) -> Unit,
+    onVisibleRange: (Long, Long) -> Unit,
 ) {
     Box(Modifier.fillMaxWidth().padding(vertical = 8.dp).height(chartHeight), contentAlignment = Alignment.Center) {
         when {
@@ -238,10 +247,34 @@ private fun ChartBody(
                     markerTimes = markerTimes.map { it / 1000 },
                     lineColor = if (points.last().value >= points.first().value) colors.positive else colors.negative,
                     onCrosshair = onCrosshair,
+                    onVisibleRange = onVisibleRange,
                     contentDescription = summary,
                     visibleBars = inRange?.size?.takeIf { it in 2 until points.size } ?: 0,
                 )
             }
         }
+    }
+}
+
+private const val MILLIS = 1000L
+
+/** What the header shows without a finger on the chart. */
+private class HeaderValues(val start: Double?, val end: Double?, val endTime: Long?, val panned: Boolean)
+
+/**
+ * Start and end of the change shown above the chart. When the visible window ends before the
+ * latest point (panned back), both come from the window, so the numbers match what is drawn.
+ */
+private fun headerValues(points: List<ChartPoint>?, inRange: List<ChartPoint>?, visible: Pair<Long, Long>?, current: Double?): HeaderValues {
+    val defaultStart = inRange?.firstOrNull()?.value ?: points?.firstOrNull()?.value
+    if (points.isNullOrEmpty() || visible == null) return HeaderValues(defaultStart, current ?: points?.lastOrNull()?.value, null, false)
+    val (from, to) = visible
+    val first = points.firstOrNull { it.timeMillis >= from } ?: points.first()
+    val last = points.lastOrNull { it.timeMillis <= to } ?: points.last()
+    val panned = last.timeMillis < points.last().timeMillis
+    return if (panned) {
+        HeaderValues(first.value, last.value, last.timeMillis, true)
+    } else {
+        HeaderValues(first.value, current ?: last.value, null, false)
     }
 }
