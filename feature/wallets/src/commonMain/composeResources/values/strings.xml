@@ -38,7 +38,15 @@
     <string name="tx_cost_unknown">Set cost</string>
     <string name="cost_dialog_title">Cost basis</string>
     <string name="cost_dialog_message">What did these coins cost you, in US dollars? The automatic value uses the price on the transfer day. If you bought them earlier (for example on an exchange) and only moved them here now, enter what you paid.</string>
-    <string name="cost_dialog_label">Cost in USD</string>
+    <string name="cost_dialog_label">Total cost in USD</string>
+    <string name="cost_dialog_total">Total</string>
+    <!-- %1$s = coin symbol, e.g. "Per BTC". -->
+    <string name="cost_dialog_per_coin">Per %1$s</string>
+    <string name="cost_dialog_label_per_coin">USD per %1$s</string>
+    <!-- Under the input: the total resulting from the per-coin price. %1$s = amount in USD. -->
+    <string name="cost_dialog_total_hint">Total %1$s</string>
+    <!-- Under the input: the per-coin price resulting from the total. %1$s = price, %2$s = symbol. -->
+    <string name="cost_dialog_per_coin_hint">%1$s per %2$s</string>
     <string name="cost_dialog_save">Save</string>
     <string name="cost_dialog_reset">Use automatic</string>
     <string name="cost_dialog_cancel">Cancel</string>

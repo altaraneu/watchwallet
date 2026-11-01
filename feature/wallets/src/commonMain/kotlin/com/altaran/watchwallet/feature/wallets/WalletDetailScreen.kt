@@ -76,10 +76,15 @@ import com.altaran.watchwallet.feature.wallets.generated.resources.*
 import com.altaran.watchwallet.feature.wallets.generated.resources.Res
 import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_cancel
 import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_label
+import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_label_per_coin
 import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_message
+import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_per_coin
+import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_per_coin_hint
 import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_reset
 import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_save
 import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_title
+import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_total
+import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_total_hint
 import com.altaran.watchwallet.feature.wallets.generated.resources.tx_cost_auto
 import com.altaran.watchwallet.feature.wallets.generated.resources.tx_cost_unknown
 import com.altaran.watchwallet.feature.wallets.generated.resources.tx_cost_user
@@ -130,8 +135,11 @@ internal fun WalletDetailScreen(
 ) {
     var editingCost by remember { mutableStateOf<WalletTransaction?>(null) }
     editingCost?.let { tx ->
+        val asset = state.assets[tx.assetId]
         CostBasisDialog(
             current = state.costs[CostKey(tx.walletId, tx.hash, tx.assetId.value)],
+            amount = asset?.let { TokenAmount(tx.delta, it.decimals).toDouble() } ?: 0.0,
+            symbol = asset?.symbol ?: "?",
             onSave = { value ->
                 onSetCost(tx, value)
                 editingCost = null
@@ -384,19 +392,51 @@ private fun TransactionRow(
 
 /** Edit the USD cost of one incoming transfer, or return to the automatic value. */
 @Composable
-private fun CostBasisDialog(current: CostBasisEntry?, onSave: (Double?) -> Unit, onDismiss: () -> Unit) {
+private fun CostBasisDialog(current: CostBasisEntry?, amount: Double, symbol: String, onSave: (Double?) -> Unit, onDismiss: () -> Unit) {
+    // The cost can be entered as a total or as a price per coin (multiplied by the amount).
+    var perCoin by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf(current?.valueUsd?.let { ((it * 100).toLong() / 100.0).toString() }.orEmpty()) }
-    val value = text.replace(',', '.').replace(Char(0x00A0).toString(), "").replace(" ", "").toDoubleOrNull()
+    val entered = text.replace(',', '.').replace(Char(0x00A0).toString(), "").replace(" ", "").toDoubleOrNull()
+    val value = if (perCoin) entered?.let { it * amount } else entered
+    val usd = com.altaran.watchwallet.core.model.QuoteCurrency.USD
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(Res.string.cost_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(Res.string.cost_dialog_message), style = MaterialTheme.typography.bodyMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.material3.FilterChip(
+                        selected = !perCoin,
+                        onClick = {
+                            if (perCoin) entered?.let { text = (((it * amount) * 100).toLong() / 100.0).toString() }
+                            perCoin = false
+                        },
+                        label = { Text(stringResource(Res.string.cost_dialog_total)) },
+                    )
+                    androidx.compose.material3.FilterChip(
+                        selected = perCoin,
+                        onClick = {
+                            if (!perCoin && amount > 0) entered?.let { text = (it / amount).toString().take(MAX_PRICE_CHARS) }
+                            perCoin = true
+                        },
+                        label = { Text(stringResource(Res.string.cost_dialog_per_coin, symbol)) },
+                    )
+                }
                 androidx.compose.material3.OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
-                    label = { Text(stringResource(Res.string.cost_dialog_label)) },
+                    label = { Text(stringResource(if (perCoin) Res.string.cost_dialog_label_per_coin else Res.string.cost_dialog_label, symbol)) },
+                    supportingText = {
+                        // Show the other form, so both the total and the unit price are visible.
+                        val other = when {
+                            entered == null -> null
+                            perCoin -> stringResource(Res.string.cost_dialog_total_hint, MoneyFormatter.format(entered * amount, usd))
+                            amount > 0 -> stringResource(Res.string.cost_dialog_per_coin_hint, MoneyFormatter.formatPrice(entered / amount, usd), symbol)
+                            else -> null
+                        }
+                        other?.let { Text(it) }
+                    },
                     singleLine = true,
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
                 )
@@ -485,3 +525,5 @@ private fun explorerUrl(state: WalletDetailUiState, chain: (ChainId) -> Chain?):
     val target = state.wallet?.target as? WatchTarget.Address ?: return null
     return chain(target.chainId)?.explorerAddressUrl?.replace("{address}", target.address)
 }
+
+private const val MAX_PRICE_CHARS = 14
