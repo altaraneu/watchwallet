@@ -24,4 +24,6 @@
     <string name="chart_description">Value chart, range %1$s. Touch and drag to see values.</string>
     <!-- A Cardano stake address: covers every address of the wallet. Shown after the chain name. -->
     <string name="target_cardano_wallet">whole wallet (stake key)</string>
+    <!-- Under a chart while price history is still downloading. -->
+    <string name="chart_loading_prices">Loading price history… the chart fills in as prices arrive.</string>
 </resources>

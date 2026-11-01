@@ -12,10 +12,14 @@
     <string name="portfolio_other">Ostatní</string>
     <string name="portfolio_change_24h">%1$s (%2$s) za 24 hodin</string>
     <plurals name="portfolio_hidden_assets">
-        <item quantity="one">%1$d skrytý token (spam nebo bez ceny)</item>
-        <item quantity="few">%1$d skryté tokeny (spam nebo bez ceny)</item>
-        <item quantity="many">%1$d skrytého tokenu (spam nebo bez ceny)</item>
-        <item quantity="other">%1$d skrytých tokenů (spam nebo bez ceny)</item>
+        <item quantity="one">%1$d skrytý token (spam, bez ceny nebo skrytý vámi)</item>
+        <item quantity="few">%1$d skryté tokeny (spam, bez ceny nebo skryté vámi)</item>
+        <item quantity="many">%1$d skrytého tokenu (spam, bez ceny nebo skryté vámi)</item>
+        <item quantity="other">%1$d skrytých tokenů (spam, bez ceny nebo skryté vámi)</item>
     </plurals>
     <string name="portfolio_all_wallets">Vše</string>
+    <string name="portfolio_hide_asset">Skrýt tento token</string>
+    <string name="portfolio_show_asset">Zobrazit</string>
+    <string name="portfolio_hidden_reason_spam">%1$s · vypadá jako spam</string>
+    <string name="portfolio_hidden_reason_other">%1$s · bez ceny nebo skrytý vámi</string>
 </resources>

@@ -38,8 +38,10 @@ import com.altaran.watchwallet.core.model.NetworkSettings
 import com.altaran.watchwallet.core.network.ProxyConfig
 import com.altaran.watchwallet.core.network.createHttpClient
 import com.altaran.watchwallet.core.pricing.CoinGeckoProvider
+import com.altaran.watchwallet.core.pricing.ExchangePrices
 import com.altaran.watchwallet.core.pricing.FxRates
 import com.altaran.watchwallet.core.pricing.KrakenMarketData
+import com.altaran.watchwallet.core.pricing.LayeredPriceProvider
 import com.altaran.watchwallet.core.pricing.PriceProvider
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.first
@@ -85,7 +87,8 @@ val dataModule: Module = module {
     single { ChainRegistry(get()) }
     single<PriceProvider> {
         val key = get<NetworkSettings>().coinGeckoApiKey
-        CoinGeckoProvider(get(), apiKey = { key })
+        // Exchange data first (fast, generous limits), CoinGecko for the long tail.
+        LayeredPriceProvider(CoinGeckoProvider(get(), apiKey = { key }), ExchangePrices(get()), get())
     }
     single { KrakenMarketData(get()) }
     single { FxRates(get()) }

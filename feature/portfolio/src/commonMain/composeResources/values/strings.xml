@@ -16,8 +16,13 @@
     <!-- %1$s = signed value change, %2$s = signed percent; for example "+1 200 Kč (+2.1 %) in 24 hours" -->
     <string name="portfolio_change_24h">%1$s (%2$s) in 24 hours</string>
     <plurals name="portfolio_hidden_assets">
-        <item quantity="one">%1$d token hidden (spam or no price)</item>
-        <item quantity="other">%1$d tokens hidden (spam or no price)</item>
+        <item quantity="one">%1$d token hidden (spam, no price or hidden by you)</item>
+        <item quantity="other">%1$d tokens hidden (spam, no price or hidden by you)</item>
     </plurals>
     <string name="portfolio_all_wallets">All</string>
+    <string name="portfolio_hide_asset">Hide this token</string>
+    <string name="portfolio_show_asset">Show</string>
+    <!-- Under a hidden token. %1$s = amount with symbol. -->
+    <string name="portfolio_hidden_reason_spam">%1$s · looks like spam</string>
+    <string name="portfolio_hidden_reason_other">%1$s · no price or hidden by you</string>
 </resources>

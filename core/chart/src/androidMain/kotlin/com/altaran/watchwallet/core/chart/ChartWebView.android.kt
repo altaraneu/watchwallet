@@ -98,6 +98,7 @@ internal actual fun ChartWebView(
                 }
                 // Debuggable builds only: forward page console output (chart script errors) to logcat.
                 if (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+                    WebView.setWebContentsDebuggingEnabled(true)
                     webChromeClient = object : WebChromeClient() {
                         override fun onConsoleMessage(message: ConsoleMessage): Boolean {
                             Log.w("WatchWalletChart", "${message.messageLevel()} ${message.lineNumber()}: ${message.message()}")

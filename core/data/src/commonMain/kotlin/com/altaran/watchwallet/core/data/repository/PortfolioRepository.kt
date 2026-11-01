@@ -51,7 +51,12 @@ data class PortfolioSnapshot(
     val holdings: List<Holding>,
     val hiddenAssetCount: Int,
     val hasUnpricedAssets: Boolean,
+    /** Hidden assets (spam, no price, or hidden by the user), to review and show again. */
+    val hiddenAssets: List<HiddenAsset> = emptyList(),
 )
+
+/** An asset left out of totals; [assets] are the per-chain entries to change visibility for. */
+data class HiddenAsset(val key: String, val symbol: String, val name: String, val amount: Double, val assets: List<Asset>, val isSpam: Boolean)
 
 /**
  * Portfolio-level view: holdings, total value and value history. Pure combination of cached
@@ -87,6 +92,17 @@ class PortfolioRepository(
                 holdings = holdings,
                 hiddenAssetCount = hidden.map { it.asset.id }.distinct().size,
                 hasUnpricedAssets = holdings.any { it.price == null },
+                hiddenAssets = hidden.groupBy { it.asset.id }.map { (_, rows) ->
+                    val asset = rows.first().asset
+                    HiddenAsset(
+                        key = asset.id.value,
+                        symbol = asset.symbol,
+                        name = asset.name,
+                        amount = rows.sumOf { it.amount.toDouble() },
+                        assets = listOf(asset),
+                        isSpam = rows.first().isSpam,
+                    )
+                }.sortedBy { it.symbol.lowercase() },
             )
         }
 

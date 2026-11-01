@@ -55,6 +55,7 @@ Responses are not cached on disk by the HTTP client.
 | Service | Used for | Data sent |
 |---|---|---|
 | `api.coingecko.com` | Current prices, price history, market overview | Coin ids (for example `bitcoin`), token contract addresses (public token identifiers, not your address), selected currency |
+| `api.binance.com`, fallback `data-api.binance.vision` (public market data, no account) | Current prices and price history of well-known coins and tokens (tried before CoinGecko) | Coin symbols only (for example `BTCUSDT`) |
 | `api.kraken.com`, `ws.kraken.com` | Candlestick charts and live price updates | Trading pair (for example `BTC/EUR`) and candle interval |
 | `api.frankfurter.dev` (fallback `api.frankfurter.app`) | ECB reference exchange rates for currencies Kraken does not quote (CZK, PLN…) | Currency codes |
 

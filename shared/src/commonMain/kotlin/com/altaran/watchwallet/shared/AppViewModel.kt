@@ -32,6 +32,10 @@ class AppViewModel(
     syncEngine: SyncEngine,
     priceRepository: PriceRepository,
 ) : ViewModel() {
+    /** Chart history is downloading (shown as a hint on charts). */
+    val priceHistoryLoading: StateFlow<Boolean> =
+        priceRepository.historyLoading.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     val uiState: StateFlow<AppUiState> = settingsRepository.settings
         .onStart { settingsRepository.initializeDefaults() }
         .map<UserSettings, AppUiState> { AppUiState.Ready(it) }

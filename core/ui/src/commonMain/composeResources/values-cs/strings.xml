@@ -16,4 +16,5 @@
     <string name="chart_a11y_hidden">Graf za %1$s, částky skryté</string>
     <string name="chart_description">Graf hodnoty, rozsah %1$s. Dotkni se a táhni pro zobrazení hodnot.</string>
     <string name="target_cardano_wallet">celá peněženka (stake klíč)</string>
+    <string name="chart_loading_prices">Načítám historii cen… graf se doplní, jak ceny dorazí.</string>
 </resources>

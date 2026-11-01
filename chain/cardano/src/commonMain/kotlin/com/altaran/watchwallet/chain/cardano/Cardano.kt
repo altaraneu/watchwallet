@@ -274,7 +274,8 @@ internal fun parseCardanoTransaction(
     assets: Map<String, Asset>,
 ): List<ChainTransaction> {
     val hash = tx.str("tx_hash") ?: return emptyList()
-    val time = tx.long("block_time")?.let { Instant.fromEpochSeconds(it) } ?: Clock.System.now()
+    // Koios returns `tx_timestamp` (older responses: `block_time`).
+    val time = (tx.long("tx_timestamp") ?: tx.long("block_time"))?.let { Instant.fromEpochSeconds(it) } ?: Clock.System.now()
     fun ours(io: JsonElement) = if (stake) {
         io.str("stake_addr") == address
     } else {

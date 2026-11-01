@@ -1,6 +1,7 @@
 package com.altaran.watchwallet.feature.portfolio
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -23,17 +26,23 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.altaran.watchwallet.core.data.repository.HiddenAsset
 import com.altaran.watchwallet.core.data.repository.Holding
 import com.altaran.watchwallet.core.designsystem.chart.AllocationPalette
 import com.altaran.watchwallet.core.designsystem.chart.DonutChart
@@ -45,6 +54,8 @@ import com.altaran.watchwallet.core.designsystem.component.SectionHeader
 import com.altaran.watchwallet.core.designsystem.component.SkeletonBlock
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
+import com.altaran.watchwallet.core.model.Asset
+import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.ChartRange
 import com.altaran.watchwallet.core.model.QuoteCurrency
 import com.altaran.watchwallet.core.ui.ValueChartSection
@@ -52,6 +63,10 @@ import com.altaran.watchwallet.core.ui.chartFormatFor
 import com.altaran.watchwallet.core.ui.format.MoneyFormatter
 import com.altaran.watchwallet.feature.portfolio.generated.resources.*
 import com.altaran.watchwallet.feature.portfolio.generated.resources.Res
+import com.altaran.watchwallet.feature.portfolio.generated.resources.portfolio_hidden_reason_other
+import com.altaran.watchwallet.feature.portfolio.generated.resources.portfolio_hidden_reason_spam
+import com.altaran.watchwallet.feature.portfolio.generated.resources.portfolio_hide_asset
+import com.altaran.watchwallet.feature.portfolio.generated.resources.portfolio_show_asset
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -71,6 +86,7 @@ internal fun PortfolioRoute(
         onRefresh = viewModel::refresh,
         onOpenHolding = onOpenHolding,
         onSelectGroup = viewModel::selectGroup,
+        onSetVisibility = viewModel::setVisibility,
     )
 }
 
@@ -84,6 +100,7 @@ internal fun PortfolioScreen(
     onRefresh: () -> Unit,
     onOpenHolding: (String) -> Unit,
     onSelectGroup: (Long?) -> Unit = {},
+    onSetVisibility: (List<Asset>, Boolean) -> Unit = { _, _ -> },
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
@@ -127,7 +144,7 @@ internal fun PortfolioScreen(
                         onAction = onAddWallet,
                     )
                 } else {
-                    PortfolioContent(uiState, onRangeChange, onOpenHolding, onSelectGroup)
+                    PortfolioContent(uiState, onRangeChange, onOpenHolding, onSelectGroup, onSetVisibility)
                 }
             }
         }
@@ -140,8 +157,10 @@ private fun PortfolioContent(
     onRangeChange: (ChartRange) -> Unit,
     onOpenHolding: (String) -> Unit,
     onSelectGroup: (Long?) -> Unit,
+    onSetVisibility: (List<Asset>, Boolean) -> Unit,
 ) {
     val currency = state.quoteCurrency
+    var hiddenExpanded by rememberSaveable { mutableStateOf(false) }
     val snapshot = state.snapshot
     LazyColumn(Modifier.fillMaxSize()) {
         if (state.groups.isNotEmpty()) {
@@ -180,15 +199,24 @@ private fun PortfolioContent(
             )
         }
         item { SectionHeader(stringResource(Res.string.portfolio_assets)) }
-        items(snapshot.holdings, key = { it.key }) { holding -> HoldingRow(holding, currency, onOpenHolding) }
+        items(snapshot.holdings, key = { it.key }) { holding ->
+            HoldingRow(holding, currency, onOpenHolding, onHide = { onSetVisibility(holding.assets, false) })
+        }
         if (snapshot.hiddenAssetCount > 0) {
             item {
+                // Tap to review hidden tokens and show any of them again.
                 Text(
-                    pluralStringResource(Res.plurals.portfolio_hidden_assets, snapshot.hiddenAssetCount, snapshot.hiddenAssetCount),
+                    pluralStringResource(Res.plurals.portfolio_hidden_assets, snapshot.hiddenAssetCount, snapshot.hiddenAssetCount) +
+                        if (hiddenExpanded) " ▲" else " ▼",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.fillMaxWidth().clickable { hiddenExpanded = !hiddenExpanded }.padding(horizontal = 16.dp, vertical = 12.dp),
                 )
+            }
+            if (hiddenExpanded) {
+                items(snapshot.hiddenAssets, key = { "hidden-" + it.key }) { hidden ->
+                    HiddenAssetRow(hidden, onShow = { onSetVisibility(hidden.assets, true) })
+                }
             }
         }
         if (snapshot.holdings.count { (it.value ?: 0.0) > 0 } >= 2) {
@@ -200,7 +228,41 @@ private fun PortfolioContent(
 }
 
 @Composable
-private fun HoldingRow(holding: Holding, currency: QuoteCurrency, onOpen: (String) -> Unit) {
+private fun HoldingRow(holding: Holding, currency: QuoteCurrency, onOpen: (String) -> Unit, onHide: () -> Unit) {
+    // Native coins (BTC, ETH…) cannot be hidden; tokens can, with a long press.
+    val hideable = holding.assets.any { it.id != AssetId.native(it.chainId) }
+    var menu by remember { mutableStateOf(false) }
+    Box {
+        HoldingAssetRow(holding, currency, onOpen, onLongClick = if (hideable) ({ menu = true }) else null)
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(text = { Text(stringResource(Res.string.portfolio_hide_asset)) }, onClick = {
+                menu = false
+                onHide()
+            })
+        }
+    }
+}
+
+@Composable
+private fun HiddenAssetRow(hidden: HiddenAsset, onShow: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(hidden.symbol, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                stringResource(
+                    if (hidden.isSpam) Res.string.portfolio_hidden_reason_spam else Res.string.portfolio_hidden_reason_other,
+                    MoneyFormatter.formatCrypto(hidden.amount, hidden.symbol),
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        TextButton(onClick = onShow) { Text(stringResource(Res.string.portfolio_show_asset)) }
+    }
+}
+
+@Composable
+private fun HoldingAssetRow(holding: Holding, currency: QuoteCurrency, onOpen: (String) -> Unit, onLongClick: (() -> Unit)?) {
     AssetRow(
         iconKey = CryptoIcons.forSymbol(holding.symbol),
         symbol = holding.symbol,
@@ -209,6 +271,7 @@ private fun HoldingRow(holding: Holding, currency: QuoteCurrency, onOpen: (Strin
         change = holding.change24hPercent?.let { MoneyFormatter.formatPercentChange(it / 100) },
         changeDirection = holding.change24hPercent?.compareTo(0.0) ?: 0,
         onClick = { onOpen(holding.key) },
+        onLongClick = onLongClick,
     )
 }
 

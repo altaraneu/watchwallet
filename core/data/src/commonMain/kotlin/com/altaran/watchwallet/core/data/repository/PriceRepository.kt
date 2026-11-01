@@ -13,8 +13,11 @@ import com.altaran.watchwallet.core.pricing.MarketInfo
 import com.altaran.watchwallet.core.pricing.PriceProvider
 import com.altaran.watchwallet.core.timeline.TimedPrice
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Clock
@@ -36,6 +39,10 @@ class PriceRepository(
     private val settings: SettingsDataSource,
 ) {
     private val historyMutex = Mutex()
+    private val historyRequests = MutableStateFlow(0)
+
+    /** Chart history is being downloaded; charts show a progress hint meanwhile. */
+    val historyLoading: Flow<Boolean> = historyRequests.map { it > 0 }.distinctUntilChanged()
     private val lastHistoryFetch = mutableMapOf<String, Instant>()
 
     fun currentPrices(currency: QuoteCurrency): Flow<Map<String, CurrentPrice>> =
@@ -85,10 +92,19 @@ class PriceRepository(
         priceIds.forEach { priceId ->
             val key = "$priceId|$code|$hourly"
             if (isFresh(key, maxAge)) return@forEach
-            runCatching {
+            historyRequests.update { it + 1 }
+            try {
                 val points = provider.history(priceId, code, days)
                 priceDao.insertPoints(points.map { PricePointEntity(priceId, code, it.time.toEpochMilliseconds(), it.price) })
                 lastHistoryFetch[key] = Clock.System.now()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (
+                @Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception,
+            ) {
+                // Missing history only leaves a gap in the chart; it is retried on the next request.
+            } finally {
+                historyRequests.update { it - 1 }
             }
         }
     }

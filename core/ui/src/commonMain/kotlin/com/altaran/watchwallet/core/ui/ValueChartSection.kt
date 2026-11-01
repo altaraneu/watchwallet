@@ -11,6 +11,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,9 +40,13 @@ import com.altaran.watchwallet.core.ui.format.MoneyFormatter
 import com.altaran.watchwallet.core.ui.generated.resources.Res
 import com.altaran.watchwallet.core.ui.generated.resources.chart_a11y_hidden
 import com.altaran.watchwallet.core.ui.generated.resources.chart_a11y_summary
+import com.altaran.watchwallet.core.ui.generated.resources.chart_loading_prices
 import com.altaran.watchwallet.core.ui.generated.resources.chart_no_data
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
+
+/** Price history is downloading somewhere in the app (provided at the app root). */
+val LocalPriceHistoryLoading = compositionLocalOf { false }
 
 /** Axis/crosshair number format for values in [currency], following the app language. */
 fun chartFormatFor(currency: QuoteCurrency, maxDecimals: Int = currency.displayDecimals): ChartNumberFormat =
@@ -92,6 +97,18 @@ fun ValueChartSection(
             rangeText = rangeLabel(range),
             secondaryLine = secondaryLine,
         )
+        if (LocalPriceHistoryLoading.current && points != null) {
+            // Prices are still coming in: the chart may be incomplete (flat or jumping) for now.
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+                Text(
+                    stringResource(Res.string.chart_loading_prices),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+        }
         Box(Modifier.fillMaxWidth().padding(vertical = 8.dp).height(chartHeight), contentAlignment = Alignment.Center) {
             when {
                 points == null -> {

@@ -43,7 +43,7 @@ sealed interface PortfolioUiState {
 @OptIn(ExperimentalCoroutinesApi::class)
 class PortfolioViewModel(
     private val settingsRepository: SettingsRepository,
-    walletRepository: WalletRepository,
+    private val walletRepository: WalletRepository,
     private val portfolioRepository: PortfolioRepository,
     private val syncEngine: SyncEngine,
 ) : ViewModel() {
@@ -117,5 +117,10 @@ class PortfolioViewModel(
 
     fun refresh() {
         syncEngine.syncAll(manual = true)
+    }
+
+    /** Shows or hides assets regardless of the automatic rules (spam, no price). */
+    fun setVisibility(assets: List<com.altaran.watchwallet.core.model.Asset>, visible: Boolean) {
+        viewModelScope.launch { assets.forEach { walletRepository.setAssetVisibility(it, visible) } }
     }
 }

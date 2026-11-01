@@ -29,6 +29,7 @@ import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
 import com.altaran.watchwallet.core.designsystem.theme.WatchWalletTheme
 import com.altaran.watchwallet.core.model.ThemeMode
+import com.altaran.watchwallet.core.ui.LocalPriceHistoryLoading
 import com.altaran.watchwallet.feature.addwallet.AddWalletRoute
 import com.altaran.watchwallet.feature.addwallet.addWalletScreen
 import com.altaran.watchwallet.feature.donate.DonateRoute
@@ -74,7 +75,8 @@ fun WatchWalletApp(viewModel: AppViewModel) {
         ThemeMode.DARK -> true
     }
     WatchWalletTheme(darkTheme = darkTheme, dynamicColor = settings.useDynamicColor) {
-        CompositionLocalProvider(LocalDiscreetMode provides settings.discreetMode) {
+        val historyLoading by viewModel.priceHistoryLoading.collectAsStateWithLifecycle()
+        CompositionLocalProvider(LocalDiscreetMode provides settings.discreetMode, LocalPriceHistoryLoading provides historyLoading) {
             val navController = rememberNavController()
             AppScaffold(navController)
             val showReminder by viewModel.showDonateReminder.collectAsStateWithLifecycle()
