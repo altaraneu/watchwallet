@@ -42,6 +42,13 @@ interface ChainAdapter {
      */
     suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, continueHistory: Boolean): SyncResult =
         sync(target, knownTransactions)
+
+    /**
+     * `true` when [sync] with `continueHistory` really fetches older transactions, so a sync that
+     * reports `historyTruncated = false` means the history is complete. Adapters that ignore the
+     * flag keep a wallet marked as truncated once it was.
+     */
+    val supportsHistoryContinuation: Boolean get() = false
 }
 
 data class ProbeResult(
@@ -64,6 +71,12 @@ data class SyncResult(
     val activeChains: List<ChainId> = emptyList(),
     /** `true` when history was cut off (for example an exchange wallet with huge history). */
     val historyTruncated: Boolean = false,
+    /**
+     * Chains whose balances [balances] fully describes. `null` (the default) = the result is a
+     * complete snapshot and replaces every stored balance of the wallet. Multi-chain adapters list
+     * only the chains they could fetch, so stored balances of unreachable chains are kept.
+     */
+    val syncedChains: List<ChainId>? = null,
 )
 
 /** A transaction's net effect on the wallet for one asset. */

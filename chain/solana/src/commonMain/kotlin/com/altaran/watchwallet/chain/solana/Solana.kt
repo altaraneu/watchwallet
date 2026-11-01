@@ -8,6 +8,7 @@ import com.altaran.watchwallet.chain.api.ProbeResult
 import com.altaran.watchwallet.chain.api.SyncResult
 import com.altaran.watchwallet.chain.common.Base58Checks
 import com.altaran.watchwallet.chain.common.JsonRpcClient
+import com.altaran.watchwallet.chain.common.RpcErrorException
 import com.altaran.watchwallet.chain.common.accountTransaction
 import com.altaran.watchwallet.chain.common.amountOf
 import com.altaran.watchwallet.chain.common.arr
@@ -125,6 +126,7 @@ class SolanaAdapter(
 
     override val family = ChainFamily.SOLANA
     override val chains = listOf(SolanaChain.CHAIN)
+    override val supportsHistoryContinuation = true
 
     override suspend fun probe(target: WatchTarget): ProbeResult = chainCall("Solana") {
         val address = address(target)
@@ -184,8 +186,15 @@ class SolanaAdapter(
 
         val transactions = newSignatures.flatMap { entry ->
             val signature = entry.str("signature")!!
-            val tx = transaction(signature) ?: return@flatMap emptyList()
             val confirmed = entry.str("confirmationStatus") != "processed"
+            val tx = transaction(signature)
+            if (tx == null) {
+                // Only just processed: not stored, so the next sync sees it again. A missing
+                // confirmed transaction fails the sync; skipping it would leave a permanent gap
+                // because later syncs stop at the newer signatures stored now.
+                if (!confirmed) return@flatMap emptyList()
+                throw ChainDataException("Solana transaction $signature not available")
+            }
             parseTransaction(signature, tx, address, tokenAssets, confirmed)
         }
         SyncResult(
@@ -241,12 +250,15 @@ class SolanaAdapter(
         }
         val accounts = try {
             rpc.call("getProgramAccounts", params(SolanaChain.STAKE_PROGRAM, options)).asList
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
         } catch (
-            @Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception,
+            @Suppress("SwallowedException") e: RpcErrorException,
         ) {
-            // Some RPC providers disable getProgramAccounts: show the liquid balance anyway.
+            // Some RPC providers disable getProgramAccounts (an RPC error): show the liquid balance
+            // anyway. Transport failures propagate, so stored staked balances are not wiped.
+            return BigInteger.ZERO
+        } catch (e: io.ktor.client.plugins.ResponseException) {
+            // Some providers refuse the method with HTTP 403/410 instead.
+            if (e.response.status.value != HTTP_FORBIDDEN && e.response.status.value != HTTP_GONE) throw e
             return BigInteger.ZERO
         }
         return accounts.fold(BigInteger.ZERO) { sum, account -> sum + parseBigInteger(account.at("account").at("lamports").content) }
@@ -315,6 +327,8 @@ class SolanaAdapter(
 
     private companion object {
         const val SIGNATURE_PAGE = 100
+        const val HTTP_FORBIDDEN = 403
+        const val HTTP_GONE = 410
 
         /** Stake account layout: enum tag (4), rent reserve (8), staker (32), withdrawer (32)… */
         const val STAKE_WITHDRAWER_OFFSET = 44
@@ -334,6 +348,29 @@ internal fun splAsset(mint: String, decimals: Int): Asset {
         decimals = decimals,
         priceId = known?.coingeckoId ?: tokenPriceId(SolanaChain.COINGECKO_PLATFORM, mint),
     )
+}
+
+/**
+ * `true` when the transaction moves SOL between [owner] and one of its own stake accounts: a new
+ * stake account funded by the owner (system `createAccount`/`createAccountWithSeed` owned by the
+ * stake program) or a withdrawal from a stake account back to the owner. Such moves are not
+ * deposits or withdrawals of the portfolio (the staked SOL is still held).
+ */
+internal fun movesOwnStake(tx: JsonElement, owner: String): Boolean {
+    val instructions = tx.at("transaction", "message").arr("instructions") +
+        tx.obj("meta").arr("innerInstructions").flatMap { it.arr("instructions") }
+    return instructions.any { instruction ->
+        val type = instruction.at("parsed").str("type")
+        val info = instruction.at("parsed", "info")
+        when (instruction.str("program")) {
+            "system" -> (type == "createAccount" || type == "createAccountWithSeed") &&
+                info.str("owner") == SolanaChain.STAKE_PROGRAM && info.str("source") == owner
+
+            "stake" -> type == "withdraw" && info.str("destination") == owner && info.str("withdrawAuthority") == owner
+
+            else -> false
+        }
+    }
 }
 
 /**
@@ -361,7 +398,16 @@ internal fun parseTransaction(
         val feePayer = index == 0
         if (!delta.isZero() || feePayer) {
             val fee = if (feePayer) parseBigInteger(meta.str("fee")) else null
-            result += accountTransaction(SolanaChain.ID, signature, time, SolanaChain.SOL, delta, fee, confirmed)
+            result += accountTransaction(
+                SolanaChain.ID,
+                signature,
+                time,
+                SolanaChain.SOL,
+                delta,
+                fee,
+                confirmed,
+                isSelfTransfer = movesOwnStake(tx, owner),
+            )
         }
     }
 

@@ -3,6 +3,7 @@ package com.altaran.watchwallet.feature.markets
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.altaran.watchwallet.core.chart.Candle
+import com.altaran.watchwallet.core.common.DispatcherProvider
 import com.altaran.watchwallet.core.data.repository.CandleFeed
 import com.altaran.watchwallet.core.data.repository.Holding
 import com.altaran.watchwallet.core.data.repository.MarketDataRepository
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -160,6 +162,8 @@ internal class AssetDetailViewModel(
     private val costBasis: com.altaran.watchwallet.core.data.repository.CostBasisRepository,
     private val fx: com.altaran.watchwallet.core.pricing.FxRates,
     private val registry: com.altaran.watchwallet.core.data.chain.ChainRegistry,
+    /** Filtering and sorting of all transactions and price series runs off the main thread. */
+    private val dispatchers: DispatcherProvider = DispatcherProvider(),
 ) : ViewModel() {
     private val cost = MutableStateFlow<Triple<Double?, Boolean, Double?>>(Triple(null, true, null))
     private val extras = MutableStateFlow<Pair<List<WalletShare>, List<com.altaran.watchwallet.core.ui.TxView>>>(emptyList<WalletShare>() to emptyList())
@@ -192,6 +196,7 @@ internal class AssetDetailViewModel(
             }
             series.map<List<ChartPoint>, List<ChartPoint>?> { it }.onStart { emit(null) }
         }
+        .flowOn(dispatchers.default)
 
     private val watched = priceRepository.watchlist.map { list -> list.any { it.priceId == key } }
 
@@ -258,7 +263,7 @@ internal class AssetDetailViewModel(
                     )
                 }
                 shares to activity
-            }.collect { extras.value = it }
+            }.flowOn(dispatchers.default).collect { extras.value = it }
         }
         // Cost basis and USD value of the holding (profit/loss is shown in USD, like the costs).
         viewModelScope.launch {
@@ -266,11 +271,11 @@ internal class AssetDetailViewModel(
                 if (h == null) return@combine Triple(null, true, null)
                 val ids = h.assets.map { it.id }.toSet()
                 val relevant = txs.filter { it.assetId in ids }
-                val result = com.altaran.watchwallet.core.data.repository.CostBasisRepository.holdingCost(relevant, costs) { tx ->
+                val result = com.altaran.watchwallet.core.data.repository.CostBasisRepository.holdingCost(relevant, costs, heldAmount = h.amount) { tx ->
                     assets[tx.assetId]?.let { com.altaran.watchwallet.core.model.TokenAmount(tx.delta, it.decimals).toDouble() } ?: 0.0
                 }
                 Triple(result.costUsd.takeIf { relevant.isNotEmpty() }, result.complete, h.value)
-            }.collect { (c, complete, value) ->
+            }.flowOn(dispatchers.default).collect { (c, complete, value) ->
                 val code = settingsRepository.settings.first().quoteCurrency
                 val usd = when {
                     value == null -> null

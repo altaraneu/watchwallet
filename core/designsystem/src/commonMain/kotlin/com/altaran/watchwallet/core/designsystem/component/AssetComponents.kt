@@ -19,12 +19,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.altaran.watchwallet.core.designsystem.chart.Sparkline
 import com.altaran.watchwallet.core.designsystem.generated.resources.Res
+import com.altaran.watchwallet.core.designsystem.generated.resources.change_down
+import com.altaran.watchwallet.core.designsystem.generated.resources.change_up
 import com.altaran.watchwallet.core.designsystem.generated.resources.range_1m
 import com.altaran.watchwallet.core.designsystem.generated.resources.range_1y
 import com.altaran.watchwallet.core.designsystem.generated.resources.range_24h
@@ -60,10 +64,29 @@ fun ChangeText(
         direction < 0 -> "▼ "
         else -> ""
     }
+    // TalkBack would read the glyph as "black up-pointing triangle": describe the change instead.
+    val description = when {
+        direction > 0 -> stringResource(Res.string.change_up, formatted)
+        direction < 0 -> stringResource(Res.string.change_down, formatted)
+        else -> formatted
+    }
+    val hidden = discreetAware && LocalDiscreetMode.current
     if (discreetAware) {
-        AmountText(arrow + formatted, modifier = modifier, style = style, color = color)
+        // While hidden, AmountText provides its own "amount hidden" description.
+        AmountText(
+            arrow + formatted,
+            modifier = if (hidden) modifier else modifier.clearAndSetSemantics { contentDescription = description },
+            style = style,
+            color = color,
+        )
     } else {
-        Text(arrow + formatted, modifier = modifier, style = style.tabularNumbers(), color = color, maxLines = 1)
+        Text(
+            arrow + formatted,
+            modifier = modifier.clearAndSetSemantics { contentDescription = description },
+            style = style.tabularNumbers(),
+            color = color,
+            maxLines = 1,
+        )
     }
 }
 
@@ -84,14 +107,22 @@ fun AssetRow(
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
     iconUrl: String? = null,
+    /** Screen reader label of the long-press action, for example "Hide this token". */
+    onLongClickLabel: String? = null,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .then(
                 when {
-                    onLongClick != null -> Modifier.combinedClickable(onClick = { onClick?.invoke() }, onLongClick = onLongClick)
+                    onLongClick != null -> Modifier.combinedClickable(
+                        onClick = { onClick?.invoke() },
+                        onLongClick = onLongClick,
+                        onLongClickLabel = onLongClickLabel,
+                    )
+
                     onClick != null -> Modifier.clickable(onClick = onClick)
+
                     else -> Modifier
                 },
             )

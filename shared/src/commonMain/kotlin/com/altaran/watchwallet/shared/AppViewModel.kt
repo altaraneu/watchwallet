@@ -6,6 +6,8 @@ import com.altaran.watchwallet.core.data.repository.PriceRepository
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.model.UserSettings
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 sealed interface AppUiState {
@@ -30,7 +33,7 @@ sealed interface AppUiState {
 class AppViewModel(
     private val settingsRepository: SettingsRepository,
     syncEngine: SyncEngine,
-    priceRepository: PriceRepository,
+    private val priceRepository: PriceRepository,
 ) : ViewModel() {
     /** Chart history is downloading (shown as a hint on charts). */
     val priceHistoryLoading: StateFlow<Boolean> =
@@ -66,12 +69,25 @@ class AppViewModel(
                 .drop(1) // the initial sync already refreshes prices
                 .collect { priceRepository.refreshCurrentPrices() }
         }
-        // Keep displayed values fresh while the app is open.
-        viewModelScope.launch {
-            while (true) {
-                kotlinx.coroutines.delay(PRICE_REFRESH_MS)
-                priceRepository.refreshCurrentPrices()
+    }
+
+    private var priceRefreshJob: Job? = null
+
+    /**
+     * Keeps displayed values fresh while the app is visible: prices refresh every minute only
+     * between `onStart` and `onStop`, never in the background.
+     */
+    fun setForeground(foreground: Boolean) {
+        priceRefreshJob?.cancel()
+        priceRefreshJob = if (foreground) {
+            viewModelScope.launch {
+                while (isActive) {
+                    delay(PRICE_REFRESH_MS)
+                    priceRepository.refreshCurrentPrices()
+                }
             }
+        } else {
+            null
         }
     }
 

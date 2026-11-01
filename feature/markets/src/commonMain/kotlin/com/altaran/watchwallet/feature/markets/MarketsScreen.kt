@@ -195,7 +195,11 @@ internal fun AssetDetailScreen(
                             remoteUrl = com.altaran.watchwallet.core.data.AssetIcons.url(state.holding?.priceId ?: state.market?.priceId),
                         )
                         Spacer(Modifier.width(12.dp))
-                        Text(if (name.isNotEmpty()) "$name ($symbol)" else symbol, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(
+                            if (name.isNotEmpty()) stringResource(Res.string.asset_title, name, symbol) else symbol,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                 },
                 navigationIcon = {
@@ -260,20 +264,9 @@ internal fun AssetDetailScreen(
                     },
                     format = { if (isBalance) MoneyFormatter.formatCrypto(it, symbol) else MoneyFormatter.formatPrice(it, currency) },
                     formatChange = { value ->
-                        if (isBalance) {
-                            (
-                                if (value >=
-                                    0
-                                ) {
-                                    "+"
-                                } else {
-                                    "−"
-                                }
-                            ) + MoneyFormatter.formatCrypto(kotlin.math.abs(value), symbol)
-                        } else {
-                            MoneyFormatter.formatChange(value, currency)
-                        }
+                        if (isBalance) formatCryptoChange(value, symbol) else MoneyFormatter.formatChange(value, currency)
                     },
+                    windowKey = state.mode.name,
                 )
             }
             Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -289,9 +282,10 @@ internal fun AssetDetailScreen(
                     state.valueUsd?.let { value ->
                         val pl = value - costUsd
                         val pct = if (costUsd > 0) MoneyFormatter.formatPercentChange(pl / costUsd) else null
+                        val plText = MoneyFormatter.formatChange(pl, usd)
                         Stat(
                             stringResource(Res.string.asset_unrealized),
-                            MoneyFormatter.formatChange(pl, usd) + (pct?.let { " ($it)" } ?: ""),
+                            pct?.let { stringResource(Res.string.asset_change_with_percent, plText, it) } ?: plText,
                         )
                     }
                     if (!state.costComplete) {
@@ -390,6 +384,19 @@ private fun modeLabel(mode: AssetChartMode): String = stringResource(
     },
 )
 
+// U+2212 MINUS SIGN, like MoneyFormatter's signed changes.
+private val MINUS_SIGN = Char(0x2212)
+
+/** Signed crypto amount (`+0,5 BTC`, `−0,1 BTC`), following MoneyFormatter's sign rules. */
+private fun formatCryptoChange(value: Double, symbol: String): String {
+    val sign = when {
+        value > 0 -> "+"
+        value < 0 -> MINUS_SIGN.toString()
+        else -> ""
+    }
+    return sign + MoneyFormatter.formatCrypto(kotlin.math.abs(value), symbol)
+}
+
 private fun priceDecimals(price: Double?): Int = when {
     price == null || price >= 100 -> 2
     price >= 1 -> 4
@@ -404,17 +411,28 @@ private fun priceDecimals(price: Double?): Int = when {
  */
 @Composable
 private fun CandleSection(state: AssetDetailUiState, candles: CandleChartState.Ready, symbol: String, onIntervalChange: (CandleInterval) -> Unit) {
-    var crosshair by remember(candles.candles) { mutableStateOf<CrosshairValue?>(null) }
-    var window by remember(candles.candles) { mutableStateOf<Pair<Long, Long>?>(null) }
     val currency = state.currency
+    // Pan, zoom and the tapped candle survive data refreshes and reset with the interval (the
+    // chart page keeps them in the same way and re-reports them after each refresh).
+    val windowKey = "${state.interval.name}|${currency.code}"
+    var crosshair by remember(windowKey) { mutableStateOf<CrosshairValue?>(null) }
+    var window by remember(windowKey) { mutableStateOf<Pair<Long, Long>?>(null) }
     val all = candles.candles
     val live = candles.live
     val last = live ?: all.lastOrNull()
-    val firstVisible =
-        window?.let { (from, _) -> all.firstOrNull { it.time >= from } } ?: all.getOrNull(all.size - state.interval.visibleBars) ?: all.firstOrNull()
-    val lastVisible = window?.let { (_, to) -> (listOfNotNull(live) + all.asReversed()).firstOrNull { it.time <= to } } ?: last
+    val visibleBars = state.interval.visibleBars
+    val firstVisible = remember(all, window, visibleBars) {
+        window?.let { (from, _) -> all.firstOrNull { it.time >= from } } ?: all.getOrNull(all.size - visibleBars) ?: all.firstOrNull()
+    }
+    val lastVisible = remember(all, live, window) {
+        window?.let { (_, to) -> live?.takeIf { it.time <= to } ?: all.lastOrNull { it.time <= to } } ?: last
+    }
     val shown = crosshair?.value ?: lastVisible?.close
-    val selected = crosshair?.let { c -> (listOfNotNull(live) + all).firstOrNull { it.time == c.time } }
+    val crosshairTime = crosshair?.time
+    val selected = remember(all, live, crosshairTime) {
+        crosshairTime?.let { t -> live?.takeIf { it.time == t } ?: all.firstOrNull { it.time == t } }
+    }
+    val series = remember(all) { ChartSeries.Candles(all) }
 
     ValueHeader(
         label = crosshair?.let { DateFormatter.dateTime(Instant.fromEpochSeconds(it.time)) } ?: stringResource(Res.string.asset_live_price, symbol),
@@ -433,13 +451,14 @@ private fun CandleSection(state: AssetDetailUiState, candles: CandleChartState.R
         }
     }
     TradingChart(
-        series = ChartSeries.Candles(all),
+        series = series,
         live = live,
         format = chartFormatFor(currency, maxDecimals = priceDecimals(last?.close)),
         height = 320.dp,
         intraday = state.interval.isIntraday,
         logScale = state.logScale,
-        visibleBars = state.interval.visibleBars,
+        visibleBars = visibleBars,
+        windowKey = windowKey,
         onCrosshair = { crosshair = it },
         onVisibleRange = { from, to -> window = from to to },
         modifier = Modifier.padding(vertical = 8.dp),

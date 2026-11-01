@@ -9,6 +9,7 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class ExchangePricesTest {
@@ -31,6 +32,39 @@ class ExchangePricesTest {
         assertEquals(100_000.0, prices.getValue("BTC").priceUsd)
         assertEquals(1.0, prices.getValue("USDT").priceUsd)
         assertNull(prices["KAS"])
+    }
+
+    @Test
+    fun transientFailureDoesNotMarkSymbolsUnlisted() = runTest {
+        var fail = true
+        val engine = MockEngine { _ ->
+            if (fail) {
+                respond("""{"code":-1003,"msg":"Too many requests."}""", HttpStatusCode.Forbidden, json)
+            } else {
+                respond("""[{"symbol":"BTCUSDT","lastPrice":"100000.0","openPrice":"98000.0"}]""", HttpStatusCode.OK, json)
+            }
+        }
+        val exchange = ExchangePrices(createHttpClient(engine = engine), hosts = listOf("https://ex.test"))
+        assertFailsWith<PriceDataException> { exchange.tickers(setOf("BTC")) }
+        fail = false
+        assertEquals(100_000.0, exchange.tickers(setOf("BTC")).getValue("BTC").priceUsd)
+    }
+
+    @Test
+    fun dailyClosesAreDatedAtTheEndOfTheDay() = runTest {
+        val day = 86_400_000L
+        val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        val open = (now / day - 3) * day
+        val current = (now / day) * day
+        val engine = MockEngine { _ ->
+            respond("""[[$open,"1","2","0.5","1.5"],[$current,"1.5","2","1","1.7"]]""", HttpStatusCode.OK, json)
+        }
+        val candles = ExchangePrices(createHttpClient(engine = engine), hosts = listOf("https://ex.test"))
+            .history("BTC", hourly = false, limit = 2)
+        // The day still in progress is left out; the finished one is dated at its close.
+        assertEquals(1, candles.size)
+        assertEquals(open + day, candles.single().time.toEpochMilliseconds())
+        assertEquals(1.5, candles.single().closeUsd)
     }
 
     @Test

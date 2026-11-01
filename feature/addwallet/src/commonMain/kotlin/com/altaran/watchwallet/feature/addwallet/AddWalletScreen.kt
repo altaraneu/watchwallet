@@ -68,7 +68,6 @@ import com.altaran.watchwallet.feature.addwallet.generated.resources.Res
 import com.altaran.watchwallet.feature.addwallet.generated.resources.add_wallet_group_hint
 import com.altaran.watchwallet.feature.addwallet.generated.resources.add_wallet_group_label
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -88,6 +87,7 @@ internal fun AddWalletRoute(
         onNavigateUp = onNavigateUp,
         onInputChange = viewModel::onInputChange,
         onSubmit = viewModel::onSubmit,
+        onPaste = viewModel::onPaste,
         onSelectCandidate = viewModel::onSelectCandidate,
         onNameChange = viewModel::onNameChange,
         onSave = viewModel::onSave,
@@ -108,6 +108,11 @@ internal fun AddWalletScreen(
     onNavigateUp: () -> Unit,
     onInputChange: (String) -> Unit,
     onSubmit: (String) -> Unit,
+    /** Submits pasted text; returns `true` when it was rejected as key material. */
+    onPaste: (String) -> Boolean = {
+        onSubmit(it)
+        false
+    },
     onSelectCandidate: (Int) -> Unit,
     onAdd: (String) -> Unit = onSubmit,
     onGroupChange: (String) -> Unit = {},
@@ -190,21 +195,23 @@ internal fun AddWalletScreen(
                 onPaste = {
                     scope.launch {
                         val text = clipboard.getClipEntry()?.plainText()?.trim().orEmpty()
-                        if (text.isNotEmpty()) submit(text)
+                        if (text.isNotEmpty()) {
+                            keyboard?.hide()
+                            focusManager.clearFocus()
+                            // A seed phrase or key must not stay on the clipboard, where other
+                            // apps and keyboards can read it. The warning stays on screen.
+                            if (onPaste(text)) clipboard.setClipEntry(null)
+                        }
                     }
                 },
                 onScan = { scanning = true },
-                // Once the preview is ready the main button saves; otherwise it checks and adds.
-                primaryLabel = if (selectedPreview?.existingWalletId != null) Res.string.add_wallet_open_existing else Res.string.add_wallet_save,
-                primaryEnabled = if (selectedPreview != null) !state.saving else state.input.isNotBlank() && state.phase !is AddWalletPhase.Probing,
+                // Once the preview is ready, its own button (below the preview) saves.
+                showPrimary = selectedPreview == null,
+                primaryEnabled = state.input.isNotBlank() && state.phase !is AddWalletPhase.Probing,
                 onPrimary = {
-                    if (selectedPreview != null) {
-                        save()
-                    } else {
-                        keyboard?.hide()
-                        focusManager.clearFocus()
-                        onAdd(state.input)
-                    }
+                    keyboard?.hide()
+                    focusManager.clearFocus()
+                    onAdd(state.input)
                 },
             )
 
@@ -381,20 +388,22 @@ private fun WatchTarget.chainId(): String = when (this) {
 private fun InputActions(
     onPaste: () -> Unit,
     onScan: () -> Unit,
-    primaryLabel: StringResource,
+    showPrimary: Boolean,
     primaryEnabled: Boolean,
     onPrimary: () -> Unit,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         FilledTonalButton(onClick = onPaste) {
-            Icon(WwIcon.Copy.painter(), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+            Icon(WwIcon.Paste.painter(), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
             Spacer(Modifier.width(ButtonDefaults.IconSpacing))
             Text(stringResource(Res.string.add_wallet_paste))
         }
         if (isQrScanningSupported) {
             FilledTonalButton(onClick = onScan) { Text(stringResource(Res.string.add_wallet_scan)) }
         }
-        Button(onClick = onPrimary, enabled = primaryEnabled) { Text(stringResource(primaryLabel)) }
+        if (showPrimary) {
+            Button(onClick = onPrimary, enabled = primaryEnabled) { Text(stringResource(Res.string.add_wallet_save)) }
+        }
     }
 }
 

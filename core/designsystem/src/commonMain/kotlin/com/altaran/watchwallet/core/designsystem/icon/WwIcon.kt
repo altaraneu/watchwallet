@@ -12,6 +12,7 @@ import com.altaran.watchwallet.core.designsystem.generated.resources.ic_copy
 import com.altaran.watchwallet.core.designsystem.generated.resources.ic_favorite
 import com.altaran.watchwallet.core.designsystem.generated.resources.ic_info
 import com.altaran.watchwallet.core.designsystem.generated.resources.ic_markets
+import com.altaran.watchwallet.core.designsystem.generated.resources.ic_paste
 import com.altaran.watchwallet.core.designsystem.generated.resources.ic_portfolio
 import com.altaran.watchwallet.core.designsystem.generated.resources.ic_settings
 import com.altaran.watchwallet.core.designsystem.generated.resources.ic_visibility
@@ -31,6 +32,7 @@ enum class WwIcon(internal val resource: DrawableResource) {
     Markets(Res.drawable.ic_markets),
     Settings(Res.drawable.ic_settings),
     Copy(Res.drawable.ic_copy),
+    Paste(Res.drawable.ic_paste),
     Check(Res.drawable.ic_check),
     Visibility(Res.drawable.ic_visibility),
     VisibilityOff(Res.drawable.ic_visibility_off),

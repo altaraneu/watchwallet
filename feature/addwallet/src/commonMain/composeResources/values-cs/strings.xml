@@ -5,7 +5,6 @@
     <string name="add_wallet_intro">Vlož veřejnou adresu, rozšířený veřejný klíč (xpub, ypub, zpub) nebo output deskriptor. WatchWallet blockchain rozpozná sám.</string>
     <string name="add_wallet_input_label">Adresa, xpub nebo deskriptor</string>
     <string name="add_wallet_paste">Vložit</string>
-    <string name="add_wallet_continue">Pokračovat</string>
     <string name="add_wallet_probing">Kontroluji blockchain…</string>
     <string name="add_wallet_pick_type">Která z nich je tvoje peněženka?</string>
     <string name="add_wallet_name_label">Název (nepovinný)</string>

@@ -82,6 +82,10 @@ abstract class WalletDao {
     @Query("SELECT MIN(timestamp) FROM wallet_tx")
     abstract suspend fun earliestTransactionTime(): Long?
 
+    /** Time of the oldest stored transaction of any asset priced by [priceId] (epoch ms), or `null`. */
+    @Query("SELECT MIN(t.timestamp) FROM wallet_tx t JOIN asset a ON a.id = t.asset_id WHERE a.price_id = :priceId")
+    abstract suspend fun earliestTransactionTimeForPrice(priceId: String): Long?
+
     @Query("DELETE FROM wallet_balance")
     protected abstract suspend fun deleteAllBalances()
 
@@ -167,11 +171,23 @@ abstract class WalletDao {
     @Query("DELETE FROM wallet_balance WHERE wallet_id = :walletId")
     protected abstract suspend fun clearBalances(walletId: Long)
 
+    @Query(
+        """DELETE FROM wallet_balance WHERE wallet_id = :walletId
+           AND asset_id IN (SELECT id FROM asset WHERE chain_id IN (:chainIds))""",
+    )
+    protected abstract suspend fun clearBalancesOfChains(walletId: Long, chainIds: List<String>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     protected abstract suspend fun insertBalances(balances: List<WalletBalanceEntity>)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    protected abstract suspend fun upsertTransactions(transactions: List<WalletTxEntity>)
+    /**
+     * Stored rows win: after [clearPending] only confirmed rows remain, and a confirmed row must not
+     * be overwritten by a later partial re-fetch (for example one leg of a transaction whose legs
+     * were merged when it was first stored). Pending rows were just deleted, so a transaction that
+     * confirmed in the meantime is inserted fresh.
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    protected abstract suspend fun insertNewTransactions(transactions: List<WalletTxEntity>)
 
     @Query("DELETE FROM wallet_tx WHERE wallet_id = :walletId AND confirmed = 0")
     protected abstract suspend fun clearPending(walletId: Long)
@@ -188,6 +204,10 @@ abstract class WalletDao {
     /**
      * Writes the result of one sync atomically: either the whole snapshot is stored or nothing,
      * so the UI never sees half-updated balances.
+     *
+     * @param balanceChains chains whose balances [balances] fully describes; `null` replaces every
+     * balance of the wallet. Balances of other chains (for example an EVM network that could not
+     * be reached) are kept.
      */
     @Transaction
     open suspend fun storeSync(
@@ -199,15 +219,20 @@ abstract class WalletDao {
         activeChains: String,
         syncedAt: Long,
         truncated: Boolean,
+        balanceChains: List<String>?,
     ) {
         // Keep the user's visibility choice when metadata is refreshed.
         insertAssetsIfMissing(assets)
         assets.forEach { refreshAssetMetadata(it.id, it.symbol, it.name, it.decimals, it.priceId, it.isSpam) }
-        clearBalances(walletId)
+        if (balanceChains == null) {
+            clearBalances(walletId)
+        } else if (balanceChains.isNotEmpty()) {
+            clearBalancesOfChains(walletId, balanceChains)
+        }
         insertBalances(balances)
         // Pending transactions are re-fetched every sync; drop stale ones (replaced or confirmed).
         clearPending(walletId)
-        upsertTransactions(transactions)
+        insertNewTransactions(transactions)
         if (derived != null) {
             clearDerived(walletId)
             insertDerived(derived)

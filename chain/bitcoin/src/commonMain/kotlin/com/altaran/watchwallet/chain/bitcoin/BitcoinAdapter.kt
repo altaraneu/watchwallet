@@ -70,6 +70,7 @@ class BitcoinAdapter(
 
     override val family = ChainFamily.UTXO
     override val chains = listOf(BitcoinChain.CHAIN)
+    override val supportsHistoryContinuation = true
 
     override suspend fun probe(target: WatchTarget): ProbeResult = wrap {
         when (target) {

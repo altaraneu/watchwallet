@@ -81,6 +81,9 @@ internal actual object ExportCrypto {
     private const val IV_BYTES = 12
     private const val TAG_BITS = 128
 
+    /** Accepted iteration counts: rejects weak files and absurd values that would hang the app. */
+    private val ITERATION_RANGE = 100_000..10_000_000
+
     actual val isSupported: Boolean = true
 
     actual fun encrypt(plainText: String, password: String): String {
@@ -105,11 +108,15 @@ internal actual object ExportCrypto {
     actual fun decrypt(envelope: String, password: String): String? = runCatching {
         val json = JSONObject(envelope)
         require(json.getString("format") == FORMAT)
+        val iterations = json.getInt("iterations")
+        require(iterations in ITERATION_RANGE)
         val salt = Base64.decode(json.getString("salt"), Base64.NO_WRAP)
+        require(salt.size == SALT_BYTES)
         val iv = Base64.decode(json.getString("iv"), Base64.NO_WRAP)
+        require(iv.size == IV_BYTES)
         val data = Base64.decode(json.getString("ciphertext"), Base64.NO_WRAP)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, key(password, salt, json.getInt("iterations")), GCMParameterSpec(TAG_BITS, iv))
+        cipher.init(Cipher.DECRYPT_MODE, key(password, salt, iterations), GCMParameterSpec(TAG_BITS, iv))
         cipher.doFinal(data).decodeToString()
     }.getOrNull()
 

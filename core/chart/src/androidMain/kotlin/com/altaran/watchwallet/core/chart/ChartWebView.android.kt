@@ -72,11 +72,6 @@ internal actual fun ChartWebView(
                         fun onVisibleRange(payload: String?) {
                             parseVisibleRange(payload)?.let { (from, to) -> main.post { rangeCallback(from, to) } }
                         }
-
-                        @JavascriptInterface
-                        fun onReady(
-                            @Suppress("UNUSED_PARAMETER") payload: String?,
-                        ) = Unit
                     },
                     "WWBridge",
                 )

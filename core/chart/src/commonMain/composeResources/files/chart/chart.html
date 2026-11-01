@@ -17,8 +17,13 @@
   // Bridge between the app and TradingView Lightweight Charts. Called from Kotlin with JSON args.
   var chart = null, series = null, markersApi = null, options = null, formatter = null;
   var pinnedTime = null; // bar selected by a tap (touch screens show the crosshair only on long press)
-  // The user panned or zoomed: data refreshes keep their view instead of jumping back.
-  var userMoved = false, lastVisibleBars = null, programmaticUntil = 0;
+  // The user panned or zoomed: data refreshes keep their view instead of jumping back. Reset only
+  // when the app switches to a different window (range, interval, mode), named by windowKey.
+  var userMoved = false, lastWindowKey = null;
+  // Real user input (touch, pointer, wheel); only that may mark the view as moved by the user.
+  var pointerDown = false, lastInputAt = 0;
+  var markerTimes = [], lineColors = null, lastReapplyAt = 0;
+  var MIN_MAX_BAR_SPACING = 50, INPUT_GRACE_MS = 600;
 
   function post(name, payload) {
     try {
@@ -29,6 +34,21 @@
     } catch (e) { /* ignore */ }
   }
 
+  function markInput() { lastInputAt = Date.now(); }
+  function onDown() { pointerDown = true; markInput(); }
+  function onUp() { pointerDown = false; markInput(); }
+  document.addEventListener('pointerdown', onDown, { capture: true, passive: true });
+  document.addEventListener('touchstart', onDown, { capture: true, passive: true });
+  document.addEventListener('pointermove', function () { if (pointerDown) markInput(); }, { capture: true, passive: true });
+  document.addEventListener('touchmove', markInput, { capture: true, passive: true });
+  document.addEventListener('pointerup', onUp, { capture: true, passive: true });
+  document.addEventListener('pointercancel', onUp, { capture: true, passive: true });
+  document.addEventListener('touchend', onUp, { capture: true, passive: true });
+  document.addEventListener('touchcancel', onUp, { capture: true, passive: true });
+  document.addEventListener('wheel', markInput, { capture: true, passive: true });
+
+  function userIsInteracting() { return pointerDown || Date.now() - lastInputAt < INPUT_GRACE_MS; }
+
   function makeFormatter(o) {
     if (o.hideValues) { return function () { return '•••'; }; }
     try {
@@ -37,7 +57,7 @@
         return function (p) { return nf.format(p); };
       }
       var df = new Intl.NumberFormat(o.locale, { maximumFractionDigits: o.maxDecimals });
-      return function (p) { return df.format(p) + (o.suffix ? ' ' + o.suffix : ''); };
+      return function (p) { return df.format(p) + (o.suffix ? ' ' + o.suffix : ''); };
     } catch (e) {
       return function (p) { return String(p); };
     }
@@ -46,6 +66,9 @@
   function init(o) {
     options = o;
     if (chart) { chart.remove(); chart = null; series = null; markersApi = null; }
+    // A new chart starts with the default view and no selection; the app is told so.
+    pinnedTime = null; userMoved = false; lastWindowKey = null;
+    post('onCrosshair', JSON.stringify(null));
     formatter = makeFormatter(o);
     var LWC = LightweightCharts;
     chart = LWC.createChart(document.getElementById('chart'), {
@@ -59,7 +82,7 @@
       },
       grid: { vertLines: { color: o.colors.grid }, horzLines: { color: o.colors.grid } },
       rightPriceScale: { borderVisible: false, visible: !o.hideValues, mode: o.logScale ? 1 : 0, scaleMargins: { top: 0.12, bottom: 0.08 } },
-      timeScale: { borderVisible: false, timeVisible: o.intraday, secondsVisible: false, rightOffset: 0, minBarSpacing: 0.5, maxBarSpacing: 10,
+      timeScale: { borderVisible: false, timeVisible: o.intraday, secondsVisible: false, rightOffset: 0, minBarSpacing: 0.5, maxBarSpacing: MIN_MAX_BAR_SPACING,
         // Panning stops at the first and the latest bar: no empty space before or after the data.
         fixLeftEdge: true, fixRightEdge: true, lockVisibleTimeRangeOnResize: true,
         tickMarkFormatter: function (t, type) { return tickLabel(t, type, o.locale); } },
@@ -82,29 +105,22 @@
         crosshairMarkerRadius: 4,
         autoscaleInfoProvider: minimumRange
       });
+      applyLineColors();
     }
     // Report the visible window so the app can show the change for what the user sees.
     chart.timeScale().subscribeVisibleLogicalRangeChange(function (range) {
       if (!range || !series) return;
-      if (Date.now() > programmaticUntil) userMoved = true;
-      var from = series.dataByIndex(Math.max(0, Math.ceil(range.from)), 1);
-      var to = series.dataByIndex(Math.floor(range.to), -1);
-      if (from && to) post('onVisibleRange', JSON.stringify({ from: from.time, to: to.time }));
-      // A tapped (pinned) cursor stays inside the window while panning: it sticks to the edge.
-      if (pinnedTime !== null && from && to) {
-        var edge = pinnedTime < from.time ? from : (pinnedTime > to.time ? to : null);
-        if (edge) {
-          pinnedTime = edge.time;
-          chart.setCrosshairPosition(edge.close !== undefined ? edge.close : edge.value, edge.time, series);
-          postBar(edge.time, edge);
-        }
-      }
+      if (userIsInteracting()) userMoved = true;
+      reportVisibleRange(range);
     });
     chart.subscribeCrosshairMove(function (param) {
       var d = param && param.time !== undefined ? param.seriesData.get(series) : null;
-      if (!d || (!param.point && pinnedTime === null)) {
-        // Keep a tapped bar selected until the user taps it again or elsewhere off the data.
-        if (pinnedTime === null) post('onCrosshair', JSON.stringify(null));
+      if (!param || !param.point || !d) {
+        // Finger lifted or off the data: a tapped bar stays selected (and shown in the header)
+        // until the user taps it again or taps empty space.
+        if (pinnedTime === null) { post('onCrosshair', JSON.stringify(null)); return; }
+        if (d && param.time === pinnedTime) { postBar(pinnedTime, d); return; }
+        showPinned();
         return;
       }
       postBar(param.time, d);
@@ -114,10 +130,53 @@
       var d = param && param.time !== undefined ? param.seriesData.get(series) : null;
       if (!d || param.time === pinnedTime) { clearPin(); return; }
       pinnedTime = param.time;
-      chart.setCrosshairPosition(d.close !== undefined ? d.close : d.value, param.time, series);
+      chart.setCrosshairPosition(valueOf(d), param.time, series);
       postBar(param.time, d);
     });
-    post('onReady', '');
+  }
+
+  function reportVisibleRange(range) {
+    if (!range || !series) return;
+    var from = series.dataByIndex(Math.max(0, Math.ceil(range.from)), 1);
+    var to = series.dataByIndex(Math.floor(range.to), -1);
+    if (from && to) post('onVisibleRange', JSON.stringify({ from: from.time, to: to.time }));
+    // A tapped (pinned) cursor stays inside the window while panning: it sticks to the edge.
+    if (pinnedTime !== null && from && to) {
+      var edge = pinnedTime < from.time ? from : (pinnedTime > to.time ? to : null);
+      if (edge) {
+        pinnedTime = edge.time;
+        chart.setCrosshairPosition(valueOf(edge), edge.time, series);
+        postBar(edge.time, edge);
+      }
+    }
+  }
+
+  function valueOf(d) { return d.close !== undefined ? d.close : d.value; }
+
+  // Bar at exactly [time] (binary search over the sorted series data), or null.
+  function barAt(time) {
+    if (!series) return null;
+    var data = series.data();
+    var lo = 0, hi = data.length - 1;
+    while (lo <= hi) {
+      var mid = (lo + hi) >> 1, t = data[mid].time;
+      if (t === time) return data[mid];
+      if (t < time) lo = mid + 1; else hi = mid - 1;
+    }
+    return null;
+  }
+
+  // Shows the pinned bar again (after a long press ends or the data was replaced).
+  function showPinned() {
+    if (pinnedTime === null) return;
+    var bar = barAt(pinnedTime);
+    if (!bar) { clearPin(); return; }
+    postBar(pinnedTime, bar);
+    // setCrosshairPosition raises a crosshair event itself; never re-enter in a loop.
+    var now = Date.now();
+    if (now - lastReapplyAt < 50) return;
+    lastReapplyAt = now;
+    chart.setCrosshairPosition(valueOf(bar), pinnedTime, series);
   }
 
   // Bar times are UTC seconds; labels use the device time zone like the rest of the app.
@@ -154,8 +213,7 @@
   }
 
   function postBar(time, d) {
-    var v = d.close !== undefined ? d.close : d.value;
-    post('onCrosshair', JSON.stringify({ time: time, value: v, open: d.open, high: d.high, low: d.low }));
+    post('onCrosshair', JSON.stringify({ time: time, value: valueOf(d), open: d.open, high: d.high, low: d.low }));
   }
 
   function clearPin() {
@@ -164,36 +222,70 @@
     post('onCrosshair', JSON.stringify(null));
   }
 
+  // Few points must still fill the width when fitted (fixed edges leave no room otherwise).
+  function updateMaxBarSpacing(count) {
+    var width = document.getElementById('chart').clientWidth || window.innerWidth || 0;
+    var fill = count > 0 ? Math.ceil(width / count) + 1 : 0;
+    chart.timeScale().applyOptions({ maxBarSpacing: Math.max(MIN_MAX_BAR_SPACING, fill) });
+  }
+
   // visibleBars > 0: show only the most recent bars (the user can pan back and zoom out);
-  // otherwise fit everything.
-  function setData(points, fit, visibleBars) {
+  // otherwise fit everything. The user's pan, zoom and tapped bar survive refreshes of the same
+  // window (same windowKey) and are reset when the window changes.
+  function setData(points, fit, visibleBars, windowKey) {
     if (!series) return;
-    var sameWindow = visibleBars === lastVisibleBars;
-    var keep = userMoved && sameWindow ? chart.timeScale().getVisibleRange() : null;
-    lastVisibleBars = visibleBars;
-    if (!sameWindow) pinnedTime = null;
-    programmaticUntil = Date.now() + 300;
+    var sameWindow = windowKey === lastWindowKey;
+    lastWindowKey = windowKey;
+    if (!sameWindow) { clearPin(); userMoved = false; }
+    var keep = userMoved ? chart.timeScale().getVisibleRange() : null;
+    updateMaxBarSpacing(points.length);
     series.setData(points);
-    if (keep) { chart.timeScale().setVisibleRange(keep); return; }
-    userMoved = false;
-    if (!fit) return;
-    if (visibleBars && points.length > visibleBars) {
-      chart.timeScale().setVisibleLogicalRange({ from: points.length - visibleBars, to: points.length - 1 });
-    } else {
-      chart.timeScale().fitContent();
+    applyMarkers();
+    if (keep) {
+      chart.timeScale().setVisibleRange(keep);
+    } else if (fit) {
+      if (visibleBars && points.length > visibleBars) {
+        chart.timeScale().setVisibleLogicalRange({ from: points.length - visibleBars, to: points.length - 1 });
+      } else {
+        chart.timeScale().fitContent();
+      }
     }
+    // Keep the app in sync with what is drawn: the visible window and the tapped bar.
+    reportVisibleRange(chart.timeScale().getVisibleLogicalRange());
+    if (pinnedTime !== null) showPinned();
   }
 
   function update(point) {
     if (!series) return;
     try { series.update(point); } catch (e) { /* out-of-order update: ignore */ }
+    if (pinnedTime !== null && point.time === pinnedTime) postBar(pinnedTime, point);
   }
 
   function setMarkers(times) {
-    if (!series) return;
-    var markers = times.map(function (t) { return { time: t, position: 'belowBar', color: options.colors.marker, shape: 'circle', size: 0.6 }; });
-    if (!markersApi) { markersApi = LightweightCharts.createSeriesMarkers(series, markers); }
-    else { markersApi.setMarkers(markers); }
+    markerTimes = times || [];
+    applyMarkers();
+  }
+
+  function applyMarkers() {
+    if (!series || !options) return;
+    var markers = markerTimes.map(function (t) { return { time: t, position: 'belowBar', color: options.colors.marker, shape: 'circle', size: 0.6 }; });
+    if (!markersApi) {
+      if (markers.length === 0) return;
+      markersApi = LightweightCharts.createSeriesMarkers(series, markers);
+    } else {
+      markersApi.setMarkers(markers);
+    }
+  }
+
+  // Line and area colours of the area series (they follow the trend without recreating the chart).
+  function setLineColors(c) {
+    lineColors = c;
+    applyLineColors();
+  }
+
+  function applyLineColors() {
+    if (!series || !options || options.kind !== 'area' || !lineColors) return;
+    series.applyOptions({ lineColor: lineColors.line, topColor: lineColors.areaTop, bottomColor: lineColors.areaBottom });
   }
 </script>
 </body>

@@ -29,7 +29,7 @@ Responses are not cached on disk by the HTTP client.
 | Service | Used for | Data sent |
 |---|---|---|
 | `mempool.space/api` (Esplora), fallback `blockstream.info/api` when it fails | Bitcoin balances and history | Individual Bitcoin addresses. For an xpub, the addresses derived **on the device** are queried one by one with random timing; the xpub itself is never sent. |
-| Public JSON-RPC nodes per EVM network (`*.publicnode.com`, `mainnet.era.zksync.io`, `rpc.linea.build`, `rpc.scroll.io`, `rpc.mantle.xyz`, `rpc.gnosischain.com`, `evm.cronos.org`, `rpc.soniclabs.com`, `forno.celo.org`, `etc.rivet.link`, `rpc.hyperliquid.xyz`, `rpc.berachain.com`, `evm-rpc.sei-apis.com`, `mainnet.unichain.org`, `rpc.blast.io`) | Native balance and activity check on each EVM network | The EVM address |
+| Public JSON-RPC nodes per EVM network (`*.publicnode.com`, `mainnet.era.zksync.io`, `rpc.linea.build`, `rpc.scroll.io`, `rpc.mantle.xyz`, `rpc.gnosischain.com`, `evm.cronos.org`, `rpc.soniclabs.com`, `forno.celo.org`, `etc.etcdesktop.com`, `rpc.hyperliquid.xyz`, `rpc.berachain.com`, `evm-rpc.sei-apis.com`, `mainnet.unichain.org`, `rpc.blast.io`) | Native balance and activity check on each EVM network | The EVM address |
 | Blockscout instances (`eth.`, `base.`, `optimism.`, `arbitrum.`, `polygon.`, `gnosis.`, `zksync.`, `scroll.`, `celo.`, `etc.`, `unichain.blockscout.com`, `explorer.mantle.xyz`) | Token balances and transaction history | The EVM address |
 
 | `litecoinspace.org/api` (Esplora) | Litecoin balances and history | Individual Litecoin addresses (xpub-derived addresses one by one) |
@@ -60,8 +60,38 @@ Responses are not cached on disk by the HTTP client.
 | `api.kraken.com`, `ws.kraken.com` | Candlestick charts and live price updates | Trading pair (for example `BTC/EUR`) and candle interval |
 | `api.frankfurter.dev` (fallback `api.frankfurter.app`) | ECB reference exchange rates for currencies Kraken does not quote (CZK, PLN…) | Currency codes |
 
-Planned: configurable endpoints per chain (own Electrum/Esplora server, custom RPC) and a
-Tor/SOCKS5 proxy option for all traffic.
+### Your own server and proxy
+
+- **Custom Esplora server (Settings → Network).** You can replace the default Bitcoin Esplora
+  servers with your own (for example a self-hosted mempool or Esplora instance). The app then
+  sends the Bitcoin addresses described above to that server instead of `mempool.space` /
+  `blockstream.info`.
+- **SOCKS5 proxy (Settings → Network, Android).** All HTTP and WebSocket traffic of the app can be
+  routed through a SOCKS5 proxy, for example Orbot on `127.0.0.1:9050` for Tor. Host names are
+  resolved by the proxy, not on the device. The option is not offered on platforms whose network
+  stack cannot honour it yet.
+
+## Block explorer links
+
+Wallet and transaction screens offer links to public block explorers. They are opened **only when
+you tap them**, in your own browser, outside the app; the app itself never contacts these sites.
+The opened URL contains the address or transaction hash, so the explorer (and your browser) learns
+which address or transaction you looked at. Explorers used:
+
+- Bitcoin `mempool.space`; Litecoin `litecoinspace.org`; Dogecoin and Bitcoin Cash `blockchair.com`
+- EVM networks: `etherscan.io`, `bscscan.com`, `arbiscan.io`, `optimistic.etherscan.io`,
+  `basescan.org`, `polygonscan.com`, `snowtrace.io`, `explorer.zksync.io`, `lineascan.build`,
+  `scrollscan.com`, `explorer.mantle.xyz`, `gnosisscan.io`, `cronoscan.com`, `sonicscan.org`,
+  `celoscan.io`, `etc.blockscout.com`, `hyperevmscan.io`, `berascan.com`, `seitrace.com`,
+  `uniscan.xyz`, `blastscan.io`
+- Solana `solscan.io`; XRP `livenet.xrpl.org`; Tron `tronscan.org`; TON `tonviewer.com`;
+  Cardano `cardanoscan.io`; Cosmos chains `www.mintscan.io`; Polkadot / Kusama
+  `assethub-polkadot.subscan.io`, `assethub-kusama.subscan.io`; Stellar `stellar.expert`;
+  Sui `suiscan.xyz`; Aptos `explorer.aptoslabs.com`; NEAR `nearblocks.io`; Hedera `hashscan.io`;
+  Algorand `allo.info`; Tezos `tzkt.io`; Kaspa `explorer.kaspa.org`
+
+The About section in Settings links to `www.tradingview.com` (chart library attribution) and the
+project repository on `github.com`; these, too, open only on tap in your browser.
 
 ## Charts
 

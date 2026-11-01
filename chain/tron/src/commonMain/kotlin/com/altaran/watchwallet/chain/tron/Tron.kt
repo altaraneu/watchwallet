@@ -16,6 +16,7 @@ import com.altaran.watchwallet.chain.common.chainCall
 import com.altaran.watchwallet.chain.common.content
 import com.altaran.watchwallet.chain.common.long
 import com.altaran.watchwallet.chain.common.nativeAsset
+import com.altaran.watchwallet.chain.common.notFoundAsNull
 import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
@@ -213,7 +214,8 @@ class TronAdapter(
     }
 
     private suspend fun trc10Asset(id: String): Asset? {
-        val info = runCatching { get("$base/wallet/getassetissuebyid?value=$id") }.getOrNull() ?: return null
+        // A failed lookup fails the sync (stored balances are kept) instead of dropping the token.
+        val info = notFoundAsNull { get("$base/wallet/getassetissuebyid?value=$id") } ?: return null
         val precision = info.str("precision")?.toIntOrNull() ?: 0
         val name = info.str("name")?.let { hexText(it) }
         val symbol = info.str("abbr")?.let { hexText(it) } ?: name

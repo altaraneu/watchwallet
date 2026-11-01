@@ -7,7 +7,13 @@
     <string name="import_choose_file">Vybrat soubor</string>
     <string name="import_preview">Zkontrolovat</string>
     <string name="import_group">Přidat do skupiny (nepovinné)</string>
-    <string name="import_action">Importovat %1$d peněženek</string>
+    <plurals name="import_action">
+        <item quantity="one">Importovat %1$d peněženku</item>
+        <item quantity="few">Importovat %1$d peněženky</item>
+        <item quantity="many">Importovat %1$d peněženky</item>
+        <item quantity="other">Importovat %1$d peněženek</item>
+    </plurals>
+    <string name="import_row_target_group">%1$s · %2$s</string>
     <string name="import_status_tracked">Už sledováno, přeskočí se</string>
     <string name="import_status_duplicate">Duplicita v tomto seznamu</string>
     <string name="import_status_unsupported">%1$s zatím není podporován</string>

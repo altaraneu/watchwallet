@@ -1,6 +1,5 @@
 package com.altaran.watchwallet.feature.wallets
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,65 +35,40 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.altaran.watchwallet.core.data.repository.CostBasisEntry
 import com.altaran.watchwallet.core.data.repository.CostKey
 import com.altaran.watchwallet.core.data.repository.Holding
-import com.altaran.watchwallet.core.designsystem.component.AmountText
 import com.altaran.watchwallet.core.designsystem.component.AssetRow
 import com.altaran.watchwallet.core.designsystem.component.ChainBadge
 import com.altaran.watchwallet.core.designsystem.component.CryptoIcons
 import com.altaran.watchwallet.core.designsystem.component.EmptyState
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
-import com.altaran.watchwallet.core.designsystem.theme.WatchWalletTheme
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.TokenAmount
-import com.altaran.watchwallet.core.model.TxDirection
 import com.altaran.watchwallet.core.model.WalletTransaction
 import com.altaran.watchwallet.core.model.WatchTarget
+import com.altaran.watchwallet.core.ui.CopyButton
 import com.altaran.watchwallet.core.ui.TransactionDetails
 import com.altaran.watchwallet.core.ui.TransactionRow
 import com.altaran.watchwallet.core.ui.TxView
 import com.altaran.watchwallet.core.ui.ValueChartSection
 import com.altaran.watchwallet.core.ui.chartFormatFor
-import com.altaran.watchwallet.core.ui.clipboard.plainTextClipEntry
-import com.altaran.watchwallet.core.ui.format.DateFormatter
 import com.altaran.watchwallet.core.ui.format.MoneyFormatter
 import com.altaran.watchwallet.core.ui.shortAddress
 import com.altaran.watchwallet.core.ui.targetDescription
 import com.altaran.watchwallet.feature.wallets.generated.resources.*
 import com.altaran.watchwallet.feature.wallets.generated.resources.Res
-import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_cancel
-import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_label
-import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_label_per_coin
-import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_message
-import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_per_coin
-import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_per_coin_hint
-import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_reset
-import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_save
-import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_title
-import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_total
-import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_total_hint
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_open_explorer
-import com.altaran.watchwallet.feature.wallets.generated.resources.tx_cost_auto
-import com.altaran.watchwallet.feature.wallets.generated.resources.tx_cost_unknown
-import com.altaran.watchwallet.feature.wallets.generated.resources.tx_cost_user
-import com.altaran.watchwallet.feature.wallets.generated.resources.tx_sheet_cost_auto
-import com.altaran.watchwallet.feature.wallets.generated.resources.tx_sheet_cost_user
-import com.altaran.watchwallet.feature.wallets.generated.resources.tx_sheet_edit_cost
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -140,15 +113,31 @@ internal fun WalletDetailScreen(
     onOpenHolding: (String) -> Unit,
     onSetCost: (TxView, Double?) -> Unit = { _, _ -> },
 ) {
-    var selectedTx by remember { mutableStateOf<TxView?>(null) }
+    // Only the key is saved (a TxView is not saveable); the view is rebuilt from the state.
+    var selectedTxKey by rememberSaveable { mutableStateOf<String?>(null) }
+    val selectedTx = selectedTxKey?.let { key ->
+        state.transactions.firstOrNull { it.txKey() == key }?.let { tx -> tx.toView(state, chain(tx.chainId)) }
+    }
     val sheetUriHandler = LocalUriHandler.current
-    TransactionDetails(selectedTx, onSelect = { selectedTx = it }, onSetCost = onSetCost, onOpenExplorer = { sheetUriHandler.openUri(it) })
+    TransactionDetails(
+        selectedTx,
+        onSelect = { tx -> selectedTxKey = tx?.let { txKey(it.hash, it.assetId) } },
+        onSetCost = onSetCost,
+        onOpenExplorer = { sheetUriHandler.openUri(it) },
+    )
     var menuOpen by remember { mutableStateOf(false) }
-    var renameOpen by remember { mutableStateOf(false) }
-    var deleteOpen by remember { mutableStateOf(false) }
+    var renameOpen by rememberSaveable { mutableStateOf(false) }
+    var deleteOpen by rememberSaveable { mutableStateOf(false) }
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val uriHandler = LocalUriHandler.current
     val wallet = state.wallet
+    val tabs = buildList {
+        add(DetailTab.ASSETS)
+        add(DetailTab.ACTIVITY)
+        if (wallet?.target is WatchTarget.ExtendedPublicKey) add(DetailTab.ADDRESSES)
+    }
+    // Derived, never written back during composition (the tab list can shrink while loading).
+    val selectedTab = tab.coerceIn(0, tabs.lastIndex)
 
     Scaffold(
         topBar = {
@@ -212,15 +201,9 @@ internal fun WalletDetailScreen(
                     }
                 }
                 item {
-                    val tabs = buildList {
-                        add(DetailTab.ASSETS)
-                        add(DetailTab.ACTIVITY)
-                        if (wallet?.target is WatchTarget.ExtendedPublicKey) add(DetailTab.ADDRESSES)
-                    }
-                    if (tab >= tabs.size) tab = 0
-                    PrimaryTabRow(selectedTabIndex = tab) {
+                    PrimaryTabRow(selectedTabIndex = selectedTab) {
                         tabs.forEachIndexed { index, item ->
-                            Tab(selected = tab == index, onClick = { tab = index }, text = {
+                            Tab(selected = selectedTab == index, onClick = { tab = index }, text = {
                                 Text(
                                     stringResource(
                                         when (item) {
@@ -234,12 +217,10 @@ internal fun WalletDetailScreen(
                         }
                     }
                 }
-                val tabs = listOf(DetailTab.ASSETS, DetailTab.ACTIVITY, DetailTab.ADDRESSES)
-                when (tabs.getOrNull(tab)) {
+                when (tabs[selectedTab]) {
                     DetailTab.ASSETS -> holdings(state, onOpenHolding)
-                    DetailTab.ACTIVITY -> activity(state, chain) { tx -> selectedTx = tx }
+                    DetailTab.ACTIVITY -> activity(state, chain) { tx -> selectedTxKey = txKey(tx.hash, tx.assetId) }
                     DetailTab.ADDRESSES -> addresses(state)
-                    null -> Unit
                 }
             }
         }
@@ -350,30 +331,18 @@ private fun androidx.compose.foundation.lazy.LazyListScope.addresses(state: Wall
 
 @Composable
 private fun NextAddressCard(address: String) {
-    val clipboard = LocalClipboard.current
-    val scope = rememberCoroutineScope()
-    var copied by remember { mutableStateOf(false) }
     androidx.compose.material3.OutlinedCard(Modifier.fillMaxWidth().padding(16.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(Res.string.address_next_receive), style = MaterialTheme.typography.titleSmall)
             Text(address, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = {
-                scope.launch {
-                    clipboard.setClipEntry(plainTextClipEntry(address, sensitive = true))
-                    copied = true
-                }
-            }) {
-                Icon(if (copied) WwIcon.Check.painter() else WwIcon.Copy.painter(), contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(if (copied) Res.string.address_copied else Res.string.address_copy))
-            }
+            CopyButton(text = address, sensitive = true, label = stringResource(Res.string.address_copy), tonal = false)
         }
     }
 }
 
 @Composable
 private fun RenameDialog(current: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
-    var name by remember { mutableStateOf(current) }
+    var name by rememberSaveable { mutableStateOf(current) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(Res.string.detail_rename)) },
@@ -387,6 +356,11 @@ private fun explorerUrl(state: WalletDetailUiState, chain: (ChainId) -> Chain?):
     val target = state.wallet?.target as? WatchTarget.Address ?: return null
     return chain(target.chainId)?.explorerAddressUrl?.replace("{address}", target.address)
 }
+
+/** Saveable identity of one transaction leg of this wallet. */
+private fun txKey(hash: String, assetId: String): String = "$hash|$assetId"
+
+private fun WalletTransaction.txKey(): String = txKey(hash, assetId.value)
 
 /** Display model of a transaction of this wallet (shared row/sheet in core:ui). */
 private fun WalletTransaction.toView(state: WalletDetailUiState, chain: Chain?): TxView {

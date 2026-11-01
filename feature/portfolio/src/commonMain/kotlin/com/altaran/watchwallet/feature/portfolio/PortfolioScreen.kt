@@ -40,6 +40,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.altaran.watchwallet.core.data.repository.HiddenAsset
@@ -209,13 +213,31 @@ private fun PortfolioContent(
         if (snapshot.hiddenAssetCount > 0) {
             item {
                 // Tap to review hidden tokens and show any of them again.
-                Text(
-                    pluralStringResource(Res.plurals.portfolio_hidden_assets, snapshot.hiddenAssetCount, snapshot.hiddenAssetCount) +
-                        if (hiddenExpanded) " ▲" else " ▼",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.fillMaxWidth().clickable { hiddenExpanded = !hiddenExpanded }.padding(horizontal = 16.dp, vertical = 12.dp),
+                val toggleState = stringResource(
+                    if (hiddenExpanded) Res.string.portfolio_hidden_expanded else Res.string.portfolio_hidden_collapsed,
                 )
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable(role = Role.Button) { hiddenExpanded = !hiddenExpanded }
+                        .semantics { stateDescription = toggleState }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        pluralStringResource(Res.plurals.portfolio_hidden_assets, snapshot.hiddenAssetCount, snapshot.hiddenAssetCount),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    // Decorative: the expanded state is announced through stateDescription.
+                    Text(
+                        if (hiddenExpanded) "▲" else "▼",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 4.dp).clearAndSetSemantics {},
+                    )
+                }
             }
             if (hiddenExpanded) {
                 items(snapshot.hiddenAssets, key = { "hidden-" + it.key }) { hidden ->
@@ -276,6 +298,7 @@ private fun HoldingAssetRow(holding: Holding, currency: QuoteCurrency, onOpen: (
         changeDirection = holding.change24hPercent?.compareTo(0.0) ?: 0,
         onClick = { onOpen(holding.key) },
         onLongClick = onLongClick,
+        onLongClickLabel = stringResource(Res.string.portfolio_hide_asset),
         iconUrl = com.altaran.watchwallet.core.data.AssetIcons.url(holding.priceId),
     )
 }

@@ -27,6 +27,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -139,7 +141,11 @@ private fun WalletRow(item: WalletListItem, currency: QuoteCurrency, onClick: ()
             }
         }
         if (item.syncing) {
-            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+            val syncingDescription = stringResource(Res.string.wallets_syncing)
+            CircularProgressIndicator(
+                Modifier.size(16.dp).semantics { contentDescription = syncingDescription },
+                strokeWidth = 2.dp,
+            )
             Spacer(Modifier.width(12.dp))
         }
         AmountText(item.value?.let { MoneyFormatter.format(it, currency) } ?: "—", style = MaterialTheme.typography.titleSmall)

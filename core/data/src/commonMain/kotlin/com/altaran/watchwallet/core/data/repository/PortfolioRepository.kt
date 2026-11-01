@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -71,13 +72,6 @@ class PortfolioRepository(
     private val walletRepository: WalletRepository,
     private val priceRepository: PriceRepository,
 ) {
-    /** Visible balance rows, optionally limited to some wallets. */
-    private fun visibleBalances(currency: QuoteCurrency, walletIds: Set<Long>?): Flow<Pair<List<BalanceRow>, Map<String, CurrentPrice>>> =
-        combine(walletRepository.balances, priceRepository.currentPrices(currency)) { balances, prices ->
-            val filtered = balances.filter { walletIds == null || it.walletId in walletIds }
-            filtered.filter { isVisible(it, prices) } to prices
-        }
-
     fun snapshot(currency: QuoteCurrency, walletIds: Set<Long>? = null): Flow<PortfolioSnapshot> =
         combine(walletRepository.balances, priceRepository.currentPrices(currency)) { balances, prices ->
             val scoped = balances.filter { walletIds == null || it.walletId in walletIds }
@@ -120,20 +114,18 @@ class PortfolioRepository(
 
     /** Total value over time for the range (all wallets or a subset), downsampled for rendering. */
     fun valueSeries(currency: QuoteCurrency, range: ChartRange, walletIds: Set<Long>? = null): Flow<List<TimedValue>> {
-        val scoped = visibleBalances(currency, walletIds)
+        val inputs = chartInputs(currency, walletIds)
         // Restart only when the set of assets changes; balance and price updates (every sync and
         // minute) just trigger a recomputation, so a long computation is never cancelled forever.
-        return scoped.map { (balances, _) -> balances.mapNotNull { it.asset.priceId }.distinct().sorted() }.distinctUntilChanged().flatMapLatest { priceIds ->
+        return inputs.map { it.priceIds }.distinctUntilChanged().flatMapLatest { priceIds ->
             combine(
-                scoped,
-                walletRepository.allTransactions,
+                inputs,
                 priceRepository.history(priceIds, currency).onStart { emit(emptyMap()) },
-            ) { (balances, prices), transactions, history ->
-                val histories = buildHistories(balances, transactions.filter { walletIds == null || it.walletId in walletIds }, history, prices)
-                val scopedTxs = transactions.filter { walletIds == null || it.walletId in walletIds }
-                val first = transactions.minOfOrNull { it.timestamp }
+            ) { input, history ->
+                val histories = buildHistories(input.rows, input.transactions, history, input.prices)
+                val first = input.transactions.minOfOrNull { it.timestamp }
                 val (samples, rangeStart) = displaySamples(range, first)
-                val flows = cumulativeFlows(scopedTxs, balances, history, samples)
+                val flows = cumulativeFlows(input.transactions, input.rows, history, samples)
                 val values = Timeline.portfolio(histories, samples).mapIndexed { i, point -> point.copy(flow = flows[i]) }
                 displayDownsample(values, rangeStart)
             }.conflate()
@@ -142,6 +134,44 @@ class PortfolioRepository(
             // skip intermediate states while prices stream in.
             .conflate()
             .flowOn(Dispatchers.Default)
+    }
+
+    /**
+     * Rows to chart: every visible current balance plus every (wallet, asset) that only has
+     * transactions (sold or moved away), with a current balance of zero, so past values do not
+     * vanish when an asset is no longer held. The same rows drive values and deposit flows.
+     */
+    private fun chartInputs(currency: QuoteCurrency, walletIds: Set<Long>?): Flow<ChartInputs> = combine(
+        walletRepository.balances,
+        priceRepository.currentPrices(currency),
+        walletRepository.allTransactions,
+        walletRepository.assets,
+    ) { balances, prices, transactions, assets ->
+        val scopedTxs = transactions.filter { walletIds == null || it.walletId in walletIds }
+        ChartInputs(chartRows(balances, prices, scopedTxs, assets, walletIds), scopedTxs, prices)
+    }
+
+    private fun chartRows(
+        balances: List<BalanceRow>,
+        prices: Map<String, CurrentPrice>,
+        transactions: List<WalletTransaction>,
+        assets: Map<AssetId, Asset>,
+        walletIds: Set<Long>?,
+    ): List<ChartRow> {
+        // Visibility is decided per asset (the user's choice and spam flag are asset-wide).
+        val (visible, hidden) = balances.partition { isVisible(it, prices) }
+        val visibleAssets = visible.map { it.asset.id }.toSet()
+        val hiddenAssets = hidden.map { it.asset.id }.toSet() - visibleAssets
+        val scopedBalances = balances.filter { walletIds == null || it.walletId in walletIds }
+        val held = scopedBalances.map { it.walletId to it.asset.id }.toSet()
+        val rows = scopedBalances.filter { it.asset.id in visibleAssets }.map { ChartRow(it.walletId, it.asset, it.amount.raw, it.amount.decimals) }
+        val past = transactions.map { it.walletId to it.assetId }.distinct().filter { it !in held }.mapNotNull { (walletId, assetId) ->
+            val asset = assets[assetId] ?: return@mapNotNull null
+            if (asset.priceId == null || assetId in hiddenAssets) return@mapNotNull null
+            val shown = assetId in visibleAssets || isVisibleWithoutBalance(asset, prices)
+            if (shown) ChartRow(walletId, asset, BigInteger.ZERO, asset.decimals) else null
+        }
+        return rows + past
     }
 
     /**
@@ -167,17 +197,18 @@ class PortfolioRepository(
     /**
      * Net deposits up to each sample: incoming transfers add their value at that time, outgoing
      * ones subtract it (fees excluded: they are a cost, not a withdrawal). Transfers between the
-     * user's own wallets cancel out. Only assets that are held (and charted) are counted.
+     * user's own wallets cancel out. Only charted assets are counted.
      */
     private fun cumulativeFlows(
         transactions: List<WalletTransaction>,
-        balances: List<BalanceRow>,
+        rows: List<ChartRow>,
         history: Map<String, List<TimedPrice>>,
         samples: List<kotlin.time.Instant>,
     ): DoubleArray {
-        val assets = balances.associate { it.asset.id to it.asset }
+        // Exactly the (wallet, asset) pairs that are charted, so values and flows stay consistent.
+        val assets = rows.associate { (it.walletId to it.asset.id) to it.asset }
         val events = transactions.filter { it.confirmed && it.direction != com.altaran.watchwallet.core.model.TxDirection.SELF }.mapNotNull { tx ->
-            val asset = assets[tx.assetId] ?: return@mapNotNull null
+            val asset = assets[tx.walletId to tx.assetId] ?: return@mapNotNull null
             val prices = history[asset.priceId ?: return@mapNotNull null].orEmpty()
             val price = Timeline.priceAt(prices, tx.timestamp) ?: return@mapNotNull null
             val scale = 10.0.pow(asset.decimals)
@@ -199,24 +230,23 @@ class PortfolioRepository(
 
     /** Balance and value history of one holding (by [Holding.key]). */
     fun holdingSeries(currency: QuoteCurrency, holdingKey: String, range: ChartRange): Flow<HoldingSeries> {
-        val scoped = visibleBalances(currency, null)
-        return scoped.map { (balances, _) ->
-            balances.filter { keyOf(it.asset) == holdingKey }.mapNotNull { it.asset.priceId }.distinct().sorted()
+        val inputs = chartInputs(currency, null)
+        return inputs.map { input ->
+            input.rows.filter { keyOf(it.asset) == holdingKey }.mapNotNull { it.asset.priceId }.distinct().sorted()
         }.distinctUntilChanged().flatMapLatest { priceIds ->
             combine(
-                scoped,
-                walletRepository.allTransactions,
+                inputs,
                 priceRepository.history(priceIds, currency).onStart {
                     emit(emptyMap())
                 },
-            ) { (balances, prices), txs, history ->
-                val rows = balances.filter { keyOf(it.asset) == holdingKey }
-                val histories = buildHistories(rows, txs, history, prices)
+            ) { input, history ->
+                val rows = input.rows.filter { keyOf(it.asset) == holdingKey }
+                val txs = input.transactions
+                val histories = buildHistories(rows, txs, history, input.prices)
+                val assetIds = rows.map { it.asset.id }.toSet()
                 val (samples, rangeStart) = displaySamples(
                     range,
-                    txs.filter { tx ->
-                        rows.any { it.asset.id == tx.assetId }
-                    }.minOfOrNull { it.timestamp },
+                    txs.filter { it.assetId in assetIds }.minOfOrNull { it.timestamp },
                 )
                 // Balances of each asset once (not once per sample), then summed per sample.
                 val perAsset = histories.map { Timeline.balances(it, samples) }
@@ -234,21 +264,26 @@ class PortfolioRepository(
         }.conflate().flowOn(Dispatchers.Default)
     }
 
-    /** Price ids needed to draw [range] for everything visible; used to trigger history fetches. */
-    suspend fun ensureHistory(currency: QuoteCurrency, range: ChartRange, priceIds: Collection<String>) =
-        priceRepository.ensureHistory(priceIds, currency, range)
+    /**
+     * Fetches history needed to draw [range] for [priceIds] (everything visible), then for assets
+     * that are charted although no longer held (they still shape past values).
+     */
+    suspend fun ensureHistory(currency: QuoteCurrency, range: ChartRange, priceIds: Collection<String>) {
+        val past = chartInputs(currency, null).first().priceIds.filter { it !in priceIds }
+        priceRepository.ensureHistory(priceIds.toList() + past, currency, range)
+    }
 
     private fun buildHistories(
-        balances: List<BalanceRow>,
+        rows: List<ChartRow>,
         transactions: List<WalletTransaction>,
         history: Map<String, List<TimedPrice>>,
         prices: Map<String, CurrentPrice>,
     ): List<AssetHistory> {
         val txByWalletAsset = transactions.groupBy { it.walletId to it.assetId }
-        return balances.map { row ->
+        return rows.map { row ->
             AssetHistory(
-                currentBalance = row.amount.raw,
-                decimals = row.amount.decimals,
+                currentBalance = row.balance,
+                decimals = row.decimals,
                 deltas = txByWalletAsset[row.walletId to row.asset.id].orEmpty().map { TimedDelta(it.timestamp, it.delta) },
                 prices = row.asset.priceId?.let { history[it] }.orEmpty(),
                 currentPrice = row.asset.priceId?.let { prices[it]?.price },
@@ -293,7 +328,29 @@ class PortfolioRepository(
                 row.asset.id == AssetId.native(row.asset.chainId) -> true
                 else -> row.asset.priceId?.let { prices.containsKey(it) } == true
             }
+
+        /**
+         * Visibility of an asset no longer held anywhere (no balance row carries the user's choice
+         * or spam flag): native coins, and tokens with a current price that do not look like spam.
+         */
+        fun isVisibleWithoutBalance(asset: Asset, prices: Map<String, CurrentPrice>): Boolean = when {
+            asset.id == AssetId.native(asset.chainId) -> true
+            com.altaran.watchwallet.chain.evm.SpamFilter.isSpam(asset.symbol, asset.name) -> false
+            else -> asset.priceId?.let { prices.containsKey(it) } == true
+        }
     }
+}
+
+/** One charted (wallet, asset) pair; [balance] is zero for assets that are no longer held. */
+internal data class ChartRow(val walletId: Long, val asset: Asset, val balance: BigInteger, val decimals: Int)
+
+internal class ChartInputs(
+    val rows: List<ChartRow>,
+    /** Transactions of the wallets in scope. */
+    val transactions: List<WalletTransaction>,
+    val prices: Map<String, CurrentPrice>,
+) {
+    val priceIds: List<String> = rows.mapNotNull { it.asset.priceId }.distinct().sorted()
 }
 
 data class HoldingSeries(

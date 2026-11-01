@@ -1,5 +1,7 @@
 package com.altaran.watchwallet.core.data.sync
 
+import com.altaran.watchwallet.chain.api.ChainTransaction
+import com.altaran.watchwallet.chain.api.SyncResult
 import com.altaran.watchwallet.chain.evm.SpamFilter
 import com.altaran.watchwallet.core.data.chain.ChainRegistry
 import com.altaran.watchwallet.core.data.repository.toEntity
@@ -14,6 +16,7 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.WatchTarget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +28,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import kotlin.time.Clock
 
 data class SyncState(
@@ -48,6 +52,10 @@ class SyncEngine(
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob()),
 ) {
     private val mutex = Mutex()
+
+    /** Wallet ids with a sync in flight (from [syncAll] or [syncWallet]); guarded by [inFlightLock]. */
+    private val inFlight = HashSet<Long>()
+    private val inFlightLock = Mutex()
     private val _state = MutableStateFlow(SyncState())
     val state: StateFlow<SyncState> = _state.asStateFlow()
 
@@ -58,25 +66,38 @@ class SyncEngine(
      */
     fun syncAll(manual: Boolean = false): Job = scope.launch {
         if (manual && _state.value.running) _state.update { it.copy(manual = true) }
-        if (mutex.isLocked) return@launch
-        mutex.withLock {
+        // Atomic check-and-acquire: a second request while one runs is a no-op.
+        if (!mutex.tryLock()) return@launch
+        try {
             _state.update { it.copy(running = true, manual = manual || it.manual) }
             try {
+                val wallets = walletDao.activeWallets()
+                // Errors of wallets that were deleted (or archived) are no longer relevant.
+                val ids = wallets.map { it.id }.toSet()
+                _state.update { state -> state.copy(errors = state.errors.filterKeys { it in ids }) }
                 // Wallets sync in parallel (bounded) so one large wallet does not block the others;
                 // each result is stored as soon as it is ready.
                 val gate = Semaphore(PARALLEL_WALLETS)
                 coroutineScope {
-                    walletDao.activeWallets().forEach { wallet -> launch { gate.withPermit { syncOne(wallet) } } }
+                    wallets.forEach { wallet -> launch { gate.withPermit { syncOne(wallet) } } }
                 }
                 prices.refreshCurrentPrices()
             } finally {
-                _state.update { it.copy(running = false, manual = false, syncingWallets = emptySet()) }
+                // syncingWallets is maintained by syncOne itself (a single-wallet sync may still run).
+                _state.update { it.copy(running = false, manual = false) }
             }
+        } finally {
+            mutex.unlock()
         }
     }
 
     fun syncWallet(walletId: Long): Job = scope.launch {
-        walletDao.wallet(walletId)?.let { syncOne(it) }
+        val wallet = walletDao.wallet(walletId)
+        if (wallet == null) {
+            _state.update { it.copy(errors = it.errors - walletId) }
+            return@launch
+        }
+        syncOne(wallet)
         prices.refreshCurrentPrices()
     }
 
@@ -84,15 +105,46 @@ class SyncEngine(
         const val PARALLEL_WALLETS = 3
     }
 
-    private suspend fun syncOne(wallet: WalletEntity) {
-        val target = wallet.toTarget() ?: return
+    /** Chains that could not be synced this time keep their previous activity. */
+    private fun activeChainsAfter(wallet: WalletEntity, result: SyncResult): List<String> {
+        val fresh = result.activeChains.map { it.value }
+        val synced = result.syncedChains?.map { it.value }?.toSet() ?: return fresh
+        val previous = wallet.activeChains.split(',').filter { it.isNotBlank() }
+        return (fresh + previous.filter { it !in synced }).distinct()
+    }
+
+    private fun ChainTransaction.toEntity(walletId: Long) = WalletTxEntity(
+        walletId = walletId,
+        chainId = chainId.value,
+        hash = hash,
+        assetId = asset.id.value,
+        timestamp = timestamp.toEpochMilliseconds(),
+        delta = delta.toString(),
+        fee = fee?.toString(),
+        isSelf = isSelfTransfer,
+        confirmed = confirmed,
+    )
+
+    private suspend fun syncOne(snapshot: WalletEntity) {
+        val target = snapshot.toTarget() ?: return
         val adapter = registry.adapter(target) ?: return
-        _state.update { it.copy(syncingWallets = it.syncingWallets + wallet.id) }
+        // The same wallet never syncs twice at once (syncAll and syncWallet can overlap).
+        if (!inFlightLock.withLock { inFlight.add(snapshot.id) }) return
+        _state.update { it.copy(syncingWallets = it.syncingWallets + snapshot.id) }
+        // `wallet` is re-read below; the finally block only needs the id.
+        val walletId = snapshot.id
         try {
+            // Re-read: another sync may have finished since the snapshot (truncation, active chains).
+            val wallet = walletDao.wallet(walletId)
+            if (wallet == null) {
+                _state.update { it.copy(errors = it.errors - walletId) }
+                return
+            }
             val known = walletDao.knownConfirmedHashes(wallet.id).toSet()
             val result = adapter.sync(target, known, continueHistory = wallet.historyTruncated)
             val now = Clock.System.now().toEpochMilliseconds()
 
+            val activeChains = activeChainsAfter(wallet, result)
             val assets = (result.balances.map { it.asset } + result.transactions.map { it.asset }).distinctBy { it.id }
             walletDao.storeSync(
                 walletId = wallet.id,
@@ -103,27 +155,18 @@ class SyncEngine(
                 balances = result.balances.filter { !it.amount.isZero }.map {
                     WalletBalanceEntity(wallet.id, it.asset.id.value, it.amount.raw.toString(), now)
                 },
-                transactions = result.transactions.map { tx ->
-                    WalletTxEntity(
-                        walletId = wallet.id,
-                        chainId = tx.chainId.value,
-                        hash = tx.hash,
-                        assetId = tx.asset.id.value,
-                        timestamp = tx.timestamp.toEpochMilliseconds(),
-                        delta = tx.delta.toString(),
-                        fee = tx.fee?.toString(),
-                        isSelf = tx.isSelfTransfer,
-                        confirmed = tx.confirmed,
-                    )
-                },
+                transactions = result.transactions.map { it.toEntity(wallet.id) },
                 derived = if (target is WatchTarget.ExtendedPublicKey) {
                     result.derivedAddresses.map { DerivedAddressEntity(wallet.id, it.address, it.change, it.index, it.used) }
                 } else {
                     null
                 },
-                activeChains = result.activeChains.joinToString(",") { it.value },
+                activeChains = activeChains.joinToString(","),
                 syncedAt = now,
-                truncated = result.historyTruncated,
+                // Adapters that cannot continue a cut-off history never fetch the missing part, so
+                // a wallet once truncated stays marked as such.
+                truncated = (wallet.historyTruncated && !adapter.supportsHistoryContinuation) || result.historyTruncated,
+                balanceChains = result.syncedChains?.map { it.value },
             )
             _state.update { it.copy(errors = it.errors - wallet.id) }
         } catch (e: kotlinx.coroutines.CancellationException) {
@@ -131,9 +174,10 @@ class SyncEngine(
         } catch (
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
-            _state.update { it.copy(errors = it.errors + (wallet.id to (e.message ?: e::class.simpleName.orEmpty()))) }
+            _state.update { it.copy(errors = it.errors + (walletId to (e.message ?: e::class.simpleName.orEmpty()))) }
         } finally {
-            _state.update { it.copy(syncingWallets = it.syncingWallets - wallet.id) }
+            _state.update { it.copy(syncingWallets = it.syncingWallets - walletId) }
+            withContext(NonCancellable) { inFlightLock.withLock { inFlight.remove(walletId) } }
         }
     }
 }

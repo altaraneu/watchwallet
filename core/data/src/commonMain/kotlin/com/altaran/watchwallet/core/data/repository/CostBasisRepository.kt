@@ -87,27 +87,88 @@ class CostBasisRepository(
             return point.price.takeIf { time - point.time <= MAX_PRICE_AGE }
         }
 
+        /** Relative difference between reconstructed and held quantity that marks the cost incomplete. */
+        private const val QUANTITY_TOLERANCE = 0.01
+
         /**
          * Cost of what is held now, average cost method: incoming transfers add their cost,
          * outgoing ones (fees included) remove cost in proportion to the amount that left.
          * [amountOf] converts a transaction delta to a decimal amount.
+         *
+         * - Unconfirmed transactions are skipped (they are counted once confirmed).
+         * - Transfers between the user's own wallets (the same transaction hash leaving one wallet
+         *   and arriving in another) carry their cost over: only their net effect (the fee)
+         *   counts. Self-transfers within one wallet likewise count only their fee.
+         * - With [heldAmount] (the quantity actually held now), the result is marked incomplete
+         *   when the transactions do not explain that quantity (missing or truncated history).
          */
-        fun holdingCost(transactions: List<WalletTransaction>, costs: Map<CostKey, CostBasisEntry>, amountOf: (WalletTransaction) -> Double): HoldingCost {
+        fun holdingCost(
+            transactions: List<WalletTransaction>,
+            costs: Map<CostKey, CostBasisEntry>,
+            heldAmount: Double? = null,
+            amountOf: (WalletTransaction) -> Double,
+        ): HoldingCost {
             var quantity = 0.0
             var cost = 0.0
             var complete = true
-            transactions.sortedBy { it.timestamp }.forEach { tx ->
-                val amount = amountOf(tx)
-                if (amount > 0 && tx.direction == TxDirection.IN) {
-                    val entry = costs[CostKey(tx.walletId, tx.hash, tx.assetId.value)]
-                    if (entry == null) complete = false else cost += entry.valueUsd
-                    quantity += amount
-                } else if (amount < 0) {
-                    if (quantity > 0) cost *= ((quantity + amount) / quantity).coerceIn(0.0, 1.0)
-                    quantity = (quantity + amount).coerceAtLeast(0.0)
+
+            fun remove(amount: Double) {
+                if (quantity > 0) cost *= ((quantity + amount) / quantity).coerceIn(0.0, 1.0)
+                quantity = (quantity + amount).coerceAtLeast(0.0)
+            }
+
+            val confirmed = transactions.filter { it.confirmed }
+            // Legs of one transaction (same hash and asset) in several of the user's wallets.
+            val internal = confirmed.groupBy { it.hash to it.assetId }.filterValues { legs ->
+                legs.map { it.walletId }.distinct().size > 1 &&
+                    legs.any { it.direction == TxDirection.OUT } && legs.any { it.direction == TxDirection.IN }
+            }
+            val handled = HashSet<Pair<String, com.altaran.watchwallet.core.model.AssetId>>()
+            confirmed.sortedBy { it.timestamp }.forEach { tx ->
+                val pairKey = tx.hash to tx.assetId
+                val legs = internal[pairKey]
+                if (legs != null) {
+                    // Handle the whole internal transfer once: only its net effect (fees) counts.
+                    if (!handled.add(pairKey)) return@forEach
+                    val net = legs.sumOf { amountOf(it) }
+                    if (net < 0) remove(net) else quantity += net
+                    return@forEach
+                }
+                when (tx.direction) {
+                    TxDirection.IN -> {
+                        val amount = amountOf(tx)
+                        if (amount > 0) {
+                            val entry = costs[CostKey(tx.walletId, tx.hash, tx.assetId.value)]
+                            if (entry == null) complete = false else cost += entry.valueUsd
+                            quantity += amount
+                        }
+                    }
+
+                    TxDirection.OUT -> {
+                        val amount = amountOf(tx)
+                        if (amount < 0) remove(amount)
+                    }
+
+                    TxDirection.SELF -> {
+                        // Only the fee leaves (for example moving coins to an own stake account).
+                        val fee = tx.fee ?: return@forEach
+                        if (fee.isZero()) return@forEach
+                        val feeAmount = amountOf(tx.copy(delta = -fee))
+                        if (feeAmount < 0) remove(feeAmount)
+                    }
                 }
             }
-            return HoldingCost(cost, complete)
+            return HoldingCost(cost, complete && explains(quantity, heldAmount))
         }
+
+        /** Whether the quantity rebuilt from transactions matches what is actually held. */
+        private fun explains(quantity: Double, heldAmount: Double?): Boolean {
+            if (heldAmount == null) return true
+            val difference = kotlin.math.abs(quantity - heldAmount)
+            return difference <= heldAmount * QUANTITY_TOLERANCE || difference <= MIN_QUANTITY_DIFFERENCE
+        }
+
+        /** Absolute quantity difference below which rounding is assumed (dust). */
+        private const val MIN_QUANTITY_DIFFERENCE = 1e-9
     }
 }

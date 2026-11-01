@@ -1,0 +1,1 @@
+First release: 30+ chains, portfolio and coin charts, cost basis and profit/loss, performance excluding deposits, import/export, app lock, Tor proxy. Watch-only and private: no keys, no tracking.

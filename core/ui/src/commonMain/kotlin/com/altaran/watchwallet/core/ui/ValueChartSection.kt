@@ -11,6 +11,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +44,7 @@ import com.altaran.watchwallet.core.ui.generated.resources.chart_a11y_summary
 import com.altaran.watchwallet.core.ui.generated.resources.chart_loading_prices
 import com.altaran.watchwallet.core.ui.generated.resources.chart_no_data
 import com.altaran.watchwallet.core.ui.generated.resources.chart_performance
+import com.altaran.watchwallet.core.ui.generated.resources.chart_value_with_percent
 import com.altaran.watchwallet.core.ui.generated.resources.chart_visible_range
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -87,13 +89,26 @@ fun ValueChartSection(
     secondaryLine: String? = null,
     chartHeight: Dp = 260.dp,
     ranges: List<ChartRange> = ChartRange.entries,
+    /** Extra identity of what the chart shows (for example a mode); a change resets pan and zoom. */
+    windowKey: String = "",
 ) {
-    var crosshair by remember(points) { mutableStateOf<CrosshairValue?>(null) }
+    // Pan, zoom and the tapped point survive data refreshes and reset with the window, in sync
+    // with the chart page (which reports the kept selection and window after every refresh).
+    val chartWindowKey = "${range.name}|$windowKey"
+    var crosshair by remember(chartWindowKey) { mutableStateOf<CrosshairValue?>(null) }
     // Visible window after pan/zoom (epoch ms of the first and last visible point).
-    var visible by remember(range) { mutableStateOf<Pair<Long, Long>?>(null) }
+    var visible by remember(chartWindowKey) { mutableStateOf<Pair<Long, Long>?>(null) }
+    // While loading the chart is not shown: a new chart starts without selection or pan.
+    val loading = points == null
+    LaunchedEffect(loading) {
+        if (loading) {
+            crosshair = null
+            visible = null
+        }
+    }
     // Points cover the whole history (for panning back); the change refers to the selected range.
     val windowStart = remember(range, points) { rangeStartMillis(range) }
-    val inRange = points?.filter { windowStart == null || it.timeMillis >= windowStart }
+    val inRange = remember(points, windowStart) { points?.filter { windowStart == null || it.timeMillis >= windowStart } }
     val header = headerValues(points, inRange, visible, currentValue)
     val shown = crosshair?.value ?: header.end
     val start = header.start
@@ -124,6 +139,7 @@ fun ValueChartSection(
             logScale = logScale,
             markerTimes = markerTimes,
             chartHeight = chartHeight,
+            windowKey = chartWindowKey,
             onCrosshair = { crosshair = it },
             onVisibleRange = { from, to -> visible = from * MILLIS to to * MILLIS },
         )
@@ -147,8 +163,10 @@ fun ValueHeader(
         AmountText(value ?: "—", style = MaterialTheme.typography.displaySmall)
         if (change != null) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                val changeText = formatChange(change)
                 ChangeText(
-                    formatted = formatChange(change) + (changePercent?.let { " (" + MoneyFormatter.formatPercentChange(it) + ")" } ?: ""),
+                    formatted = changePercent?.let { stringResource(Res.string.chart_value_with_percent, changeText, MoneyFormatter.formatPercentChange(it)) }
+                        ?: changeText,
                     direction = change.compareTo(0.0),
                     discreetAware = true,
                 )
@@ -217,9 +235,12 @@ private fun ChartBody(
     logScale: Boolean,
     markerTimes: List<Long>,
     chartHeight: Dp,
+    windowKey: String,
     onCrosshair: (CrosshairValue?) -> Unit,
     onVisibleRange: (Long, Long) -> Unit,
 ) {
+    val series = remember(points) { points?.let { list -> ChartSeries.Area(list.map { AreaPoint(it.timeMillis / MILLIS, it.value) }) } }
+    val markerSeconds = remember(markerTimes) { markerTimes.map { it / MILLIS } }
     Box(Modifier.fillMaxWidth().padding(vertical = 8.dp).height(chartHeight), contentAlignment = Alignment.Center) {
         when {
             points == null -> {
@@ -234,24 +255,25 @@ private fun ChartBody(
                 )
             }
 
-            else -> {
+            series != null -> {
                 val colors = WatchWalletTheme.extendedColors
                 val first = (inRange?.firstOrNull() ?: points.first()).value
                 val last = points.last().value
                 val summary = chartSummary(rangeLabel(range).orEmpty(), first, last, format, formatChange)
                 TradingChart(
-                    series = ChartSeries.Area(points.map { AreaPoint(it.timeMillis / 1000, it.value) }),
+                    series = series,
                     format = numberFormat,
                     height = chartHeight,
                     intraday = range.needsHourlyPrices,
                     logScale = logScale,
                     hideValues = LocalDiscreetMode.current,
-                    markerTimes = markerTimes.map { it / 1000 },
+                    markerTimes = markerSeconds,
                     lineColor = if (points.last().value >= points.first().value) colors.positive else colors.negative,
                     onCrosshair = onCrosshair,
                     onVisibleRange = onVisibleRange,
                     contentDescription = summary,
                     visibleBars = inRange?.size?.takeIf { it in 2 until points.size } ?: 0,
+                    windowKey = windowKey,
                 )
             }
         }
@@ -312,8 +334,10 @@ private fun PerformanceLine(header: HeaderValues, crosshair: CrosshairValue?, po
     val performance = end - start - flow
     val base = start + flow.coerceAtLeast(0.0)
     val percent = if (base > 0) MoneyFormatter.formatPercentChange(performance / base) else null
+    val amount = formatChange(performance)
+    val change = percent?.let { stringResource(Res.string.chart_value_with_percent, amount, it) } ?: amount
     Text(
-        stringResource(Res.string.chart_performance, formatChange(performance) + (percent?.let { " ($it)" } ?: "")),
+        stringResource(Res.string.chart_performance, change),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = 16.dp),

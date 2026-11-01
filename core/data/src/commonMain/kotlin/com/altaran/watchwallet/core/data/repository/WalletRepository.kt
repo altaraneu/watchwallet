@@ -100,14 +100,19 @@ internal class DefaultWalletRepository(
     override val groups: Flow<List<com.altaran.watchwallet.core.model.WalletGroup>> =
         walletDao.observeGroups().map { rows -> rows.map { com.altaran.watchwallet.core.model.WalletGroup(it.id, it.name, it.sortOrder) } }
 
-    override suspend fun createGroup(name: String): Long =
-        walletDao.insertGroup(com.altaran.watchwallet.core.database.entity.WalletGroupEntity(name = name.trim(), sortOrder = walletDao.nextGroupSortOrder()))
+    override suspend fun createGroup(name: String): Long {
+        requireNoSecret(name)
+        return walletDao.insertGroup(
+            com.altaran.watchwallet.core.database.entity.WalletGroupEntity(name = name.trim(), sortOrder = walletDao.nextGroupSortOrder()),
+        )
+    }
 
     override suspend fun findGroup(name: String): Long? = walletDao.findGroup(name.trim())
 
     override suspend fun addWallet(target: WatchTarget, name: String, activeChains: List<ChainId>, groupId: Long?): Long {
         // Defense in depth: never persist anything that looks like key material.
-        require(!SecretGuard.isSecret(target.storedValue())) { "Refusing to store key material" }
+        requireNoSecret(target.storedValue())
+        requireNoSecret(name)
         findExisting(target)?.let { return it }
         val entity = WalletEntity(
             name = name.trim(),
@@ -134,7 +139,10 @@ internal class DefaultWalletRepository(
         return walletDao.insert(entity)
     }
 
-    override suspend fun rename(id: Long, name: String) = walletDao.rename(id, name.trim())
+    override suspend fun rename(id: Long, name: String) {
+        requireNoSecret(name)
+        walletDao.rename(id, name.trim())
+    }
 
     override suspend fun delete(id: Long) = walletDao.delete(id)
 
@@ -142,6 +150,11 @@ internal class DefaultWalletRepository(
 
     override suspend fun setAssetVisibility(asset: Asset, visible: Boolean?) =
         walletDao.setAssetVisibility(asset.id.value, visible)
+}
+
+/** Defense in depth: never persist free text or targets that look like key material. */
+private fun requireNoSecret(value: String) {
+    require(!SecretGuard.isSecret(value)) { "Refusing to store key material" }
 }
 
 /** Converts current balances to the domain type (used by repositories and tests). */

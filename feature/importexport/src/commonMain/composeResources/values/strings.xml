@@ -7,8 +7,13 @@
     <string name="import_choose_file">Choose file</string>
     <string name="import_preview">Review</string>
     <string name="import_group">Add to group (optional)</string>
-    <!-- %1$d = number of selected wallets -->
-    <string name="import_action">Import %1$d wallets</string>
+    <!-- Import button. %1$d = number of selected wallets -->
+    <plurals name="import_action">
+        <item quantity="one">Import %1$d wallet</item>
+        <item quantity="other">Import %1$d wallets</item>
+    </plurals>
+    <!-- Import preview row subtitle. %1$s = wallet type (for example "Bitcoin address"), %2$s = group name -->
+    <string name="import_row_target_group">%1$s · %2$s</string>
     <string name="import_status_tracked">Already tracked, will be skipped</string>
     <string name="import_status_duplicate">Duplicate in this list</string>
     <!-- %1$s = chain name -->

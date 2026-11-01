@@ -9,8 +9,11 @@ import io.ktor.client.request.parameter
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -23,6 +26,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -145,15 +150,20 @@ class FxRates(
     private val http: HttpClient,
     private val urls: List<String> = listOf("https://api.frankfurter.dev/v1/latest", "https://api.frankfurter.app/latest"),
 ) {
-    private val cache = mutableMapOf<String, Double>()
+    private class Cached(val rate: Double, val fetchedAt: Instant)
 
-    /** How many units of [to] one [from] buys, for example EUR → CZK ≈ 24.5. */
+    /** Rates by `from>to`; guarded by [cacheLock] (rates are requested from parallel coroutines). */
+    private val cache = HashMap<String, Cached>()
+    private val cacheLock = Mutex()
+
+    /** How many units of [to] one [from] buys, for example EUR → CZK ≈ 24.5. Cached for [TTL]. */
     suspend fun rate(from: String, to: String): Double {
         if (from == to) return 1.0
         val key = "$from>$to"
-        cache[key]?.let { return it }
+        val now = Clock.System.now()
+        cacheLock.withLock { cache[key] }?.takeIf { now - it.fetchedAt < TTL }?.let { return it.rate }
         for (url in urls) {
-            val rate = runCatching {
+            val rate = try {
                 val body: JsonObject = http.get(url) {
                     parameter("base", from)
                     parameter("from", from)
@@ -161,12 +171,23 @@ class FxRates(
                     parameter("to", to)
                 }.body()
                 body["rates"]?.jsonObject?.get(to)?.jsonPrimitive?.doubleOrNull
-            }.getOrNull()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (
+                @Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception,
+            ) {
+                null
+            }
             if (rate != null) {
-                cache[key] = rate
+                cacheLock.withLock { cache[key] = Cached(rate, now) }
                 return rate
             }
         }
         throw PriceDataException("FX rate $from→$to unavailable")
+    }
+
+    private companion object {
+        /** ECB reference rates change once per working day. */
+        val TTL = 1.hours
     }
 }

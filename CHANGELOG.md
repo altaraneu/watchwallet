@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-02
+
 ### Added
 - Project skeleton (milestone 1): Kotlin Multiplatform + Compose Multiplatform, Android app.
 - Bottom navigation: Portfolio, Wallets, Markets, Settings.
@@ -33,6 +35,15 @@ All notable changes to this project are documented here. The format follows
 - Older Bitcoin history is backfilled in chunks after the first sync.
 - Adding a Cosmos account also adds its active sister-chain accounts.
 - Screen reader summaries for charts.
+- Coin detail as the one place for a coin: price and value charts, holdings across wallets,
+  activity, cost basis and unrealized profit/loss.
+- Cost basis per transaction (filled from the historical price, editable as total or per coin).
+- Performance excluding deposits and withdrawals under the value change.
+- Full value history with range windows; charts keep pan and zoom across refreshes.
+- Coin and token icons (optional, Trust Wallet assets repository, cached on the device).
+- Binance prices and candles first, CoinGecko and Kraken as fallbacks.
+- Staking: Solana stake accounts, delegated POL, Cosmos rewards.
+- Group field when adding a wallet; Add wallet in the Portfolio top bar.
 
 ### Fixed
 - Charts were invisible (zero-height WebView viewport).

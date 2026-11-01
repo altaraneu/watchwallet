@@ -45,6 +45,13 @@ class PriceRepository(
     val historyLoading: Flow<Boolean> = historyRequests.map { it > 0 }.distinctUntilChanged()
     private val lastHistoryFetch = mutableMapOf<String, Instant>()
 
+    /**
+     * `priceId|currency` keys for which the source has no older daily prices (for example an asset
+     * listed after the first transaction); not asked again in this session. Only accessed while
+     * [historyMutex] is held.
+     */
+    private val noOlderHistory = HashSet<String>()
+
     fun currentPrices(currency: QuoteCurrency): Flow<Map<String, CurrentPrice>> =
         priceDao.observeCurrent(currency.code.lowercase()).map { rows ->
             rows.associate { it.priceId to CurrentPrice(it.priceId, it.currency, it.price, it.change24h) }
@@ -116,7 +123,6 @@ class PriceRepository(
         // only goes to the network when something is missing).
         if (!hourly) {
             priceIds.forEach { priceId ->
-                historyRequests.update { it + 1 }
                 try {
                     extendBack(priceId, code)
                 } catch (e: kotlinx.coroutines.CancellationException) {
@@ -125,24 +131,36 @@ class PriceRepository(
                     @Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception,
                 ) {
                     // Older prices are optional; the next chart request tries again.
-                } finally {
-                    historyRequests.update { it - 1 }
                 }
             }
         }
     }
 
     /**
-     * Extends stored daily history back to the oldest transaction, one page at a time. Past
-     * prices never change, so pages already stored are never fetched again.
+     * Extends stored daily history back to the oldest transaction of an asset with this price id,
+     * one page at a time. Past prices never change, so pages already stored are never fetched
+     * again; when the source has nothing older, the price id is not asked again this session.
+     * Called with [historyMutex] held.
      */
     private suspend fun extendBack(priceId: String, code: String) {
-        val needed = walletDao.earliestTransactionTime() ?: return
+        val key = "$priceId|$code"
+        if (key in noOlderHistory) return
+        val needed = walletDao.earliestTransactionTimeForPrice(priceId) ?: return
         repeat(MAX_BACKFILL_PAGES) {
             val earliest = priceDao.earliestPointTime(priceId, code) ?: return
             if (earliest <= needed + BACKFILL_SLACK_MS) return
-            val older = provider.historyBefore(priceId, code, Instant.fromEpochMilliseconds(earliest))
-            if (older.isEmpty()) return
+            // The loading hint is shown only while really waiting for the network.
+            historyRequests.update { it + 1 }
+            val older = try {
+                provider.historyBefore(priceId, code, Instant.fromEpochMilliseconds(earliest))
+            } finally {
+                historyRequests.update { it - 1 }
+            }
+            // Nothing older, or nothing before what is stored (no progress): stop asking.
+            if (older.none { it.time.toEpochMilliseconds() < earliest }) {
+                noOlderHistory += key
+                return
+            }
             priceDao.insertPoints(older.map { PricePointEntity(priceId, code, it.time.toEpochMilliseconds(), it.price) })
         }
     }

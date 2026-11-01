@@ -2,7 +2,6 @@
 <resources>
     <string name="amount_hidden">Částka skryta</string>
     <string name="action_cancel">Zrušit</string>
-    <string name="action_retry">Zkusit znovu</string>
     <string name="range_24h">24 h</string>
     <string name="range_7d">7 d</string>
     <string name="range_1m">1 M</string>
@@ -10,4 +9,6 @@
     <string name="range_1y">1 R</string>
     <string name="range_ytd">Letos</string>
     <string name="range_all">Vše</string>
+    <string name="change_up">Nárůst %1$s</string>
+    <string name="change_down">Pokles %1$s</string>
 </resources>

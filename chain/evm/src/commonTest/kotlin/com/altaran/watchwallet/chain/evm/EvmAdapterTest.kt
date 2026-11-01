@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -115,6 +116,31 @@ class EvmAdapterTest {
             assertEquals("2000000000000000000", byHash.getValue("0xt1").delta.toString())
             assertEquals("2500000", byHash.getValue("0xt3").delta.toString())
             assertEquals("token:ethereum:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", byHash.getValue("0xt3").asset.priceId)
+        }
+    }
+
+    @Test
+    fun syncedChainsListReachableNetworks() = runTest {
+        withContext(Dispatchers.Default) {
+            val result = adapter.sync(target, emptySet())
+            assertEquals(setOf(mainnet.id, quiet.id), result.syncedChains.orEmpty().toSet())
+        }
+    }
+
+    @Test
+    fun failingTokenBalancesFailTheNetworkInsteadOfDroppingTokens() = runTest {
+        withContext(Dispatchers.Default) {
+            val failing = MockEngine { request ->
+                if (request.url.toString().contains("/token-balances")) {
+                    respond("oops", HttpStatusCode.NotFound)
+                } else {
+                    engine.config.requestHandlers.first().invoke(this, request)
+                }
+            }
+            // The only active network failed: the whole sync fails, nothing is replaced.
+            assertFailsWith<com.altaran.watchwallet.chain.api.ChainDataException> {
+                EvmAdapter(createHttpClient(engine = failing), listOf(mainnet, quiet)).sync(target, emptySet())
+            }
         }
     }
 

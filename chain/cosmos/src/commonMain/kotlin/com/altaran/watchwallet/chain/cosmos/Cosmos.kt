@@ -13,6 +13,7 @@ import com.altaran.watchwallet.chain.common.arr
 import com.altaran.watchwallet.chain.common.at
 import com.altaran.watchwallet.chain.common.chainCall
 import com.altaran.watchwallet.chain.common.content
+import com.altaran.watchwallet.chain.common.notFoundAsNull
 import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
@@ -241,7 +242,9 @@ class CosmosAdapter(
             response.arr("entries").forEach { staked += parseBigInteger(it.str("balance")) }
         }
         // Pending rewards are owned too (claimable any time); the API reports decimal amounts.
-        val rewards = runCatching { get("$base/cosmos/distribution/v1beta1/delegators/$address/rewards") }.getOrNull()
+        // Only "not found" means no rewards: other failures fail the sync instead of silently
+        // lowering the stored staked balance.
+        val rewards = notFoundAsNull { get("$base/cosmos/distribution/v1beta1/delegators/$address/rewards") }
         rewards?.arr("total")?.firstOrNull { it.str("denom") == network.denom }?.str("amount")?.substringBefore('.')?.let {
             staked += parseBigInteger(it)
         }

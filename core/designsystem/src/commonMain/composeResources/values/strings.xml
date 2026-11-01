@@ -3,7 +3,6 @@
     <!-- Accessibility label read instead of an amount while discreet mode is on. -->
     <string name="amount_hidden">Amount hidden</string>
     <string name="action_cancel">Cancel</string>
-    <string name="action_retry">Retry</string>
     <!-- Chart range chips. Keep them very short. -->
     <string name="range_24h">24H</string>
     <string name="range_7d">7D</string>
@@ -13,4 +12,7 @@
     <!-- Year to date -->
     <string name="range_ytd">YTD</string>
     <string name="range_all">All</string>
+    <!-- Screen reader description of a value change. %1$s = signed change, for example "+2.1 %". -->
+    <string name="change_up">Up %1$s</string>
+    <string name="change_down">Down %1$s</string>
 </resources>

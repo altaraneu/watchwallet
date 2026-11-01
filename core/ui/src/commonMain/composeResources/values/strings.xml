@@ -20,8 +20,6 @@
     <string name="chart_a11y_summary">Chart for %1$s: from %2$s to %3$s, change %4$s</string>
     <!-- Screen reader summary while amounts are hidden (discreet mode). %1$s = range. -->
     <string name="chart_a11y_hidden">Chart for %1$s, amounts hidden</string>
-    <!-- Accessibility description of a value chart; %1$s = range, for example "1Y". -->
-    <string name="chart_description">Value chart, range %1$s. Touch and drag to see values.</string>
     <!-- A Cardano stake address: covers every address of the wallet. Shown after the chain name. -->
     <string name="target_cardano_wallet">whole wallet (stake key)</string>
     <!-- Under a chart while price history is still downloading. -->
@@ -31,7 +29,11 @@
     <string name="tx_received">Received</string>
     <string name="tx_sent">Sent</string>
     <string name="tx_self">Transfer between own addresses</string>
-    <string name="tx_pending">Pending</string>
+    <!-- Label of an unconfirmed transaction. %1$s = direction, for example "Received". -->
+    <string name="tx_label_pending">%1$s · Pending</string>
+    <!-- Copy button; it shows copy_done for two seconds after a tap. -->
+    <string name="copy_action">Copy</string>
+    <string name="copy_done">Copied</string>
     <!-- Cost basis under an incoming transfer. %1$s = amount in USD. -->
     <string name="tx_cost_auto">Cost %1$s</string>
     <string name="tx_cost_user">Cost %1$s (yours)</string>
@@ -57,4 +59,6 @@
     <string name="tx_open_explorer">Open in block explorer</string>
     <!-- Under the value change: the change without deposits and withdrawals. %1$s = signed amount (and percent). -->
     <string name="chart_performance">Excluding deposits and withdrawals: %1$s</string>
+    <!-- A signed change followed by its percentage. %1$s = signed amount, %2$s = signed percent; for example "+120 USD (+4.2 %)". -->
+    <string name="chart_value_with_percent">%1$s (%2$s)</string>
 </resources>

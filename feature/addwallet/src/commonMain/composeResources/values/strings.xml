@@ -5,7 +5,6 @@
     <string name="add_wallet_intro">Paste a public address, an extended public key (xpub, ypub, zpub) or an output descriptor. WatchWallet detects the chain automatically.</string>
     <string name="add_wallet_input_label">Address, xpub or descriptor</string>
     <string name="add_wallet_paste">Paste</string>
-    <string name="add_wallet_continue">Continue</string>
     <string name="add_wallet_probing">Checking the blockchain…</string>
     <string name="add_wallet_pick_type">Which one is your wallet?</string>
     <string name="add_wallet_name_label">Name (optional)</string>

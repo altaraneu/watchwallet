@@ -50,16 +50,12 @@ fun SettingsItem(
     title: String,
     modifier: Modifier = Modifier,
     summary: String? = null,
-    icon: WwIcon? = null,
     showChevron: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     ListItem(
         headlineContent = { Text(title) },
         supportingContent = summary?.let { { Text(it) } },
-        leadingContent = icon?.let {
-            { Icon(painter = it.painter(), contentDescription = null) }
-        },
         trailingContent = if (showChevron) {
             { Icon(painter = WwIcon.ChevronRight.painter(), contentDescription = null) }
         } else {

@@ -29,8 +29,6 @@
     <string name="interval_1w">1W</string>
     <!-- %1$s = asset symbol -->
     <string name="asset_live_price">%1$s price · live</string>
-    <!-- Open, high, low of the candle under the finger -->
-    <string name="asset_ohlc">O %1$s · H %2$s · L %3$s</string>
     <string name="asset_source_kraken">Live candles: Kraken public market data. Non-EUR/USD currencies converted with ECB reference rates.</string>
     <string name="asset_visible_range">in the visible range</string>
     <string name="asset_high">Max</string>
@@ -52,4 +50,8 @@
     <string name="asset_cost_incomplete">Some transfers have no cost yet; set it in the wallet’s activity.</string>
     <string name="asset_in_wallets">In your wallets</string>
     <string name="asset_activity">Activity</string>
+    <!-- Asset detail title. %1$s = asset name, %2$s = symbol; for example "Bitcoin (BTC)". -->
+    <string name="asset_title">%1$s (%2$s)</string>
+    <!-- A signed change followed by its percentage. %1$s = signed amount, %2$s = signed percent. -->
+    <string name="asset_change_with_percent">%1$s (%2$s)</string>
 </resources>

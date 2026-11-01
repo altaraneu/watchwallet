@@ -26,6 +26,12 @@ val NetworkJson: Json = Json {
 /** Platform HTTP engine (OkHttp on Android/JVM, Darwin on iOS). */
 expect fun createPlatformEngine(proxy: ProxyConfig?): HttpClientEngine
 
+/**
+ * Whether [createPlatformEngine] honours a [ProxyConfig]. When `false`, the UI must not offer the
+ * proxy option, so nobody believes their traffic is routed through Tor when it is not.
+ */
+expect val proxySupported: Boolean
+
 private const val CONNECT_TIMEOUT_MS = 15_000L
 private const val REQUEST_TIMEOUT_MS = 45_000L
 private const val MAX_RETRIES = 3

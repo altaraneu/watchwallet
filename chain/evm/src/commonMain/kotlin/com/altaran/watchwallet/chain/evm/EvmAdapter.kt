@@ -14,6 +14,7 @@ import com.altaran.watchwallet.core.model.TokenAmount
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -39,7 +40,17 @@ class EvmAdapter(
     override val family = ChainFamily.EVM
     override val chains = networks.map { it.chain }
 
-    private data class NetworkActivity(val network: EvmNetwork, val nativeBalance: BigInteger, val active: Boolean, val txCount: Int)
+    /**
+     * Activity of the address on one network. [conclusive] is `false` when the indexer could not
+     * be asked (receive-only addresses may then look inactive although they hold tokens).
+     */
+    private data class NetworkActivity(
+        val network: EvmNetwork,
+        val nativeBalance: BigInteger,
+        val active: Boolean,
+        val txCount: Int,
+        val conclusive: Boolean = true,
+    )
 
     override suspend fun probe(target: WatchTarget): ProbeResult {
         val address = (target as? WatchTarget.Address)?.address ?: throw ChainDataException("EVM supports addresses only")
@@ -55,15 +66,39 @@ class EvmAdapter(
         )
     }
 
+    /**
+     * Networks that cannot be reached, or whose balances or history fail to load, are left out of
+     * [SyncResult.syncedChains], so their stored balances and history are kept as they are instead
+     * of being replaced by an incomplete picture.
+     */
     override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = coroutineScope {
         val address = (target as? WatchTarget.Address)?.address ?: throw ChainDataException("EVM supports addresses only")
-        val activity = scanNetworks(address).filter { it.active }
-        val perNetwork = activity.map { act -> async { syncNetwork(act, address, knownTransactions) } }.awaitAll()
+        val scanned = scanNetworks(address)
+        val activity = scanned.filter { it.active }
+        val perNetwork = activity.map { act ->
+            async {
+                // A failing network must not cancel the others (the inner scope keeps the failure local).
+                act to runCatching { coroutineScope { syncNetwork(act, address, knownTransactions) } }
+            }
+        }.awaitAll()
+        perNetwork.forEach { (_, result) ->
+            val error = result.exceptionOrNull()
+            if (error is CancellationException) throw error
+        }
+        val synced = perNetwork.mapNotNull { (act, result) -> result.getOrNull()?.let { act to it } }
+        if (activity.isNotEmpty() && synced.isEmpty()) {
+            val cause = perNetwork.firstNotNullOfOrNull { it.second.exceptionOrNull() }
+            throw ChainDataException("No EVM network could be synced: ${cause?.message}", cause)
+        }
+        val failed = perNetwork.filter { it.second.isFailure }.map { it.first.network.id }
         SyncResult(
-            balances = perNetwork.flatMap { it.balances },
-            transactions = perNetwork.flatMap { it.transactions },
+            balances = synced.flatMap { it.second.balances },
+            transactions = synced.flatMap { it.second.transactions },
+            // Failed networks stay active: they are retried by the next sync.
             activeChains = activity.map { it.network.id },
-            historyTruncated = perNetwork.any { it.historyTruncated },
+            historyTruncated = synced.any { it.second.historyTruncated },
+            // Inactive networks are known to hold nothing only when the indexer confirmed it.
+            syncedChains = scanned.filter { it.active || it.conclusive }.map { it.network.id } - failed.toSet(),
         )
     }
 
@@ -89,11 +124,12 @@ class EvmAdapter(
                 }
                 // Receive-only addresses (e.g. airdropped tokens) have zero nonce and native balance:
                 // ask the indexer, with its own short timeout (counters can be slow for big accounts).
-                val counters = network.blockscoutUrl?.let { base ->
-                    withTimeoutOrNull(INDEXER_TIMEOUT) { runCatching { blockscout.counters(base, address) }.getOrNull() }
+                val base = network.blockscoutUrl ?: return@async NetworkActivity(network, balance, false, 0)
+                val counters = withTimeoutOrNull(INDEXER_TIMEOUT) {
+                    runCatching { coroutineScope { blockscout.counters(base, address) } }.getOrNull()
                 }
                 val txCount = (counters?.transactions?.toIntOrNull() ?: 0) + (counters?.tokenTransfers?.toIntOrNull() ?: 0)
-                NetworkActivity(network, balance, txCount > 0, txCount)
+                NetworkActivity(network, balance, txCount > 0, txCount, conclusive = counters != null)
             }
         }.awaitAll()
         if (results.all { it == null }) throw ChainDataException("No EVM network reachable")
@@ -105,7 +141,8 @@ class EvmAdapter(
         val balances = mutableListOf(AssetAmount(network.nativeAsset, TokenAmount(activity.nativeBalance, 18)))
         val base = network.blockscoutUrl ?: return SyncResult(balances, emptyList())
 
-        val tokenBalances = runCatching { blockscout.tokenBalances(base, address) }.getOrDefault(emptyList())
+        // A failure here fails the network (its stored balances are kept), never "no tokens".
+        val tokenBalances = blockscout.tokenBalances(base, address)
         tokenBalances.filter { it.token.type == "ERC-20" && it.token.contract != null }.forEach { balance ->
             // Staked POL is held as validator share tokens: report the POL they represent.
             polygonStake(network, balance.token, address)?.let {
@@ -147,7 +184,9 @@ class EvmAdapter(
         val items = mutableListOf<T>()
         var next: JsonObject? = null
         repeat(MAX_PAGES) {
-            val page = runCatching { fetch(next) }.getOrElse { return items to false }
+            // Errors propagate: returning a partial page set would leave a permanent gap, because the
+            // next sync stops at the transactions stored now.
+            val page = fetch(next)
             items += page.items
             if (page.nextPageParams == null || page.items.any { hashOf(it) in known }) return items to false
             next = page.nextPageParams
@@ -218,22 +257,22 @@ class EvmAdapter(
         val name = token.name.orEmpty()
         if (!name.startsWith("Delegated POL #") && !name.startsWith("Delegated MATIC #")) return null
         val validatorId = name.substringAfter('#').trim().toLongOrNull(16) ?: return null
-        return runCatching {
-            val registered = rpc.call(network.rpcUrl, POLYGON_STAKE_MANAGER, GET_VALIDATOR_CONTRACT + validatorId.toString(16).padStart(64, '0'))
-            if (!registered.lowercase().endsWith(contract.removePrefix("0x"))) return null
-            val stake = rpc.call(network.rpcUrl, contract, GET_TOTAL_STAKE + address.removePrefix("0x").lowercase().padStart(64, '0'))
-            val amount = parseHex(stake.take(64))
-            val asset = Asset(
-                id = AssetId.token(network.id, contract),
-                chainId = network.id,
-                symbol = "POL",
-                name = "POL (staked, validator $validatorId)",
-                decimals = 18,
-                priceId = POL_PRICE_ID,
-                contract = contract,
-            )
-            AssetAmount(asset, TokenAmount(amount, 18))
-        }.getOrNull()
+        // RPC failures propagate (and fail this network's sync): falling back to the raw share
+        // token would store a wrong amount under the same asset id.
+        val registered = rpc.call(network.rpcUrl, POLYGON_STAKE_MANAGER, GET_VALIDATOR_CONTRACT + validatorId.toString(16).padStart(64, '0'))
+        if (!registered.lowercase().endsWith(contract.removePrefix("0x"))) return null
+        val stake = rpc.call(network.rpcUrl, contract, GET_TOTAL_STAKE + address.removePrefix("0x").lowercase().padStart(64, '0'))
+        val amount = parseHex(stake.take(64))
+        val asset = Asset(
+            id = AssetId.token(network.id, contract),
+            chainId = network.id,
+            symbol = "POL",
+            name = "POL (staked, validator $validatorId)",
+            decimals = 18,
+            priceId = POL_PRICE_ID,
+            contract = contract,
+        )
+        return AssetAmount(asset, TokenAmount(amount, 18))
     }
 
     private fun tokenAsset(network: EvmNetwork, token: BsToken): Asset? {

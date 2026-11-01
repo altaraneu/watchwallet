@@ -1,0 +1,1 @@
+První verze: přes 30 řetězců, grafy portfolia a mincí, pořizovací cena a zisk/ztráta, výkon bez vkladů, import a export, zámek aplikace, Tor proxy. Jen sledování a soukromí: žádné klíče, žádné sledování.

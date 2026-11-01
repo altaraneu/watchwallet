@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.altaran.watchwallet.core.chart.generated.resources.Res
 import com.altaran.watchwallet.core.designsystem.theme.WatchWalletTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -78,6 +80,11 @@ fun TradingChart(
     fitOnDataChange: Boolean = true,
     /** Initially visible number of bars (most recent); 0 = fit all data. */
     visibleBars: Int = 0,
+    /**
+     * Identifies what the data shows (range, interval, mode…). Refreshes with the same key keep
+     * the user's pan, zoom and tapped bar; a new key resets the view to [visibleBars].
+     */
+    windowKey: String = "",
     lineColor: Color? = null,
     onCrosshair: (CrosshairValue?) -> Unit = {},
     /** Visible window (UTC seconds of the first and last visible bar) after pan/zoom. */
@@ -87,7 +94,8 @@ fun TradingChart(
 ) {
     val html by produceState<String?>(null) { value = loadChartHtml() }
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val colors = chartColors(lineColor)
+    val colors = chartColors()
+    val lineColors = lineColors(lineColor)
     val kind = if (series is ChartSeries.Candles) "candles" else "area"
     val controller = remember { ChartController() }
     val currentOnCrosshair by rememberUpdatedState(onCrosshair)
@@ -111,22 +119,31 @@ fun TradingChart(
         )
     }
 
+    // init() recreates the chart; the page keeps markers and line colours and re-applies them,
+    // and the last data is replayed here (the data effect below does not rerun for new options).
     LaunchedEffect(initOptions) {
         controller.run("init($initOptions)")
         controller.reapplyData()
     }
-    LaunchedEffect(series, initOptions) {
-        val json = when (series) {
-            is ChartSeries.Candles -> JSON.encodeToString(series.candles.distinctBy { it.time }.sortedBy { it.time })
-            is ChartSeries.Area -> JSON.encodeToString(series.points.distinctBy { it.time }.sortedBy { it.time })
+    LaunchedEffect(series, fitOnDataChange, visibleBars, windowKey) {
+        val js = withContext(Dispatchers.Default) {
+            val json = when (series) {
+                is ChartSeries.Candles -> JSON.encodeToString(series.candles.distinctBy { it.time }.sortedBy { it.time })
+                is ChartSeries.Area -> JSON.encodeToString(series.points.distinctBy { it.time }.sortedBy { it.time })
+            }
+            "setData($json, $fitOnDataChange, $visibleBars, ${JSON.encodeToString(windowKey)})"
         }
-        controller.setData("setData($json, $fitOnDataChange, $visibleBars)")
+        controller.setData(js)
+    }
+    LaunchedEffect(lineColors) {
+        controller.run("setLineColors(${JSON.encodeToString(lineColors)})")
     }
     LaunchedEffect(live) {
         live?.let { controller.run("update(${JSON.encodeToString(it)})") }
     }
-    LaunchedEffect(markerTimes, series) {
-        if (markerTimes.isNotEmpty()) controller.run("setMarkers(${JSON.encodeToString(markerTimes.distinct().sorted())})")
+    LaunchedEffect(markerTimes) {
+        val json = withContext(Dispatchers.Default) { JSON.encodeToString(markerTimes.distinct().sorted()) }
+        controller.run("setMarkers($json)")
     }
 
     html?.let {
@@ -233,11 +250,23 @@ internal data class ChartColors(
     val marker: String,
 )
 
+/** Line and area fill of the area series; applied without recreating the chart. */
+@Serializable
+internal data class LineColors(val line: String, val areaTop: String, val areaBottom: String)
+
 @Composable
-private fun chartColors(lineColor: Color?): ChartColors {
+private fun lineColors(lineColor: Color?): LineColors {
+    val line = lineColor ?: MaterialTheme.colorScheme.primary
+    return remember(line) {
+        LineColors(line = line.css(), areaTop = line.copy(alpha = 0.30f).css(), areaBottom = line.copy(alpha = 0.0f).css())
+    }
+}
+
+@Composable
+private fun chartColors(): ChartColors {
     val scheme = MaterialTheme.colorScheme
     val extended = WatchWalletTheme.extendedColors
-    val line = lineColor ?: scheme.primary
+    val line = scheme.primary
     return remember(scheme, extended, line) {
         ChartColors(
             background = scheme.surface.css(),

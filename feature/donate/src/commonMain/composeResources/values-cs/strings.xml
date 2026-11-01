@@ -5,8 +5,6 @@
     <string name="donate_intro">WatchWallet je zdarma a open source, bez reklam, sledování a účtů. Pokud ti je užitečná, můžeš její vývoj podpořit zasláním BTC nebo ETH na jednu z adres níže.</string>
     <string name="donate_btc_label">Bitcoin (BTC)</string>
     <string name="donate_eth_label">Ethereum (ETH)</string>
-    <string name="donate_copy">Kopírovat</string>
     <string name="donate_copy_description">Kopírovat adresu %1$s</string>
-    <string name="donate_copied">Zkopírováno</string>
     <string name="donate_verify">Před odesláním ověř, že se adresy shodují s těmi v README repozitáře projektu.</string>
 </resources>

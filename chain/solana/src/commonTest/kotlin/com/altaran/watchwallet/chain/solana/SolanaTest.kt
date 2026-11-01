@@ -1,5 +1,5 @@
 // Fixtures contain long real addresses and JSON payloads.
-@file:Suppress("ktlint:standard:max-line-length")
+@file:Suppress("ktlint:standard:max-line-length", "MaxLineLength")
 
 package com.altaran.watchwallet.chain.solana
 
@@ -132,6 +132,26 @@ class SolanaTest {
             assertEquals(null, receive.fee)
             assertTrue(result.transactions.none { it.hash == "sigOld" })
         }
+    }
+
+    @Test
+    fun fundingOwnStakeAccountIsASelfTransfer() {
+        val stakeTx = com.altaran.watchwallet.core.network.NetworkJson.parseToJsonElement(
+            """{"blockTime":1718000000,
+          "meta":{"err":null,"fee":5000,"preBalances":[3000000000,0,1],"postBalances":[999995000,2000000000,1],"preTokenBalances":[],"postTokenBalances":[],"innerInstructions":[]},
+          "transaction":{"message":{"accountKeys":[
+            {"pubkey":"$owner","signer":true},{"pubkey":"StakeAcc1111111111111111111111111111111111","signer":true},{"pubkey":"Stake11111111111111111111111111111111111111","signer":false}],
+            "instructions":[
+              {"program":"system","programId":"11111111111111111111111111111111","parsed":{"type":"createAccount","info":{"source":"$owner","newAccount":"StakeAcc1111111111111111111111111111111111","lamports":2000000000,"owner":"Stake11111111111111111111111111111111111111"}}},
+              {"program":"stake","programId":"Stake11111111111111111111111111111111111111","parsed":{"type":"initialize","info":{"stakeAccount":"StakeAcc1111111111111111111111111111111111"}}}]}}}""",
+        )
+        val sol = parseTransaction("sigStake", stakeTx, owner, emptyMap(), confirmed = true).single()
+        assertTrue(sol.isSelfTransfer, "moving SOL into an own stake account is not a withdrawal")
+        val transferTx = com.altaran.watchwallet.core.network.NetworkJson.parseToJsonElement(
+            """{"meta":{"fee":5000,"preBalances":[1],"postBalances":[1]},"transaction":{"message":{"accountKeys":[],"instructions":[
+              {"program":"system","parsed":{"type":"transfer","info":{"source":"$owner","destination":"$other","lamports":1}}}]}}}""",
+        )
+        assertTrue(!movesOwnStake(transferTx, owner))
     }
 
     @Test

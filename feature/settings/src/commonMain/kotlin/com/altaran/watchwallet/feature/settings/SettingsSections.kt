@@ -29,6 +29,7 @@ import com.altaran.watchwallet.core.designsystem.component.SettingsItem
 import com.altaran.watchwallet.core.designsystem.component.SettingsSwitchItem
 import com.altaran.watchwallet.core.designsystem.component.SingleChoiceDialog
 import com.altaran.watchwallet.core.model.NetworkSettings
+import com.altaran.watchwallet.core.network.proxySupported
 import com.altaran.watchwallet.feature.settings.generated.resources.*
 import com.altaran.watchwallet.feature.settings.generated.resources.Res
 import org.jetbrains.compose.resources.pluralStringResource
@@ -82,19 +83,22 @@ internal fun AdvancedSettingsSections(
 
     SectionHeader(stringResource(Res.string.settings_section_network))
     val network = settings.network
-    SettingsSwitchItem(
-        title = stringResource(Res.string.settings_proxy),
-        summary = if (network.proxyEnabled) "${network.proxyHost}:${network.proxyPort}" else stringResource(Res.string.settings_proxy_summary),
-        checked = network.proxyEnabled,
-        onCheckedChange = { enabled -> onNetworkChange(network.copy(proxyEnabled = enabled)) },
-    )
-    // The address only matters while the proxy is on.
-    if (network.proxyEnabled) {
-        SettingsItem(
-            title = stringResource(Res.string.settings_proxy_address),
-            summary = "${network.proxyHost}:${network.proxyPort}",
-            onClick = { dialog = NetworkDialog.PROXY },
+    // Hidden where the HTTP engine cannot route through a proxy (iOS for now).
+    if (proxySupported) {
+        SettingsSwitchItem(
+            title = stringResource(Res.string.settings_proxy),
+            summary = if (network.proxyEnabled) "${network.proxyHost}:${network.proxyPort}" else stringResource(Res.string.settings_proxy_summary),
+            checked = network.proxyEnabled,
+            onCheckedChange = { enabled -> onNetworkChange(network.copy(proxyEnabled = enabled)) },
         )
+        // The address only matters while the proxy is on.
+        if (network.proxyEnabled) {
+            SettingsItem(
+                title = stringResource(Res.string.settings_proxy_address),
+                summary = "${network.proxyHost}:${network.proxyPort}",
+                onClick = { dialog = NetworkDialog.PROXY },
+            )
+        }
     }
     SettingsItem(
         title = stringResource(Res.string.settings_esplora),

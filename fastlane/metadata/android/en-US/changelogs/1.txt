@@ -1,1 +1,0 @@
-First release: Bitcoin and EVM tracking, portfolio and price charts, import/export, app lock, Tor proxy.

@@ -91,4 +91,35 @@ class BatchParserTest {
         assertEquals(listOf(solana), entries.first().candidates)
         assertEquals("Trading", entries.first().label)
     }
+
+    private val nl = Char(10).toString()
+    private val mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+
+    @Test
+    fun secretInAnySingleCellAbortsTheImport() {
+        val cases = listOf(
+            "$btc${nl}Savings 1,$btc,BTC,$mnemonic" to 2,
+            "label,address,chain,notes${nl}Savings 1,$btc,BTC,$mnemonic" to 2,
+            "name;group;address;notes${nl}Cold;Alice;$eth;\"$mnemonic\"" to 2,
+        )
+        for ((input, line) in cases) {
+            assertEquals(BatchResult.SecretDetected(SecretKind.MNEMONIC, line), BatchParser.parse(input), input)
+        }
+    }
+
+    @Test
+    fun secretInExportFreeTextFieldsAbortsTheImport() {
+        val address = WatchTarget.Address(ChainFamily.UTXO, ChainId.BITCOIN, btc, ScriptType.P2WPKH)
+        val cases = listOf(
+            ExportedWallet.from(address, "Cold", null, mnemonic),
+            ExportedWallet.from(address, mnemonic, null, null),
+            ExportedWallet.from(address, "Cold", mnemonic, null),
+        )
+        for (wallet in cases) {
+            val export = WatchWalletExport(exportedAt = "2026-11-01T12:00:00Z", wallets = listOf(wallet))
+            val result = BatchParser.parse(ExportFormat.encode(export))
+            assertIs<BatchResult.SecretDetected>(result, wallet.toString())
+            assertEquals(SecretKind.MNEMONIC, result.kind)
+        }
+    }
 }

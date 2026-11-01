@@ -1,6 +1,5 @@
 package com.altaran.watchwallet.feature.importexport
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -10,10 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -34,13 +35,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -57,7 +59,7 @@ import com.altaran.watchwallet.core.ui.shortAddress
 import com.altaran.watchwallet.core.ui.targetDescription
 import com.altaran.watchwallet.feature.importexport.generated.resources.*
 import com.altaran.watchwallet.feature.importexport.generated.resources.Res
-import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -75,13 +77,9 @@ private fun ScreenScaffold(title: String, onNavigateUp: () -> Unit, content: @Co
 }
 
 @Composable
-internal fun ImportRoute(initialText: String?, onNavigateUp: () -> Unit, onDone: () -> Unit, viewModel: ImportViewModel = koinViewModel()) {
+internal fun ImportRoute(onNavigateUp: () -> Unit, onDone: () -> Unit, viewModel: ImportViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val documents = rememberDocumentActions()
-    remember(initialText) {
-        if (!initialText.isNullOrBlank()) viewModel.parse(initialText)
-        true
-    }
     ScreenScaffold(stringResource(Res.string.import_title), onNavigateUp) { modifier ->
         when (val phase = state.phase) {
             ImportPhase.Input, is ImportPhase.SecretRejected -> Column(
@@ -115,7 +113,7 @@ internal fun ImportRoute(initialText: String?, onNavigateUp: () -> Unit, onDone:
 
             is ImportPhase.Preview -> PreviewList(phase, state.groupName, viewModel, modifier)
 
-            ImportPhase.Importing -> Column(
+            ImportPhase.Importing, ImportPhase.Decrypting -> Column(
                 modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -168,6 +166,7 @@ private fun PasswordPrompt(wrong: Boolean, onSubmit: (String) -> Unit, modifier:
             onValueChange = { password = it },
             label = { Text(stringResource(Res.string.export_password)) },
             visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
             isError = wrong,
             supportingText = if (wrong) ({ Text(stringResource(Res.string.import_wrong_password)) }) else null,
             singleLine = true,
@@ -192,16 +191,19 @@ private fun PreviewList(phase: ImportPhase.Preview, groupName: String, viewModel
                 )
             }
             itemsIndexed(phase.rows) { index, row ->
+                val selectable = row.entry.status in setOf(EntryStatus.READY, EntryStatus.AMBIGUOUS)
+                // One touch target and one semantics node per row: the row toggles, the checkbox
+                // only shows the state.
                 Row(
-                    Modifier.fillMaxWidth().clickable(enabled = row.entry.status in setOf(EntryStatus.READY, EntryStatus.AMBIGUOUS)) { viewModel.toggle(index) }
+                    Modifier.fillMaxWidth()
+                        .toggleable(value = row.selected, enabled = selectable, role = Role.Checkbox) { viewModel.toggle(index) }
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Checkbox(
                         checked = row.selected,
-                        onCheckedChange = { viewModel.toggle(index) },
-                        enabled =
-                            row.entry.status in setOf(EntryStatus.READY, EntryStatus.AMBIGUOUS),
+                        onCheckedChange = null,
+                        enabled = selectable,
                     )
                     Column(Modifier.weight(1f)) {
                         Text(
@@ -228,7 +230,9 @@ private fun PreviewList(phase: ImportPhase.Preview, groupName: String, viewModel
 
                                 row.entry.status == EntryStatus.INVALID -> stringResource(Res.string.import_status_invalid)
 
-                                target != null -> targetDescription(target) + (row.entry.group?.let { " · $it" } ?: "")
+                                target != null -> row.entry.group?.let { group ->
+                                    stringResource(Res.string.import_row_target_group, targetDescription(target), group)
+                                } ?: targetDescription(target)
 
                                 else -> ""
                             },
@@ -255,7 +259,7 @@ private fun PreviewList(phase: ImportPhase.Preview, groupName: String, viewModel
             }
         }
         Button(onClick = viewModel::import, enabled = selected > 0, modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            Text(stringResource(Res.string.import_action, selected))
+            Text(pluralStringResource(Res.plurals.import_action, selected, selected))
         }
     }
 }
@@ -264,14 +268,25 @@ private fun PreviewList(phase: ImportPhase.Preview, groupName: String, viewModel
 internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val documents = rememberDocumentActions()
-    val scope = rememberCoroutineScope()
+    // The view model builds (and encrypts) in the background; the platform action runs here.
+    LaunchedEffect(state.prepared) {
+        val prepared = state.prepared ?: return@LaunchedEffect
+        viewModel.onPreparedHandled()
+        if (prepared.share) {
+            documents.shareText(prepared.content)
+        } else {
+            documents.saveText(prepared.fileName, prepared.mimeType, prepared.content) { ok ->
+                viewModel.showMessage(if (ok) ExportMessage.SAVED else ExportMessage.SAVE_FAILED)
+            }
+        }
+    }
     ScreenScaffold(stringResource(Res.string.export_title), onNavigateUp) { modifier ->
         Column(modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer), modifier = Modifier.padding(16.dp)) {
                 Text(stringResource(Res.string.export_notice), modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
             }
             SectionHeader(stringResource(Res.string.export_scope))
-            Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = state.groupId == null, onClick = {
                     viewModel.setGroup(null)
                 }, label = { Text(stringResource(Res.string.export_all, state.walletCount)) })
@@ -304,7 +319,9 @@ internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = 
                         label = { Text(stringResource(Res.string.export_password)) },
                         supportingText = { Text(stringResource(Res.string.export_password_hint)) },
                         visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
                         singleLine = true,
+                        enabled = !state.busy,
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                     )
                 }
@@ -331,21 +348,17 @@ internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = 
                     modifier = Modifier.padding(16.dp),
                 )
             }
-            Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = {
-                    scope.launch {
-                        val (content, name) = viewModel.build()
-                        val mime = when (state.format) {
-                            ExportFormatOption.JSON -> "application/json"
-                            ExportFormatOption.CSV, ExportFormatOption.TRANSACTIONS -> "text/csv"
-                            ExportFormatOption.TEXT -> "text/plain"
-                        }
-                        documents.saveText(name, mime, content) { ok -> viewModel.showMessage(if (ok) ExportMessage.SAVED else ExportMessage.SAVE_FAILED) }
-                    }
-                }, enabled = state.walletCount > 0) { Text(stringResource(Res.string.export_save)) }
-                OutlinedButton(onClick = { scope.launch { documents.shareText(viewModel.build().first) } }, enabled = state.walletCount > 0) {
+            FlowRow(
+                Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                val canExport = state.walletCount > 0 && !state.busy
+                Button(onClick = { viewModel.prepare(share = false) }, enabled = canExport) { Text(stringResource(Res.string.export_save)) }
+                OutlinedButton(onClick = { viewModel.prepare(share = true) }, enabled = canExport) {
                     Text(stringResource(Res.string.export_share))
                 }
+                if (state.busy) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
             }
             Spacer(Modifier.width(1.dp))
         }

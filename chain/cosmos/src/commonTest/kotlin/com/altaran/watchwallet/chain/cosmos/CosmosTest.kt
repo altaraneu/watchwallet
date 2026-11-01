@@ -72,6 +72,10 @@ class CosmosTest {
                        "balance":{"denom":"uatom","amount":"10000000"}}],"pagination":{"next_key":null,"total":"1"}}"""
                 }
 
+                path.endsWith("/rewards") -> {
+                    """{"rewards":[],"total":[]}"""
+                }
+
                 path.endsWith("/unbonding_delegations") -> {
                     """{"unbonding_responses":[{"delegator_address":"$ours","validator_address":"cosmosvaloper1y","entries":[{"creation_height":"1","completion_time":"2024-06-01T00:00:00Z","initial_balance":"1000000","balance":"1000000"}]}]}"""
                 }

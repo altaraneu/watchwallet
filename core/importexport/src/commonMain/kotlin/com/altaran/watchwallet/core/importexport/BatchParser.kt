@@ -63,13 +63,16 @@ object BatchParser {
         }
 
         val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }
-        // Row by row first (reports the line), then the whole input (mnemonics split over lines).
+        val delimiter = Csv.detectDelimiter(lines.first())
+        // Row by row first (reports the line), then every single cell (a seed phrase in a notes
+        // column is diluted by the other cells of its row), then the whole input (mnemonics split
+        // over lines).
         lines.forEachIndexed { i, line ->
-            (SecretGuard.check(line) as? SecretCheck.Secret)?.let { return BatchResult.SecretDetected(it.kind, i + 1) }
+            val cells = listOf(line) + Csv.split(line, delimiter) + line.split(',', ';', '	')
+            secretIn(cells)?.let { return BatchResult.SecretDetected(it, i + 1) }
         }
         (SecretGuard.check(text) as? SecretCheck.Secret)?.let { return BatchResult.SecretDetected(it.kind, 0) }
 
-        val delimiter = Csv.detectDelimiter(lines.first())
         val header = Csv.split(lines.first(), delimiter).map { it.trim().lowercase() }
         val addressColumn = header.indexOfFirst { it in ADDRESS_HEADERS }
         val parser = RowParser(otherChains)
@@ -81,11 +84,26 @@ object BatchParser {
         return BatchResult.Entries(markDuplicates(rows))
     }
 
-    private fun fromExport(export: WatchWalletExport): BatchResult = BatchResult.Entries(
+    /** The kind of the first secret found in any of [values], checked one by one. */
+    private fun secretIn(values: Iterable<String?>): SecretKind? = values.firstNotNullOfOrNull { value ->
+        value?.let { (SecretGuard.check(it) as? SecretCheck.Secret)?.kind }
+    }
+
+    private fun fromExport(export: WatchWalletExport): BatchResult {
+        secretIn(export.groups.map { it.name })?.let { return BatchResult.SecretDetected(it, 0) }
+        // Every field on its own, before any entry is built.
+        export.wallets.forEachIndexed { i, wallet ->
+            val fields = listOf(wallet.value, wallet.name, wallet.group, wallet.notes, wallet.family, wallet.chain, wallet.kind, wallet.scriptType) +
+                wallet.tags
+            secretIn(fields)?.let { return BatchResult.SecretDetected(it, i + 1) }
+        }
+        return fromCheckedExport(export)
+    }
+
+    private fun fromCheckedExport(export: WatchWalletExport): BatchResult = BatchResult.Entries(
         markDuplicates(
             export.wallets.mapIndexed { i, wallet ->
                 val target = wallet.toTarget()
-                if (SecretGuard.isSecret(wallet.value)) return BatchResult.SecretDetected(SecretKind.HEX_PRIVATE_KEY, i + 1)
                 BatchEntry(
                     line = i + 1,
                     raw = wallet.value,

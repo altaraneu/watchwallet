@@ -80,6 +80,15 @@ internal class AddWalletViewModel(
     }
 
     /**
+     * Submits text pasted from the clipboard. Returns `true` when it was rejected as key
+     * material, so the screen can clear the clipboard.
+     */
+    fun onPaste(text: String): Boolean {
+        onSubmit(text)
+        return _state.value.phase is AddWalletPhase.SecretRejected
+    }
+
+    /**
      * Classifies the input. With [saveWhenUnambiguous] (the "Add wallet" button) a single
      * candidate is saved right after the check; otherwise the preview asks.
      */

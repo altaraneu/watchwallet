@@ -1,1 +1,0 @@
-První verze: sledování Bitcoinu a EVM sítí, grafy portfolia a cen, import a export, zámek aplikace, Tor proxy.

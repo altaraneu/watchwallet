@@ -20,6 +20,7 @@ import com.altaran.watchwallet.core.model.TokenAmount
 import com.altaran.watchwallet.core.model.WalletGroup
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.security.SecretKind
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.time.Clock
 
 /** A preview row with the user's choices (selected, chosen candidate for ambiguous rows). */
@@ -45,6 +47,9 @@ sealed interface ImportPhase {
     data class SecretRejected(val kind: SecretKind, val line: Int) : ImportPhase
     data object NeedsPassword : ImportPhase
     data object WrongPassword : ImportPhase
+
+    /** Key derivation and decryption run off the main thread. */
+    data object Decrypting : ImportPhase
     data class Preview(val rows: List<ImportRow>) : ImportPhase
     data object Importing : ImportPhase
     data class Done(val summary: ImportSummary) : ImportPhase
@@ -61,10 +66,17 @@ internal class ImportViewModel(
     private val walletRepository: WalletRepository,
     private val syncEngine: SyncEngine,
     private val addWalletService: com.altaran.watchwallet.core.data.AddWalletService,
+    pendingImport: PendingImport,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ImportUiState())
     val state: StateFlow<ImportUiState> = _state.asStateFlow()
     private var encrypted: String? = null
+
+    init {
+        // Prefilled text (for example from the add-wallet screen) is consumed exactly once, so a
+        // configuration change does not parse it again and wipe the preview selection.
+        pendingImport.consume()?.takeIf { it.isNotBlank() }?.let(::parse)
+    }
 
     fun onTextChange(value: String) = _state.update { it.copy(text = value, phase = ImportPhase.Input) }
 
@@ -94,12 +106,17 @@ internal class ImportViewModel(
 
     fun decrypt(password: String) {
         val envelope = encrypted ?: return
-        val plain = ExportCrypto.decrypt(envelope, password)
-        if (plain == null) {
-            _state.update { it.copy(phase = ImportPhase.WrongPassword) }
-        } else {
-            encrypted = null
-            parse(plain)
+        if (_state.value.phase == ImportPhase.Decrypting) return
+        _state.update { it.copy(phase = ImportPhase.Decrypting) }
+        viewModelScope.launch {
+            // PBKDF2 with 600 000 iterations takes seconds on slower phones.
+            val plain = withContext(Dispatchers.Default) { ExportCrypto.decrypt(envelope, password) }
+            if (plain == null) {
+                _state.update { it.copy(phase = ImportPhase.WrongPassword) }
+            } else {
+                encrypted = null
+                parse(plain)
+            }
         }
     }
 
@@ -175,9 +192,16 @@ data class ExportUiState(
     val password: String = "",
     val walletCount: Int = 0,
     val message: ExportMessage? = null,
+    /** The export is being built (and encrypted) in the background. */
+    val busy: Boolean = false,
+    /** A finished export waiting for the screen to save or share it. */
+    val prepared: PreparedExport? = null,
 )
 
 enum class ExportMessage { SAVED, SAVE_FAILED }
+
+/** A built export; [share] = share sheet, otherwise save to a file. */
+data class PreparedExport(val content: String, val fileName: String, val mimeType: String, val share: Boolean)
 
 internal class ExportViewModel(
     private val walletRepository: WalletRepository,
@@ -204,8 +228,37 @@ internal class ExportViewModel(
     fun setPassword(value: String) = _state.update { it.copy(password = value) }
     fun showMessage(message: ExportMessage?) = _state.update { it.copy(message = message) }
 
+    /**
+     * Builds the export in the background; the screen then saves or shares [ExportUiState.prepared]
+     * and calls [onPreparedHandled]. The password is cleared from the state afterwards.
+     */
+    fun prepare(share: Boolean) {
+        if (_state.value.busy) return
+        val format = _state.value.format
+        _state.update { it.copy(busy = true, message = null, prepared = null) }
+        viewModelScope.launch {
+            val built = runCatching { build() }.getOrNull()
+            _state.update { state ->
+                state.copy(
+                    busy = false,
+                    password = "",
+                    prepared = built?.let { (content, name) -> PreparedExport(content, name, mimeType(format), share) },
+                    message = if (built == null) ExportMessage.SAVE_FAILED else state.message,
+                )
+            }
+        }
+    }
+
+    fun onPreparedHandled() = _state.update { it.copy(prepared = null) }
+
+    private fun mimeType(format: ExportFormatOption): String = when (format) {
+        ExportFormatOption.JSON -> "application/json"
+        ExportFormatOption.CSV, ExportFormatOption.TRANSACTIONS -> "text/csv"
+        ExportFormatOption.TEXT -> "text/plain"
+    }
+
     /** Builds the export file content and a suggested file name. */
-    suspend fun build(): Pair<String, String> {
+    private suspend fun build(): Pair<String, String> {
         val state = _state.value
         val groups = walletRepository.groups.first()
         val groupNames = groups.associate { it.id to it.name }
@@ -219,7 +272,12 @@ internal class ExportViewModel(
             ExportFormatOption.JSON -> {
                 val usedGroups = wallets.mapNotNull { it.group }.distinct().map { ExportedGroup(it) }
                 val json = ExportFormat.encode(WatchWalletExport(exportedAt = Clock.System.now().toString(), groups = usedGroups, wallets = wallets))
-                val content = if (state.password.isNotEmpty() && ExportCrypto.isSupported) ExportCrypto.encrypt(json, state.password) else json
+                val content = if (state.password.isNotEmpty() && ExportCrypto.isSupported) {
+                    // PBKDF2 key derivation is deliberately slow: keep it off the main thread.
+                    withContext(Dispatchers.Default) { ExportCrypto.encrypt(json, state.password) }
+                } else {
+                    json
+                }
                 content to "watchwallet-$stamp.json"
             }
 

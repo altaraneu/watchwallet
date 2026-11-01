@@ -26,4 +26,7 @@
     <string name="portfolio_hidden_reason_spam">%1$s · looks like spam</string>
     <string name="portfolio_hidden_reason_other">%1$s · no price or hidden by you</string>
     <string name="portfolio_add_wallet">Add wallet</string>
+    <!-- Screen reader state of the hidden tokens list toggle. -->
+    <string name="portfolio_hidden_expanded">Expanded</string>
+    <string name="portfolio_hidden_collapsed">Collapsed</string>
 </resources>

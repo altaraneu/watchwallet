@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -41,6 +42,7 @@ import com.altaran.watchwallet.feature.donate.DonateRoute
 import com.altaran.watchwallet.feature.donate.donateScreen
 import com.altaran.watchwallet.feature.importexport.ExportRoute
 import com.altaran.watchwallet.feature.importexport.ImportRoute
+import com.altaran.watchwallet.feature.importexport.PendingImport
 import com.altaran.watchwallet.feature.importexport.importExportScreens
 import com.altaran.watchwallet.feature.markets.AssetDetailRoute
 import com.altaran.watchwallet.feature.markets.MarketsRoute
@@ -75,6 +77,11 @@ import kotlin.reflect.KClass
 @Composable
 fun WatchWalletApp(viewModel: AppViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // The periodic price refresh runs only while the app is started (visible).
+    LifecycleStartEffect(viewModel) {
+        viewModel.setForeground(true)
+        onStopOrDispose { viewModel.setForeground(false) }
+    }
     val settings = (uiState as? AppUiState.Ready)?.settings ?: return
 
     val darkTheme = when (settings.themeMode) {
@@ -152,6 +159,9 @@ private enum class TopLevelDestination(
 
 @Composable
 private fun AppScaffold(navController: NavHostController = rememberNavController()) {
+    // Batch-import text is handed over in memory, never as a navigation argument (which would end
+    // up in the saved back stack state).
+    val pendingImport = koinInject<PendingImport>()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val currentTopLevel = TopLevelDestination.entries.firstOrNull { destination ->
@@ -191,7 +201,10 @@ private fun AppScaffold(navController: NavHostController = rememberNavController
             walletDetailScreen(onNavigateUp = navController::navigateUp, onOpenHolding = openHolding)
             addWalletScreen(
                 onNavigateUp = navController::navigateUp,
-                onBatchImport = { text -> navController.navigate(ImportRoute(text)) },
+                onBatchImport = { text ->
+                    pendingImport.set(text)
+                    navController.navigate(ImportRoute)
+                },
                 onWalletAdded = { id ->
                     navController.navigate(WalletDetailRoute(id)) {
                         popUpTo<AddWalletRoute> { inclusive = true }
@@ -202,7 +215,7 @@ private fun AppScaffold(navController: NavHostController = rememberNavController
             assetDetailScreen(onNavigateUp = navController::navigateUp, onOpenWallet = openWallet)
             settingsScreen(
                 onOpenSupport = { navController.navigate(DonateRoute) },
-                onOpenImport = { navController.navigate(ImportRoute()) },
+                onOpenImport = { navController.navigate(ImportRoute) },
                 onOpenExport = { navController.navigate(ExportRoute) },
             )
             importExportScreens(
