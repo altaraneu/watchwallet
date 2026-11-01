@@ -19,13 +19,13 @@ fun NavGraphBuilder.marketsScreen(onOpenAsset: (String) -> Unit) {
     composable<MarketsRoute> { MarketsRoute(onOpenAsset = onOpenAsset) }
 }
 
-fun NavGraphBuilder.assetDetailScreen(onNavigateUp: () -> Unit) {
+fun NavGraphBuilder.assetDetailScreen(onNavigateUp: () -> Unit, onOpenWallet: (Long) -> Unit = {}) {
     composable<AssetDetailRoute> { entry ->
-        AssetDetailRoute(key = entry.toRoute<AssetDetailRoute>().key, onNavigateUp = onNavigateUp)
+        AssetDetailRoute(key = entry.toRoute<AssetDetailRoute>().key, onNavigateUp = onNavigateUp, onOpenWallet = onOpenWallet)
     }
 }
 
 val marketsModule = module {
     viewModelOf(::MarketsViewModel)
-    viewModel { params -> AssetDetailViewModel(params.get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { params -> AssetDetailViewModel(params.get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 }

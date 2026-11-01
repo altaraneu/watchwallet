@@ -18,4 +18,26 @@
     <string name="target_cardano_wallet">celá peněženka (stake klíč)</string>
     <string name="chart_loading_prices">Načítám historii cen… graf se doplní, jak ceny dorazí.</string>
     <string name="chart_visible_range">ve viditelném rozsahu</string>
+    <string name="tx_received">Přijato</string>
+    <string name="tx_sent">Odesláno</string>
+    <string name="tx_self">Převod mezi vlastními adresami</string>
+    <string name="tx_pending">Čeká na potvrzení</string>
+    <string name="tx_cost_auto">Pořizovací cena %1$s</string>
+    <string name="tx_cost_user">Pořizovací cena %1$s (vaše)</string>
+    <string name="tx_cost_unknown">Zadat pořizovací cenu</string>
+    <string name="cost_dialog_title">Pořizovací cena</string>
+    <string name="cost_dialog_message">Kolik vás tyto mince stály v amerických dolarech? Automatická hodnota používá cenu v den převodu. Pokud jste je koupili dřív (třeba na burze) a sem je jen převedli, zadejte, kolik jste zaplatili.</string>
+    <string name="cost_dialog_label">Celková cena v USD</string>
+    <string name="cost_dialog_total">Celkem</string>
+    <string name="cost_dialog_per_coin">Za 1 %1$s</string>
+    <string name="cost_dialog_label_per_coin">USD za 1 %1$s</string>
+    <string name="cost_dialog_total_hint">Celkem %1$s</string>
+    <string name="cost_dialog_per_coin_hint">%1$s za 1 %2$s</string>
+    <string name="cost_dialog_save">Uložit</string>
+    <string name="cost_dialog_reset">Použít automatickou</string>
+    <string name="cost_dialog_cancel">Zrušit</string>
+    <string name="tx_sheet_cost_auto">%1$s (%2$s za 1 %3$s), automaticky: cena v den převodu</string>
+    <string name="tx_sheet_cost_user">%1$s (%2$s za 1 %3$s), zadáno vámi</string>
+    <string name="tx_sheet_edit_cost">Upravit pořizovací cenu</string>
+    <string name="tx_open_explorer">Otevřít v průzkumníku bloků</string>
 </resources>

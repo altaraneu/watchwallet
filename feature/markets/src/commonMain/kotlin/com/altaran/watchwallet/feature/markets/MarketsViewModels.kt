@@ -138,7 +138,14 @@ data class AssetDetailUiState(
     val costComplete: Boolean = true,
     /** Current value of the holding in USD (for the profit/loss). */
     val valueUsd: Double? = null,
+    /** Where the holding is: one row per wallet. */
+    val wallets: List<WalletShare> = emptyList(),
+    /** Transactions of this asset across all wallets, newest first. */
+    val activity: List<com.altaran.watchwallet.core.ui.TxView> = emptyList(),
 )
+
+/** Amount of an asset held in one wallet. */
+data class WalletShare(val walletId: Long, val name: String, val amount: Double, val value: Double?)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class AssetDetailViewModel(
@@ -150,8 +157,16 @@ internal class AssetDetailViewModel(
     private val walletRepository: com.altaran.watchwallet.core.data.repository.WalletRepository,
     private val costBasis: com.altaran.watchwallet.core.data.repository.CostBasisRepository,
     private val fx: com.altaran.watchwallet.core.pricing.FxRates,
+    private val registry: com.altaran.watchwallet.core.data.chain.ChainRegistry,
 ) : ViewModel() {
     private val cost = MutableStateFlow<Triple<Double?, Boolean, Double?>>(Triple(null, true, null))
+    private val extras = MutableStateFlow<Pair<List<WalletShare>, List<com.altaran.watchwallet.core.ui.TxView>>>(emptyList<WalletShare>() to emptyList())
+
+    fun setCost(tx: com.altaran.watchwallet.core.ui.TxView, valueUsd: Double?) {
+        viewModelScope.launch {
+            costBasis.setUserValue(com.altaran.watchwallet.core.data.repository.CostKey(tx.walletId, tx.hash, tx.assetId), valueUsd)
+        }
+    }
     private val mode = MutableStateFlow(AssetChartMode.PRICE)
     private val range = MutableStateFlow(ChartRange.M1)
     private val interval = MutableStateFlow(CandleInterval.H1)
@@ -197,10 +212,50 @@ internal class AssetDetailViewModel(
             watched = if (key.startsWith("token:") || key.contains(':')) null else w,
         )
     }.combine(cost) { s, (c, complete, usd) -> s.copy(costUsd = c, costComplete = complete, valueUsd = usd) }
+        .combine(extras) { s, (w, a) -> s.copy(wallets = w, activity = a) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AssetDetailUiState())
 
     init {
         viewModelScope.launch { costBasis.fillAutomatic() }
+        // Per-wallet amounts and the asset's activity across wallets (one place for everything).
+        viewModelScope.launch {
+            combine(
+                holding,
+                combine(walletRepository.allTransactions, costBasis.entries) { t, c -> t to c },
+                walletRepository.assets,
+                walletRepository.activeWallets,
+                walletRepository.balances,
+            ) { h, (txs, costs), assets, wallets, balances ->
+                if (h == null) return@combine emptyList<WalletShare>() to emptyList()
+                val ids = h.assets.map { it.id }.toSet()
+                val names = wallets.associate { it.id to it.name }
+                val shares = balances.filter { it.asset.id in ids }.groupBy { it.walletId }.map { (walletId, rows) ->
+                    val amount = rows.sumOf { it.amount.toDouble() }
+                    WalletShare(walletId, names[walletId] ?: "?", amount, h.price?.let { it * amount })
+                }.sortedByDescending { it.amount }
+                val activity = txs.filter { it.assetId in ids }.sortedByDescending { it.timestamp }.take(MAX_ACTIVITY).map { tx ->
+                    val asset = assets[tx.assetId]
+                    val chain = registry.chain(tx.chainId)
+                    val cost = costs[com.altaran.watchwallet.core.data.repository.CostKey(tx.walletId, tx.hash, tx.assetId.value)]
+                    com.altaran.watchwallet.core.ui.TxView(
+                        walletId = tx.walletId,
+                        hash = tx.hash,
+                        assetId = tx.assetId.value,
+                        direction = tx.direction,
+                        confirmed = tx.confirmed,
+                        time = tx.timestamp,
+                        amount = asset?.let { com.altaran.watchwallet.core.model.TokenAmount(tx.delta, it.decimals).toDouble() } ?: 0.0,
+                        symbol = asset?.symbol ?: h.symbol,
+                        chainName = chain?.name,
+                        walletName = names[tx.walletId].takeIf { wallets.size > 1 },
+                        costUsd = cost?.valueUsd,
+                        costUserSet = cost?.userSet == true,
+                        explorerUrl = chain?.explorerTxUrl?.replace("{tx}", tx.hash),
+                    )
+                }
+                shares to activity
+            }.collect { extras.value = it }
+        }
         // Cost basis and USD value of the holding (profit/loss is shown in USD, like the costs).
         viewModelScope.launch {
             combine(holding, walletRepository.allTransactions, costBasis.entries, walletRepository.assets) { h, txs, costs, assets ->
@@ -292,3 +347,6 @@ internal class AssetDetailViewModel(
 
     private data class Settings(val mode: AssetChartMode, val range: ChartRange, val interval: CandleInterval, val log: Boolean)
 }
+
+/** Most recent transactions shown in the asset detail. */
+private const val MAX_ACTIVITY = 200

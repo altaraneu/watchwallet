@@ -50,4 +50,6 @@
     <string name="asset_unrealized">Unrealized profit/loss</string>
     <!-- Shown when some incoming transfers have no cost basis (no price for that day). -->
     <string name="asset_cost_incomplete">Some transfers have no cost yet; set it in the wallet’s activity.</string>
+    <string name="asset_in_wallets">In your wallets</string>
+    <string name="asset_activity">Activity</string>
 </resources>

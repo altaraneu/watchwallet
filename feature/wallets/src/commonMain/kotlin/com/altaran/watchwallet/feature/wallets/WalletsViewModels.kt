@@ -110,9 +110,9 @@ internal class WalletDetailViewModel(
     private val range = MutableStateFlow(ChartRange.M1)
 
     /** Saves what a transfer really cost in USD; `null` returns to the automatic value. */
-    fun setCost(tx: com.altaran.watchwallet.core.model.WalletTransaction, valueUsd: Double?) {
+    fun setCost(tx: com.altaran.watchwallet.core.ui.TxView, valueUsd: Double?) {
         viewModelScope.launch {
-            costBasis.setUserValue(com.altaran.watchwallet.core.data.repository.CostKey(tx.walletId, tx.hash, tx.assetId.value), valueUsd)
+            costBasis.setUserValue(com.altaran.watchwallet.core.data.repository.CostKey(tx.walletId, tx.hash, tx.assetId), valueUsd)
         }
     }
     private val currency = settingsRepository.settings.map { it.quoteCurrency }

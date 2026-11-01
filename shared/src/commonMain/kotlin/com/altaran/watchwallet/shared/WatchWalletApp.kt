@@ -199,7 +199,7 @@ private fun AppScaffold(navController: NavHostController = rememberNavController
                 },
             )
             marketsScreen(onOpenAsset = openHolding)
-            assetDetailScreen(onNavigateUp = navController::navigateUp)
+            assetDetailScreen(onNavigateUp = navController::navigateUp, onOpenWallet = openWallet)
             settingsScreen(
                 onOpenSupport = { navController.navigate(DonateRoute) },
                 onOpenImport = { navController.navigate(ImportRoute()) },

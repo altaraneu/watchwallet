@@ -65,6 +65,9 @@ import com.altaran.watchwallet.core.model.TokenAmount
 import com.altaran.watchwallet.core.model.TxDirection
 import com.altaran.watchwallet.core.model.WalletTransaction
 import com.altaran.watchwallet.core.model.WatchTarget
+import com.altaran.watchwallet.core.ui.TransactionDetails
+import com.altaran.watchwallet.core.ui.TransactionRow
+import com.altaran.watchwallet.core.ui.TxView
 import com.altaran.watchwallet.core.ui.ValueChartSection
 import com.altaran.watchwallet.core.ui.chartFormatFor
 import com.altaran.watchwallet.core.ui.clipboard.plainTextClipEntry
@@ -135,37 +138,11 @@ internal fun WalletDetailScreen(
     onRename: (String) -> Unit,
     onDelete: () -> Unit,
     onOpenHolding: (String) -> Unit,
-    onSetCost: (WalletTransaction, Double?) -> Unit = { _, _ -> },
+    onSetCost: (TxView, Double?) -> Unit = { _, _ -> },
 ) {
-    var editingCost by remember { mutableStateOf<WalletTransaction?>(null) }
-    var selectedTx by remember { mutableStateOf<WalletTransaction?>(null) }
+    var selectedTx by remember { mutableStateOf<TxView?>(null) }
     val sheetUriHandler = LocalUriHandler.current
-    selectedTx?.let { tx ->
-        TransactionSheet(
-            tx = tx,
-            state = state,
-            chain = chain(tx.chainId),
-            onEditCost = {
-                selectedTx = null
-                editingCost = tx
-            },
-            onOpenExplorer = { url -> sheetUriHandler.openUri(url) },
-            onDismiss = { selectedTx = null },
-        )
-    }
-    editingCost?.let { tx ->
-        val asset = state.assets[tx.assetId]
-        CostBasisDialog(
-            current = state.costs[CostKey(tx.walletId, tx.hash, tx.assetId.value)],
-            amount = asset?.let { TokenAmount(tx.delta, it.decimals).toDouble() } ?: 0.0,
-            symbol = asset?.symbol ?: "?",
-            onSave = { value ->
-                onSetCost(tx, value)
-                editingCost = null
-            },
-            onDismiss = { editingCost = null },
-        )
-    }
+    TransactionDetails(selectedTx, onSelect = { selectedTx = it }, onSetCost = onSetCost, onOpenExplorer = { sheetUriHandler.openUri(it) })
     var menuOpen by remember { mutableStateOf(false) }
     var renameOpen by remember { mutableStateOf(false) }
     var deleteOpen by remember { mutableStateOf(false) }
@@ -330,144 +307,17 @@ internal fun HoldingRow(holding: Holding, state: WalletDetailUiState, onOpen: (S
 private fun androidx.compose.foundation.lazy.LazyListScope.activity(
     state: WalletDetailUiState,
     chain: (ChainId) -> Chain?,
-    onOpen: (WalletTransaction) -> Unit,
+    onOpen: (TxView) -> Unit,
 ) {
     if (state.transactions.isEmpty()) {
         item { EmptyState(WwIcon.Markets, stringResource0(Res.string.detail_no_activity_title), stringResource0(Res.string.detail_no_activity_message)) }
         return
     }
     items(state.transactions, key = { "t-" + it.hash + it.assetId.value }) { tx ->
-        TransactionRow(tx, state, chain(tx.chainId)) { onOpen(tx) }
+        val view = tx.toView(state, chain(tx.chainId))
+        TransactionRow(view) { onOpen(view) }
         HorizontalDivider(Modifier.padding(start = 16.dp))
     }
-}
-
-@Composable
-private fun TransactionRow(tx: WalletTransaction, state: WalletDetailUiState, chain: Chain?, onOpen: () -> Unit) {
-    val asset = state.assets[tx.assetId]
-    val symbol = asset?.symbol ?: "?"
-    val amount = asset?.let { TokenAmount(tx.delta, it.decimals).toDouble() } ?: 0.0
-    val colors = WatchWalletTheme.extendedColors
-    // One tap target per row: it opens the transaction sheet (cost basis, explorer link).
-    Row(
-        Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                stringResource(
-                    when (tx.direction) {
-                        TxDirection.IN -> Res.string.tx_received
-                        TxDirection.OUT -> Res.string.tx_sent
-                        TxDirection.SELF -> Res.string.tx_self
-                    },
-                ) + if (!tx.confirmed) " · " + stringResource(Res.string.tx_pending) else "",
-                style = MaterialTheme.typography.titleSmall,
-            )
-            Text(
-                DateFormatter.dateTime(tx.timestamp) + (chain?.let { " · " + it.name } ?: ""),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        val sign = if (amount > 0) {
-            "+"
-        } else if (amount < 0) {
-            "−"
-        } else {
-            ""
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            AmountText(
-                sign + MoneyFormatter.formatCrypto(kotlin.math.abs(amount), symbol),
-                style = MaterialTheme.typography.titleSmall,
-                color = if (amount > 0) colors.positive else MaterialTheme.colorScheme.onSurface,
-            )
-            // Incoming transfers carry a cost basis (USD) that the user can correct.
-            if (amount > 0 && tx.direction == TxDirection.IN) {
-                val cost = state.costs[CostKey(tx.walletId, tx.hash, tx.assetId.value)]
-                Text(
-                    cost?.let {
-                        stringResource(
-                            if (it.userSet) Res.string.tx_cost_user else Res.string.tx_cost_auto,
-                            MoneyFormatter.format(it.valueUsd, com.altaran.watchwallet.core.model.QuoteCurrency.USD),
-                        )
-                    } ?: stringResource(Res.string.tx_cost_unknown),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 2.dp),
-                )
-            }
-        }
-    }
-}
-
-/** Edit the USD cost of one incoming transfer, or return to the automatic value. */
-@Composable
-private fun CostBasisDialog(current: CostBasisEntry?, amount: Double, symbol: String, onSave: (Double?) -> Unit, onDismiss: () -> Unit) {
-    // The cost can be entered as a total or as a price per coin (multiplied by the amount).
-    var perCoin by remember { mutableStateOf(false) }
-    var text by remember { mutableStateOf(current?.valueUsd?.let { ((it * 100).toLong() / 100.0).toString() }.orEmpty()) }
-    val entered = text.replace(',', '.').replace(Char(0x00A0).toString(), "").replace(" ", "").toDoubleOrNull()
-    val value = if (perCoin) entered?.let { it * amount } else entered
-    val usd = com.altaran.watchwallet.core.model.QuoteCurrency.USD
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.cost_dialog_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(Res.string.cost_dialog_message), style = MaterialTheme.typography.bodyMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    androidx.compose.material3.FilterChip(
-                        selected = !perCoin,
-                        onClick = {
-                            if (perCoin) entered?.let { text = (((it * amount) * 100).toLong() / 100.0).toString() }
-                            perCoin = false
-                        },
-                        label = { Text(stringResource(Res.string.cost_dialog_total)) },
-                    )
-                    androidx.compose.material3.FilterChip(
-                        selected = perCoin,
-                        onClick = {
-                            if (!perCoin && amount > 0) entered?.let { text = (it / amount).toString().take(MAX_PRICE_CHARS) }
-                            perCoin = true
-                        },
-                        label = { Text(stringResource(Res.string.cost_dialog_per_coin, symbol)) },
-                    )
-                }
-                androidx.compose.material3.OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    label = { Text(stringResource(if (perCoin) Res.string.cost_dialog_label_per_coin else Res.string.cost_dialog_label, symbol)) },
-                    supportingText = {
-                        // Show the other form, so both the total and the unit price are visible.
-                        val other = when {
-                            entered == null -> null
-                            perCoin -> stringResource(Res.string.cost_dialog_total_hint, MoneyFormatter.format(entered * amount, usd))
-                            amount > 0 -> stringResource(Res.string.cost_dialog_per_coin_hint, MoneyFormatter.formatPrice(entered / amount, usd), symbol)
-                            else -> null
-                        }
-                        other?.let { Text(it) }
-                    },
-                    singleLine = true,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
-                )
-            }
-        },
-        confirmButton = {
-            androidx.compose.material3.TextButton(onClick = { onSave(value) }, enabled = value != null && value >= 0) {
-                Text(stringResource(Res.string.cost_dialog_save))
-            }
-        },
-        dismissButton = {
-            Row {
-                if (current?.userSet == true) {
-                    androidx.compose.material3.TextButton(onClick = { onSave(null) }) { Text(stringResource(Res.string.cost_dialog_reset)) }
-                }
-                androidx.compose.material3.TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cost_dialog_cancel)) }
-            }
-        },
-    )
 }
 
 private fun androidx.compose.foundation.lazy.LazyListScope.addresses(state: WalletDetailUiState) {
@@ -538,67 +388,23 @@ private fun explorerUrl(state: WalletDetailUiState, chain: (ChainId) -> Chain?):
     return chain(target.chainId)?.explorerAddressUrl?.replace("{address}", target.address)
 }
 
-private const val MAX_PRICE_CHARS = 14
-
-/** Details of one transaction: amount, date, cost basis (editable) and the explorer link. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TransactionSheet(
-    tx: WalletTransaction,
-    state: WalletDetailUiState,
-    chain: Chain?,
-    onEditCost: () -> Unit,
-    onOpenExplorer: (String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val asset = state.assets[tx.assetId]
-    val symbol = asset?.symbol ?: "?"
-    val amount = asset?.let { TokenAmount(tx.delta, it.decimals).toDouble() } ?: 0.0
-    val url = chain?.explorerTxUrl?.replace("{tx}", tx.hash)
-    val cost = state.costs[CostKey(tx.walletId, tx.hash, tx.assetId.value)]
-    val usd = com.altaran.watchwallet.core.model.QuoteCurrency.USD
-    androidx.compose.material3.ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(
-                stringResource(
-                    when (tx.direction) {
-                        TxDirection.IN -> Res.string.tx_received
-                        TxDirection.OUT -> Res.string.tx_sent
-                        TxDirection.SELF -> Res.string.tx_self
-                    },
-                ),
-                style = MaterialTheme.typography.titleLarge,
-            )
-            AmountText(MoneyFormatter.formatCrypto(amount, symbol), style = MaterialTheme.typography.headlineSmall)
-            Text(
-                DateFormatter.dateTime(tx.timestamp) + (chain?.let { " · " + it.name } ?: ""),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (amount > 0 && tx.direction == TxDirection.IN) {
-                androidx.compose.material3.HorizontalDivider()
-                Text(stringResource(Res.string.cost_dialog_title), style = MaterialTheme.typography.titleSmall)
-                Text(
-                    cost?.let {
-                        val perCoin = if (amount > 0) MoneyFormatter.formatPrice(it.valueUsd / amount, usd) else null
-                        stringResource(
-                            if (it.userSet) Res.string.tx_sheet_cost_user else Res.string.tx_sheet_cost_auto,
-                            MoneyFormatter.format(it.valueUsd, usd),
-                            perCoin.orEmpty(),
-                            symbol,
-                        )
-                    } ?: stringResource(Res.string.tx_cost_unknown),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                androidx.compose.material3.FilledTonalButton(onClick = onEditCost, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(Res.string.tx_sheet_edit_cost))
-                }
-            }
-            if (url != null) {
-                androidx.compose.material3.OutlinedButton(onClick = { onOpenExplorer(url) }, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(Res.string.detail_open_explorer))
-                }
-            }
-        }
-    }
+/** Display model of a transaction of this wallet (shared row/sheet in core:ui). */
+private fun WalletTransaction.toView(state: WalletDetailUiState, chain: Chain?): TxView {
+    val asset = state.assets[assetId]
+    val cost = state.costs[CostKey(walletId, hash, assetId.value)]
+    return TxView(
+        walletId = walletId,
+        hash = hash,
+        assetId = assetId.value,
+        direction = direction,
+        confirmed = confirmed,
+        time = timestamp,
+        amount = asset?.let { TokenAmount(delta, it.decimals).toDouble() } ?: 0.0,
+        symbol = asset?.symbol ?: "?",
+        chainName = chain?.name,
+        walletName = null,
+        costUsd = cost?.valueUsd,
+        costUserSet = cost?.userSet == true,
+        explorerUrl = chain?.explorerTxUrl?.replace("{tx}", hash),
+    )
 }

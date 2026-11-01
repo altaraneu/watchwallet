@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,6 +53,9 @@ import com.altaran.watchwallet.core.designsystem.component.SectionHeader
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
 import com.altaran.watchwallet.core.model.CandleInterval
+import com.altaran.watchwallet.core.ui.TransactionDetails
+import com.altaran.watchwallet.core.ui.TransactionRow
+import com.altaran.watchwallet.core.ui.TxView
 import com.altaran.watchwallet.core.ui.ValueChartSection
 import com.altaran.watchwallet.core.ui.ValueHeader
 import com.altaran.watchwallet.core.ui.chartFormatFor
@@ -58,8 +63,10 @@ import com.altaran.watchwallet.core.ui.format.DateFormatter
 import com.altaran.watchwallet.core.ui.format.MoneyFormatter
 import com.altaran.watchwallet.feature.markets.generated.resources.*
 import com.altaran.watchwallet.feature.markets.generated.resources.Res
+import com.altaran.watchwallet.feature.markets.generated.resources.asset_activity
 import com.altaran.watchwallet.feature.markets.generated.resources.asset_cost_basis
 import com.altaran.watchwallet.feature.markets.generated.resources.asset_cost_incomplete
+import com.altaran.watchwallet.feature.markets.generated.resources.asset_in_wallets
 import com.altaran.watchwallet.feature.markets.generated.resources.asset_unrealized
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -140,10 +147,21 @@ private fun MarketRow(row: com.altaran.watchwallet.core.pricing.MarketInfo, stat
 internal fun AssetDetailRoute(
     key: String,
     onNavigateUp: () -> Unit,
+    onOpenWallet: (Long) -> Unit = {},
     viewModel: AssetDetailViewModel = koinViewModel(key = "asset-$key") { parametersOf(key) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AssetDetailScreen(state, onNavigateUp, viewModel::setMode, viewModel::setRange, viewModel::setInterval, viewModel::toggleLogScale, viewModel::toggleWatch)
+    AssetDetailScreen(
+        state,
+        onNavigateUp,
+        viewModel::setMode,
+        viewModel::setRange,
+        viewModel::setInterval,
+        viewModel::toggleLogScale,
+        viewModel::toggleWatch,
+        onOpenWallet = onOpenWallet,
+        onSetCost = viewModel::setCost,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -156,7 +174,12 @@ internal fun AssetDetailScreen(
     onIntervalChange: (CandleInterval) -> Unit,
     onToggleLog: () -> Unit,
     onToggleWatch: (Boolean) -> Unit = {},
+    onOpenWallet: (Long) -> Unit = {},
+    onSetCost: (TxView, Double?) -> Unit = { _, _ -> },
 ) {
+    var selectedTx by remember { mutableStateOf<TxView?>(null) }
+    val uriHandler = LocalUriHandler.current
+    TransactionDetails(selectedTx, onSelect = { selectedTx = it }, onSetCost = onSetCost, onOpenExplorer = { uriHandler.openUri(it) })
     val symbol = state.holding?.symbol ?: state.market?.symbol.orEmpty()
     val name = state.holding?.name ?: state.market?.name.orEmpty()
     val currency = state.currency
@@ -279,6 +302,17 @@ internal fun AssetDetailScreen(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                         )
                     }
+                }
+            }
+            if (state.wallets.isNotEmpty()) {
+                SectionHeader(stringResource(Res.string.asset_in_wallets))
+                state.wallets.forEach { share -> WalletShareRow(share, symbol, currency) { onOpenWallet(share.walletId) } }
+            }
+            if (state.activity.isNotEmpty()) {
+                SectionHeader(stringResource(Res.string.asset_activity))
+                state.activity.forEach { tx ->
+                    TransactionRow(tx) { selectedTx = tx }
+                    HorizontalDivider(Modifier.padding(start = 16.dp))
                 }
             }
             state.market?.let { market ->
@@ -456,6 +490,27 @@ private fun Stat(label: String, value: String, discreet: Boolean = true) {
             com.altaran.watchwallet.core.designsystem.component.AmountText(value, style = MaterialTheme.typography.bodyMedium)
         } else {
             Text(value, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+/** One wallet holding this asset; opens the wallet. */
+@Composable
+private fun WalletShareRow(share: WalletShare, symbol: String, currency: com.altaran.watchwallet.core.model.QuoteCurrency, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(share.name, style = MaterialTheme.typography.titleSmall)
+            com.altaran.watchwallet.core.designsystem.component.AmountText(
+                MoneyFormatter.formatCrypto(share.amount, symbol),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        share.value?.let {
+            com.altaran.watchwallet.core.designsystem.component.AmountText(MoneyFormatter.format(it, currency), style = MaterialTheme.typography.titleSmall)
         }
     }
 }
