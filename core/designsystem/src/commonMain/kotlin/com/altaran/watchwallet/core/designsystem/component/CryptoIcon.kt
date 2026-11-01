@@ -104,6 +104,14 @@ object CryptoIcons {
         "USDC.E" to "usdc",
         "USDT" to "usdt",
         "USDT0" to "usdt",
+        "SHIB" to "shib",
+        "CHZ" to "chz",
+        "ANKR" to "ankr",
+        "LINK" to "link",
+        "UNI" to "uni",
+        "WBTC" to "wbtc",
+        "PEPE" to "pepe",
+        "SUI" to "sui",
         "DAI" to "dai",
     )
 

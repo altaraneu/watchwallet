@@ -65,6 +65,10 @@ abstract class WalletDao {
     @Query("DELETE FROM wallet WHERE id = :id")
     abstract suspend fun delete(id: Long)
 
+    /** Time of the oldest stored transaction of any wallet (epoch ms), or `null`. */
+    @Query("SELECT MIN(timestamp) FROM wallet_tx")
+    abstract suspend fun earliestTransactionTime(): Long?
+
     @Query("DELETE FROM wallet_balance")
     protected abstract suspend fun deleteAllBalances()
 

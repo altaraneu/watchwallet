@@ -124,10 +124,30 @@ class PortfolioRepository(
             ) { transactions, history ->
                 val histories = buildHistories(balances, transactions.filter { walletIds == null || it.walletId in walletIds }, history, prices)
                 val first = transactions.minOfOrNull { it.timestamp }
-                val samples = Timeline.sampleTimes(range, Clock.System.now(), first)
-                Timeline.downsample(Timeline.portfolio(histories, samples))
+                val (samples, rangeStart) = displaySamples(range, first)
+                displayDownsample(Timeline.portfolio(histories, samples), rangeStart)
             }
         }.distinctUntilChanged()
+
+    /**
+     * Sample times for a chart of [range] that can be panned back in time: the selected range at
+     * its own resolution, preceded by daily samples of the whole history. Returns the samples and
+     * the start of the selected range (the initially visible window).
+     */
+    private fun displaySamples(range: ChartRange, firstActivity: kotlin.time.Instant?): Pair<List<kotlin.time.Instant>, kotlin.time.Instant> {
+        val now = Clock.System.now()
+        val fine = Timeline.sampleTimes(range, now, firstActivity)
+        val start = fine.firstOrNull() ?: now
+        if (range == ChartRange.ALL) return fine to start
+        val coarse = Timeline.sampleTimes(ChartRange.ALL, now, firstActivity).filter { it < start }
+        return (coarse + fine) to start
+    }
+
+    /** Downsamples only the older, coarse part, so the selected range keeps its resolution. */
+    private fun displayDownsample(points: List<TimedValue>, rangeStart: kotlin.time.Instant): List<TimedValue> {
+        val (older, inRange) = points.partition { it.time < rangeStart }
+        return Timeline.downsample(older, maxPoints = OLDER_POINTS) + Timeline.downsample(inRange)
+    }
 
     /** Balance and value history of one holding (by [Holding.key]). */
     fun holdingSeries(currency: QuoteCurrency, holdingKey: String, range: ChartRange): Flow<HoldingSeries> =
@@ -136,9 +156,8 @@ class PortfolioRepository(
             val priceIds = rows.mapNotNull { it.asset.priceId }.distinct()
             combine(walletRepository.allTransactions, priceRepository.history(priceIds, currency).onStart { emit(emptyMap()) }) { txs, history ->
                 val histories = buildHistories(rows, txs, history, prices)
-                val samples = Timeline.sampleTimes(
+                val (samples, rangeStart) = displaySamples(
                     range,
-                    Clock.System.now(),
                     txs.filter { tx ->
                         rows.any { it.asset.id == tx.assetId }
                     }.minOfOrNull { it.timestamp },
@@ -147,8 +166,8 @@ class PortfolioRepository(
                     TimedValue(samples[i], histories.sumOf { Timeline.balances(it, samples)[i] })
                 }
                 HoldingSeries(
-                    balance = Timeline.downsample(balanceSeries),
-                    value = Timeline.downsample(Timeline.portfolio(histories, samples)),
+                    balance = displayDownsample(balanceSeries, rangeStart),
+                    value = displayDownsample(Timeline.portfolio(histories, samples), rangeStart),
                     price = Timeline.downsample(
                         priceIds.firstOrNull()?.let { id ->
                             history[id].orEmpty().filter { it.time >= samples.first() }.map { TimedValue(it.time, it.price) }
@@ -200,6 +219,9 @@ class PortfolioRepository(
         }.sortedWith(compareByDescending<Holding> { it.value ?: -1.0 }.thenBy { it.symbol })
 
     companion object {
+        /** Points kept for the history before the selected range (panning back). */
+        private const val OLDER_POINTS = 400
+
         private const val PERCENT = 100.0
 
         fun keyOf(asset: Asset): String = asset.priceId ?: asset.id.value

@@ -42,6 +42,10 @@ import com.altaran.watchwallet.core.ui.generated.resources.chart_a11y_hidden
 import com.altaran.watchwallet.core.ui.generated.resources.chart_a11y_summary
 import com.altaran.watchwallet.core.ui.generated.resources.chart_loading_prices
 import com.altaran.watchwallet.core.ui.generated.resources.chart_no_data
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
 
@@ -84,7 +88,10 @@ fun ValueChartSection(
 ) {
     var crosshair by remember(points) { mutableStateOf<CrosshairValue?>(null) }
     val shown = crosshair?.value ?: currentValue
-    val start = points?.firstOrNull()?.value
+    // Points cover the whole history (for panning back); the change refers to the selected range.
+    val windowStart = remember(range, points) { rangeStartMillis(range) }
+    val inRange = points?.filter { windowStart == null || it.timeMillis >= windowStart }
+    val start = inRange?.firstOrNull()?.value ?: points?.firstOrNull()?.value
     val end = crosshair?.value ?: currentValue ?: points?.lastOrNull()?.value
 
     Column(modifier.fillMaxWidth()) {
@@ -97,56 +104,19 @@ fun ValueChartSection(
             rangeText = rangeLabel(range),
             secondaryLine = secondaryLine,
         )
-        if (LocalPriceHistoryLoading.current && points != null) {
-            // Prices are still coming in: the chart may be incomplete (flat or jumping) for now.
-            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                LinearProgressIndicator(Modifier.fillMaxWidth())
-                Text(
-                    stringResource(Res.string.chart_loading_prices),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
-        }
-        Box(Modifier.fillMaxWidth().padding(vertical = 8.dp).height(chartHeight), contentAlignment = Alignment.Center) {
-            when {
-                points == null -> {
-                    LinearProgressIndicator(Modifier.padding(horizontal = 48.dp).fillMaxWidth())
-                }
-
-                points.size < 2 || points.all { it.value == 0.0 } -> {
-                    Text(
-                        stringResource(Res.string.chart_no_data),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                else -> {
-                    val colors = WatchWalletTheme.extendedColors
-                    val first = points.first().value
-                    val last = points.last().value
-                    val summary = if (LocalDiscreetMode.current) {
-                        stringResource(Res.string.chart_a11y_hidden, rangeLabel(range).orEmpty())
-                    } else {
-                        stringResource(Res.string.chart_a11y_summary, rangeLabel(range).orEmpty(), format(first), format(last), formatChange(last - first))
-                    }
-                    TradingChart(
-                        series = ChartSeries.Area(points.map { AreaPoint(it.timeMillis / 1000, it.value) }),
-                        format = numberFormat,
-                        height = chartHeight,
-                        intraday = range.needsHourlyPrices,
-                        logScale = logScale,
-                        hideValues = LocalDiscreetMode.current,
-                        markerTimes = markerTimes.map { it / 1000 },
-                        lineColor = if (points.last().value >= points.first().value) colors.positive else colors.negative,
-                        onCrosshair = { crosshair = it },
-                        contentDescription = summary,
-                    )
-                }
-            }
-        }
+        LoadingHint(visible = LocalPriceHistoryLoading.current && points != null)
+        ChartBody(
+            points = points,
+            inRange = inRange,
+            range = range,
+            format = format,
+            formatChange = formatChange,
+            numberFormat = numberFormat,
+            logScale = logScale,
+            markerTimes = markerTimes,
+            chartHeight = chartHeight,
+            onCrosshair = { crosshair = it },
+        )
         RangeSelector(selected = range, onSelect = onRangeChange, ranges = ranges)
     }
 }
@@ -179,6 +149,99 @@ fun ValueHeader(
         }
         if (secondaryLine != null) {
             AmountText(secondaryLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** Start of [range] in epoch milliseconds, or `null` for the whole history. */
+private fun rangeStartMillis(range: ChartRange): Long? {
+    val now = kotlin.time.Clock.System.now()
+    return when (range) {
+        ChartRange.ALL -> {
+            null
+        }
+
+        ChartRange.YTD -> {
+            val zone = TimeZone.currentSystemDefault()
+            LocalDate(now.toLocalDateTime(zone).year, 1, 1).atStartOfDayIn(zone).toEpochMilliseconds()
+        }
+
+        else -> {
+            range.span?.let { (now - it).toEpochMilliseconds() }
+        }
+    }
+}
+
+/** Screen reader summary of a value chart (no amounts in discreet mode). */
+@Composable
+private fun chartSummary(range: String, first: Double, last: Double, format: (Double) -> String, formatChange: (Double) -> String): String =
+    if (LocalDiscreetMode.current) {
+        stringResource(Res.string.chart_a11y_hidden, range)
+    } else {
+        stringResource(Res.string.chart_a11y_summary, range, format(first), format(last), formatChange(last - first))
+    }
+
+/** Shown while price history downloads: the chart may still be incomplete. */
+@Composable
+private fun LoadingHint(visible: Boolean) {
+    if (!visible) return
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        LinearProgressIndicator(Modifier.fillMaxWidth())
+        Text(
+            stringResource(Res.string.chart_loading_prices),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+    }
+}
+
+@Composable
+private fun ChartBody(
+    points: List<ChartPoint>?,
+    inRange: List<ChartPoint>?,
+    range: ChartRange,
+    format: (Double) -> String,
+    formatChange: (Double) -> String,
+    numberFormat: ChartNumberFormat,
+    logScale: Boolean,
+    markerTimes: List<Long>,
+    chartHeight: Dp,
+    onCrosshair: (CrosshairValue?) -> Unit,
+) {
+    Box(Modifier.fillMaxWidth().padding(vertical = 8.dp).height(chartHeight), contentAlignment = Alignment.Center) {
+        when {
+            points == null -> {
+                LinearProgressIndicator(Modifier.padding(horizontal = 48.dp).fillMaxWidth())
+            }
+
+            points.size < 2 || points.all { it.value == 0.0 } -> {
+                Text(
+                    stringResource(Res.string.chart_no_data),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            else -> {
+                val colors = WatchWalletTheme.extendedColors
+                val first = (inRange?.firstOrNull() ?: points.first()).value
+                val last = points.last().value
+                val summary = chartSummary(rangeLabel(range).orEmpty(), first, last, format, formatChange)
+                TradingChart(
+                    series = ChartSeries.Area(points.map { AreaPoint(it.timeMillis / 1000, it.value) }),
+                    format = numberFormat,
+                    height = chartHeight,
+                    intraday = range.needsHourlyPrices,
+                    logScale = logScale,
+                    hideValues = LocalDiscreetMode.current,
+                    markerTimes = markerTimes.map { it / 1000 },
+                    lineColor = if (points.last().value >= points.first().value) colors.positive else colors.negative,
+                    onCrosshair = onCrosshair,
+                    contentDescription = summary,
+                    visibleBars = inRange?.size?.takeIf { it in 2 until points.size } ?: 0,
+                )
+            }
         }
     }
 }

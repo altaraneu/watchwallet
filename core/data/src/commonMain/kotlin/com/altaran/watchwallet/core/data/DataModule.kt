@@ -37,6 +37,7 @@ import com.altaran.watchwallet.core.datastore.dataStoreModule
 import com.altaran.watchwallet.core.model.NetworkSettings
 import com.altaran.watchwallet.core.network.ProxyConfig
 import com.altaran.watchwallet.core.network.createHttpClient
+import com.altaran.watchwallet.core.pricing.BinanceMarketData
 import com.altaran.watchwallet.core.pricing.CoinGeckoProvider
 import com.altaran.watchwallet.core.pricing.ExchangePrices
 import com.altaran.watchwallet.core.pricing.FxRates
@@ -92,7 +93,8 @@ val dataModule: Module = module {
     }
     single { KrakenMarketData(get()) }
     single { FxRates(get()) }
-    single { MarketDataRepository(get(), get()) }
+    single { BinanceMarketData(get()) }
+    single { MarketDataRepository(get(), get(), get()) }
 
     single<SettingsRepository> { DefaultSettingsRepository(get()) }
     single<WalletRepository> { DefaultWalletRepository(get()) }

@@ -41,6 +41,12 @@ interface PriceProvider {
 
     suspend fun markets(coinIds: Collection<String>, currency: String): List<MarketInfo>
 
+    /**
+     * Daily prices older than [before] (one page, oldest first), for extending stored history back
+     * in time. Providers without paging return nothing.
+     */
+    suspend fun historyBefore(priceId: String, currency: String, before: kotlin.time.Instant): List<PricePoint> = emptyList()
+
     /** Coins matching a name or symbol, for adding to the watchlist. */
     suspend fun search(query: String): List<CoinSearchResult>
 }

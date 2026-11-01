@@ -57,12 +57,13 @@ class ExchangePrices(
     }
 
     /** Daily (or hourly) closes in USD, oldest first, at most [limit] candles. */
-    suspend fun history(symbol: String, hourly: Boolean, limit: Int): List<ExchangeCandle> {
+    suspend fun history(symbol: String, hourly: Boolean, limit: Int, endTime: Instant? = null): List<ExchangeCandle> {
         if (symbol in STABLECOINS || symbol in unlisted) return emptyList()
         val rows: JsonArray = request("api/v3/klines") {
             parameter("symbol", symbol + QUOTE)
             parameter("interval", if (hourly) "1h" else "1d")
             parameter("limit", limit.coerceIn(1, MAX_CANDLES))
+            endTime?.let { parameter("endTime", it.toEpochMilliseconds()) }
         }
         return rows.mapNotNull { row ->
             val cells = row as? JsonArray ?: return@mapNotNull null

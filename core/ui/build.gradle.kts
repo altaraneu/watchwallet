@@ -9,6 +9,7 @@ kotlin {
             api(projects.core.model)
             implementation(projects.core.designsystem)
             api(projects.core.chart)
+            implementation(libs.kotlinx.datetime)
         }
     }
 }

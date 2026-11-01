@@ -2,11 +2,13 @@ package com.altaran.watchwallet.core.data.repository
 
 import com.altaran.watchwallet.core.model.CandleInterval
 import com.altaran.watchwallet.core.model.QuoteCurrency
+import com.altaran.watchwallet.core.pricing.BinanceMarketData
 import com.altaran.watchwallet.core.pricing.FxRates
 import com.altaran.watchwallet.core.pricing.KrakenMarketData
 import com.altaran.watchwallet.core.pricing.OhlcCandle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 import kotlin.time.Duration.Companion.seconds
 
@@ -20,20 +22,48 @@ sealed interface CandleFeed {
 }
 
 /**
- * Candlestick data for the price chart: history from Kraken, then live updates.
+ * Candlestick data for the price chart: history, then live updates.
  *
- * Currencies Kraken does not quote directly (CZK, PLN, HUF, SEK, NOK, DKK…) are converted from
- * EUR with the current ECB reference rate; older candles therefore use today's rate.
+ * Binance (USDT pairs, highly liquid) is tried first for fiat currencies, converted from USD
+ * with the current ECB reference rate. Kraken is the fallback and serves BTC/ETH as quote
+ * currencies; currencies it does not quote directly are converted from EUR. Older candles
+ * therefore use today's rate.
  */
 class MarketDataRepository(
     private val kraken: KrakenMarketData,
     private val fx: FxRates,
+    private val binance: BinanceMarketData,
 ) {
     fun candles(symbol: String, currency: QuoteCurrency, interval: CandleInterval): Flow<CandleFeed> = flow {
+        if (currency.kind == QuoteCurrency.Kind.FIAT && binanceCandles(symbol, currency, interval)) return@flow
+        krakenCandles(symbol, currency, interval)
+    }
+
+    /** Streams Binance candles while the pair is available; returns false when it is not listed. */
+    private suspend fun FlowCollector<CandleFeed>.binanceCandles(symbol: String, currency: QuoteCurrency, interval: CandleInterval): Boolean {
+        val factor = if (currency.code == "USD") 1.0 else runCatching { fx.rate("USD", currency.code) }.getOrNull() ?: return false
+        var listed = false
+        var backoff = 1
+        while (true) {
+            val history = runCatching { binance.candles(symbol, interval) }.getOrDefault(emptyList())
+            if (history.isEmpty()) {
+                if (!listed) return false
+            } else {
+                listed = true
+                emit(CandleFeed.History(history.map { it.scaled(factor) }))
+                backoff = 1
+                binance.liveCandles(symbol, interval).collect { emit(CandleFeed.Live(it.scaled(factor))) }
+            }
+            delay((backoff * 2).seconds)
+            backoff = (backoff * 2).coerceAtMost(MAX_BACKOFF_SECONDS)
+        }
+    }
+
+    private suspend fun FlowCollector<CandleFeed>.krakenCandles(symbol: String, currency: QuoteCurrency, interval: CandleInterval) {
         val source = runCatching { resolve(symbol.uppercase(), currency) }.getOrNull()
         if (source == null) {
             emit(CandleFeed.Unavailable)
-            return@flow
+            return
         }
         var backoff = 1
         var first = true

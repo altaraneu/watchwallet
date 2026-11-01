@@ -85,9 +85,14 @@ class PriceRepository(
      * Makes sure price history covering [range] exists for [priceIds]. Daily history (one year)
      * is fetched at most every 12 hours; hourly history (7 days) at most every 30 minutes.
      */
-    suspend fun ensureHistory(priceIds: Collection<String>, currency: QuoteCurrency, range: ChartRange) = historyMutex.withLock {
+    suspend fun ensureHistory(priceIds: Collection<String>, currency: QuoteCurrency, range: ChartRange) {
+        // Charts can be panned back past the selected range: short ranges need daily history too.
+        ensureHistory(priceIds, currency, range.needsHourlyPrices)
+        if (range.needsHourlyPrices) ensureHistory(priceIds, currency, hourly = false)
+    }
+
+    private suspend fun ensureHistory(priceIds: Collection<String>, currency: QuoteCurrency, hourly: Boolean) = historyMutex.withLock {
         val code = currency.code.lowercase()
-        val hourly = range.needsHourlyPrices
         val (days, maxAge) = if (hourly) HOURLY_DAYS to 30.minutes else null to 12.hours
         priceIds.forEach { priceId ->
             val key = "$priceId|$code|$hourly"
@@ -96,6 +101,7 @@ class PriceRepository(
             try {
                 val points = provider.history(priceId, code, days)
                 priceDao.insertPoints(points.map { PricePointEntity(priceId, code, it.time.toEpochMilliseconds(), it.price) })
+                if (!hourly) extendBack(priceId, code)
                 lastHistoryFetch[key] = Clock.System.now()
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
@@ -106,6 +112,21 @@ class PriceRepository(
             } finally {
                 historyRequests.update { it - 1 }
             }
+        }
+    }
+
+    /**
+     * Extends stored daily history back to the oldest transaction, one page at a time. Past
+     * prices never change, so pages already stored are never fetched again.
+     */
+    private suspend fun extendBack(priceId: String, code: String) {
+        val needed = walletDao.earliestTransactionTime() ?: return
+        repeat(MAX_BACKFILL_PAGES) {
+            val earliest = priceDao.earliestPointTime(priceId, code) ?: return
+            if (earliest <= needed + BACKFILL_SLACK_MS) return
+            val older = provider.historyBefore(priceId, code, Instant.fromEpochMilliseconds(earliest))
+            if (older.isEmpty()) return
+            priceDao.insertPoints(older.map { PricePointEntity(priceId, code, it.time.toEpochMilliseconds(), it.price) })
         }
     }
 
@@ -120,6 +141,10 @@ class PriceRepository(
 
     companion object {
         private const val HOURLY_DAYS = 7
+
+        /** Each page is about 2.7 years of daily prices. */
+        private const val MAX_BACKFILL_PAGES = 4
+        private const val BACKFILL_SLACK_MS = 2 * 24 * 3600 * 1000L
 
         /** Shown in Markets even before the user holds anything. */
         val DEFAULT_MARKETS = listOf("bitcoin", "ethereum")

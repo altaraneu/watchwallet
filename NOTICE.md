@@ -6,9 +6,9 @@
 - **UI icons** (`core/designsystem/.../composeResources/drawable/ic_*.xml`):
   [Material Symbols](https://github.com/google/material-design-icons), Apache License 2.0.
 - **Coin and network icons** (`chain_*.png`), resized to 96×96:
-  - `chain_{btc,eth,bnb,avax,gno,etc,ltc,doge,bch,sol,xrp,trx,ada,atom,dot,ksm,xlm,algo,xtz,usdc,usdt,dai}.png`:
+  - `chain_{btc,eth,bnb,avax,gno,etc,ltc,doge,bch,sol,xrp,trx,ada,atom,dot,ksm,xlm,algo,xtz,usdc,usdt,dai,chz,ankr,link,uni,wbtc}.png`:
     [spothq/cryptocurrency-icons](https://github.com/spothq/cryptocurrency-icons), CC0 1.0.
-  - `chain_{arbitrum,optimism,base,zksync,linea,scroll,mantle,cronos,sonic,celo,hyperevm,sei,blast,ton,osmosis,aptos,near,hedera,polygon}.png`:
+  - `chain_{arbitrum,optimism,base,zksync,linea,scroll,mantle,cronos,sonic,celo,hyperevm,sei,blast,ton,osmosis,aptos,near,hedera,polygon,shib,pepe,sui}.png`:
     [trustwallet/assets](https://github.com/trustwallet/assets), MIT License, Copyright (c) 2019-2023 Trust Wallet.
 
   Coin and network logos are trademarks of their respective owners and are used only to

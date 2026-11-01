@@ -74,6 +74,16 @@ class LayeredPriceProvider(
 
     override suspend fun search(query: String): List<CoinSearchResult> = fallback.search(query)
 
+    override suspend fun historyBefore(priceId: String, currency: String, before: Instant): List<PricePoint> {
+        val symbol = KnownAssets.symbolOf(priceId) ?: return emptyList()
+        val conversion = conversion(currency) ?: return emptyList()
+        val end = Instant.fromEpochMilliseconds(before.toEpochMilliseconds() - 1)
+        val candles = exchange.history(symbol, hourly = false, limit = ExchangePrices.MAX_CANDLES, endTime = end)
+        if (conversion.needs.isEmpty()) return candles.map { PricePoint(it.time, it.closeUsd * conversion.fiatFactor) }
+        val quote = exchange.history(conversion.needs.single(), hourly = false, limit = ExchangePrices.MAX_CANDLES, endTime = end).associateBy { it.time }
+        return candles.mapNotNull { c -> quote[c.time]?.closeUsd?.takeIf { it > 0 }?.let { PricePoint(c.time, c.closeUsd / it) } }
+    }
+
     // ---------------------------------------------------------------- exchange helpers
 
     private suspend fun exchangeCurrent(symbols: Map<String, String>, currency: String): Map<String, CurrentPrice> {
