@@ -32,6 +32,24 @@ Responses are not cached on disk by the HTTP client.
 | Public JSON-RPC nodes per EVM network (`*.publicnode.com`, `mainnet.era.zksync.io`, `rpc.linea.build`, `rpc.scroll.io`, `rpc.mantle.xyz`, `rpc.gnosischain.com`, `evm.cronos.org`, `rpc.soniclabs.com`, `forno.celo.org`, `etc.rivet.link`, `rpc.hyperliquid.xyz`, `rpc.berachain.com`, `evm-rpc.sei-apis.com`, `mainnet.unichain.org`, `rpc.blast.io`) | Native balance and activity check on each EVM network | The EVM address |
 | Blockscout instances (`eth.`, `base.`, `optimism.`, `arbitrum.`, `polygon.`, `gnosis.`, `zksync.`, `scroll.`, `celo.`, `etc.`, `unichain.blockscout.com`, `explorer.mantle.xyz`) | Token balances and transaction history | The EVM address |
 
+| `litecoinspace.org/api` (Esplora) | Litecoin balances and history | Individual Litecoin addresses (xpub-derived addresses one by one) |
+| `doge1.trezor.io`, `bch1.trezor.io` (Blockbook, address endpoint only) | Dogecoin and Bitcoin Cash | Individual addresses; the xpub endpoint is never used |
+| `api.mainnet-beta.solana.com` | Solana SOL and SPL/Token-2022 balances, history | The Solana address and transaction signatures |
+| `xrplcluster.com` (fallback `s1.ripple.com`) | XRP balance, trust lines, history, reserve | The XRP account |
+| `api.trongrid.io` | TRX, TRC-10, TRC-20 balances and history | The Tron address; TRC-10 token ids |
+| `toncenter.com/api/v3` | TON balance, jettons, history | The TON address |
+| `api.koios.rest` | Cardano balances, native tokens, history | The stake or payment address; transaction hashes |
+| `rest.cosmos.directory` | Cosmos Hub, Osmosis, Celestia, Injective balances, staking, history | The bech32 address |
+| `rpc.polkadot.io`, `kusama-rpc.polkadot.io` | Polkadot / Kusama balances | A storage key containing the account id |
+| `horizon.stellar.org` | Stellar balances, trustlines, payments | The Stellar account |
+| `fullnode.mainnet.sui.io` | Sui balances and history | The Sui address (only after you pick Sui explicitly) |
+| `api.mainnet.aptoslabs.com` | Aptos balance and history | The Aptos address (only after you pick Aptos explicitly) |
+| `rpc.mainnet.near.org` | NEAR balance | The NEAR account id |
+| `mainnet-public.mirrornode.hedera.com` | Hedera balances, tokens, history | The Hedera account id; token ids |
+| `mainnet-idx.algonode.cloud` | Algorand balances, ASAs, history | The Algorand address; asset ids |
+| `api.tzkt.io` | Tezos balance, tokens, operations | The Tezos address |
+| `api.kaspa.org` | Kaspa balance and history | The Kaspa address |
+
 ### Prices and market data (no addresses are ever sent)
 
 | Service | Used for | Data sent |

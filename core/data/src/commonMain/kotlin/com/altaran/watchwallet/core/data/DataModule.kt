@@ -2,6 +2,24 @@ package com.altaran.watchwallet.core.data
 
 import com.altaran.watchwallet.chain.api.ChainAdapter
 import com.altaran.watchwallet.chain.bitcoin.BitcoinAdapter
+import com.altaran.watchwallet.chain.litecoin.LitecoinAdapter
+import com.altaran.watchwallet.chain.dogecoin.DogecoinAdapter
+import com.altaran.watchwallet.chain.bitcoincash.BitcoinCashAdapter
+import com.altaran.watchwallet.chain.solana.SolanaAdapter
+import com.altaran.watchwallet.chain.xrp.XrpAdapter
+import com.altaran.watchwallet.chain.tron.TronAdapter
+import com.altaran.watchwallet.chain.ton.TonAdapter
+import com.altaran.watchwallet.chain.cardano.CardanoAdapter
+import com.altaran.watchwallet.chain.cosmos.CosmosAdapter
+import com.altaran.watchwallet.chain.polkadot.PolkadotAdapter
+import com.altaran.watchwallet.chain.stellar.StellarAdapter
+import com.altaran.watchwallet.chain.sui.SuiAdapter
+import com.altaran.watchwallet.chain.aptos.AptosAdapter
+import com.altaran.watchwallet.chain.near.NearAdapter
+import com.altaran.watchwallet.chain.hedera.HederaAdapter
+import com.altaran.watchwallet.chain.algorand.AlgorandAdapter
+import com.altaran.watchwallet.chain.tezos.TezosAdapter
+import com.altaran.watchwallet.chain.kaspa.KaspaAdapter
 import com.altaran.watchwallet.chain.bitcoin.BitcoinChain
 import com.altaran.watchwallet.chain.evm.EvmAdapter
 import com.altaran.watchwallet.core.data.chain.ChainRegistry
@@ -40,9 +58,27 @@ val dataModule: Module = module {
     }
     single<List<ChainAdapter>> {
         val network = get<NetworkSettings>()
-        listOf(
+        listOf<ChainAdapter>(
             BitcoinAdapter(get(), network.esploraUrl ?: BitcoinChain.DEFAULT_ESPLORA_URL),
             EvmAdapter(get()),
+            LitecoinAdapter(get()),
+            DogecoinAdapter(get()),
+            BitcoinCashAdapter(get()),
+            SolanaAdapter(get()),
+            XrpAdapter(get()),
+            TronAdapter(get()),
+            TonAdapter(get()),
+            CardanoAdapter(get()),
+            CosmosAdapter(get()),
+            PolkadotAdapter(get()),
+            StellarAdapter(get()),
+            SuiAdapter(get()),
+            AptosAdapter(get()),
+            NearAdapter(get()),
+            HederaAdapter(get()),
+            AlgorandAdapter(get()),
+            TezosAdapter(get()),
+            KaspaAdapter(get()),
         )
     }
     single { ChainRegistry(get()) }

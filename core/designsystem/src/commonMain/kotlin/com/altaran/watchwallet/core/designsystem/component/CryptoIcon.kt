@@ -31,7 +31,7 @@ object CryptoIcons {
         "evm:999" to "hyperevm", "evm:1329" to "sei", "evm:81457" to "blast",
         "solana" to "sol", "xrp" to "xrp", "tron" to "trx", "ton" to "ton", "cardano" to "ada",
         "stellar" to "xlm", "algorand" to "algo", "tezos" to "xtz", "near" to "near", "hedera" to "hedera",
-        "aptos" to "aptos", "polkadot" to "dot", "kusama" to "ksm", "cosmos" to "atom", "osmosis" to "osmosis",
+        "aptos" to "aptos", "polkadot" to "dot", "kusama" to "ksm", "cosmos:cosmoshub" to "atom", "cosmos:osmosis" to "osmosis",
     )
 
     private val SYMBOL_KEYS = mapOf(

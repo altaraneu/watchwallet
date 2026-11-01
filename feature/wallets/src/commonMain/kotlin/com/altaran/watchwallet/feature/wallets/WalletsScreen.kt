@@ -115,10 +115,10 @@ private fun WalletRow(item: WalletListItem, currency: QuoteCurrency, onClick: ()
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CryptoIcon(
-            iconKey = when (target?.family) {
-                ChainFamily.UTXO -> "btc"
-                ChainFamily.EVM -> "eth"
-                else -> null
+            iconKey = when (target) {
+                is com.altaran.watchwallet.core.model.WatchTarget.Address -> CryptoIcons.forChain(target.chainId.value)
+                is com.altaran.watchwallet.core.model.WatchTarget.ExtendedPublicKey -> CryptoIcons.forChain(target.chainId.value)
+                null -> null
             },
             fallbackText = item.wallet.name,
         )

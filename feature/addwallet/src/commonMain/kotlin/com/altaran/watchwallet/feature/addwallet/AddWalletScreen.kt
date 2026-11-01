@@ -84,6 +84,9 @@ internal fun AddWalletRoute(
         onNameChange = viewModel::onNameChange,
         onSave = viewModel::onSave,
         onBatchImport = onBatchImport,
+        onConfirmChain = viewModel::onConfirmChain,
+        onConfirmUnused = viewModel::onConfirmUnused,
+        onClear = viewModel::onClear,
     )
 }
 
@@ -99,6 +102,9 @@ internal fun AddWalletScreen(
     onNameChange: (String) -> Unit,
     onSave: (defaultName: String) -> Unit,
     onBatchImport: (String) -> Unit = {},
+    onConfirmChain: (ChainFamily) -> Unit = {},
+    onConfirmUnused: () -> Unit = {},
+    onClear: () -> Unit = {},
 ) {
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
@@ -170,6 +176,22 @@ internal fun AddWalletScreen(
                     stringResource(Res.string.add_wallet_unsupported_title, familyLabel(phase.family)),
                     stringResource(Res.string.add_wallet_unsupported_message),
                 )
+                is AddWalletPhase.ConfirmChain -> WarningCard(
+                    title = stringResource(Res.string.confirm_chain_title),
+                    message = stringResource(Res.string.confirm_chain_message),
+                ) {
+                    phase.options.forEach { family ->
+                        FilledTonalButton(onClick = { onConfirmChain(family) }) { Text(familyLabel(family)) }
+                    }
+                    androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
+                }
+                is AddWalletPhase.ConfirmUnused -> WarningCard(
+                    title = stringResource(Res.string.confirm_unused_title),
+                    message = stringResource(Res.string.confirm_unused_message),
+                ) {
+                    androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
+                    FilledTonalButton(onClick = onConfirmUnused) { Text(stringResource(Res.string.confirm_add_anyway)) }
+                }
                 AddWalletPhase.WrongChecksum -> InfoCard(
                     stringResource(Res.string.add_wallet_checksum_title),
                     stringResource(Res.string.add_wallet_checksum_message),
@@ -213,6 +235,20 @@ private fun SecretWarning(kind: SecretKind) {
                 Text(stringResource(Res.string.secret_message), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer)
                 Text(stringResource(Res.string.secret_scam_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
             }
+        }
+    }
+}
+
+@Composable
+private fun WarningCard(title: String, message: String, actions: @Composable () -> Unit) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(WwIcon.Warning.painter(), contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
+                Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onErrorContainer)
+            }
+            Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { actions() }
         }
     }
 }
@@ -315,6 +351,12 @@ private fun previewSummary(preview: CandidatePreview, chainName: (com.altaran.wa
 @Composable
 private fun defaultName(target: WatchTarget): String = when {
     target.family == ChainFamily.EVM -> stringResource(Res.string.default_name_evm)
-    target is WatchTarget.ExtendedPublicKey -> stringResource(Res.string.default_name_bitcoin_wallet)
-    else -> stringResource(Res.string.default_name_bitcoin_address)
+    target.chainId() == "bitcoin" && target is WatchTarget.ExtendedPublicKey -> stringResource(Res.string.default_name_bitcoin_wallet)
+    target.chainId() == "bitcoin" -> stringResource(Res.string.default_name_bitcoin_address)
+    else -> stringResource(Res.string.default_name_generic, com.altaran.watchwallet.core.ui.chainLabel(target))
+}
+
+private fun WatchTarget.chainId(): String = when (this) {
+    is WatchTarget.Address -> chainId.value
+    is WatchTarget.ExtendedPublicKey -> chainId.value
 }

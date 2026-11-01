@@ -43,10 +43,9 @@ class PortfolioWidget : GlanceAppWidget(), KoinComponent {
         val hidden = settings.discreetMode
         val value = if (hidden) HIDDEN else MoneyFormatter.format(snapshot.totalValue, settings.quoteCurrency)
         val change = snapshot.change24hPercent?.let { pct ->
-            if (hidden) HIDDEN else MoneyFormatter.formatPercentChange(pct / 100)
+            context.getString(R.string.widget_change_24h, if (hidden) HIDDEN else MoneyFormatter.formatPercentChange(pct / 100))
         }
         val title = context.getString(R.string.widget_title)
-        val changeLabel = context.getString(R.string.widget_change_24h)
 
         provideContent {
             GlanceTheme {
@@ -62,7 +61,7 @@ class PortfolioWidget : GlanceAppWidget(), KoinComponent {
                     Text(title, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 13.sp))
                     Text(value, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 24.sp, fontWeight = FontWeight.Bold))
                     if (change != null) {
-                        Text("$change $changeLabel", style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 13.sp))
+                        Text(change, style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 13.sp))
                     }
                 }
             }

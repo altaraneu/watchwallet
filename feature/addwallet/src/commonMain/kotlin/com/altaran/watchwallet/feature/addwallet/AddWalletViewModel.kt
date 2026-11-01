@@ -28,6 +28,12 @@ sealed interface AddWalletPhase {
 
     data object MultipleEntries : AddWalletPhase
 
+    /** `0x` + 64 hex: the user must pick the chain explicitly (it may also be a private key). */
+    data class ConfirmChain(val value: String, val options: List<ChainFamily>) : AddWalletPhase
+
+    /** The chosen address has never been used: second, stronger warning before saving. */
+    data class ConfirmUnused(val preview: CandidatePreview) : AddWalletPhase
+
     data object Unrecognized : AddWalletPhase
 
     /** Valid input; the user confirms one preview (pre-selected: the first with activity). */
@@ -69,7 +75,10 @@ internal class AddWalletViewModel(
                 _state.update { AddWalletUiState(phase = AddWalletPhase.SecretRejected(result.kind)) }
             }
             is Classification.Unsupported -> setPhase(text, AddWalletPhase.Unsupported(result.family))
-            is Classification.ConfirmationRequired -> setPhase(text, AddWalletPhase.Unsupported(result.options.first()))
+            is Classification.ConfirmationRequired -> {
+                val options = result.options.filter(service::isSupported)
+                setPhase(text, if (options.isEmpty()) AddWalletPhase.Unsupported(result.options.first()) else AddWalletPhase.ConfirmChain(result.value, options))
+            }
             Classification.WrongChecksum -> setPhase(text, AddWalletPhase.WrongChecksum)
             is Classification.Multiple -> setPhase(text, AddWalletPhase.MultipleEntries)
             Classification.Unrecognized -> setPhase(text, AddWalletPhase.Unrecognized)
@@ -83,6 +92,32 @@ internal class AddWalletViewModel(
                 }
             }
         }
+    }
+
+    /** Probes only the chain the user picked; never any other. */
+    fun onConfirmChain(family: ChainFamily) {
+        val phase = _state.value.phase as? AddWalletPhase.ConfirmChain ?: return
+        val target = service.confirmedTarget(phase.value, family) ?: run {
+            _state.update { it.copy(phase = AddWalletPhase.Unrecognized) }
+            return
+        }
+        _state.update { it.copy(phase = AddWalletPhase.Probing) }
+        probeJob = viewModelScope.launch {
+            val preview = service.probe(listOf(com.altaran.watchwallet.core.classifier.Candidate(target, com.altaran.watchwallet.core.classifier.Confidence.CERTAIN))).single()
+            val next = if (preview.probe?.hasActivity == true) AddWalletPhase.Preview(listOf(preview), 0) else AddWalletPhase.ConfirmUnused(preview)
+            _state.update { it.copy(phase = next) }
+        }
+    }
+
+    fun onConfirmUnused() {
+        val phase = _state.value.phase as? AddWalletPhase.ConfirmUnused ?: return
+        _state.update { it.copy(phase = AddWalletPhase.Preview(listOf(phase.preview), 0)) }
+    }
+
+    /** Discards the input (for example after the user realised it was a private key). */
+    fun onClear() {
+        probeJob?.cancel()
+        _state.value = AddWalletUiState()
     }
 
     fun onSelectCandidate(index: Int) {

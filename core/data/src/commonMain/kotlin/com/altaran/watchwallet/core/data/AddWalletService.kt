@@ -4,6 +4,8 @@ import com.altaran.watchwallet.chain.api.ProbeResult
 import com.altaran.watchwallet.core.classifier.AddressClassifier
 import com.altaran.watchwallet.core.classifier.Candidate
 import com.altaran.watchwallet.core.classifier.Classification
+import com.altaran.watchwallet.core.classifier.Confidence
+import com.altaran.watchwallet.core.data.chain.ChainParsers
 import com.altaran.watchwallet.core.data.chain.ChainRegistry
 import com.altaran.watchwallet.core.data.repository.WalletRepository
 import com.altaran.watchwallet.core.data.sync.SyncEngine
@@ -36,11 +38,26 @@ class AddWalletService(
 ) {
     fun classify(input: String): Classification = when (val result = AddressClassifier.classify(input)) {
         is Classification.Candidates -> {
-            val supported = result.candidates.filter { it.target.family in registry.supportedFamilies }
+            val supported = result.candidates.filter { registry.supports(it.target) }
             if (supported.isEmpty()) Classification.Unsupported(result.candidates.first().target.family) else Classification.Candidates(supported)
+        }
+        // Formats of the other chains (Litecoin, Solana, XRP, Cardano…), validated with checksums.
+        is Classification.Unsupported, Classification.Unrecognized -> {
+            val targets = ChainParsers.parse(input).filter { registry.supports(it) }
+            if (targets.isEmpty()) {
+                result
+            } else {
+                Classification.Candidates(targets.map { Candidate(it, if (targets.size == 1) Confidence.CERTAIN else Confidence.POSSIBLE) })
+            }
         }
         else -> result
     }
+
+    /** Interprets a `0x` + 64 hex value after the user explicitly picked Sui or Aptos. */
+    fun confirmedTarget(value: String, family: ChainFamily): WatchTarget? = ChainParsers.parseConfirmed(value, family)
+
+    /** Non-Bitcoin/EVM parsing for batch import. */
+    fun parseOtherChains(input: String): List<WatchTarget> = ChainParsers.parse(input).filter { registry.supports(it) }
 
     fun isSupported(family: ChainFamily): Boolean = family in registry.supportedFamilies
 
@@ -50,7 +67,7 @@ class AddWalletService(
         candidates.map { candidate ->
             async {
                 val existing = walletRepository.findExisting(candidate.target)
-                val adapter = registry.adapter(candidate.target.family)
+                val adapter = registry.adapter(candidate.target)
                 val probe = adapter?.let { runCatching { it.probe(candidate.target) }.getOrNull() }
                 CandidatePreview(candidate, probe, failed = probe == null, existingWalletId = existing)
             }

@@ -6,5 +6,5 @@
     <string name="widget_label">Hodnota portfolia</string>
     <string name="widget_description">Celková hodnota sledovaných peněženek</string>
     <string name="widget_title">Portfolio</string>
-    <string name="widget_change_24h">za 24 h</string>
+    <string name="widget_change_24h">%1$s za 24 h</string>
 </resources>

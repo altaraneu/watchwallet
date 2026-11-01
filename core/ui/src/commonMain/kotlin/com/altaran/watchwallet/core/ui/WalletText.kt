@@ -39,7 +39,27 @@ fun familyLabel(family: ChainFamily): String = when (family) {
     else -> family.name.lowercase().replaceFirstChar { it.uppercase() }
 }
 
-/** For example "Bitcoin · Native SegWit xpub" or "EVM · address". */
+/** Product names of chains (proper nouns, not translated). */
+private val CHAIN_NAMES = mapOf(
+    "bitcoin" to "Bitcoin", "litecoin" to "Litecoin", "dogecoin" to "Dogecoin", "bitcoincash" to "Bitcoin Cash",
+    "solana" to "Solana", "xrp" to "XRP Ledger", "tron" to "Tron", "ton" to "TON", "cardano" to "Cardano",
+    "cosmos:cosmoshub" to "Cosmos Hub", "cosmos:osmosis" to "Osmosis", "cosmos:celestia" to "Celestia",
+    "cosmos:injective" to "Injective", "polkadot" to "Polkadot", "kusama" to "Kusama", "stellar" to "Stellar",
+    "sui" to "Sui", "aptos" to "Aptos", "near" to "NEAR", "hedera" to "Hedera", "algorand" to "Algorand",
+    "tezos" to "Tezos", "kaspa" to "Kaspa",
+)
+
+/** Display name of the chain a target lives on; EVM targets cover all EVM networks. */
+@Composable
+fun chainLabel(target: WatchTarget): String {
+    val chainId = when (target) {
+        is WatchTarget.Address -> target.chainId
+        is WatchTarget.ExtendedPublicKey -> target.chainId
+    }
+    return if (target.family == ChainFamily.EVM) familyLabel(ChainFamily.EVM) else CHAIN_NAMES[chainId.value] ?: familyLabel(target.family)
+}
+
+/** For example "Bitcoin · Native SegWit xpub", "Solana · address" or "EVM · address". */
 @Composable
 fun targetDescription(target: WatchTarget): String {
     val kind = when (target) {
@@ -47,7 +67,7 @@ fun targetDescription(target: WatchTarget): String {
         is WatchTarget.Address -> target.scriptType?.let { stringResource(Res.string.target_address, scriptTypeLabel(it)) }
             ?: stringResource(Res.string.target_address, "").trim()
     }
-    return stringResource(Res.string.target_description, familyLabel(target.family), kind)
+    return stringResource(Res.string.target_description, chainLabel(target), kind)
 }
 
 /** Shortens an address for display: `bc1qar0s…wf5mdq`. */

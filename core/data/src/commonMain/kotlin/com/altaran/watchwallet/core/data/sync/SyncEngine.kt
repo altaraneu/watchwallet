@@ -79,7 +79,7 @@ class SyncEngine(
 
     private suspend fun syncOne(wallet: WalletEntity) {
         val target = wallet.toTarget() ?: return
-        val adapter = registry.adapter(target.family) ?: return
+        val adapter = registry.adapter(target) ?: return
         _state.update { it.copy(syncingWallets = it.syncingWallets + wallet.id) }
         try {
             val known = walletDao.knownConfirmedHashes(wallet.id).toSet()

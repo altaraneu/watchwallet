@@ -45,4 +45,12 @@
     <string name="qr_hint">Point the camera at an address or xpub QR code</string>
     <string name="qr_close">Close scanner</string>
     <string name="qr_no_permission">Camera access is needed to scan QR codes. You can allow it in the app settings.</string>
+    <!-- %1$s = chain name, for example "Solana" -->
+    <string name="default_name_generic">%1$s wallet</string>
+    <string name="confirm_chain_title">Choose the network</string>
+    <string name="confirm_chain_message">This looks like a Sui or Aptos address, but private keys of several chains look exactly the same. Nothing has been checked or sent yet. Pick the network of this address. If you copied a private key by mistake, clear it.</string>
+    <string name="confirm_unused_title">This address has never been used</string>
+    <string name="confirm_unused_message">If you copied a private key by mistake, clear it now and never share it. Add it only if you are sure this is a new, unused address.</string>
+    <string name="confirm_add_anyway">Add anyway</string>
+    <string name="confirm_clear">Clear</string>
 </resources>
