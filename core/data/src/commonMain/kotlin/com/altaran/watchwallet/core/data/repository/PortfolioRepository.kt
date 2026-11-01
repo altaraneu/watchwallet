@@ -12,11 +12,14 @@ import com.altaran.watchwallet.core.timeline.TimedPrice
 import com.altaran.watchwallet.core.timeline.TimedValue
 import com.altaran.watchwallet.core.timeline.Timeline
 import com.ionspin.kotlin.bignum.integer.BigInteger
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlin.time.Clock
@@ -128,6 +131,10 @@ class PortfolioRepository(
                 displayDownsample(Timeline.portfolio(histories, samples), rangeStart)
             }
         }.distinctUntilChanged()
+            // Hundreds of samples over years of history: never compute on the main thread, and
+            // skip intermediate states while prices stream in.
+            .conflate()
+            .flowOn(Dispatchers.Default)
 
     /**
      * Sample times for a chart of [range] that can be panned back in time: the selected range at
@@ -162,9 +169,9 @@ class PortfolioRepository(
                         rows.any { it.asset.id == tx.assetId }
                     }.minOfOrNull { it.timestamp },
                 )
-                val balanceSeries = samples.indices.map { i ->
-                    TimedValue(samples[i], histories.sumOf { Timeline.balances(it, samples)[i] })
-                }
+                // Balances of each asset once (not once per sample), then summed per sample.
+                val perAsset = histories.map { Timeline.balances(it, samples) }
+                val balanceSeries = samples.indices.map { i -> TimedValue(samples[i], perAsset.sumOf { it[i] }) }
                 HoldingSeries(
                     balance = displayDownsample(balanceSeries, rangeStart),
                     value = displayDownsample(Timeline.portfolio(histories, samples), rangeStart),
@@ -175,7 +182,7 @@ class PortfolioRepository(
                     ),
                 )
             }
-        }
+        }.conflate().flowOn(Dispatchers.Default)
 
     /** Price ids needed to draw [range] for everything visible; used to trigger history fetches. */
     suspend fun ensureHistory(currency: QuoteCurrency, range: ChartRange, priceIds: Collection<String>) =

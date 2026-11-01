@@ -272,6 +272,7 @@ internal fun HoldingRow(holding: Holding, state: WalletDetailUiState, onOpen: (S
         change = holding.change24hPercent?.let { MoneyFormatter.formatPercentChange(it / 100) },
         changeDirection = holding.change24hPercent?.compareTo(0.0) ?: 0,
         onClick = { onOpen(holding.key) },
+        iconUrl = com.altaran.watchwallet.core.data.AssetIcons.url(holding.priceId),
     )
 }
 

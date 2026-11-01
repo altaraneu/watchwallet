@@ -83,6 +83,7 @@ fun AssetRow(
     sparkline: List<Double> = emptyList(),
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
+    iconUrl: String? = null,
 ) {
     Row(
         modifier = modifier
@@ -97,7 +98,7 @@ fun AssetRow(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CryptoIcon(iconKey = iconKey, fallbackText = symbol, size = 40.dp)
+        CryptoIcon(iconKey = iconKey, fallbackText = symbol, size = 40.dp, remoteUrl = iconUrl)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(symbol, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)

@@ -272,6 +272,7 @@ private fun HoldingAssetRow(holding: Holding, currency: QuoteCurrency, onOpen: (
         changeDirection = holding.change24hPercent?.compareTo(0.0) ?: 0,
         onClick = { onOpen(holding.key) },
         onLongClick = onLongClick,
+        iconUrl = com.altaran.watchwallet.core.data.AssetIcons.url(holding.priceId),
     )
 }
 

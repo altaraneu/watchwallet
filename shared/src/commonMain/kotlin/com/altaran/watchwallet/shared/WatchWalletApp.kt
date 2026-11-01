@@ -24,7 +24,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import coil3.ImageLoader
+import coil3.compose.setSingletonImageLoaderFactory
+import coil3.disk.DiskCache
+import coil3.network.ktor3.KtorNetworkFetcherFactory
 import com.altaran.watchwallet.core.designsystem.component.LocalDiscreetMode
+import com.altaran.watchwallet.core.designsystem.component.LocalRemoteIcons
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
 import com.altaran.watchwallet.core.designsystem.theme.WatchWalletTheme
@@ -59,8 +64,11 @@ import com.altaran.watchwallet.shared.generated.resources.nav_markets
 import com.altaran.watchwallet.shared.generated.resources.nav_portfolio
 import com.altaran.watchwallet.shared.generated.resources.nav_settings
 import com.altaran.watchwallet.shared.generated.resources.nav_wallets
+import io.ktor.client.HttpClient
+import okio.FileSystem
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import kotlin.reflect.KClass
 
 /** Root composable shared by all platforms. Renders nothing until settings are loaded. */
@@ -76,7 +84,24 @@ fun WatchWalletApp(viewModel: AppViewModel) {
     }
     WatchWalletTheme(darkTheme = darkTheme, dynamicColor = settings.useDynamicColor) {
         val historyLoading by viewModel.priceHistoryLoading.collectAsStateWithLifecycle()
-        CompositionLocalProvider(LocalDiscreetMode provides settings.discreetMode, LocalPriceHistoryLoading provides historyLoading) {
+        // Coin logos go through the app's HTTP client (proxy/Tor settings apply) with a disk cache.
+        val http = koinInject<HttpClient>()
+        setSingletonImageLoaderFactory { context ->
+            ImageLoader.Builder(context)
+                .components { add(KtorNetworkFetcherFactory(http)) }
+                .diskCache {
+                    DiskCache.Builder()
+                        .directory(FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "coin_icons")
+                        .maxSizeBytes(ICON_CACHE_BYTES)
+                        .build()
+                }
+                .build()
+        }
+        CompositionLocalProvider(
+            LocalDiscreetMode provides settings.discreetMode,
+            LocalPriceHistoryLoading provides historyLoading,
+            LocalRemoteIcons provides settings.remoteIcons,
+        ) {
             val navController = rememberNavController()
             AppScaffold(navController)
             val showReminder by viewModel.showDonateReminder.collectAsStateWithLifecycle()
@@ -110,6 +135,8 @@ private fun DonateReminderDialog(onSupport: () -> Unit, onLater: () -> Unit, onN
         },
     )
 }
+
+private const val ICON_CACHE_BYTES = 30L * 1024 * 1024
 
 private enum class TopLevelDestination(
     val route: Any,

@@ -81,6 +81,10 @@ internal class SettingsViewModel(
         viewModelScope.launch { settingsRepository.setAppLock(enabled) }
     }
 
+    fun setRemoteIcons(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setRemoteIcons(enabled) }
+    }
+
     fun setSecureScreen(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setSecureScreen(enabled) }
     }

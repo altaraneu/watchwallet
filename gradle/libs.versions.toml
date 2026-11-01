@@ -43,6 +43,7 @@ bignum = "0.3.10"
 
 # Networking
 ktor = "3.6.1"
+coil = "3.6.3"
 
 # Crypto
 bitcoinKmp = "0.32.0"
@@ -115,6 +116,8 @@ bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum" }
 
 # Ktor
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }

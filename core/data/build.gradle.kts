@@ -9,6 +9,7 @@ kotlin {
             api(projects.core.classifier)
             api(projects.chain.api)
             implementation(projects.core.common)
+            implementation(projects.core.crypto)
             implementation(projects.core.datastore)
             implementation(projects.core.database)
             implementation(projects.core.network)

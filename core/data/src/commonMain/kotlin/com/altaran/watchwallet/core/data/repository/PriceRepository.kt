@@ -101,7 +101,6 @@ class PriceRepository(
             try {
                 val points = provider.history(priceId, code, days)
                 priceDao.insertPoints(points.map { PricePointEntity(priceId, code, it.time.toEpochMilliseconds(), it.price) })
-                if (!hourly) extendBack(priceId, code)
                 lastHistoryFetch[key] = Clock.System.now()
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
@@ -111,6 +110,24 @@ class PriceRepository(
                 // Missing history only leaves a gap in the chart; it is retried on the next request.
             } finally {
                 historyRequests.update { it - 1 }
+            }
+        }
+        // Then older history, after every asset has its recent prices (checks the DB first, so it
+        // only goes to the network when something is missing).
+        if (!hourly) {
+            priceIds.forEach { priceId ->
+                historyRequests.update { it + 1 }
+                try {
+                    extendBack(priceId, code)
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (
+                    @Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception,
+                ) {
+                    // Older prices are optional; the next chart request tries again.
+                } finally {
+                    historyRequests.update { it - 1 }
+                }
             }
         }
     }

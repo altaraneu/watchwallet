@@ -56,6 +56,8 @@ import com.altaran.watchwallet.feature.settings.generated.resources.settings_lan
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_language_system
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_license
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_license_summary
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_remote_icons
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_remote_icons_summary
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_section_about
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_section_data
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_section_developer
@@ -100,6 +102,7 @@ internal fun SettingsRoute(
         onSeedDemo = viewModel::seedDemoWallets,
         onAppLockChange = viewModel::setAppLock,
         onSecureScreenChange = viewModel::setSecureScreen,
+        onRemoteIconsChange = viewModel::setRemoteIcons,
         onBackgroundRefreshChange = viewModel::setBackgroundRefresh,
         onNetworkChange = viewModel::setNetwork,
         onRestart = viewModel::restart,
@@ -123,6 +126,7 @@ internal fun SettingsScreen(
     onSeedDemo: () -> Unit = {},
     onAppLockChange: (Boolean) -> Unit = {},
     onSecureScreenChange: (Boolean) -> Unit = {},
+    onRemoteIconsChange: (Boolean) -> Unit = {},
     onBackgroundRefreshChange: (Int, Boolean) -> Unit = { _, _ -> },
     onNetworkChange: (com.altaran.watchwallet.core.model.NetworkSettings) -> Unit = {},
     onRestart: () -> Unit = {},
@@ -208,6 +212,12 @@ internal fun SettingsScreen(
                 summary = stringResource(Res.string.settings_discreet_mode_summary),
                 checked = settings.discreetMode,
                 onCheckedChange = onDiscreetModeChange,
+            )
+            SettingsSwitchItem(
+                title = stringResource(Res.string.settings_remote_icons),
+                summary = stringResource(Res.string.settings_remote_icons_summary),
+                checked = settings.remoteIcons,
+                onCheckedChange = onRemoteIconsChange,
             )
             AdvancedSettingsSections(
                 state = uiState,

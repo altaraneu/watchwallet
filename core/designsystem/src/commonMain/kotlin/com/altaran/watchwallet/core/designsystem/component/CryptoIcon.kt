@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.SubcomposeAsyncImage
 import com.altaran.watchwallet.core.designsystem.generated.resources.Res
 import com.altaran.watchwallet.core.designsystem.generated.resources.allDrawableResources
 import org.jetbrains.compose.resources.painterResource
@@ -120,9 +122,12 @@ object CryptoIcons {
     fun forSymbol(symbol: String): String? = SYMBOL_KEYS[symbol.uppercase()]
 }
 
+/** Remote coin logos may be loaded (user setting, provided at the app root). */
+val LocalRemoteIcons = compositionLocalOf { true }
+
 /**
- * Round coin / network icon. Falls back to a colored circle with the first letter when no
- * bundled icon exists, so every asset still gets a recognizable mark.
+ * Round coin / network icon: the remote logo ([remoteUrl], cached on disk) when allowed, else
+ * the bundled icon, else a colored circle with the first letter, so every asset gets a mark.
  */
 @Composable
 fun CryptoIcon(
@@ -131,7 +136,23 @@ fun CryptoIcon(
     modifier: Modifier = Modifier,
     size: Dp = 40.dp,
     fallbackColor: Color = MaterialTheme.colorScheme.secondaryContainer,
+    remoteUrl: String? = null,
 ) {
+    if (remoteUrl != null && LocalRemoteIcons.current) {
+        SubcomposeAsyncImage(
+            model = remoteUrl,
+            contentDescription = null,
+            modifier = modifier.size(size).clip(CircleShape),
+            loading = { LocalIcon(iconKey, fallbackText, Modifier, size, fallbackColor) },
+            error = { LocalIcon(iconKey, fallbackText, Modifier, size, fallbackColor) },
+        )
+    } else {
+        LocalIcon(iconKey, fallbackText, modifier, size, fallbackColor)
+    }
+}
+
+@Composable
+private fun LocalIcon(iconKey: String?, fallbackText: String, modifier: Modifier, size: Dp, fallbackColor: Color) {
     val resource = iconKey?.let { Res.allDrawableResources["chain_$it"] }
     if (resource != null) {
         Image(

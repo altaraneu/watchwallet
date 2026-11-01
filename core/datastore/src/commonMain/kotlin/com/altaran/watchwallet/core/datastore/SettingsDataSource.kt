@@ -34,6 +34,7 @@ class SettingsDataSource(
             discreetMode = prefs[Keys.DISCREET_MODE] ?: false,
             appLock = prefs[Keys.APP_LOCK] ?: false,
             secureScreen = prefs[Keys.SECURE_SCREEN] ?: false,
+            remoteIcons = prefs[Keys.REMOTE_ICONS] ?: true,
             backgroundRefreshHours = prefs[Keys.BACKGROUND_HOURS] ?: 0,
             backgroundRefreshWifiOnly = prefs[Keys.BACKGROUND_WIFI_ONLY] ?: true,
             network = NetworkSettings(
@@ -69,6 +70,8 @@ class SettingsDataSource(
     suspend fun setAppLock(enabled: Boolean) = edit { it[Keys.APP_LOCK] = enabled }
 
     suspend fun setSecureScreen(enabled: Boolean) = edit { it[Keys.SECURE_SCREEN] = enabled }
+
+    suspend fun setRemoteIcons(enabled: Boolean) = edit { it[Keys.REMOTE_ICONS] = enabled }
 
     suspend fun setBackgroundRefresh(hours: Int, wifiOnly: Boolean) = edit {
         it[Keys.BACKGROUND_HOURS] = hours
@@ -108,6 +111,7 @@ class SettingsDataSource(
         val DISCREET_MODE = booleanPreferencesKey("discreet_mode")
         val APP_LOCK = booleanPreferencesKey("app_lock")
         val SECURE_SCREEN = booleanPreferencesKey("secure_screen")
+        val REMOTE_ICONS = booleanPreferencesKey("remote_icons")
         val BACKGROUND_HOURS = intPreferencesKey("background_refresh_hours")
         val BACKGROUND_WIFI_ONLY = booleanPreferencesKey("background_refresh_wifi_only")
         val PROXY_ENABLED = booleanPreferencesKey("proxy_enabled")

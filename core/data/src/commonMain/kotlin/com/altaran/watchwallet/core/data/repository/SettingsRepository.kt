@@ -19,6 +19,7 @@ interface SettingsRepository {
     suspend fun setDiscreetMode(enabled: Boolean)
     suspend fun setAppLock(enabled: Boolean)
     suspend fun setSecureScreen(enabled: Boolean)
+    suspend fun setRemoteIcons(enabled: Boolean)
     suspend fun setBackgroundRefresh(hours: Int, wifiOnly: Boolean)
     suspend fun setNetwork(network: NetworkSettings)
 
@@ -43,6 +44,7 @@ internal class DefaultSettingsRepository(
     override suspend fun setDiscreetMode(enabled: Boolean) = dataSource.setDiscreetMode(enabled)
     override suspend fun setAppLock(enabled: Boolean) = dataSource.setAppLock(enabled)
     override suspend fun setSecureScreen(enabled: Boolean) = dataSource.setSecureScreen(enabled)
+    override suspend fun setRemoteIcons(enabled: Boolean) = dataSource.setRemoteIcons(enabled)
     override suspend fun setBackgroundRefresh(hours: Int, wifiOnly: Boolean) = dataSource.setBackgroundRefresh(hours, wifiOnly)
     override suspend fun setNetwork(network: NetworkSettings) = dataSource.setNetwork(network)
     override suspend fun recordLaunch(): Int = dataSource.recordLaunch()

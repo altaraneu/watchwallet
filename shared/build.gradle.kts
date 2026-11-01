@@ -16,6 +16,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.core.data)
+            implementation(libs.coil.network.ktor3)
+            implementation(libs.ktor.client.core)
             implementation(projects.feature.addwallet)
             implementation(projects.feature.portfolio)
             implementation(projects.feature.wallets)

@@ -125,6 +125,7 @@ private fun MarketRow(row: com.altaran.watchwallet.core.pricing.MarketInfo, stat
         changeDirection = row.change24hPercent?.compareTo(0.0) ?: 0,
         sparkline = row.sparkline7d,
         onClick = { onOpen(row.priceId) },
+        iconUrl = com.altaran.watchwallet.core.data.AssetIcons.url(row.priceId),
     )
 }
 

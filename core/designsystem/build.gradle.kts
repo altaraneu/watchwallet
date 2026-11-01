@@ -10,6 +10,7 @@ kotlin {
             api(libs.compose.components.resources)
             api(projects.core.model)
             implementation(libs.kotlinx.collections.immutable)
+            api(libs.coil.compose)
         }
         androidMain.dependencies {
             implementation(libs.androidx.core.ktx)
