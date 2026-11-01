@@ -41,8 +41,11 @@ enum class SecretKind {
     /** NEAR private key (`ed25519:` + 64 bytes). */
     NEAR_PRIVATE_KEY,
 
-    /** Encrypted JSON keystore (contains ciphertext and KDF parameters). */
+    /** Encrypted JSON keystore (Ethereum, Polkadot.js…) or an ASCII-armored key export. */
     ENCRYPTED_KEYSTORE,
+
+    /** Base64-encoded private key (Algorand `sk`, legacy Sui keystore entries…). */
+    BASE64_PRIVATE_KEY,
 }
 
 sealed interface SecretCheck {
@@ -86,6 +89,8 @@ object SecretGuard {
     private val MNEMONIC_WORD_RATIO = 0.9
     private val JSON_BYTE_ARRAY = Regex("""^\[\s*\d{1,3}(\s*,\s*\d{1,3}){63}\s*]$""")
     private val KEYSTORE_MARKERS = listOf("ciphertext", "\"kdf\"", "cipherparams")
+    private val POLKADOT_KEYSTORE_MARKERS = listOf("\"encoded\"", "\"encoding\"")
+    private val ARMORED_KEY = Regex("""-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----""")
 
     private fun wholeInputSecret(text: String): SecretKind? {
         // Word lists: 12+ alphabetic words (any language, any separator).
@@ -97,6 +102,10 @@ object SecretGuard {
         // Solana CLI keypair file: [12,34,...] with 64 bytes.
         if (JSON_BYTE_ARRAY.containsMatchIn(text.replace(Regex("""\s+"""), ""))) return SecretKind.SOLANA_SECRET_KEY
         if (KEYSTORE_MARKERS.all { text.contains(it, ignoreCase = true) }) return SecretKind.ENCRYPTED_KEYSTORE
+        // Base64 keys contain `/`, `+` and `=`, which the token splitter treats as separators.
+        if (words.any(::isBase64Key)) return SecretKind.BASE64_PRIVATE_KEY
+        if (POLKADOT_KEYSTORE_MARKERS.all { text.contains(it) }) return SecretKind.ENCRYPTED_KEYSTORE
+        if (ARMORED_KEY.containsMatchIn(text)) return SecretKind.ENCRYPTED_KEYSTORE
         return null
     }
 
@@ -115,7 +124,7 @@ object SecretGuard {
             .distinct()
 
     private val EXTENDED_PRIVATE_PREFIXES =
-        listOf("xprv", "yprv", "zprv", "tprv", "uprv", "vprv", "Yprv", "Zprv", "Uprv", "Vprv", "Ltpv", "Mtpv", "dgpv")
+        listOf("xprv", "yprv", "zprv", "tprv", "uprv", "vprv", "Yprv", "Zprv", "Uprv", "Vprv", "Ltpv", "Mtpv", "dgpv", "kprv")
     private val HEX = Regex("""^[0-9a-fA-F]+$""")
     private val BASE58 = Regex("""^[1-9A-HJ-NP-Za-km-z]+$""")
     private val XRP_SEED = Regex("""^s[rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz]{28,30}$""")
@@ -141,6 +150,9 @@ object SecretGuard {
         }
         if (CARDANO_SIGNING.matches(lower)) return SecretKind.CARDANO_SIGNING_KEY
         if (lower.startsWith("ed25519:") && base58Length(token.substringAfter(':')) == KEYPAIR_BYTES) {
+            return SecretKind.NEAR_PRIVATE_KEY
+        }
+        if (lower.startsWith("secp256k1:") && base58Length(token.substringAfter(':')) in PRIVATE_KEY_BYTES..KEYPAIR_BYTES) {
             return SecretKind.NEAR_PRIVATE_KEY
         }
         if (TEZOS_SECRET.matches(token)) return SecretKind.TEZOS_SECRET_KEY
@@ -169,6 +181,19 @@ object SecretGuard {
         val payload = runCatching { Base58Check.decode(token).second }.getOrNull() ?: return false
         return payload.size == PRIVATE_KEY_BYTES ||
             (payload.size == PRIVATE_KEY_BYTES + 1 && payload.last() == 0x01.toByte())
+    }
+
+    private val BASE64 = Regex("""^[A-Za-z0-9+/]+={0,2}$""")
+
+    /**
+     * Base64 that decodes to a typical key length. It must contain `+`, `/` or `=`: base58
+     * addresses (Solana, Tron…) never do, so they are not mistaken for keys.
+     */
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
+    private fun isBase64Key(token: String): Boolean {
+        if (!BASE64.matches(token) || token.none { it == '+' || it == '/' || it == '=' }) return false
+        val size = runCatching { kotlin.io.encoding.Base64.decode(token).size }.getOrDefault(-1)
+        return size == PRIVATE_KEY_BYTES || size == PRIVATE_KEY_BYTES + 1 || size == KEYPAIR_BYTES
     }
 
     private fun base58Length(value: String): Int =

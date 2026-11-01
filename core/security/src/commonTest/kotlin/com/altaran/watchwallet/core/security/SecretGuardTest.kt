@@ -69,6 +69,21 @@ class SecretGuardTest {
     }
 
     @Test
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
+    fun formatsReportedByChainAdaptersAreRejected() {
+        val b64 = kotlin.io.encoding.Base64
+        assertSecret(SecretKind.BASE64_PRIVATE_KEY, b64.encode(ByteArray(64) { it.toByte() })) // Algorand sk
+        assertSecret(SecretKind.BASE64_PRIVATE_KEY, b64.encode(ByteArray(33) { (it * 7).toByte() })) // legacy Sui keystore
+        assertSecret(
+            SecretKind.ENCRYPTED_KEYSTORE,
+            listOf("-----BEGIN TENDERMINT PRIVATE KEY-----", "kdf: bcrypt", "abc", "-----END TENDERMINT PRIVATE KEY-----").joinToString("\n"),
+        )
+        assertSecret(SecretKind.ENCRYPTED_KEYSTORE, """{"encoded":"abc","encoding":{"content":["pkcs8","sr25519"],"type":["scrypt"]},"address":"x"}""")
+        assertSecret(SecretKind.EXTENDED_PRIVATE_KEY, "kprv" + "A".repeat(107))
+        assertSecret(SecretKind.NEAR_PRIVATE_KEY, "secp256k1:" + "5".repeat(44))
+    }
+
+    @Test
     fun publicAddressesAndKeysAreNotSecrets() {
         listOf(
             "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
