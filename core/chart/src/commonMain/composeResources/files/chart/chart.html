@@ -57,9 +57,10 @@
       },
       grid: { vertLines: { color: o.colors.grid }, horzLines: { color: o.colors.grid } },
       rightPriceScale: { borderVisible: false, visible: !o.hideValues, mode: o.logScale ? 1 : 0, scaleMargins: { top: 0.12, bottom: 0.08 } },
-      timeScale: { borderVisible: false, timeVisible: o.intraday, secondsVisible: false, rightOffset: 4, minBarSpacing: 0.5, maxBarSpacing: 14 },
+      timeScale: { borderVisible: false, timeVisible: o.intraday, secondsVisible: false, rightOffset: 4, minBarSpacing: 0.5, maxBarSpacing: 10,
+        tickMarkFormatter: function (t, type) { return tickLabel(t, type, o.locale); } },
       crosshair: { mode: 0, vertLine: { labelBackgroundColor: o.colors.accent }, horzLine: { visible: !o.hideValues, labelVisible: !o.hideValues, labelBackgroundColor: o.colors.accent } },
-      localization: { locale: o.locale, priceFormatter: formatter },
+      localization: { locale: o.locale, priceFormatter: formatter, timeFormatter: function (t) { return crosshairLabel(t, o); } },
       handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
       handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true }
     });
@@ -67,13 +68,15 @@
       series = chart.addSeries(LWC.CandlestickSeries, {
         upColor: o.colors.up, downColor: o.colors.down, borderVisible: false,
         wickUpColor: o.colors.up, wickDownColor: o.colors.down,
-        priceLineVisible: !o.hideValues, lastValueVisible: !o.hideValues
+        priceLineVisible: !o.hideValues, lastValueVisible: !o.hideValues,
+        autoscaleInfoProvider: minimumRange
       });
     } else {
       series = chart.addSeries(LWC.AreaSeries, {
         lineColor: o.colors.line, topColor: o.colors.areaTop, bottomColor: o.colors.areaBottom,
         lineWidth: 2, priceLineVisible: false, lastValueVisible: !o.hideValues,
-        crosshairMarkerRadius: 4
+        crosshairMarkerRadius: 4,
+        autoscaleInfoProvider: minimumRange
       });
     }
     // Report the visible window so the app can show the change for what the user sees.
@@ -101,6 +104,39 @@
       postBar(param.time, d);
     });
     post('onReady', '');
+  }
+
+  // Bar times are UTC seconds; labels use the device time zone like the rest of the app.
+  function localDate(t) { return new Date(t * 1000); }
+
+  function tickLabel(t, type, locale) {
+    var d = localDate(t);
+    try {
+      if (type === 0) return d.toLocaleDateString(locale, { year: 'numeric' });
+      if (type === 1) return d.toLocaleDateString(locale, { month: 'short' });
+      if (type === 2) return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+      return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return null; }
+  }
+
+  function crosshairLabel(t, o) {
+    var d = localDate(t);
+    try {
+      return o.intraday
+        ? d.toLocaleString(o.locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+        : d.toLocaleDateString(o.locale, { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch (e) { return d.toISOString(); }
+  }
+
+  // Keeps the price axis at least 0.5 % tall, so tiny moves (stablecoins, quantised quotes)
+  // do not fill the whole chart with blocky bars.
+  function minimumRange(original) {
+    var res = original();
+    if (!res || !res.priceRange) return res;
+    var lo = res.priceRange.minValue, hi = res.priceRange.maxValue;
+    var mid = (lo + hi) / 2, need = Math.abs(mid) * 0.005;
+    if (hi - lo < need) { res.priceRange.minValue = mid - need / 2; res.priceRange.maxValue = mid + need / 2; }
+    return res;
   }
 
   function postBar(time, d) {

@@ -9,9 +9,9 @@ import io.ktor.client.request.parameter
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -73,38 +73,34 @@ class KrakenMarketData(
     }
 
     /**
-     * Live updates of the current candle. Reconnects with backoff while collected; completes only
-     * when the collector is cancelled.
+     * Live updates of the current candle over one connection. Completes when the connection drops
+     * or goes silent (Kraken sends a heartbeat every second; a sleeping phone or a lost network
+     * can leave a socket open without traffic). The caller reconnects and backfills the gap.
      */
     fun liveCandles(base: String, quote: String, interval: CandleInterval): Flow<OhlcCandle> = flow {
         val symbol = "${wsBase(base)}/$quote"
-        var backoff = 1
-        while (true) {
-            runCatching {
-                http.webSocket(wsUrl) {
-                    send(
-                        buildJsonObject {
-                            put("method", "subscribe")
-                            put(
-                                "params",
-                                buildJsonObject {
-                                    put("channel", "ohlc")
-                                    put("symbol", buildJsonArray { add(kotlinx.serialization.json.JsonPrimitive(symbol)) })
-                                    put("interval", interval.minutes)
-                                },
-                            )
-                        }.toString(),
-                    )
-                    backoff = 1
-                    for (frame in incoming) {
-                        val text = (frame as? Frame.Text)?.readText() ?: continue
-                        parseLive(text).forEach { emit(it) }
-                    }
+        runCatching {
+            http.webSocket(wsUrl) {
+                send(
+                    buildJsonObject {
+                        put("method", "subscribe")
+                        put(
+                            "params",
+                            buildJsonObject {
+                                put("channel", "ohlc")
+                                put("symbol", buildJsonArray { add(kotlinx.serialization.json.JsonPrimitive(symbol)) })
+                                put("interval", interval.minutes)
+                            },
+                        )
+                    }.toString(),
+                )
+                while (true) {
+                    val frame = withTimeoutOrNull(SILENCE_TIMEOUT) { incoming.receiveCatching().getOrNull() } ?: break
+                    val text = (frame as? Frame.Text)?.readText() ?: continue
+                    parseLive(text).forEach { emit(it) }
                 }
             }
-            delay((backoff * 2).seconds)
-            backoff = (backoff * 2).coerceAtMost(MAX_BACKOFF)
-        }
+        }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
     }
 
     private fun parseLive(text: String): List<OhlcCandle> {
@@ -126,7 +122,7 @@ class KrakenMarketData(
     }
 
     companion object {
-        private const val MAX_BACKOFF = 30
+        private val SILENCE_TIMEOUT = 15.seconds
 
         /** Kraken REST still uses legacy asset codes for a few coins. */
         fun restBase(symbol: String): String = when (symbol.uppercase()) {
