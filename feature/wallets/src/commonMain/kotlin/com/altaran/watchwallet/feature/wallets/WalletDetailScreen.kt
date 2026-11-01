@@ -70,8 +70,8 @@ import com.altaran.watchwallet.core.ui.format.DateFormatter
 import com.altaran.watchwallet.core.ui.format.MoneyFormatter
 import com.altaran.watchwallet.core.ui.shortAddress
 import com.altaran.watchwallet.core.ui.targetDescription
-import com.altaran.watchwallet.feature.wallets.generated.resources.Res
 import com.altaran.watchwallet.feature.wallets.generated.resources.*
+import com.altaran.watchwallet.feature.wallets.generated.resources.Res
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -134,11 +134,20 @@ internal fun WalletDetailScreen(
                         Icon(WwIcon.Settings.painter(), stringResource(Res.string.detail_more))
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                        DropdownMenuItem(text = { Text(stringResource(Res.string.detail_rename)) }, onClick = { menuOpen = false; renameOpen = true })
+                        DropdownMenuItem(text = { Text(stringResource(Res.string.detail_rename)) }, onClick = {
+                            menuOpen = false
+                            renameOpen = true
+                        })
                         explorerUrl(state, chain)?.let { url ->
-                            DropdownMenuItem(text = { Text(stringResource(Res.string.detail_open_explorer)) }, onClick = { menuOpen = false; uriHandler.openUri(url) })
+                            DropdownMenuItem(text = { Text(stringResource(Res.string.detail_open_explorer)) }, onClick = {
+                                menuOpen = false
+                                uriHandler.openUri(url)
+                            })
                         }
-                        DropdownMenuItem(text = { Text(stringResource(Res.string.detail_delete)) }, onClick = { menuOpen = false; deleteOpen = true })
+                        DropdownMenuItem(text = { Text(stringResource(Res.string.detail_delete)) }, onClick = {
+                            menuOpen = false
+                            deleteOpen = true
+                        })
                     }
                 },
             )
@@ -208,13 +217,23 @@ internal fun WalletDetailScreen(
         }
     }
 
-    if (renameOpen && wallet != null) RenameDialog(wallet.name, onDismiss = { renameOpen = false }) { renameOpen = false; onRename(it) }
+    if (renameOpen && wallet != null) {
+        RenameDialog(wallet.name, onDismiss = { renameOpen = false }) {
+            renameOpen = false
+            onRename(it)
+        }
+    }
     if (deleteOpen) {
         AlertDialog(
             onDismissRequest = { deleteOpen = false },
             title = { Text(stringResource(Res.string.detail_delete_title)) },
             text = { Text(stringResource(Res.string.detail_delete_message)) },
-            confirmButton = { TextButton(onClick = { deleteOpen = false; onDelete() }) { Text(stringResource(Res.string.detail_delete)) } },
+            confirmButton = {
+                TextButton(onClick = {
+                    deleteOpen = false
+                    onDelete()
+                }) { Text(stringResource(Res.string.detail_delete)) }
+            },
             dismissButton = { TextButton(onClick = { deleteOpen = false }) { Text(stringResource(Res.string.detail_cancel)) } },
         )
     }
@@ -299,7 +318,13 @@ private fun TransactionRow(tx: WalletTransaction, state: WalletDetailUiState, ch
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        val sign = if (amount > 0) "+" else if (amount < 0) "−" else ""
+        val sign = if (amount > 0) {
+            "+"
+        } else if (amount < 0) {
+            "−"
+        } else {
+            ""
+        }
         AmountText(
             sign + MoneyFormatter.formatCrypto(kotlin.math.abs(amount), symbol),
             style = MaterialTheme.typography.titleSmall,
@@ -321,7 +346,12 @@ private fun androidx.compose.foundation.lazy.LazyListScope.addresses(state: Wall
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.width(56.dp),
             )
-            Text(shortAddress(address.address, 12, 10), fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+            Text(
+                shortAddress(address.address, 12, 10),
+                fontFamily = FontFamily.Monospace,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
             Text(
                 stringResource0(if (address.used) Res.string.address_used else Res.string.address_unused),
                 style = MaterialTheme.typography.labelMedium,

@@ -9,9 +9,9 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.ScriptType
 import com.altaran.watchwallet.core.model.WatchTarget
+import com.altaran.watchwallet.core.security.SecretCheck
 import com.altaran.watchwallet.core.security.SecretGuard
 import com.altaran.watchwallet.core.security.SecretKind
-import com.altaran.watchwallet.core.security.SecretCheck
 
 enum class Confidence { CERTAIN, LIKELY, POSSIBLE }
 
@@ -107,9 +107,18 @@ object AddressClassifier {
                         )
                     }
                 }
-                ExtendedKeyNetwork.LITECOIN -> Classification.Unsupported(ChainFamily.UTXO)
-                ExtendedKeyNetwork.DOGECOIN -> Classification.Unsupported(ChainFamily.UTXO)
-                ExtendedKeyNetwork.BITCOIN_TESTNET -> Classification.Unrecognized
+
+                ExtendedKeyNetwork.LITECOIN -> {
+                    Classification.Unsupported(ChainFamily.UTXO)
+                }
+
+                ExtendedKeyNetwork.DOGECOIN -> {
+                    Classification.Unsupported(ChainFamily.UTXO)
+                }
+
+                ExtendedKeyNetwork.BITCOIN_TESTNET -> {
+                    Classification.Unrecognized
+                }
             }
         }
         return null
@@ -130,7 +139,9 @@ object AddressClassifier {
                 ),
             ),
         )
+
         EvmAddresses.Validation.WrongChecksum -> Classification.WrongChecksum
+
         EvmAddresses.Validation.Invalid -> null
     }
 
@@ -147,8 +158,17 @@ object AddressClassifier {
 /** Strips payment URI schemes and parameters: BIP21, EIP-681, `solana:`, `ripple:`, `tron:`… */
 internal object PaymentUri {
     private val SCHEMES = listOf(
-        "bitcoin:", "litecoin:", "dogecoin:", "bitcoincash:", "ethereum:", "solana:", "ripple:", "xrpl:", "tron:",
-        "ton://transfer/", "ton:",
+        "bitcoin:",
+        "litecoin:",
+        "dogecoin:",
+        "bitcoincash:",
+        "ethereum:",
+        "solana:",
+        "ripple:",
+        "xrpl:",
+        "tron:",
+        "ton://transfer/",
+        "ton:",
     )
 
     fun strip(input: String): String {

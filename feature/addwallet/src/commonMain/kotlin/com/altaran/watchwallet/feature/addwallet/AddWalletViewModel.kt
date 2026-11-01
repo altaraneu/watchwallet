@@ -74,14 +74,31 @@ internal class AddWalletViewModel(
                 // Discard immediately: the secret is not kept in the field, state or anywhere else.
                 _state.update { AddWalletUiState(phase = AddWalletPhase.SecretRejected(result.kind)) }
             }
-            is Classification.Unsupported -> setPhase(text, AddWalletPhase.Unsupported(result.family))
+
+            is Classification.Unsupported -> {
+                setPhase(text, AddWalletPhase.Unsupported(result.family))
+            }
+
             is Classification.ConfirmationRequired -> {
                 val options = result.options.filter(service::isSupported)
-                setPhase(text, if (options.isEmpty()) AddWalletPhase.Unsupported(result.options.first()) else AddWalletPhase.ConfirmChain(result.value, options))
+                setPhase(
+                    text,
+                    if (options.isEmpty()) AddWalletPhase.Unsupported(result.options.first()) else AddWalletPhase.ConfirmChain(result.value, options),
+                )
             }
-            Classification.WrongChecksum -> setPhase(text, AddWalletPhase.WrongChecksum)
-            is Classification.Multiple -> setPhase(text, AddWalletPhase.MultipleEntries)
-            Classification.Unrecognized -> setPhase(text, AddWalletPhase.Unrecognized)
+
+            Classification.WrongChecksum -> {
+                setPhase(text, AddWalletPhase.WrongChecksum)
+            }
+
+            is Classification.Multiple -> {
+                setPhase(text, AddWalletPhase.MultipleEntries)
+            }
+
+            Classification.Unrecognized -> {
+                setPhase(text, AddWalletPhase.Unrecognized)
+            }
+
             is Classification.Candidates -> {
                 setPhase(text, AddWalletPhase.Probing)
                 probeJob = viewModelScope.launch {
@@ -103,7 +120,9 @@ internal class AddWalletViewModel(
         }
         _state.update { it.copy(phase = AddWalletPhase.Probing) }
         probeJob = viewModelScope.launch {
-            val preview = service.probe(listOf(com.altaran.watchwallet.core.classifier.Candidate(target, com.altaran.watchwallet.core.classifier.Confidence.CERTAIN))).single()
+            val preview = service.probe(
+                listOf(com.altaran.watchwallet.core.classifier.Candidate(target, com.altaran.watchwallet.core.classifier.Confidence.CERTAIN)),
+            ).single()
             val next = if (preview.probe?.hasActivity == true) AddWalletPhase.Preview(listOf(preview), 0) else AddWalletPhase.ConfirmUnused(preview)
             _state.update { it.copy(phase = next) }
         }

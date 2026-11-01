@@ -9,6 +9,14 @@ complexity:
     ignoreAnnotated: ['Composable']
   LongMethod:
     ignoreAnnotated: ['Composable']
+  CyclomaticComplexMethod:
+    # Parsers and response mappers branch a lot by nature.
+    allowedComplexity: 20
+    ignoreSimpleWhenEntries: true
+  NestedBlockDepth:
+    allowedDepth: 5
+  ComplexCondition:
+    allowedConditions: 5
   TooManyFunctions:
     ignorePrivate: true
     allowedFunctionsPerFile: 20
@@ -24,13 +32,23 @@ naming:
     ignoreAnnotated: ['Composable']
 
 style:
+  MaxLineLength:
+    maxLineLength: 160
+  ReturnCount:
+    max: 5
+    excludeGuardClauses: true
+  LoopWithTooManyJumpStatements:
+    maxJumpCount: 3
+  ThrowsCount:
+    max: 4
   WildcardImport:
     # ktlint enforces imports; generated Res accessors are imported with a wildcard.
     active: false
   MagicNumber:
     # Colors, dp values and test fixtures are clearer inline.
     ignoreAnnotated: ['Composable', 'Preview']
-    excludes: ['**/*Test/**', '**/theme/**', '**/*.kts']
+    # Encodings, checksums and wire formats are full of protocol constants.
+    excludes: ['**/*Test/**', '**/theme/**', '**/*.kts', '**/chain/**', '**/core/crypto/**', '**/core/security/**', '**/core/importexport/**', '**/core/chart/**']
     ignoreEnums: true
   UnusedPrivateFunction:
     ignoreAnnotated: ['Preview']

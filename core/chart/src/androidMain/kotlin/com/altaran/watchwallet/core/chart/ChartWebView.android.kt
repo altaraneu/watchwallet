@@ -64,7 +64,9 @@ internal actual fun ChartWebView(
                         }
 
                         @JavascriptInterface
-                        fun onReady(@Suppress("UNUSED_PARAMETER") payload: String?) = Unit
+                        fun onReady(
+                            @Suppress("UNUSED_PARAMETER") payload: String?,
+                        ) = Unit
                     },
                     "WWBridge",
                 )

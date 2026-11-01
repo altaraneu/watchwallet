@@ -140,7 +140,9 @@ class CoinGeckoProvider(
         }
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
-    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+    } catch (
+        @Suppress("TooGenericExceptionCaught") e: Exception,
+    ) {
         throw PriceDataException("CoinGecko request failed: $path", e)
     }
 

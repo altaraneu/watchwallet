@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:Algorand.kt:internal suspend fun parseAlgorandTransaction: List&lt;ChainTransaction&gt;</ID>
+  </CurrentIssues>
+</SmellBaseline>

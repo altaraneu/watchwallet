@@ -1,23 +1,23 @@
 package com.altaran.watchwallet
 
 import android.app.Application
+import androidx.glance.appwidget.updateAll
 import com.altaran.watchwallet.core.data.platform.AppInfo
 import com.altaran.watchwallet.core.data.platform.AppLanguageController
 import com.altaran.watchwallet.core.data.platform.AppRestarter
-import androidx.glance.appwidget.updateAll
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.sync.SyncEngine
-import com.altaran.watchwallet.widget.PortfolioWidget
-import kotlinx.coroutines.flow.filter
 import com.altaran.watchwallet.core.designsystem.theme.isDynamicColorSupported
 import com.altaran.watchwallet.platform.AndroidAppRestarter
 import com.altaran.watchwallet.platform.BackgroundRefresh
 import com.altaran.watchwallet.platform.isAppLockAvailable
 import com.altaran.watchwallet.shared.sharedModules
+import com.altaran.watchwallet.widget.PortfolioWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject

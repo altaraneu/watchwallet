@@ -72,6 +72,7 @@ class BitcoinAdapter(
                 val info = esplora.address(target.address)
                 probeResult(info.txCount, info.balance, usedAddresses = null)
             }
+
             is WatchTarget.ExtendedPublicKey -> {
                 // Cheap pre-check of the first receive addresses before a full gap-limit scan.
                 val key = parseKey(target)
@@ -183,7 +184,9 @@ class BitcoinAdapter(
         throw e
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
-    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+    } catch (
+        @Suppress("TooGenericExceptionCaught") e: Exception,
+    ) {
         throw ChainDataException("Bitcoin data source failed: ${e.message}", e)
     }
 

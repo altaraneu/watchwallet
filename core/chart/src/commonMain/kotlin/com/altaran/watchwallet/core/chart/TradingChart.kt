@@ -177,7 +177,11 @@ internal expect fun ChartWebView(
     modifier: Modifier,
 )
 
-internal val JSON = Json { encodeDefaults = true; explicitNulls = false; ignoreUnknownKeys = true }
+internal val JSON = Json {
+    encodeDefaults = true
+    explicitNulls = false
+    ignoreUnknownKeys = true
+}
 
 @Serializable
 internal data class CrosshairPayload(val time: Long, val value: Double, val open: Double? = null, val high: Double? = null, val low: Double? = null)

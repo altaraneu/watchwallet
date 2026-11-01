@@ -2,29 +2,29 @@ package com.altaran.watchwallet.core.data.sync
 
 import com.altaran.watchwallet.chain.evm.SpamFilter
 import com.altaran.watchwallet.core.data.chain.ChainRegistry
+import com.altaran.watchwallet.core.data.repository.toEntity
 import com.altaran.watchwallet.core.data.repository.toTarget
 import com.altaran.watchwallet.core.database.dao.WalletDao
 import com.altaran.watchwallet.core.database.entity.DerivedAddressEntity
 import com.altaran.watchwallet.core.database.entity.WalletBalanceEntity
 import com.altaran.watchwallet.core.database.entity.WalletEntity
 import com.altaran.watchwallet.core.database.entity.WalletTxEntity
-import com.altaran.watchwallet.core.data.repository.toEntity
 import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.WatchTarget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlin.time.Clock
 
 data class SyncState(
@@ -121,7 +121,9 @@ class SyncEngine(
             _state.update { it.copy(errors = it.errors - wallet.id) }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
-        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
             _state.update { it.copy(errors = it.errors + (wallet.id to (e.message ?: e::class.simpleName.orEmpty()))) }
         } finally {
             _state.update { it.copy(syncingWallets = it.syncingWallets - wallet.id) }

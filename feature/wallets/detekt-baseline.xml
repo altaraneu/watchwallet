@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MagicNumber:WalletDetailScreen.kt:10</ID>
+    <ID>MagicNumber:WalletDetailScreen.kt:12</ID>
+  </CurrentIssues>
+</SmellBaseline>

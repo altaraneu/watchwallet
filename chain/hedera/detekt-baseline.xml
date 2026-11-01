@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:Hedera.kt:internal suspend fun parseHederaTransaction: List&lt;ChainTransaction&gt;</ID>
+    <ID>DestructuringDeclarationWithTooManyEntries:Hedera.kt:HederaAddresses$val (shard, realm, num, checksum) = match.destructured</ID>
+  </CurrentIssues>
+</SmellBaseline>

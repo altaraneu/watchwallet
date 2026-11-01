@@ -32,7 +32,7 @@ internal actual fun ChartWebView(
     UIKitView(
         modifier = modifier,
         factory = {
-            WKWebView(frame = platform.CoreGraphics.CGRectZero.readValue(), configuration = WKWebViewConfiguration()).apply {
+            WKWebView(frame = platform.CoreGraphics.CGRectMake(0.0, 0.0, 0.0, 0.0), configuration = WKWebViewConfiguration()).apply {
                 navigationDelegate = delegate
                 opaque = false
                 loadHTMLString(html, baseURL = null)

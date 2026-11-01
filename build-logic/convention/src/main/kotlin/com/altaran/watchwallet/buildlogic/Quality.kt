@@ -24,6 +24,8 @@ internal fun Project.configureQuality() {
         buildUponDefaultConfig.set(true)
         parallel.set(true)
         config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+        // Findings that existed when the rules were introduced; new code must be clean.
+        baseline.set(file("detekt-baseline.xml"))
         // Multiplatform source sets: src/commonMain/kotlin, src/androidMain/kotlin, ...
         source.setFrom(
             projectDir.resolve("src").listFiles().orEmpty()

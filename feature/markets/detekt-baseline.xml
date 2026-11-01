@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:MarketsScreen.kt:@Composable private fun CandleSection</ID>
+    <ID>CyclomaticComplexMethod:MarketsScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable internal fun AssetDetailScreen</ID>
+    <ID>DestructuringDeclarationWithTooManyEntries:MarketsViewModels.kt:AssetDetailViewModel$(c, r, m, held)</ID>
+    <ID>MagicNumber:MarketsScreen.kt:0.01</ID>
+    <ID>MagicNumber:MarketsScreen.kt:100</ID>
+    <ID>MagicNumber:MarketsScreen.kt:4</ID>
+    <ID>MagicNumber:MarketsScreen.kt:6</ID>
+    <ID>MagicNumber:MarketsScreen.kt:8</ID>
+  </CurrentIssues>
+</SmellBaseline>

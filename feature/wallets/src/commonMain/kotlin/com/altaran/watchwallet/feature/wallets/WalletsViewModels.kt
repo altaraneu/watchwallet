@@ -53,7 +53,12 @@ internal class WalletsViewModel(
 ) : ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<WalletsUiState> = settingsRepository.settings.map { it.quoteCurrency }.flatMapLatest { currency ->
-        combine(walletRepository.activeWallets, portfolioRepository.walletValues(currency), syncEngine.state, walletRepository.groups) { wallets, values, sync, groups ->
+        combine(walletRepository.activeWallets, portfolioRepository.walletValues(currency), syncEngine.state, walletRepository.groups) {
+            wallets,
+            values,
+            sync,
+            groups,
+            ->
             WalletsUiState(
                 groups = groups.associate { it.id to it.name },
                 loading = false,

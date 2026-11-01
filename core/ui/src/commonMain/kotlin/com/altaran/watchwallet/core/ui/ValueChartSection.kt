@@ -92,12 +92,18 @@ fun ValueChartSection(
         )
         Box(Modifier.fillMaxWidth().padding(vertical = 8.dp).height(chartHeight), contentAlignment = Alignment.Center) {
             when {
-                points == null -> LinearProgressIndicator(Modifier.padding(horizontal = 48.dp).fillMaxWidth())
-                points.size < 2 || points.all { it.value == 0.0 } -> Text(
-                    stringResource(Res.string.chart_no_data),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                points == null -> {
+                    LinearProgressIndicator(Modifier.padding(horizontal = 48.dp).fillMaxWidth())
+                }
+
+                points.size < 2 || points.all { it.value == 0.0 } -> {
+                    Text(
+                        stringResource(Res.string.chart_no_data),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
                 else -> {
                     val colors = WatchWalletTheme.extendedColors
                     TradingChart(

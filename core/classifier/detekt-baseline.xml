@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ReturnCount:AddressClassifier.kt:AddressClassifier$private fun bitcoin: Classification?</ID>
+  </CurrentIssues>
+</SmellBaseline>

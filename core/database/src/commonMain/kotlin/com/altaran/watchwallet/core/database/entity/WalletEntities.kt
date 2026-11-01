@@ -38,8 +38,7 @@ data class WalletEntity(
     @ColumnInfo(name = "sort_order") val sortOrder: Int,
     val archived: Boolean,
     @ColumnInfo(name = "created_at_epoch_ms") val createdAtEpochMs: Long,
-    // --- version 2: watch target ---
-    /** [com.altaran.watchwallet.core.model.ChainFamily] name. */
+    /** Schema v2: [com.altaran.watchwallet.core.model.ChainFamily] name of the watch target. */
     val family: String? = null,
     @ColumnInfo(name = "chain_id") val chainId: String? = null,
     /** `ADDRESS` or `XPUB`. */

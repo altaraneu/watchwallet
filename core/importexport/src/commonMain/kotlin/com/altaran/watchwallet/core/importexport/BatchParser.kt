@@ -4,9 +4,9 @@ import com.altaran.watchwallet.core.classifier.AddressClassifier
 import com.altaran.watchwallet.core.classifier.Classification
 import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.WatchTarget
+import com.altaran.watchwallet.core.security.SecretCheck
 import com.altaran.watchwallet.core.security.SecretGuard
 import com.altaran.watchwallet.core.security.SecretKind
-import com.altaran.watchwallet.core.security.SecretCheck
 
 enum class EntryStatus { READY, AMBIGUOUS, DUPLICATE, NEEDS_CONFIRMATION, UNSUPPORTED, INVALID }
 
@@ -38,6 +38,8 @@ sealed interface BatchResult {
  *
  * The secret guard runs over the whole input and every row **before** anything else.
  */
+private val BYTE_ORDER_MARK = Char(0xFEFF)
+
 object BatchParser {
     private val ADDRESS_HEADERS = setOf("address", "addresses", "xpub", "address_or_xpub", "key", "public_key", "descriptor")
     private val LABEL_HEADERS = setOf("label", "name", "wallet", "title")
@@ -46,7 +48,8 @@ object BatchParser {
     private val CHAIN_HEADERS = setOf("chain", "network", "blockchain", "coin")
 
     fun parse(input: String): BatchResult {
-        val text = input.removePrefix("﻿").trim()
+        // Excel and other tools prepend a byte order mark to UTF-8 files.
+        val text = input.removePrefix(BYTE_ORDER_MARK.toString()).trim()
         if (text.isEmpty()) return BatchResult.Empty
 
         if (ExportFormat.looksLikeExport(text)) {
@@ -79,7 +82,11 @@ object BatchParser {
                 val target = wallet.toTarget()
                 if (SecretGuard.isSecret(wallet.value)) return BatchResult.SecretDetected(SecretKind.HEX_PRIVATE_KEY, i + 1)
                 BatchEntry(
-                    line = i + 1, raw = wallet.value, label = wallet.name, group = wallet.group, notes = wallet.notes,
+                    line = i + 1,
+                    raw = wallet.value,
+                    label = wallet.name,
+                    group = wallet.group,
+                    notes = wallet.notes,
                     status = if (target != null) EntryStatus.READY else EntryStatus.INVALID,
                     candidates = listOfNotNull(target),
                 )
@@ -92,7 +99,9 @@ object BatchParser {
         val label = col(LABEL_HEADERS)
         val group = col(GROUP_HEADERS)
         val notes = col(NOTES_HEADERS)
-        @Suppress("UNUSED_VARIABLE") val chain = col(CHAIN_HEADERS) // Reserved: resolve ambiguous rows by chain.
+
+        @Suppress("UNUSED_VARIABLE")
+        val chain = col(CHAIN_HEADERS) // Reserved: resolve ambiguous rows by chain.
         return rows.mapIndexed { i, row ->
             val cells = Csv.split(row, delimiter)
             entry(
@@ -124,11 +133,15 @@ object BatchParser {
                     listOf(entry(i + 1, cells.firstOrNull().orEmpty(), null, null, null))
                 }
             }
+
             recognized.size == 1 -> {
                 val label = cells.filterNot { it == recognized.single() }.joinToString(" ").ifBlank { null }
                 listOf(entry(i + 1, recognized.single(), label, null, null))
             }
-            else -> cells.map { entry(i + 1, it, null, null, null) }
+
+            else -> {
+                cells.map { entry(i + 1, it, null, null, null) }
+            }
         }
     }
 
@@ -144,9 +157,18 @@ object BatchParser {
                 val targets = result.candidates.map { it.target }
                 base.copy(status = if (targets.size == 1) EntryStatus.READY else EntryStatus.AMBIGUOUS, candidates = targets)
             }
-            is Classification.ConfirmationRequired -> base.copy(status = EntryStatus.NEEDS_CONFIRMATION)
-            is Classification.Unsupported -> base.copy(status = EntryStatus.UNSUPPORTED, unsupportedFamily = result.family)
-            else -> base
+
+            is Classification.ConfirmationRequired -> {
+                base.copy(status = EntryStatus.NEEDS_CONFIRMATION)
+            }
+
+            is Classification.Unsupported -> {
+                base.copy(status = EntryStatus.UNSUPPORTED, unsupportedFamily = result.family)
+            }
+
+            else -> {
+                base
+            }
         }
     }
 
@@ -179,10 +201,23 @@ object Csv {
         while (i < line.length) {
             val c = line[i]
             when {
-                quoted && c == '"' && line.getOrNull(i + 1) == '"' -> { current.append('"'); i++ }
-                c == '"' -> quoted = !quoted
-                !quoted && c == delimiter -> { cells += current.toString(); current.clear() }
-                else -> current.append(c)
+                quoted && c == '"' && line.getOrNull(i + 1) == '"' -> {
+                    current.append('"')
+                    i++
+                }
+
+                c == '"' -> {
+                    quoted = !quoted
+                }
+
+                !quoted && c == delimiter -> {
+                    cells += current.toString()
+                    current.clear()
+                }
+
+                else -> {
+                    current.append(c)
+                }
             }
             i++
         }

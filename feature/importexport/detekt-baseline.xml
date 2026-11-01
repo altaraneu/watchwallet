@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MagicNumber:ImportExportViewModels.kt:ExportViewModel$100</ID>
+    <ID>MagicNumber:ImportExportViewModels.kt:ExportViewModel$100.0</ID>
+    <ID>MagicNumber:ImportExportViewModels.kt:ImportViewModel$4</ID>
+    <ID>MagicNumber:ImportExportViewModels.kt:ImportViewModel$6</ID>
+  </CurrentIssues>
+</SmellBaseline>

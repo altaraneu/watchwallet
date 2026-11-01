@@ -75,7 +75,9 @@ internal class ImportViewModel(
         }
         when (val result = BatchParser.parse(text)) {
             is BatchResult.SecretDetected -> _state.value = ImportUiState(phase = ImportPhase.SecretRejected(result.kind, result.line))
+
             BatchResult.Empty -> _state.update { it.copy(text = text, phase = ImportPhase.Input) }
+
             is BatchResult.Entries -> viewModelScope.launch {
                 val rows = result.entries.map { entry ->
                     val tracked = entry.candidates.firstOrNull()?.let { walletRepository.findExisting(it) } != null
@@ -99,7 +101,17 @@ internal class ImportViewModel(
 
     fun toggle(index: Int) = updateRows { rows -> rows.mapIndexed { i, r -> if (i == index) r.copy(selected = !r.selected) else r } }
 
-    fun choose(index: Int, candidate: Int) = updateRows { rows -> rows.mapIndexed { i, r -> if (i == index) r.copy(chosen = candidate, selected = true) else r } }
+    fun choose(index: Int, candidate: Int) = updateRows { rows ->
+        rows.mapIndexed { i, r ->
+            if (i ==
+                index
+            ) {
+                r.copy(chosen = candidate, selected = true)
+            } else {
+                r
+            }
+        }
+    }
 
     fun import() {
         val phase = _state.value.phase as? ImportPhase.Preview ?: return
@@ -117,8 +129,11 @@ internal class ImportViewModel(
                 val target = row.entry.candidates.getOrNull(row.chosen)
                 when {
                     !row.selected -> skipped++
+
                     target == null -> failed++
+
                     walletRepository.findExisting(target) != null -> skipped++
+
                     else -> runCatching {
                         walletRepository.addWallet(target, row.entry.label ?: defaultName(target), emptyList(), groupId(row.entry.group ?: commonGroup))
                     }.onSuccess { imported++ }.onFailure { failed++ }
@@ -203,12 +218,16 @@ internal class ExportViewModel(
                 val content = if (state.password.isNotEmpty() && ExportCrypto.isSupported) ExportCrypto.encrypt(json, state.password) else json
                 content to "watchwallet-$stamp.json"
             }
+
             ExportFormatOption.CSV -> {
                 val values = if (state.includeValues) walletValues() else emptyMap()
                 val currency = settingsRepository.settings.first().quoteCurrency.code
                 ExportFormat.toCsv(wallets, values, if (state.includeValues) "value_$currency".lowercase() else null) to "watchwallet-$stamp.csv"
             }
-            ExportFormatOption.TEXT -> ExportFormat.toText(wallets) to "watchwallet-addresses-$stamp.txt"
+
+            ExportFormatOption.TEXT -> {
+                ExportFormat.toText(wallets) to "watchwallet-addresses-$stamp.txt"
+            }
         }
     }
 

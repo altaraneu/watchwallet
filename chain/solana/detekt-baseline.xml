@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:Solana.kt:internal fun parseTransaction: List&lt;ChainTransaction&gt;</ID>
+    <ID>LoopWithTooManyJumpStatements:Solana.kt:SolanaAdapter$for</ID>
+  </CurrentIssues>
+</SmellBaseline>

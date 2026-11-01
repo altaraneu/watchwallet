@@ -58,8 +58,8 @@ import com.altaran.watchwallet.core.ui.clipboard.plainText
 import com.altaran.watchwallet.core.ui.familyLabel
 import com.altaran.watchwallet.core.ui.format.MoneyFormatter
 import com.altaran.watchwallet.core.ui.targetDescription
-import com.altaran.watchwallet.feature.addwallet.generated.resources.Res
 import com.altaran.watchwallet.feature.addwallet.generated.resources.*
+import com.altaran.watchwallet.feature.addwallet.generated.resources.Res
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -110,7 +110,10 @@ internal fun AddWalletScreen(
     val scope = rememberCoroutineScope()
     var scanning by rememberSaveable { mutableStateOf(false) }
     if (scanning) {
-        QrScannerDialog(onResult = { text -> scanning = false; onSubmit(text.trim()) }, onDismiss = { scanning = false })
+        QrScannerDialog(onResult = { text ->
+            scanning = false
+            onSubmit(text.trim())
+        }, onDismiss = { scanning = false })
     }
     Scaffold(
         topBar = {
@@ -169,33 +172,54 @@ internal fun AddWalletScreen(
             }
 
             when (val phase = state.phase) {
-                AddWalletPhase.Idle -> Unit
-                AddWalletPhase.Probing -> ProbingIndicator()
-                is AddWalletPhase.SecretRejected -> SecretWarning(phase.kind)
-                is AddWalletPhase.Unsupported -> InfoCard(
-                    stringResource(Res.string.add_wallet_unsupported_title, familyLabel(phase.family)),
-                    stringResource(Res.string.add_wallet_unsupported_message),
-                )
-                is AddWalletPhase.ConfirmChain -> WarningCard(
-                    title = stringResource(Res.string.confirm_chain_title),
-                    message = stringResource(Res.string.confirm_chain_message),
-                ) {
-                    phase.options.forEach { family ->
-                        FilledTonalButton(onClick = { onConfirmChain(family) }) { Text(familyLabel(family)) }
+                AddWalletPhase.Idle -> {
+                    Unit
+                }
+
+                AddWalletPhase.Probing -> {
+                    ProbingIndicator()
+                }
+
+                is AddWalletPhase.SecretRejected -> {
+                    SecretWarning(phase.kind)
+                }
+
+                is AddWalletPhase.Unsupported -> {
+                    InfoCard(
+                        stringResource(Res.string.add_wallet_unsupported_title, familyLabel(phase.family)),
+                        stringResource(Res.string.add_wallet_unsupported_message),
+                    )
+                }
+
+                is AddWalletPhase.ConfirmChain -> {
+                    WarningCard(
+                        title = stringResource(Res.string.confirm_chain_title),
+                        message = stringResource(Res.string.confirm_chain_message),
+                    ) {
+                        phase.options.forEach { family ->
+                            FilledTonalButton(onClick = { onConfirmChain(family) }) { Text(familyLabel(family)) }
+                        }
+                        androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
                     }
-                    androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
                 }
-                is AddWalletPhase.ConfirmUnused -> WarningCard(
-                    title = stringResource(Res.string.confirm_unused_title),
-                    message = stringResource(Res.string.confirm_unused_message),
-                ) {
-                    androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
-                    FilledTonalButton(onClick = onConfirmUnused) { Text(stringResource(Res.string.confirm_add_anyway)) }
+
+                is AddWalletPhase.ConfirmUnused -> {
+                    WarningCard(
+                        title = stringResource(Res.string.confirm_unused_title),
+                        message = stringResource(Res.string.confirm_unused_message),
+                    ) {
+                        androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
+                        FilledTonalButton(onClick = onConfirmUnused) { Text(stringResource(Res.string.confirm_add_anyway)) }
+                    }
                 }
-                AddWalletPhase.WrongChecksum -> InfoCard(
-                    stringResource(Res.string.add_wallet_checksum_title),
-                    stringResource(Res.string.add_wallet_checksum_message),
-                )
+
+                AddWalletPhase.WrongChecksum -> {
+                    InfoCard(
+                        stringResource(Res.string.add_wallet_checksum_title),
+                        stringResource(Res.string.add_wallet_checksum_message),
+                    )
+                }
+
                 AddWalletPhase.MultipleEntries -> {
                     InfoCard(
                         stringResource(Res.string.add_wallet_multiple_title),
@@ -203,11 +227,17 @@ internal fun AddWalletScreen(
                     )
                     FilledTonalButton(onClick = { onBatchImport(state.input) }) { Text(stringResource(Res.string.add_wallet_open_batch)) }
                 }
-                AddWalletPhase.Unrecognized -> InfoCard(
-                    stringResource(Res.string.add_wallet_unrecognized_title),
-                    stringResource(Res.string.add_wallet_unrecognized_message),
-                )
-                is AddWalletPhase.Preview -> PreviewSection(phase, state, chainName, onSelectCandidate, onNameChange, onSave)
+
+                AddWalletPhase.Unrecognized -> {
+                    InfoCard(
+                        stringResource(Res.string.add_wallet_unrecognized_title),
+                        stringResource(Res.string.add_wallet_unrecognized_message),
+                    )
+                }
+
+                is AddWalletPhase.Preview -> {
+                    PreviewSection(phase, state, chainName, onSelectCandidate, onNameChange, onSave)
+                }
             }
         }
     }
@@ -233,7 +263,11 @@ private fun SecretWarning(kind: SecretKind) {
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
                 Text(stringResource(Res.string.secret_message), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer)
-                Text(stringResource(Res.string.secret_scam_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
+                Text(
+                    stringResource(Res.string.secret_scam_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
             }
         }
     }

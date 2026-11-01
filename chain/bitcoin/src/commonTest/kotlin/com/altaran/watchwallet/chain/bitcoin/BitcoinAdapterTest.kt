@@ -31,7 +31,8 @@ class BitcoinAdapterTest {
 
     @Test
     fun incomingPayment() {
-        val result = assertNotNull(toChainTransaction(tx("a", listOf("bc1qother" to 60_000), listOf(ours to 50_000, "bc1qother" to 9_000), fee = 1_000), setOf(ours)))
+        val result =
+            assertNotNull(toChainTransaction(tx("a", listOf("bc1qother" to 60_000), listOf(ours to 50_000, "bc1qother" to 9_000), fee = 1_000), setOf(ours)))
         assertEquals(50_000, result.delta.longValue())
         assertNull(result.fee, "fee is paid by the sender")
         assertTrue(!result.isSelfTransfer)
@@ -63,12 +64,18 @@ class BitcoinAdapterTest {
         val address = "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"
         val engine = MockEngine { request ->
             val body = when {
-                request.url.encodedPath.endsWith("/address/$address") ->
+                request.url.encodedPath.endsWith("/address/$address") -> {
                     """{"address":"$address","chain_stats":{"funded_txo_sum":150000,"spent_txo_sum":50000,"tx_count":2},"mempool_stats":{"funded_txo_sum":0,"spent_txo_sum":0,"tx_count":0}}"""
-                request.url.encodedPath.endsWith("/txs") ->
+                }
+
+                request.url.encodedPath.endsWith("/txs") -> {
                     """[{"txid":"t2","status":{"confirmed":true,"block_time":1700000100},"fee":200,"vin":[{"prevout":{"scriptpubkey_address":"$address","value":150000}}],"vout":[{"scriptpubkey_address":"bc1qx","value":49800},{"scriptpubkey_address":"$address","value":100000}]},
                        {"txid":"t1","status":{"confirmed":true,"block_time":1700000000},"fee":100,"vin":[{"prevout":{"scriptpubkey_address":"bc1qy","value":200000}}],"vout":[{"scriptpubkey_address":"$address","value":150000}]}]"""
-                else -> error("Unexpected ${request.url}")
+                }
+
+                else -> {
+                    error("Unexpected ${request.url}")
+                }
             }
             respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
         }

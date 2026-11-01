@@ -73,6 +73,7 @@ internal actual fun QrScannerDialog(onResult: (String) -> Unit, onDismiss: () ->
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             when {
                 granted -> CameraPreview(onResult)
+
                 denied -> Text(
                     stringResource(Res.string.qr_no_permission),
                     color = Color.White,

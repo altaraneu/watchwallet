@@ -1,6 +1,7 @@
 package com.altaran.watchwallet.feature.portfolio
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,9 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -50,8 +50,8 @@ import com.altaran.watchwallet.core.model.QuoteCurrency
 import com.altaran.watchwallet.core.ui.ValueChartSection
 import com.altaran.watchwallet.core.ui.chartFormatFor
 import com.altaran.watchwallet.core.ui.format.MoneyFormatter
-import com.altaran.watchwallet.feature.portfolio.generated.resources.Res
 import com.altaran.watchwallet.feature.portfolio.generated.resources.*
+import com.altaran.watchwallet.feature.portfolio.generated.resources.Res
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -112,6 +112,7 @@ internal fun PortfolioScreen(
                 SkeletonBlock(width = 96.dp, height = 16.dp)
                 SkeletonBlock(width = 220.dp, height = 40.dp)
             }
+
             is PortfolioUiState.Ready -> PullToRefreshBox(
                 isRefreshing = uiState.refreshing,
                 onRefresh = onRefresh,
@@ -149,7 +150,9 @@ private fun PortfolioContent(
                     Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    FilterChip(selected = state.selectedGroupId == null, onClick = { onSelectGroup(null) }, label = { Text(stringResource(Res.string.portfolio_all_wallets)) })
+                    FilterChip(selected = state.selectedGroupId == null, onClick = {
+                        onSelectGroup(null)
+                    }, label = { Text(stringResource(Res.string.portfolio_all_wallets)) })
                     state.groups.forEach { group ->
                         FilterChip(selected = state.selectedGroupId == group.id, onClick = { onSelectGroup(group.id) }, label = { Text(group.name) })
                     }

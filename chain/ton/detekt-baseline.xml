@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongMethod:TonTest.kt:TonTest$@Test fun syncParsesBalancesTransactionsAndJettons</ID>
+    <ID>MaxLineLength:TonTest.kt:TonTest$jetton_master</ID>
+    <ID>ReturnCount:Ton.kt:TonAddresses$fun decode: Account?</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -52,12 +52,26 @@ data class ExportedWallet(
     companion object {
         fun from(target: WatchTarget, name: String, group: String?, notes: String?): ExportedWallet = when (target) {
             is WatchTarget.Address -> ExportedWallet(
-                name = name, group = group, notes = notes, family = target.family.name, chain = target.chainId.value,
-                kind = "ADDRESS", value = target.address, scriptType = target.scriptType?.name,
+                name = name,
+                group = group,
+                notes = notes,
+                family = target.family.name,
+                chain = target.chainId.value,
+                kind = "ADDRESS",
+                value = target.address,
+                scriptType = target.scriptType?.name,
             )
+
             is WatchTarget.ExtendedPublicKey -> ExportedWallet(
-                name = name, group = group, notes = notes, family = target.family.name, chain = target.chainId.value,
-                kind = "XPUB", value = target.key, scriptType = target.scriptType.name, gapLimit = target.gapLimit,
+                name = name,
+                group = group,
+                notes = notes,
+                family = target.family.name,
+                chain = target.chainId.value,
+                kind = "XPUB",
+                value = target.key,
+                scriptType = target.scriptType.name,
+                gapLimit = target.gapLimit,
             )
         }
     }
@@ -89,7 +103,21 @@ object ExportFormat {
     fun toCsv(wallets: List<ExportedWallet>, values: Map<String, String> = emptyMap(), valueHeader: String? = null): String {
         val header = listOf("label", "chain", "type", "address_or_xpub", "group", "tags", "notes") + listOfNotNull(valueHeader)
         val rows = wallets.map { w ->
-            listOf(w.name, w.chain, if (w.kind == "XPUB") "xpub:${w.scriptType}" else "address", w.value, w.group.orEmpty(), w.tags.joinToString(";"), w.notes.orEmpty()) +
+            listOf(
+                w.name,
+                w.chain,
+                if (w.kind ==
+                    "XPUB"
+                ) {
+                    "xpub:${w.scriptType}"
+                } else {
+                    "address"
+                },
+                w.value,
+                w.group.orEmpty(),
+                w.tags.joinToString(";"),
+                w.notes.orEmpty(),
+            ) +
                 if (valueHeader != null) listOf(values[w.value].orEmpty()) else emptyList()
         }
         return (listOf(header) + rows).joinToString("\r\n") { row -> row.joinToString(",") { Csv.escape(it) } } + "\r\n"

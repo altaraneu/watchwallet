@@ -13,13 +13,21 @@ import kotlin.test.assertEquals
 class CoinGeckoProviderTest {
     private val engine = MockEngine { request ->
         val body = when {
-            request.url.encodedPath.endsWith("/simple/price") ->
+            request.url.encodedPath.endsWith("/simple/price") -> {
                 """{"bitcoin":{"czk":2000000.5,"czk_24h_change":-1.5},"ethereum":{"czk":70000}}"""
-            request.url.encodedPath.contains("/simple/token_price/ethereum") ->
+            }
+
+            request.url.encodedPath.contains("/simple/token_price/ethereum") -> {
                 """{"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":{"czk":23.1}}"""
-            request.url.encodedPath.endsWith("/coins/bitcoin/market_chart") ->
+            }
+
+            request.url.encodedPath.endsWith("/coins/bitcoin/market_chart") -> {
                 """{"prices":[[1704067200000,1000000.0],[1704153600000,1100000.0]]}"""
-            else -> error("Unexpected ${request.url}")
+            }
+
+            else -> {
+                error("Unexpected ${request.url}")
+            }
         }
         respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
     }

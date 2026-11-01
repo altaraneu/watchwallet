@@ -42,8 +42,14 @@ object Timeline {
                 val year = now.toLocalDateTime(timeZone).year
                 kotlinx.datetime.LocalDateTime(year, 1, 1, 0, 0).toInstant(timeZone)
             }
-            ChartRange.ALL -> firstActivity ?: (now - DEFAULT_ALL_SPAN)
-            else -> now - requireNotNull(range.span)
+
+            ChartRange.ALL -> {
+                firstActivity ?: (now - DEFAULT_ALL_SPAN)
+            }
+
+            else -> {
+                now - requireNotNull(range.span)
+            }
         }
         val step = range.step
         // Long ALL ranges: keep the number of points bounded for smooth rendering.

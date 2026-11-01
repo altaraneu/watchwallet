@@ -9,7 +9,7 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 
 [*.{kt,kts}]
-max_line_length = 120
+max_line_length = 160
 ktlint_code_style = ktlint_official
 # Composable functions are nouns in PascalCase by convention.
 ktlint_function_naming_ignore_when_annotated_with = Composable

@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MaxLineLength:SecretGuardTest.kt:SecretGuardTest$"acct_xsk1azc6gn5zkdprp4gkapmhdckykphjl62rm9224699ut5z6xcaa9p4hv5hmjfgcrzk72tnsqh6dw0njekdjpsv8nv5h5hk6lpd4ag62zenwhzqs205kfurd7kgs8fm5gx4l4j8htutwj060kyp5y5kgw55qc8lsltd"</ID>
+    <ID>MayBeConstant:SecretGuard.kt:SecretGuard$private val MNEMONIC_MIN_WORDS = 12</ID>
+    <ID>MayBeConstant:SecretGuard.kt:SecretGuard$private val MNEMONIC_WORD_RATIO = 0.9</ID>
+    <ID>ReturnCount:SecretGuard.kt:SecretGuard$private fun wholeInputSecret: SecretKind?</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MagicNumber:MoneyFormatter.android.kt:MoneyFormatter$0.1</ID>
+    <ID>MagicNumber:MoneyFormatter.ios.kt:DateFormatter$1000.0</ID>
+    <ID>MagicNumber:MoneyFormatter.kt:FormatRules$0.0001</ID>
+    <ID>MagicNumber:MoneyFormatter.kt:FormatRules$0.01</ID>
+    <ID>MagicNumber:MoneyFormatter.kt:FormatRules$100</ID>
+    <ID>MagicNumber:MoneyFormatter.kt:FormatRules$10_000</ID>
+    <ID>MagicNumber:MoneyFormatter.kt:FormatRules$4</ID>
+    <ID>MagicNumber:MoneyFormatter.kt:FormatRules$6</ID>
+    <ID>MagicNumber:MoneyFormatter.kt:FormatRules$8</ID>
+  </CurrentIssues>
+</SmellBaseline>

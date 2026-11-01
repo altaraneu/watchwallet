@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:Xrp.kt:internal fun parseXrpTransaction: List&lt;ChainTransaction&gt;</ID>
+    <ID>LongMethod:Xrp.kt:internal fun parseXrpTransaction: List&lt;ChainTransaction&gt;</ID>
+    <ID>LoopWithTooManyJumpStatements:Xrp.kt:for</ID>
+    <ID>MaxLineLength:XrpTest.kt:XrpTest$"""{"result":{"account":"$other","error":"actNotFound","error_code":19,"error_message":"Account not found.","status":"error","validated":true}}"""</ID>
+  </CurrentIssues>
+</SmellBaseline>

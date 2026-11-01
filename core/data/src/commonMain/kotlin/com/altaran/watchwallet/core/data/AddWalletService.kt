@@ -41,6 +41,7 @@ class AddWalletService(
             val supported = result.candidates.filter { registry.supports(it.target) }
             if (supported.isEmpty()) Classification.Unsupported(result.candidates.first().target.family) else Classification.Candidates(supported)
         }
+
         // Formats of the other chains (Litecoin, Solana, XRP, Cardano…), validated with checksums.
         is Classification.Unsupported, Classification.Unrecognized -> {
             val targets = ChainParsers.parse(input).filter { registry.supports(it) }
@@ -50,7 +51,10 @@ class AddWalletService(
                 Classification.Candidates(targets.map { Candidate(it, if (targets.size == 1) Confidence.CERTAIN else Confidence.POSSIBLE) })
             }
         }
-        else -> result
+
+        else -> {
+            result
+        }
     }
 
     /** Interprets a `0x` + 64 hex value after the user explicitly picked Sui or Aptos. */

@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MaxLineLength:DogecoinTest.kt:DogecoinTest$"""{"page":1,"totalPages":1,"itemsOnPage":1000,"address":"x","balance":"0","totalReceived":"0","totalSent":"0","unconfirmedBalance":"0","unconfirmedTxs":0,"txs":0}"""</ID>
+  </CurrentIssues>
+</SmellBaseline>

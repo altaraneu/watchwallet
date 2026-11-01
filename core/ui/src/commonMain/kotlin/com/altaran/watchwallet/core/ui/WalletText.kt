@@ -41,12 +41,29 @@ fun familyLabel(family: ChainFamily): String = when (family) {
 
 /** Product names of chains (proper nouns, not translated). */
 private val CHAIN_NAMES = mapOf(
-    "bitcoin" to "Bitcoin", "litecoin" to "Litecoin", "dogecoin" to "Dogecoin", "bitcoincash" to "Bitcoin Cash",
-    "solana" to "Solana", "xrp" to "XRP Ledger", "tron" to "Tron", "ton" to "TON", "cardano" to "Cardano",
-    "cosmos:cosmoshub" to "Cosmos Hub", "cosmos:osmosis" to "Osmosis", "cosmos:celestia" to "Celestia",
-    "cosmos:injective" to "Injective", "polkadot" to "Polkadot", "kusama" to "Kusama", "stellar" to "Stellar",
-    "sui" to "Sui", "aptos" to "Aptos", "near" to "NEAR", "hedera" to "Hedera", "algorand" to "Algorand",
-    "tezos" to "Tezos", "kaspa" to "Kaspa",
+    "bitcoin" to "Bitcoin",
+    "litecoin" to "Litecoin",
+    "dogecoin" to "Dogecoin",
+    "bitcoincash" to "Bitcoin Cash",
+    "solana" to "Solana",
+    "xrp" to "XRP Ledger",
+    "tron" to "Tron",
+    "ton" to "TON",
+    "cardano" to "Cardano",
+    "cosmos:cosmoshub" to "Cosmos Hub",
+    "cosmos:osmosis" to "Osmosis",
+    "cosmos:celestia" to "Celestia",
+    "cosmos:injective" to "Injective",
+    "polkadot" to "Polkadot",
+    "kusama" to "Kusama",
+    "stellar" to "Stellar",
+    "sui" to "Sui",
+    "aptos" to "Aptos",
+    "near" to "NEAR",
+    "hedera" to "Hedera",
+    "algorand" to "Algorand",
+    "tezos" to "Tezos",
+    "kaspa" to "Kaspa",
 )
 
 /** Display name of the chain a target lives on; EVM targets cover all EVM networks. */
@@ -64,6 +81,7 @@ fun chainLabel(target: WatchTarget): String {
 fun targetDescription(target: WatchTarget): String {
     val kind = when (target) {
         is WatchTarget.ExtendedPublicKey -> stringResource(Res.string.target_xpub, scriptTypeLabel(target.scriptType))
+
         is WatchTarget.Address -> target.scriptType?.let { stringResource(Res.string.target_address, scriptTypeLabel(it)) }
             ?: stringResource(Res.string.target_address, "").trim()
     }

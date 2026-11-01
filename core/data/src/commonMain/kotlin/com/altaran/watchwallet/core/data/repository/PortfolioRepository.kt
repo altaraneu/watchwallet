@@ -113,7 +113,13 @@ class PortfolioRepository(
             val priceIds = rows.mapNotNull { it.asset.priceId }.distinct()
             combine(walletRepository.allTransactions, priceRepository.history(priceIds, currency).onStart { emit(emptyMap()) }) { txs, history ->
                 val histories = buildHistories(rows, txs, history, prices)
-                val samples = Timeline.sampleTimes(range, Clock.System.now(), txs.filter { tx -> rows.any { it.asset.id == tx.assetId } }.minOfOrNull { it.timestamp })
+                val samples = Timeline.sampleTimes(
+                    range,
+                    Clock.System.now(),
+                    txs.filter { tx ->
+                        rows.any { it.asset.id == tx.assetId }
+                    }.minOfOrNull { it.timestamp },
+                )
                 val balanceSeries = samples.indices.map { i ->
                     TimedValue(samples[i], histories.sumOf { Timeline.balances(it, samples)[i] })
                 }
@@ -121,7 +127,9 @@ class PortfolioRepository(
                     balance = Timeline.downsample(balanceSeries),
                     value = Timeline.downsample(Timeline.portfolio(histories, samples)),
                     price = Timeline.downsample(
-                        priceIds.firstOrNull()?.let { id -> history[id].orEmpty().filter { it.time >= samples.first() }.map { TimedValue(it.time, it.price) } }.orEmpty(),
+                        priceIds.firstOrNull()?.let { id ->
+                            history[id].orEmpty().filter { it.time >= samples.first() }.map { TimedValue(it.time, it.price) }
+                        }.orEmpty(),
                     ),
                 )
             }

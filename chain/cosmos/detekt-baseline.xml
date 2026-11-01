@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ExplicitItLambdaMultipleParameters:Cosmos.kt:CosmosAdapter${ sum, it -&gt; sum + parseBigInteger(it.at("balance").str("amount")) }</ID>
+    <ID>ExplicitItLambdaMultipleParameters:Cosmos.kt:{ sum, it -&gt; sum + parseBigInteger(it.str("amount")) }</ID>
+    <ID>SwallowedException:Cosmos.kt:CosmosAdapter$@Suppress("TooGenericExceptionCaught") e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

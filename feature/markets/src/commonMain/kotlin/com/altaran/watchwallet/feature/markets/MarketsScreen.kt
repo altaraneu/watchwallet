@@ -1,13 +1,14 @@
 package com.altaran.watchwallet.feature.markets
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -27,37 +28,36 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.altaran.watchwallet.core.chart.ChartNumberFormat
+import com.altaran.watchwallet.core.chart.ChartSeries
+import com.altaran.watchwallet.core.chart.CrosshairValue
+import com.altaran.watchwallet.core.chart.TradingChart
 import com.altaran.watchwallet.core.designsystem.component.AssetRow
 import com.altaran.watchwallet.core.designsystem.component.CryptoIcons
 import com.altaran.watchwallet.core.designsystem.component.EmptyState
 import com.altaran.watchwallet.core.designsystem.component.SectionHeader
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
-import com.altaran.watchwallet.core.chart.ChartNumberFormat
-import com.altaran.watchwallet.core.chart.ChartSeries
-import com.altaran.watchwallet.core.chart.CrosshairValue
-import com.altaran.watchwallet.core.chart.TradingChart
 import com.altaran.watchwallet.core.model.CandleInterval
 import com.altaran.watchwallet.core.ui.ValueChartSection
 import com.altaran.watchwallet.core.ui.ValueHeader
 import com.altaran.watchwallet.core.ui.chartFormatFor
 import com.altaran.watchwallet.core.ui.format.DateFormatter
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.text.intl.Locale
-import kotlin.time.Instant
 import com.altaran.watchwallet.core.ui.format.MoneyFormatter
-import com.altaran.watchwallet.feature.markets.generated.resources.Res
 import com.altaran.watchwallet.feature.markets.generated.resources.*
+import com.altaran.watchwallet.feature.markets.generated.resources.Res
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.time.Instant
 
 @Composable
 internal fun MarketsRoute(onOpenAsset: (String) -> Unit, viewModel: MarketsViewModel = koinViewModel()) {
@@ -69,7 +69,10 @@ internal fun MarketsRoute(onOpenAsset: (String) -> Unit, viewModel: MarketsViewM
         WatchlistSearchDialog(
             results = results,
             onQuery = viewModel::search,
-            onPick = { coin -> viewModel.addToWatchlist(coin); searching = false },
+            onPick = { coin ->
+                viewModel.addToWatchlist(coin)
+                searching = false
+            },
             onDismiss = { searching = false },
         )
     }
@@ -215,7 +218,19 @@ internal fun AssetDetailScreen(
                     },
                     format = { if (isBalance) MoneyFormatter.formatCrypto(it, symbol) else MoneyFormatter.formatPrice(it, currency) },
                     formatChange = { value ->
-                        if (isBalance) (if (value >= 0) "+" else "−") + MoneyFormatter.formatCrypto(kotlin.math.abs(value), symbol) else MoneyFormatter.formatChange(value, currency)
+                        if (isBalance) {
+                            (
+                                if (value >=
+                                    0
+                                ) {
+                                    "+"
+                                } else {
+                                    "−"
+                                }
+                            ) + MoneyFormatter.formatCrypto(kotlin.math.abs(value), symbol)
+                        } else {
+                            MoneyFormatter.formatChange(value, currency)
+                        }
                     },
                 )
             }
@@ -230,7 +245,9 @@ internal fun AssetDetailScreen(
             state.market?.let { market ->
                 SectionHeader(stringResource(Res.string.asset_market))
                 Stat(stringResource(Res.string.asset_mode_price), MoneyFormatter.formatPrice(market.price, currency), discreet = false)
-                market.change24hPercent?.let { Stat(stringResource(Res.string.asset_change_24h), MoneyFormatter.formatPercentChange(it / 100), discreet = false) }
+                market.change24hPercent?.let {
+                    Stat(stringResource(Res.string.asset_change_24h), MoneyFormatter.formatPercentChange(it / 100), discreet = false)
+                }
                 market.change7dPercent?.let { Stat(stringResource(Res.string.asset_change_7d), MoneyFormatter.formatPercentChange(it / 100), discreet = false) }
                 market.marketCap?.let { Stat(stringResource(Res.string.asset_market_cap), MoneyFormatter.format(it, currency), discreet = false) }
             }
@@ -272,7 +289,13 @@ private fun WatchlistSearchDialog(
                         ) {
                             Text(coin.symbol, style = MaterialTheme.typography.titleSmall, modifier = Modifier.width(64.dp))
                             Text(coin.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                            coin.marketCapRank?.let { Text(stringResource(Res.string.watchlist_rank, it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                            coin.marketCapRank?.let {
+                                Text(
+                                    stringResource(Res.string.watchlist_rank, it),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                     }
                 }
@@ -314,7 +337,8 @@ private fun CandleSection(state: AssetDetailUiState, candles: CandleChartState.R
     val all = candles.candles
     val live = candles.live
     val last = live ?: all.lastOrNull()
-    val firstVisible = window?.let { (from, _) -> all.firstOrNull { it.time >= from } } ?: all.getOrNull(all.size - state.interval.visibleBars) ?: all.firstOrNull()
+    val firstVisible =
+        window?.let { (from, _) -> all.firstOrNull { it.time >= from } } ?: all.getOrNull(all.size - state.interval.visibleBars) ?: all.firstOrNull()
     val lastVisible = window?.let { (_, to) -> (listOfNotNull(live) + all.asReversed()).firstOrNull { it.time <= to } } ?: last
     val shown = crosshair?.value ?: lastVisible?.close
     val selected = crosshair?.let { c -> (listOfNotNull(live) + all).firstOrNull { it.time == c.time } }

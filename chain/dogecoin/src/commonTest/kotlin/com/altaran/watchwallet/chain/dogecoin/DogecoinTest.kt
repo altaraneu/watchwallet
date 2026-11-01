@@ -77,11 +77,8 @@ class DogecoinTest {
         val probe = adapter.probe(target)
         assertFalse(probe.hasActivity)
         assertEquals(3, engine.requestHistory.size)
-        assertTrue(
-            engine.requestHistory.first().url.encodedPath.endsWith(
-                "/api/v2/address/DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC",
-            ),
-        )
+        // Requests run in parallel, so their order is not fixed.
+        assertTrue(engine.requestHistory.any { it.url.encodedPath.endsWith("/api/v2/address/DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC") })
     }
 
     @Test

@@ -13,7 +13,7 @@ import com.altaran.watchwallet.core.model.WatchTarget
  */
 class ChainRegistry(private val adapters: List<ChainAdapter>) {
     private val byChain: Map<ChainId, ChainAdapter> = buildMap {
-        adapters.forEach { adapter -> adapter.chains.forEach { chain -> putIfAbsent(chain.id, adapter) } }
+        adapters.forEach { adapter -> adapter.chains.forEach { chain -> if (chain.id !in this) put(chain.id, adapter) } }
     }
     private val byFamily: Map<ChainFamily, ChainAdapter> = adapters.groupBy { it.family }.mapValues { it.value.first() }
     private val chainsById: Map<ChainId, Chain> = adapters.flatMap { it.chains }.associateBy { it.id }

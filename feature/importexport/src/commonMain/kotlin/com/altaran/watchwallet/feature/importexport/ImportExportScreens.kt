@@ -54,8 +54,8 @@ import com.altaran.watchwallet.core.importexport.EntryStatus
 import com.altaran.watchwallet.core.ui.familyLabel
 import com.altaran.watchwallet.core.ui.shortAddress
 import com.altaran.watchwallet.core.ui.targetDescription
-import com.altaran.watchwallet.feature.importexport.generated.resources.Res
 import com.altaran.watchwallet.feature.importexport.generated.resources.*
+import com.altaran.watchwallet.feature.importexport.generated.resources.Res
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -105,19 +105,31 @@ internal fun ImportRoute(initialText: String?, onNavigateUp: () -> Unit, onDone:
                     Button(onClick = { viewModel.parse() }, enabled = state.text.isNotBlank()) { Text(stringResource(Res.string.import_preview)) }
                 }
             }
+
             ImportPhase.NeedsPassword, ImportPhase.WrongPassword -> PasswordPrompt(
                 wrong = phase == ImportPhase.WrongPassword,
                 onSubmit = viewModel::decrypt,
                 modifier = modifier,
             )
+
             is ImportPhase.Preview -> PreviewList(phase, state.groupName, viewModel, modifier)
-            ImportPhase.Importing -> Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+
+            ImportPhase.Importing -> Column(
+                modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
                 CircularProgressIndicator()
             }
+
             is ImportPhase.Done -> Column(modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(stringResource(Res.string.import_done_title), style = MaterialTheme.typography.titleLarge)
                 Text(stringResource(Res.string.import_done_summary, phase.summary.imported, phase.summary.skipped, phase.summary.failed))
-                Text(stringResource(Res.string.import_done_sync), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    stringResource(Res.string.import_done_sync),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 Button(onClick = onDone) { Text(stringResource(Res.string.import_done_action)) }
             }
         }
@@ -130,8 +142,16 @@ private fun SecretCard() {
         Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Icon(WwIcon.Warning.painter(), contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(stringResource(Res.string.import_secret_title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onErrorContainer)
-                Text(stringResource(Res.string.import_secret_message), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer)
+                Text(
+                    stringResource(Res.string.import_secret_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+                Text(
+                    stringResource(Res.string.import_secret_message),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
             }
         }
     }
@@ -176,18 +196,39 @@ private fun PreviewList(phase: ImportPhase.Preview, groupName: String, viewModel
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Checkbox(checked = row.selected, onCheckedChange = { viewModel.toggle(index) }, enabled = row.entry.status in setOf(EntryStatus.READY, EntryStatus.AMBIGUOUS))
+                    Checkbox(
+                        checked = row.selected,
+                        onCheckedChange = { viewModel.toggle(index) },
+                        enabled =
+                            row.entry.status in setOf(EntryStatus.READY, EntryStatus.AMBIGUOUS),
+                    )
                     Column(Modifier.weight(1f)) {
-                        Text(row.entry.label ?: shortAddress(row.entry.raw), style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(
+                            row.entry.label ?: shortAddress(row.entry.raw),
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                         val target = row.entry.candidates.getOrNull(row.chosen)
                         Text(
                             when {
                                 row.alreadyTracked -> stringResource(Res.string.import_status_tracked)
+
                                 row.entry.status == EntryStatus.DUPLICATE -> stringResource(Res.string.import_status_duplicate)
-                                row.entry.status == EntryStatus.UNSUPPORTED -> stringResource(Res.string.import_status_unsupported, row.entry.unsupportedFamily?.let { familyLabel(it) }.orEmpty())
+
+                                row.entry.status == EntryStatus.UNSUPPORTED -> stringResource(
+                                    Res.string.import_status_unsupported,
+                                    row.entry.unsupportedFamily?.let {
+                                        familyLabel(it)
+                                    }.orEmpty(),
+                                )
+
                                 row.entry.status == EntryStatus.NEEDS_CONFIRMATION -> stringResource(Res.string.import_status_confirm)
+
                                 row.entry.status == EntryStatus.INVALID -> stringResource(Res.string.import_status_invalid)
+
                                 target != null -> targetDescription(target) + (row.entry.group?.let { " · $it" } ?: "")
+
                                 else -> ""
                             },
                             style = MaterialTheme.typography.bodySmall,
@@ -197,7 +238,12 @@ private fun PreviewList(phase: ImportPhase.Preview, groupName: String, viewModel
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 row.entry.candidates.forEachIndexed { i, candidate ->
                                     FilterChip(selected = row.chosen == i, onClick = { viewModel.choose(index, i) }, label = {
-                                        Text((candidate as? com.altaran.watchwallet.core.model.WatchTarget.ExtendedPublicKey)?.scriptType?.let { com.altaran.watchwallet.core.ui.scriptTypeLabel(it) } ?: "?")
+                                        Text(
+                                            (candidate as? com.altaran.watchwallet.core.model.WatchTarget.ExtendedPublicKey)?.scriptType?.let {
+                                                com.altaran.watchwallet.core.ui.scriptTypeLabel(it)
+                                            }
+                                                ?: "?",
+                                        )
                                     })
                                 }
                             }
@@ -225,7 +271,9 @@ internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = 
             }
             SectionHeader(stringResource(Res.string.export_scope))
             Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = state.groupId == null, onClick = { viewModel.setGroup(null) }, label = { Text(stringResource(Res.string.export_all, state.walletCount)) })
+                FilterChip(selected = state.groupId == null, onClick = {
+                    viewModel.setGroup(null)
+                }, label = { Text(stringResource(Res.string.export_all, state.walletCount)) })
                 state.groups.forEach { group ->
                     FilterChip(selected = state.groupId == group.id, onClick = { viewModel.setGroup(group.id) }, label = { Text(group.name) })
                 }
@@ -258,11 +306,13 @@ internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = 
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                     )
                 }
+
                 ExportFormatOption.CSV -> SettingsSwitchItem(
                     title = stringResource(Res.string.export_include_values),
                     checked = state.includeValues,
                     onCheckedChange = viewModel::setIncludeValues,
                 )
+
                 ExportFormatOption.TEXT -> Unit
             }
             state.message?.let {

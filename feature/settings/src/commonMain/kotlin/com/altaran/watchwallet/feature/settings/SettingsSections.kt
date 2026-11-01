@@ -29,8 +29,8 @@ import com.altaran.watchwallet.core.designsystem.component.SettingsItem
 import com.altaran.watchwallet.core.designsystem.component.SettingsSwitchItem
 import com.altaran.watchwallet.core.designsystem.component.SingleChoiceDialog
 import com.altaran.watchwallet.core.model.NetworkSettings
-import com.altaran.watchwallet.feature.settings.generated.resources.Res
 import com.altaran.watchwallet.feature.settings.generated.resources.*
+import com.altaran.watchwallet.feature.settings.generated.resources.Res
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -121,7 +121,10 @@ internal fun AdvancedSettingsSections(
             options = REFRESH_OPTIONS,
             selected = settings.backgroundRefreshHours,
             label = { refreshLabel(it) },
-            onSelect = { refreshPicker = false; onBackgroundRefreshChange(it, settings.backgroundRefreshWifiOnly) },
+            onSelect = {
+                refreshPicker = false
+                onBackgroundRefreshChange(it, settings.backgroundRefreshWifiOnly)
+            },
             onDismiss = { refreshPicker = false },
         )
     }
@@ -130,6 +133,7 @@ internal fun AdvancedSettingsSections(
             dialog = null
             onNetworkChange(network.copy(proxyHost = host, proxyPort = port))
         }
+
         NetworkDialog.ESPLORA -> TextDialog(
             title = stringResource(Res.string.settings_esplora),
             hint = stringResource(Res.string.settings_esplora_hint),
@@ -139,6 +143,7 @@ internal fun AdvancedSettingsSections(
             dialog = null
             onNetworkChange(network.copy(esploraUrl = value.trim().trimEnd('/').takeIf { it.startsWith("https://") || it.startsWith("http://") }))
         }
+
         NetworkDialog.COINGECKO -> TextDialog(
             title = stringResource(Res.string.settings_coingecko_key),
             hint = stringResource(Res.string.settings_coingecko_hint),
@@ -148,6 +153,7 @@ internal fun AdvancedSettingsSections(
             dialog = null
             onNetworkChange(network.copy(coinGeckoApiKey = value.trim().ifBlank { null }))
         }
+
         null -> Unit
     }
 }
@@ -167,7 +173,9 @@ private fun ProxyDialog(network: NetworkSettings, onDismiss: () -> Unit, onConfi
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(Res.string.settings_proxy_help), style = MaterialTheme.typography.bodySmall)
-                OutlinedTextField(value = host, onValueChange = { host = it.trim() }, label = { Text(stringResource(Res.string.settings_proxy_host)) }, singleLine = true)
+                OutlinedTextField(value = host, onValueChange = {
+                    host = it.trim()
+                }, label = { Text(stringResource(Res.string.settings_proxy_host)) }, singleLine = true)
                 OutlinedTextField(
                     value = port,
                     onValueChange = { port = it.filter(Char::isDigit).take(5) },
@@ -177,7 +185,11 @@ private fun ProxyDialog(network: NetworkSettings, onDismiss: () -> Unit, onConfi
                 )
             }
         },
-        confirmButton = { TextButton(enabled = host.isNotBlank() && portValue != null, onClick = { onConfirm(host, portValue!!) }) { Text(stringResource(Res.string.settings_save)) } },
+        confirmButton = {
+            TextButton(enabled = host.isNotBlank() && portValue != null, onClick = {
+                onConfirm(host, portValue!!)
+            }) { Text(stringResource(Res.string.settings_save)) }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.settings_cancel)) } },
     )
 }

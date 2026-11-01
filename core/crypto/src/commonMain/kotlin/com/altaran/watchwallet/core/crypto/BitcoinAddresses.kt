@@ -40,12 +40,25 @@ object BitcoinAddresses {
             .derivePublicKey(index.toLong())
             .publicKey
         return when (scriptType) {
-            ScriptType.P2PKH -> Bitcoin.computeBIP44Address(publicKey, MAINNET)
-            ScriptType.P2SH_P2WPKH -> Bitcoin.computeBIP49Address(publicKey, MAINNET)
-            ScriptType.P2WPKH -> Bitcoin.computeBIP84Address(publicKey, MAINNET)
-            ScriptType.P2TR -> Bitcoin.computeBIP86Address(publicKey, MAINNET)
-            ScriptType.P2SH, ScriptType.P2WSH ->
+            ScriptType.P2PKH -> {
+                Bitcoin.computeBIP44Address(publicKey, MAINNET)
+            }
+
+            ScriptType.P2SH_P2WPKH -> {
+                Bitcoin.computeBIP49Address(publicKey, MAINNET)
+            }
+
+            ScriptType.P2WPKH -> {
+                Bitcoin.computeBIP84Address(publicKey, MAINNET)
+            }
+
+            ScriptType.P2TR -> {
+                Bitcoin.computeBIP86Address(publicKey, MAINNET)
+            }
+
+            ScriptType.P2SH, ScriptType.P2WSH -> {
                 throw IllegalArgumentException("$scriptType cannot be derived from a single-key xpub")
+            }
         }
     }
 

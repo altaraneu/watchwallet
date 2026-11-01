@@ -53,17 +53,17 @@ internal class MarketsViewModel(
         refresh()
     }
 
-    private val _search = MutableStateFlow<List<com.altaran.watchwallet.core.pricing.CoinSearchResult>>(emptyList())
-    val searchResults: StateFlow<List<com.altaran.watchwallet.core.pricing.CoinSearchResult>> = _search
+    private val _searchResults = MutableStateFlow<List<com.altaran.watchwallet.core.pricing.CoinSearchResult>>(emptyList())
+    val searchResults: StateFlow<List<com.altaran.watchwallet.core.pricing.CoinSearchResult>> = _searchResults
 
     fun search(query: String) {
-        viewModelScope.launch { _search.value = priceRepository.search(query).getOrDefault(emptyList()) }
+        viewModelScope.launch { _searchResults.value = priceRepository.search(query).getOrDefault(emptyList()) }
     }
 
     fun addToWatchlist(coin: com.altaran.watchwallet.core.pricing.CoinSearchResult) {
         viewModelScope.launch {
             priceRepository.addToWatchlist(com.altaran.watchwallet.core.data.repository.WatchlistEntry(coin.priceId, coin.symbol, coin.name))
-            _search.value = emptyList()
+            _searchResults.value = emptyList()
             refresh()
         }
     }
@@ -144,6 +144,7 @@ internal class AssetDetailViewModel(
         .flatMapLatest { (c, r, m, held) ->
             val series = when {
                 m == AssetChartMode.PRICE || !held -> priceSeries(c, r)
+
                 else -> portfolioRepository.holdingSeries(c, key, r).map { s ->
                     (if (m == AssetChartMode.VALUE) s.value else s.balance).map { ChartPoint(it.time.toEpochMilliseconds(), it.value) }
                 }
@@ -160,7 +161,15 @@ internal class AssetDetailViewModel(
         chart,
     ) { (c, h, mk), st, (cs, w), points ->
         AssetDetailUiState(
-            c, h, mk, if (h == null) AssetChartMode.PRICE else st.mode, st.range, st.interval, st.log, cs, points,
+            c,
+            h,
+            mk,
+            if (h == null) AssetChartMode.PRICE else st.mode,
+            st.range,
+            st.interval,
+            st.log,
+            cs,
+            points,
             watched = if (key.startsWith("token:") || key.contains(':')) null else w,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AssetDetailUiState())
@@ -185,9 +194,11 @@ internal class AssetDetailViewModel(
                             live = null,
                             vwap = feed.candles.associate { it.time to it.vwap },
                         )
+
                         is CandleFeed.Live -> (candles.value as? CandleChartState.Ready)?.let { ready ->
                             ready.copy(live = feed.candle.toChart(), vwap = ready.vwap + (feed.candle.time to feed.candle.vwap))
                         } ?: candles.value
+
                         CandleFeed.Unavailable -> CandleChartState.Unavailable
                     }
                 }

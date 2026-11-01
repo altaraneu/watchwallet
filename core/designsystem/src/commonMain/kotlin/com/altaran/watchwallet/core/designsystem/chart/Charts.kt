@@ -75,6 +75,12 @@ fun DonutChart(
 
 /** Distinct, accessible categorical colors for allocation slices (light and dark friendly). */
 val AllocationPalette = listOf(
-    Color(0xFF4E6AF0), Color(0xFF13A89E), Color(0xFFF2994A), Color(0xFFD14D8F),
-    Color(0xFF8E6CEF), Color(0xFF56CCF2), Color(0xFFE5B800), Color(0xFF7F8C8D),
+    Color(0xFF4E6AF0),
+    Color(0xFF13A89E),
+    Color(0xFFF2994A),
+    Color(0xFFD14D8F),
+    Color(0xFF8E6CEF),
+    Color(0xFF56CCF2),
+    Color(0xFFE5B800),
+    Color(0xFF7F8C8D),
 )
