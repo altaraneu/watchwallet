@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="markets_title">Markets</string>
+    <string name="markets_empty_title">No prices yet</string>
+    <string name="markets_empty_message">Prices of the assets you hold and of your watchlist will appear here.</string>
+</resources>

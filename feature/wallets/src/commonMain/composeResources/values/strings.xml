@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wallets_title">Wallets</string>
+    <string name="wallets_empty_title">No wallets yet</string>
+    <string name="wallets_empty_message">Adding wallets arrives with Bitcoin support in the next update. You will be able to paste any address or xpub and WatchWallet will recognise the chain.</string>
+</resources>

@@ -1,0 +1,38 @@
+# Gradle / build
+.gradle/
+.kotlin/
+build/
+captures/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Local configuration
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.fleet/
+
+# Xcode (future iosApp)
+xcuserdata/
+DerivedData/
+*.xcuserstate
+
+# OS
+.DS_Store
+Thumbs.db
+NUL
+
+# Test / debug artifacts (never commit device screenshots or UI dumps)
+*.hprof
+screen*.png
+ui*.xml
+!**/src/**/*.xml
+!**/composeResources/**/*.xml

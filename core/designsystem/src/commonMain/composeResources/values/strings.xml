@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accessibility label read instead of an amount while discreet mode is on. -->
+    <string name="amount_hidden">Amount hidden</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_retry">Retry</string>
+</resources>

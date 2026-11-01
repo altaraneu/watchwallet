@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_portfolio">Portfolio</string>
+    <string name="nav_wallets">Peněženky</string>
+    <string name="nav_markets">Trhy</string>
+    <string name="nav_settings">Nastavení</string>
+</resources>

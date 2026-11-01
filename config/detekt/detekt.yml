@@ -1,0 +1,42 @@
+# Overrides on top of detekt's default configuration (buildUponDefaultConfig = true).
+# Key names follow detekt 2.x.
+
+complexity:
+  LongParameterList:
+    # Composables take state and many event callbacks by design.
+    allowedFunctionParameters: 8
+    ignoreDefaultParameters: true
+    ignoreAnnotated: ['Composable']
+  LongMethod:
+    ignoreAnnotated: ['Composable']
+  TooManyFunctions:
+    ignorePrivate: true
+    allowedFunctionsPerFile: 20
+    allowedFunctionsPerClass: 20
+    allowedFunctionsPerInterface: 15
+    allowedFunctionsPerObject: 15
+
+naming:
+  MatchingDeclarationName:
+    # Feature files hold a @Serializable route object next to the screen or nav functions.
+    active: false
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+
+style:
+  MagicNumber:
+    # Colors, dp values and test fixtures are clearer inline.
+    ignoreAnnotated: ['Composable', 'Preview']
+    excludes: ['**/*Test/**', '**/theme/**', '**/*.kts']
+    ignoreEnums: true
+  UnusedPrivateFunction:
+    ignoreAnnotated: ['Preview']
+  ForbiddenComment:
+    # TODO markers must reference an issue or milestone: "TODO(M3): ...".
+    comments:
+      - value: 'FIXME:'
+        reason: 'Fix it before merging.'
+      - value: 'STOPSHIP:'
+        reason: 'Address it before shipping.'
+      - value: 'TODO:'
+        reason: 'Use TODO(<milestone or issue>): with a reference.'

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="portfolio_title">Portfolio</string>
+    <string name="portfolio_total_value">Total value</string>
+    <!-- Accessibility label of the eye button that hides all amounts. -->
+    <string name="portfolio_discreet_on">Hide amounts</string>
+    <!-- Accessibility label of the eye button that shows all amounts again. -->
+    <string name="portfolio_discreet_off">Show amounts</string>
+    <string name="portfolio_empty_title">Nothing to watch yet</string>
+    <string name="portfolio_empty_message">Add a wallet by pasting a public address or an extended public key. WatchWallet never asks for your seed phrase or private keys.</string>
+    <string name="portfolio_empty_action">Add wallet</string>
+</resources>

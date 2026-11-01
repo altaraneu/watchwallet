@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wallets_title">Peněženky</string>
+    <string name="wallets_empty_title">Zatím žádné peněženky</string>
+    <string name="wallets_empty_message">Přidávání peněženek přijde s podporou Bitcoinu v příští aktualizaci. Stačí vložit libovolnou adresu nebo xpub a WatchWallet rozpozná, o jaký blockchain jde.</string>
+</resources>

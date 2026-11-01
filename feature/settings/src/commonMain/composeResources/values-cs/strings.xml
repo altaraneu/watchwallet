@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Nastavení</string>
+
+    <string name="settings_section_display">Zobrazení</string>
+    <string name="settings_currency">Měna</string>
+    <string name="settings_currency_label">%1$s (%2$s)</string>
+    <string name="currency_name_btc">Bitcoin</string>
+    <string name="currency_name_eth">Ether</string>
+    <string name="settings_theme">Motiv</string>
+    <string name="settings_theme_system">Podle systému</string>
+    <string name="settings_theme_light">Světlý</string>
+    <string name="settings_theme_dark">Tmavý</string>
+    <string name="settings_dynamic_color">Dynamické barvy</string>
+    <string name="settings_dynamic_color_summary">Použít barvy z tapety</string>
+    <string name="settings_language">Jazyk</string>
+    <string name="settings_language_system">Podle systému</string>
+
+    <string name="settings_section_privacy">Soukromí</string>
+    <string name="settings_discreet_mode">Diskrétní režim</string>
+    <string name="settings_discreet_mode_summary">Skrýt všechny částky a zůstatky</string>
+
+    <string name="settings_section_about">O aplikaci</string>
+    <string name="settings_support">Podpořit projekt</string>
+    <string name="settings_support_summary">Příspěvek v BTC nebo ETH</string>
+    <string name="settings_source_code">Zdrojový kód</string>
+    <string name="settings_license">Licence</string>
+    <string name="settings_license_summary">GNU General Public License v3.0</string>
+    <string name="settings_version">Verze</string>
+</resources>

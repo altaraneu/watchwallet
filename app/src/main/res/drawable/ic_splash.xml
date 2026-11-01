@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WatchWallet mark: an eye (watch-only) whose iris is a coin. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M24,54C32.5,41.5 42.5,36 54,36C65.5,36 75.5,41.5 84,54C75.5,66.5 65.5,72 54,72C42.5,72 32.5,66.5 24,54Z"
+        android:strokeWidth="5"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M54,40.5a13.5,13.5 0,1 1,0 27a13.5,13.5 0,1 1,0 -27zM54,45.5a8.5,8.5 0,1 0,0 17a8.5,8.5 0,1 0,0 -17zM54,49.5a4.5,4.5 0,1 1,0 9a4.5,4.5 0,1 1,0 -9z" />
+</vector>

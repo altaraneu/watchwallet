@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="markets_title">Trhy</string>
+    <string name="markets_empty_title">Zatím žádné ceny</string>
+    <string name="markets_empty_message">Tady se zobrazí ceny aktiv, která držíš, a tvého seznamu sledovaných.</string>
+</resources>

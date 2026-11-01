@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="portfolio_title">Portfolio</string>
+    <string name="portfolio_total_value">Celková hodnota</string>
+    <string name="portfolio_discreet_on">Skrýt částky</string>
+    <string name="portfolio_discreet_off">Zobrazit částky</string>
+    <string name="portfolio_empty_title">Zatím nic nesleduješ</string>
+    <string name="portfolio_empty_message">Přidej peněženku vložením veřejné adresy nebo rozšířeného veřejného klíče. WatchWallet nikdy nechce tvou seed frázi ani privátní klíče.</string>
+    <string name="portfolio_empty_action">Přidat peněženku</string>
+</resources>

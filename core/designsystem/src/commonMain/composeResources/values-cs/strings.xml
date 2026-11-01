@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="amount_hidden">Částka skryta</string>
+    <string name="action_cancel">Zrušit</string>
+    <string name="action_retry">Zkusit znovu</string>
+</resources>
