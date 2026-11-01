@@ -57,23 +57,48 @@ internal data class EsploraVout(
 /**
  * Minimal Esplora REST client (mempool.space, blockstream.info, self-hosted electrs/esplora).
  * Only individual addresses are sent; never an extended public key.
+ *
+ * With several [baseUrls] a failing instance (timeout, rate limit, outage) is skipped and the
+ * last working one is preferred for later calls. Paging uses txids, so it works across them.
  */
 internal class EsploraClient(
     private val http: HttpClient,
-    private val baseUrl: String,
+    private val baseUrls: List<String>,
     private val throttle: Throttle,
 ) {
-    suspend fun address(address: String): EsploraAddress =
-        throttle.run { http.get("${baseUrl.trimEnd('/')}/address/$address").body() }
+    init {
+        require(baseUrls.isNotEmpty())
+    }
+
+    private var preferred = 0
+
+    private suspend inline fun <reified T> get(path: String): T {
+        var lastError: Exception? = null
+        for (offset in baseUrls.indices) {
+            val index = (preferred + offset) % baseUrls.size
+            try {
+                val result: T = throttle.run { http.get("${baseUrls[index].trimEnd('/')}/$path").body() }
+                preferred = index
+                return result
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
+                lastError = e
+            }
+        }
+        throw lastError ?: IllegalStateException("No Esplora instance")
+    }
+
+    suspend fun address(address: String): EsploraAddress = get("address/$address")
 
     /**
      * First call (`lastSeenTxid == null`) returns mempool transactions plus the newest
      * [PAGE_SIZE] confirmed ones; subsequent calls return the next confirmed page.
      */
-    suspend fun transactions(address: String, lastSeenTxid: String?): List<EsploraTx> = throttle.run {
-        val path = if (lastSeenTxid == null) "txs" else "txs/chain/$lastSeenTxid"
-        http.get("${baseUrl.trimEnd('/')}/address/$address/$path").body()
-    }
+    suspend fun transactions(address: String, lastSeenTxid: String?): List<EsploraTx> =
+        get(if (lastSeenTxid == null) "address/$address/txs" else "address/$address/txs/chain/$lastSeenTxid")
 
     companion object {
         const val PAGE_SIZE = 25

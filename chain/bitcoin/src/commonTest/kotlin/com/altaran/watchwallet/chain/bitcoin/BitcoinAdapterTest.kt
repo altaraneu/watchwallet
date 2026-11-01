@@ -85,4 +85,26 @@ class BitcoinAdapterTest {
         assertEquals(listOf(-50_000L, 150_000L), result.transactions.map { it.delta.longValue() })
         assertEquals(listOf(ChainId.BITCOIN), result.activeChains)
     }
+
+    @Test
+    fun failingEsploraInstanceFallsBackToTheNextOne() = runTest {
+        val address = "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"
+        val hosts = mutableListOf<String>()
+        val engine = MockEngine { request ->
+            hosts += request.url.host
+            if (request.url.host == "down.test") error("timeout")
+            val body = if (request.url.encodedPath.endsWith("/txs")) {
+                "[]"
+            } else {
+                """{"address":"$address","chain_stats":{"funded_txo_sum":7,"spent_txo_sum":0,"tx_count":0},"mempool_stats":{"funded_txo_sum":0,"spent_txo_sum":0,"tx_count":0}}"""
+            }
+            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val adapter = BitcoinAdapter(createHttpClient(engine = engine), listOf("https://down.test/api", "https://up.test/api"))
+        val target = WatchTarget.Address(ChainFamily.UTXO, ChainId.BITCOIN, address, ScriptType.P2WPKH)
+        assertEquals(7, adapter.sync(target, emptySet()).balances.single().amount.raw.longValue())
+        // The working instance is remembered: the last calls go straight to it.
+        assertEquals(listOf("down.test", "up.test"), hosts.distinct())
+        assertEquals("up.test", hosts.last())
+    }
 }

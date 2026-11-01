@@ -59,7 +59,8 @@ val dataModule: Module = module {
     single<List<ChainAdapter>> {
         val network = get<NetworkSettings>()
         listOf<ChainAdapter>(
-            BitcoinAdapter(get(), network.esploraUrl ?: BitcoinChain.DEFAULT_ESPLORA_URL),
+            // A custom server is used alone; the defaults fall back to each other.
+            BitcoinAdapter(get(), network.esploraUrl?.let(::listOf) ?: BitcoinChain.DEFAULT_ESPLORA_URLS),
             EvmAdapter(get()),
             LitecoinAdapter(get()),
             DogecoinAdapter(get()),

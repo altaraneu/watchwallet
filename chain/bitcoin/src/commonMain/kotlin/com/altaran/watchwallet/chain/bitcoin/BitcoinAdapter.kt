@@ -50,6 +50,9 @@ object BitcoinChain {
     )
 
     const val DEFAULT_ESPLORA_URL = "https://mempool.space/api"
+
+    /** Default instances in order of preference; the second is used when the first fails. */
+    val DEFAULT_ESPLORA_URLS = listOf(DEFAULT_ESPLORA_URL, "https://blockstream.info/api")
 }
 
 /**
@@ -58,10 +61,12 @@ object BitcoinChain {
  */
 class BitcoinAdapter(
     http: HttpClient,
-    esploraUrl: String = BitcoinChain.DEFAULT_ESPLORA_URL,
+    esploraUrls: List<String> = BitcoinChain.DEFAULT_ESPLORA_URLS,
 ) : ChainAdapter {
+    constructor(http: HttpClient, esploraUrl: String) : this(http, listOf(esploraUrl))
+
     // Public instances rate-limit aggressively; jitter also decorrelates xpub address lookups.
-    private val esplora = EsploraClient(http, esploraUrl, Throttle(maxConcurrent = 4, minInterval = 80.milliseconds, maxJitter = 150.milliseconds))
+    private val esplora = EsploraClient(http, esploraUrls, Throttle(maxConcurrent = 4, minInterval = 80.milliseconds, maxJitter = 150.milliseconds))
 
     override val family = ChainFamily.UTXO
     override val chains = listOf(BitcoinChain.CHAIN)

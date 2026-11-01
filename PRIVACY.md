@@ -28,7 +28,7 @@ Responses are not cached on disk by the HTTP client.
 
 | Service | Used for | Data sent |
 |---|---|---|
-| `mempool.space/api` (Esplora) | Bitcoin balances and history | Individual Bitcoin addresses. For an xpub, the addresses derived **on the device** are queried one by one with random timing; the xpub itself is never sent. |
+| `mempool.space/api` (Esplora), fallback `blockstream.info/api` when it fails | Bitcoin balances and history | Individual Bitcoin addresses. For an xpub, the addresses derived **on the device** are queried one by one with random timing; the xpub itself is never sent. |
 | Public JSON-RPC nodes per EVM network (`*.publicnode.com`, `mainnet.era.zksync.io`, `rpc.linea.build`, `rpc.scroll.io`, `rpc.mantle.xyz`, `rpc.gnosischain.com`, `evm.cronos.org`, `rpc.soniclabs.com`, `forno.celo.org`, `etc.rivet.link`, `rpc.hyperliquid.xyz`, `rpc.berachain.com`, `evm-rpc.sei-apis.com`, `mainnet.unichain.org`, `rpc.blast.io`) | Native balance and activity check on each EVM network | The EVM address |
 | Blockscout instances (`eth.`, `base.`, `optimism.`, `arbitrum.`, `polygon.`, `gnosis.`, `zksync.`, `scroll.`, `celo.`, `etc.`, `unichain.blockscout.com`, `explorer.mantle.xyz`) | Token balances and transaction history | The EVM address |
 
