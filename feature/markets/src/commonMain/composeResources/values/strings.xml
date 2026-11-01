@@ -44,4 +44,6 @@
     <string name="watchlist_watching">Watching</string>
     <!-- Market capitalisation rank, for example "#12" -->
     <string name="watchlist_rank">#%1$d</string>
+    <!-- Screen reader summary of the candle chart. %1$s = asset symbol, %2$s = latest price. -->
+    <string name="asset_chart_a11y">%1$s price chart, latest price %2$s</string>
 </resources>

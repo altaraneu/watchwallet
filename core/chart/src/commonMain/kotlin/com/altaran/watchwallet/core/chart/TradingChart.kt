@@ -13,6 +13,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.altaran.watchwallet.core.chart.generated.resources.Res
@@ -80,6 +82,8 @@ fun TradingChart(
     onCrosshair: (CrosshairValue?) -> Unit = {},
     /** Visible window (UTC seconds of the first and last visible bar) after pan/zoom. */
     onVisibleRange: (from: Long, to: Long) -> Unit = { _, _ -> },
+    /** Spoken by screen readers instead of the (inaccessible) chart canvas. */
+    contentDescription: String? = null,
 ) {
     val html by produceState<String?>(null) { value = loadChartHtml() }
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -131,7 +135,9 @@ fun TradingChart(
             controller = controller,
             onCrosshair = { payload -> currentOnCrosshair(payload) },
             onVisibleRange = { from, to -> currentOnVisibleRange(from, to) },
-            modifier = modifier.fillMaxWidth().height(height),
+            modifier = modifier.fillMaxWidth().height(height).let { base ->
+                if (contentDescription == null) base else base.clearAndSetSemantics { this.contentDescription = contentDescription }
+            },
         )
     }
 }

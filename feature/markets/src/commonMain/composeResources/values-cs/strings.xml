@@ -38,4 +38,5 @@
     <string name="watchlist_watch">Sledovat</string>
     <string name="watchlist_watching">Sleduji</string>
     <string name="watchlist_rank">#%1$d</string>
+    <string name="asset_chart_a11y">Graf ceny %1$s, poslední cena %2$s</string>
 </resources>

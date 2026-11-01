@@ -16,6 +16,10 @@
     <!-- %1$s = chain family, %2$s = wallet kind; for example "Bitcoin · Native SegWit xpub". -->
     <string name="target_description">%1$s · %2$s</string>
     <string name="chart_no_data">Not enough data for this range yet</string>
+    <!-- Screen reader summary of a value chart. %1$s = range (e.g. "1M"), %2$s = start value, %3$s = end value, %4$s = signed change. -->
+    <string name="chart_a11y_summary">Chart for %1$s: from %2$s to %3$s, change %4$s</string>
+    <!-- Screen reader summary while amounts are hidden (discreet mode). %1$s = range. -->
+    <string name="chart_a11y_hidden">Chart for %1$s, amounts hidden</string>
     <!-- Accessibility description of a value chart; %1$s = range, for example "1Y". -->
     <string name="chart_description">Value chart, range %1$s. Touch and drag to see values.</string>
 </resources>

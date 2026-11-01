@@ -37,6 +37,8 @@ import com.altaran.watchwallet.core.model.QuoteCurrency
 import com.altaran.watchwallet.core.ui.format.DateFormatter
 import com.altaran.watchwallet.core.ui.format.MoneyFormatter
 import com.altaran.watchwallet.core.ui.generated.resources.Res
+import com.altaran.watchwallet.core.ui.generated.resources.chart_a11y_hidden
+import com.altaran.watchwallet.core.ui.generated.resources.chart_a11y_summary
 import com.altaran.watchwallet.core.ui.generated.resources.chart_no_data
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
@@ -106,6 +108,13 @@ fun ValueChartSection(
 
                 else -> {
                     val colors = WatchWalletTheme.extendedColors
+                    val first = points.first().value
+                    val last = points.last().value
+                    val summary = if (LocalDiscreetMode.current) {
+                        stringResource(Res.string.chart_a11y_hidden, rangeLabel(range).orEmpty())
+                    } else {
+                        stringResource(Res.string.chart_a11y_summary, rangeLabel(range).orEmpty(), format(first), format(last), formatChange(last - first))
+                    }
                     TradingChart(
                         series = ChartSeries.Area(points.map { AreaPoint(it.timeMillis / 1000, it.value) }),
                         format = numberFormat,
@@ -116,6 +125,7 @@ fun ValueChartSection(
                         markerTimes = markerTimes.map { it / 1000 },
                         lineColor = if (points.last().value >= points.first().value) colors.positive else colors.negative,
                         onCrosshair = { crosshair = it },
+                        contentDescription = summary,
                     )
                 }
             }

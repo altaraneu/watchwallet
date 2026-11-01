@@ -370,6 +370,7 @@ private fun CandleSection(state: AssetDetailUiState, candles: CandleChartState.R
         onCrosshair = { crosshair = it },
         onVisibleRange = { from, to -> window = from to to },
         modifier = Modifier.padding(vertical = 8.dp),
+        contentDescription = last?.let { stringResource(Res.string.asset_chart_a11y, symbol, MoneyFormatter.formatPrice(it.close, currency)) },
     )
     Row(
         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),

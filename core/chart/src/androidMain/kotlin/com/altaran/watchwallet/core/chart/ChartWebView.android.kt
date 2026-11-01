@@ -47,6 +47,8 @@ internal actual fun ChartWebView(
                 // zero-height viewport, so `height: 100%` collapses and the chart draws nothing.
                 layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                 setBackgroundColor(Color.TRANSPARENT)
+                // Canvas content means nothing to TalkBack; the composable provides a summary.
+                importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
                 settings.apply {
