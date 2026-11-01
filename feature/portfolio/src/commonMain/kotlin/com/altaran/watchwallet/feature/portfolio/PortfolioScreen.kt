@@ -63,6 +63,7 @@ import com.altaran.watchwallet.core.ui.chartFormatFor
 import com.altaran.watchwallet.core.ui.format.MoneyFormatter
 import com.altaran.watchwallet.feature.portfolio.generated.resources.*
 import com.altaran.watchwallet.feature.portfolio.generated.resources.Res
+import com.altaran.watchwallet.feature.portfolio.generated.resources.portfolio_add_wallet
 import com.altaran.watchwallet.feature.portfolio.generated.resources.portfolio_hidden_reason_other
 import com.altaran.watchwallet.feature.portfolio.generated.resources.portfolio_hidden_reason_spam
 import com.altaran.watchwallet.feature.portfolio.generated.resources.portfolio_hide_asset
@@ -109,6 +110,9 @@ internal fun PortfolioScreen(
             TopAppBar(
                 title = { Text(stringResource(Res.string.portfolio_title)) },
                 actions = {
+                    IconButton(onClick = onAddWallet) {
+                        Icon(WwIcon.Add.painter(), contentDescription = stringResource(Res.string.portfolio_add_wallet))
+                    }
                     if (uiState is PortfolioUiState.Ready) {
                         IconButton(onClick = { onToggleDiscreetMode(uiState.discreetMode) }) {
                             Icon(

@@ -5,6 +5,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,9 +32,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.altaran.watchwallet.core.chart.ChartNumberFormat
@@ -41,6 +44,7 @@ import com.altaran.watchwallet.core.chart.ChartSeries
 import com.altaran.watchwallet.core.chart.CrosshairValue
 import com.altaran.watchwallet.core.chart.TradingChart
 import com.altaran.watchwallet.core.designsystem.component.AssetRow
+import com.altaran.watchwallet.core.designsystem.component.CryptoIcon
 import com.altaran.watchwallet.core.designsystem.component.CryptoIcons
 import com.altaran.watchwallet.core.designsystem.component.EmptyState
 import com.altaran.watchwallet.core.designsystem.component.SectionHeader
@@ -156,7 +160,18 @@ internal fun AssetDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (name.isNotEmpty()) "$name ($symbol)" else symbol) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CryptoIcon(
+                            iconKey = CryptoIcons.forSymbol(symbol),
+                            fallbackText = symbol,
+                            size = 32.dp,
+                            remoteUrl = com.altaran.watchwallet.core.data.AssetIcons.url(state.holding?.priceId ?: state.market?.priceId),
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(if (name.isNotEmpty()) "$name ($symbol)" else symbol, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) { Icon(WwIcon.ArrowBack.painter(), stringResource(Res.string.markets_back)) }
                 },

@@ -2,6 +2,7 @@ package com.altaran.watchwallet.feature.addwallet
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +23,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -63,6 +65,8 @@ import com.altaran.watchwallet.core.ui.format.MoneyFormatter
 import com.altaran.watchwallet.core.ui.targetDescription
 import com.altaran.watchwallet.feature.addwallet.generated.resources.*
 import com.altaran.watchwallet.feature.addwallet.generated.resources.Res
+import com.altaran.watchwallet.feature.addwallet.generated.resources.add_wallet_group_hint
+import com.altaran.watchwallet.feature.addwallet.generated.resources.add_wallet_group_label
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
@@ -88,6 +92,7 @@ internal fun AddWalletRoute(
         onNameChange = viewModel::onNameChange,
         onSave = viewModel::onSave,
         onAdd = { text -> viewModel.onSubmit(text, saveWhenUnambiguous = true) },
+        onGroupChange = viewModel::onGroupChange,
         onBatchImport = onBatchImport,
         onConfirmChain = viewModel::onConfirmChain,
         onConfirmUnused = viewModel::onConfirmUnused,
@@ -105,6 +110,7 @@ internal fun AddWalletScreen(
     onSubmit: (String) -> Unit,
     onSelectCandidate: (Int) -> Unit,
     onAdd: (String) -> Unit = onSubmit,
+    onGroupChange: (String) -> Unit = {},
     onNameChange: (String) -> Unit,
     onSave: (defaultName: String) -> Unit,
     onBatchImport: (String) -> Unit = {},
@@ -179,6 +185,7 @@ internal fun AddWalletScreen(
                 keyboardActions = KeyboardActions(onDone = { if (state.input.isNotBlank()) submit(state.input) }),
                 modifier = Modifier.fillMaxWidth(),
             )
+            GroupField(state.groupName, state.groups, onGroupChange)
             InputActions(
                 onPaste = {
                     scope.launch {
@@ -470,6 +477,28 @@ private fun PhaseContent(
 
         is AddWalletPhase.Preview -> {
             PreviewSection(phase, state, chainName, onSelectCandidate, onNameChange, onSave = { onSave() })
+        }
+    }
+}
+
+/** Optional group (whose wallet: "Partner", "Me", "Savings"…), with existing groups as chips. */
+@Composable
+private fun GroupField(value: String, groups: List<String>, onChange: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onChange,
+            label = { Text(stringResource(Res.string.add_wallet_group_label)) },
+            placeholder = { Text(stringResource(Res.string.add_wallet_group_hint)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (groups.isNotEmpty()) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                groups.forEach { group ->
+                    FilterChip(selected = value == group, onClick = { onChange(if (value == group) "" else group) }, label = { Text(group) })
+                }
+            }
         }
     }
 }

@@ -49,6 +49,9 @@ data class AddWalletUiState(
     val savedWalletId: Long? = null,
     /** The preview should be saved as soon as it appears (one-tap add). */
     val autoSave: Boolean = false,
+    /** Group (person or purpose) for the new wallet; empty = none. */
+    val groupName: String = "",
+    val groups: List<String> = emptyList(),
 )
 
 internal class AddWalletViewModel(
@@ -56,6 +59,14 @@ internal class AddWalletViewModel(
 ) : ViewModel() {
     private val _state = MutableStateFlow(AddWalletUiState())
     val state: StateFlow<AddWalletUiState> = _state.asStateFlow()
+
+    init {
+        viewModelScope.launch { service.groups.collect { groups -> _state.update { it.copy(groups = groups.map { g -> g.name }) } } }
+    }
+
+    fun onGroupChange(value: String) {
+        _state.update { it.copy(groupName = value) }
+    }
     private var probeJob: Job? = null
 
     fun chainName(id: com.altaran.watchwallet.core.model.ChainId): String = service.chainName(id)
@@ -164,7 +175,7 @@ internal class AddWalletViewModel(
         }
         _state.update { it.copy(saving = true) }
         viewModelScope.launch {
-            val id = service.save(preview.candidate.target, current.name.ifBlank { defaultName }, preview.probe)
+            val id = service.save(preview.candidate.target, current.name.ifBlank { defaultName }, preview.probe, current.groupName)
             _state.update { it.copy(saving = false, savedWalletId = id) }
         }
     }

@@ -86,20 +86,25 @@ class AddWalletService(
      * same key on the sister chains (same coin type, different prefix) is checked as well, and
      * the ones with activity are added as separate wallets named "<name> (<chain>)".
      */
-    suspend fun save(target: WatchTarget, name: String, probe: ProbeResult?): Long {
-        val id = walletRepository.addWallet(target, name, probe?.activeChains.orEmpty())
+    suspend fun save(target: WatchTarget, name: String, probe: ProbeResult?, groupName: String? = null): Long {
+        // A group is a person or purpose ("Partner", "Savings"); created on first use.
+        val groupId = groupName?.trim()?.takeIf { it.isNotEmpty() }?.let { walletRepository.findGroup(it) ?: walletRepository.createGroup(it) }
+        val id = walletRepository.addWallet(target, name, probe?.activeChains.orEmpty(), groupId)
         syncEngine.syncWallet(id)
-        if (target is WatchTarget.Address && target.family == ChainFamily.COSMOS) addRelatedCosmos(target, name)
+        if (target is WatchTarget.Address && target.family == ChainFamily.COSMOS) addRelatedCosmos(target, name, groupId)
         return id
     }
 
-    private suspend fun addRelatedCosmos(target: WatchTarget.Address, name: String) = coroutineScope {
+    /** Existing groups, offered when adding a wallet. */
+    val groups get() = walletRepository.groups
+
+    private suspend fun addRelatedCosmos(target: WatchTarget.Address, name: String, groupId: Long?) = coroutineScope {
         CosmosAddresses.relatedAddresses(target.address).filter { registry.supports(it) }.map { related ->
             async {
                 if (walletRepository.findExisting(related) != null) return@async
                 val probe = registry.adapter(related)?.let { runCatching { it.probe(related) }.getOrNull() } ?: return@async
                 if (!probe.hasActivity) return@async
-                val id = walletRepository.addWallet(related, "$name (${chainName(related.chainId)})", probe.activeChains)
+                val id = walletRepository.addWallet(related, "$name (${chainName(related.chainId)})", probe.activeChains, groupId)
                 syncEngine.syncWallet(id)
             }
         }.awaitAll()

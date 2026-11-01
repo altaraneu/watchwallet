@@ -22,4 +22,5 @@
     <string name="portfolio_show_asset">Zobrazit</string>
     <string name="portfolio_hidden_reason_spam">%1$s · vypadá jako spam</string>
     <string name="portfolio_hidden_reason_other">%1$s · bez ceny nebo skrytý vámi</string>
+    <string name="portfolio_add_wallet">Přidat peněženku</string>
 </resources>

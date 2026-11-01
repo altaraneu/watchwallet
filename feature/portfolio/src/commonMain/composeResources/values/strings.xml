@@ -25,4 +25,5 @@
     <!-- Under a hidden token. %1$s = amount with symbol. -->
     <string name="portfolio_hidden_reason_spam">%1$s · looks like spam</string>
     <string name="portfolio_hidden_reason_other">%1$s · no price or hidden by you</string>
+    <string name="portfolio_add_wallet">Add wallet</string>
 </resources>

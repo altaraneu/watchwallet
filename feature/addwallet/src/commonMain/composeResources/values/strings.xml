@@ -53,4 +53,7 @@
     <string name="confirm_unused_message">If you copied a private key by mistake, clear it now and never share it. Add it only if you are sure this is a new, unused address.</string>
     <string name="confirm_add_anyway">Add anyway</string>
     <string name="confirm_clear">Clear</string>
+    <!-- Optional group for the new wallet: a person or purpose. -->
+    <string name="add_wallet_group_label">Group (optional)</string>
+    <string name="add_wallet_group_hint">e.g. Partner, Savings, Business</string>
 </resources>
