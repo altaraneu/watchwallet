@@ -41,4 +41,8 @@
     <string name="default_name_bitcoin_address">Bitcoin address</string>
     <string name="default_name_evm">Ethereum wallet</string>
     <string name="add_wallet_open_batch">Open batch import</string>
+    <string name="add_wallet_scan">Scan</string>
+    <string name="qr_hint">Point the camera at an address or xpub QR code</string>
+    <string name="qr_close">Close scanner</string>
+    <string name="qr_no_permission">Camera access is needed to scan QR codes. You can allow it in the app settings.</string>
 </resources>

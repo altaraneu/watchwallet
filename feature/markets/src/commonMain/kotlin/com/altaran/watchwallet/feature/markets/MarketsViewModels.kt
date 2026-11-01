@@ -53,6 +53,21 @@ internal class MarketsViewModel(
         refresh()
     }
 
+    private val _search = MutableStateFlow<List<com.altaran.watchwallet.core.pricing.CoinSearchResult>>(emptyList())
+    val searchResults: StateFlow<List<com.altaran.watchwallet.core.pricing.CoinSearchResult>> = _search
+
+    fun search(query: String) {
+        viewModelScope.launch { _search.value = priceRepository.search(query).getOrDefault(emptyList()) }
+    }
+
+    fun addToWatchlist(coin: com.altaran.watchwallet.core.pricing.CoinSearchResult) {
+        viewModelScope.launch {
+            priceRepository.addToWatchlist(com.altaran.watchwallet.core.data.repository.WatchlistEntry(coin.priceId, coin.symbol, coin.name))
+            _search.value = emptyList()
+            refresh()
+        }
+    }
+
     fun refresh() {
         viewModelScope.launch {
             _state.value = _state.value.copy(refreshing = true)
@@ -101,6 +116,8 @@ data class AssetDetailUiState(
     val candles: CandleChartState = CandleChartState.Loading,
     /** Line chart (fallback price, value or balance). */
     val chart: List<ChartPoint>? = null,
+    /** `null` when the asset cannot be watched (unpriced token). */
+    val watched: Boolean? = null,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -134,13 +151,18 @@ internal class AssetDetailViewModel(
             series.map<List<ChartPoint>, List<ChartPoint>?> { it }.onStart { emit(null) }
         }
 
+    private val watched = priceRepository.watchlist.map { list -> list.any { it.priceId == key } }
+
     val state: StateFlow<AssetDetailUiState> = combine(
         combine(currency, holding, market) { c, h, mk -> Triple(c, h, mk) },
         combine(mode, range, interval, logScale) { m, r, i, l -> Settings(m, r, i, l) },
-        candles,
+        combine(candles, watched) { cs, w -> cs to w },
         chart,
-    ) { (c, h, mk), st, cs, points ->
-        AssetDetailUiState(c, h, mk, if (h == null) AssetChartMode.PRICE else st.mode, st.range, st.interval, st.log, cs, points)
+    ) { (c, h, mk), st, (cs, w), points ->
+        AssetDetailUiState(
+            c, h, mk, if (h == null) AssetChartMode.PRICE else st.mode, st.range, st.interval, st.log, cs, points,
+            watched = if (key.startsWith("token:") || key.contains(':')) null else w,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AssetDetailUiState())
 
     init {
@@ -194,6 +216,14 @@ internal class AssetDetailViewModel(
 
     fun setInterval(value: CandleInterval) {
         interval.value = value
+    }
+
+    fun toggleWatch(currentlyWatched: Boolean) {
+        val info = market.value
+        viewModelScope.launch {
+            val entry = com.altaran.watchwallet.core.data.repository.WatchlistEntry(key, info?.symbol ?: key.uppercase(), info?.name ?: key)
+            if (currentlyWatched) priceRepository.removeFromWatchlist(entry) else priceRepository.addToWatchlist(entry)
+        }
     }
 
     fun toggleLogScale() {

@@ -31,6 +31,17 @@ private data class MarketRow(
 )
 
 @Serializable
+private data class SearchResponse(val coins: List<SearchCoin> = emptyList())
+
+@Serializable
+private data class SearchCoin(
+    val id: String,
+    val name: String,
+    val symbol: String,
+    @SerialName("market_cap_rank") val marketCapRank: Int? = null,
+)
+
+@Serializable
 private data class Sparkline(val price: List<Double?> = emptyList())
 
 /**
@@ -114,6 +125,12 @@ class CoinGeckoProvider(
             }
         }
 
+    override suspend fun search(query: String): List<CoinSearchResult> {
+        if (query.isBlank()) return emptyList()
+        val response: SearchResponse = call("search") { parameter("query", query.trim()) }
+        return response.coins.take(MAX_SEARCH_RESULTS).map { CoinSearchResult(it.id, it.symbol.uppercase(), it.name, it.marketCapRank) }
+    }
+
     private suspend inline fun <reified T> call(path: String, crossinline block: HttpRequestBuilder.() -> Unit): T = try {
         throttle.run {
             http.get("${baseUrl.trimEnd('/')}/$path") {
@@ -139,5 +156,6 @@ class CoinGeckoProvider(
         private const val MAX_IDS_PER_CALL = 100
         private const val MAX_KEYLESS_DAYS = 365
         private const val HOURLY_MAX_DAYS = 90
+        private const val MAX_SEARCH_RESULTS = 25
     }
 }

@@ -2,8 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Only network access. No storage, contacts, location or analytics permissions. -->
+    <!-- Network access and the camera for QR codes. No storage, contacts, location or analytics permissions. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Only for scanning address QR codes; requested when the user taps "Scan". -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
 
     <application
         android:name=".WatchWalletApplication"

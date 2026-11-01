@@ -32,4 +32,10 @@
     <string name="asset_high">Max</string>
     <string name="asset_low">Min</string>
     <string name="asset_average">Průměr</string>
+    <string name="watchlist_add">Přidat do sledovaných</string>
+    <string name="watchlist_search">Hledat mince</string>
+    <string name="watchlist_cancel">Zavřít</string>
+    <string name="watchlist_watch">Sledovat</string>
+    <string name="watchlist_watching">Sleduji</string>
+    <string name="watchlist_rank">#%1$d</string>
 </resources>

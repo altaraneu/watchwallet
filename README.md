@@ -14,25 +14,40 @@ key: it cannot sign or send anything.
 - **Paste and done** – paste an address, an xpub or a name; WatchWallet detects the chain.
 - **Unlimited** – no limit on wallets, addresses, groups or chains.
 
-> **Status:** early development (milestone 1 of 8: app skeleton). Wallet tracking arrives with
-> milestone 2 (Bitcoin). See [CHANGELOG.md](CHANGELOG.md).
+> **Status:** pre-release (not yet 1.0). Bitcoin and EVM networks work end to end; more chains
+> are being added. See [CHANGELOG.md](CHANGELOG.md).
 
-## Supported chains (planned)
+## Features
 
-| Milestone | Chains |
+- **Paste, scan or import**: addresses, xpub/ypub/zpub, output descriptors; QR scanner; batch
+  import from text, CSV or a WatchWallet backup. Seed phrases and private keys are always
+  rejected and never stored or sent.
+- **Bitcoin**: single addresses and extended public keys with local derivation and gap limit.
+- **Ethereum and EVM networks**: one `0x` address scanned across 21 networks (Ethereum, Base,
+  Arbitrum, OP, Polygon, BNB Chain, Avalanche, zkSync, Linea, Scroll, …), ERC-20 tokens, spam
+  filter, history.
+- **Portfolio**: total value and its history, allocation, per-wallet and per-group views (for
+  example one portfolio per family member).
+- **Markets**: prices of held assets and a watchlist; live candlestick charts (1m–1W) with pan,
+  pinch zoom and crosshair, powered by TradingView Lightweight Charts.
+- **Privacy and security**: discreet mode, app lock (biometrics / screen lock), screenshot
+  blocking, Tor/SOCKS5 proxy, your own Esplora server, no cloud backup.
+- **Export**: JSON backup (optionally AES-256-GCM encrypted), CSV, plain addresses.
+- **Languages**: English and Czech; currencies CZK, EUR, USD, GBP, CHF, PLN and more.
+
+## Supported chains
+
+| Status | Chains |
 |---|---|
-| 2 | Bitcoin (addresses, xpub/ypub/zpub, output descriptors) |
-| 4 | Ethereum and EVM networks (Arbitrum, Base, Optimism, Polygon, BNB Chain, …) |
-| 5 | Solana, XRP Ledger, Litecoin, Dogecoin, Bitcoin Cash, Tron |
-| 6 | TON, Cardano, Cosmos ecosystem, Polkadot ecosystem |
-| 7 | Stellar, Sui, Aptos, NEAR, Hedera, Algorand, Tezos, Kaspa |
+| Available | Bitcoin, Ethereum and 20 more EVM networks |
+| In progress | Litecoin, Dogecoin, Bitcoin Cash, Solana, XRP Ledger, Tron, TON, Cardano, Cosmos ecosystem, Polkadot, Stellar, Sui, Aptos, NEAR, Hedera, Algorand, Tezos, Kaspa |
 
 Privacy coins (Monero, shielded Zcash) are intentionally not supported: watching them requires
 a private view key.
 
 ## Building
 
-Requirements: JDK 17 or newer (the JDK bundled with Android Studio works) and the Android SDK
+Requirements: JDK 21 or newer (the JDK bundled with Android Studio works) and the Android SDK
 with platform 37.
 
 ```sh

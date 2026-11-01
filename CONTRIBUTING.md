@@ -18,6 +18,7 @@ conventions and how to add a chain adapter.
 ./gradlew check                 # tests + ktlint + detekt
 ./gradlew ktlintFormat          # auto-format
 python scripts/check_strings.py # translation completeness and hardcoded text
+scripts/compile-check.sh        # fast compile of all modules without building the APK
 ```
 
 Keep commits focused, with an imperative subject line ("Add Esplora balance fetcher").

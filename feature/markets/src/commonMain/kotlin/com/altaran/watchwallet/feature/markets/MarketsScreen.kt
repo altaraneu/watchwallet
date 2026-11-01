@@ -1,6 +1,8 @@
 package com.altaran.watchwallet.feature.markets
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -60,16 +62,34 @@ import org.koin.core.parameter.parametersOf
 @Composable
 internal fun MarketsRoute(onOpenAsset: (String) -> Unit, viewModel: MarketsViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    MarketsScreen(state, onOpenAsset, viewModel::refresh)
+    val results by viewModel.searchResults.collectAsStateWithLifecycle()
+    var searching by remember { mutableStateOf(false) }
+    MarketsScreen(state, onOpenAsset, viewModel::refresh, onAdd = { searching = true })
+    if (searching) {
+        WatchlistSearchDialog(
+            results = results,
+            onQuery = viewModel::search,
+            onPick = { coin -> viewModel.addToWatchlist(coin); searching = false },
+            onDismiss = { searching = false },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun MarketsScreen(state: MarketsUiState, onOpenAsset: (String) -> Unit, onRefresh: () -> Unit) {
+internal fun MarketsScreen(state: MarketsUiState, onOpenAsset: (String) -> Unit, onRefresh: () -> Unit, onAdd: () -> Unit = {}) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = { TopAppBar(title = { Text(stringResource(Res.string.markets_title)) }, scrollBehavior = scrollBehavior) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(Res.string.markets_title)) },
+                actions = {
+                    IconButton(onClick = onAdd) { Icon(WwIcon.Add.painter(), stringResource(Res.string.watchlist_add)) }
+                },
+                scrollBehavior = scrollBehavior,
+            )
+        },
     ) { padding ->
         PullToRefreshBox(isRefreshing = state.refreshing, onRefresh = onRefresh, modifier = Modifier.padding(padding).fillMaxSize()) {
             if (!state.loading && state.rows.isEmpty()) {
@@ -112,7 +132,7 @@ internal fun AssetDetailRoute(
     viewModel: AssetDetailViewModel = koinViewModel(key = "asset-$key") { parametersOf(key) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AssetDetailScreen(state, onNavigateUp, viewModel::setMode, viewModel::setRange, viewModel::setInterval, viewModel::toggleLogScale)
+    AssetDetailScreen(state, onNavigateUp, viewModel::setMode, viewModel::setRange, viewModel::setInterval, viewModel::toggleLogScale, viewModel::toggleWatch)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -124,6 +144,7 @@ internal fun AssetDetailScreen(
     onRangeChange: (com.altaran.watchwallet.core.model.ChartRange) -> Unit,
     onIntervalChange: (CandleInterval) -> Unit,
     onToggleLog: () -> Unit,
+    onToggleWatch: (Boolean) -> Unit = {},
 ) {
     val symbol = state.holding?.symbol ?: state.market?.symbol.orEmpty()
     val name = state.holding?.name ?: state.market?.name.orEmpty()
@@ -134,6 +155,16 @@ internal fun AssetDetailScreen(
                 title = { Text(if (name.isNotEmpty()) "$name ($symbol)" else symbol) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) { Icon(WwIcon.ArrowBack.painter(), stringResource(Res.string.markets_back)) }
+                },
+                actions = {
+                    state.watched?.let { watched ->
+                        FilterChip(
+                            selected = watched,
+                            onClick = { onToggleWatch(watched) },
+                            label = { Text(stringResource(if (watched) Res.string.watchlist_watching else Res.string.watchlist_watch)) },
+                            modifier = Modifier.padding(end = 8.dp),
+                        )
+                    }
                 },
             )
         },
@@ -206,6 +237,53 @@ internal fun AssetDetailScreen(
         }
     }
 }
+
+@Composable
+private fun WatchlistSearchDialog(
+    results: List<com.altaran.watchwallet.core.pricing.CoinSearchResult>,
+    onQuery: (String) -> Unit,
+    onPick: (com.altaran.watchwallet.core.pricing.CoinSearchResult) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var query by remember { mutableStateOf("") }
+    androidx.compose.runtime.LaunchedEffect(query) {
+        if (query.length >= 2) {
+            kotlinx.coroutines.delay(SEARCH_DEBOUNCE_MS)
+            onQuery(query)
+        }
+    }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.watchlist_add)) },
+        text = {
+            Column {
+                androidx.compose.material3.OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text(stringResource(Res.string.watchlist_search)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Column(Modifier.padding(top = 8.dp).verticalScroll(rememberScrollState())) {
+                    results.forEach { coin ->
+                        Row(
+                            Modifier.fillMaxWidth().clickable { onPick(coin) }.padding(vertical = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Text(coin.symbol, style = MaterialTheme.typography.titleSmall, modifier = Modifier.width(64.dp))
+                            Text(coin.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                            coin.marketCapRank?.let { Text(stringResource(Res.string.watchlist_rank, it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text(stringResource(Res.string.watchlist_cancel)) } },
+    )
+}
+
+private const val SEARCH_DEBOUNCE_MS = 400L
 
 @Composable
 private fun modeLabel(mode: AssetChartMode): String = stringResource(

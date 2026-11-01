@@ -96,6 +96,9 @@ class PriceRepository(
     suspend fun markets(currency: QuoteCurrency, coinIds: Collection<String>): Result<List<MarketInfo>> =
         runCatching { provider.markets(coinIds, currency.code.lowercase()) }
 
+    suspend fun search(query: String): Result<List<com.altaran.watchwallet.core.pricing.CoinSearchResult>> =
+        runCatching { provider.search(query) }
+
     private fun isFresh(key: String, maxAge: Duration): Boolean =
         lastHistoryFetch[key]?.let { Clock.System.now() - it < maxAge } == true
 

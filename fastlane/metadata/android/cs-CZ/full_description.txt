@@ -1,0 +1,17 @@
+<p>WatchWallet sleduje zůstatky, historii transakcí a hodnotu tvého krypto portfolia pouze pomocí <b>veřejných adres a rozšířených veřejných klíčů</b>. Nikdy nechce, nepřijímá ani neukládá seed frázi či privátní klíč a nic neumí odeslat.</p>
+<p><b>Soukromí od základu</b></p>
+<ul>
+<li>Žádné účty, žádný server, žádná analytika, reklamy ani Google Play Services.</li>
+<li>Všechna data zůstávají v telefonu; cloudová záloha je vypnutá.</li>
+<li>Každá síťová služba je zdokumentovaná; volitelně Tor / SOCKS5 proxy a vlastní Bitcoin server.</li>
+<li>Rozšířené veřejné klíče nikdy neopustí zařízení: adresy se odvozují lokálně.</li>
+</ul>
+<p><b>Funkce</b></p>
+<ul>
+<li>Vlož a hotovo: vlož adresu, xpub nebo deskriptor a blockchain se rozpozná sám.</li>
+<li>Bitcoin (adresy, xpub/ypub/zpub, deskriptory) a Ethereum s více než 20 EVM sítěmi a tokeny.</li>
+<li>Vývoj hodnoty portfolia, rozložení aktiv, grafy jednotlivých aktiv s živými svíčkami.</li>
+<li>Skupiny (třeba portfolio pro každého člena rodiny), diskrétní režim, zámek aplikace.</li>
+<li>Hromadný import z textu nebo CSV, šifrovaná JSON záloha, export do CSV.</li>
+<li>Ceny v CZK, EUR, USD a dalších měnách; angličtina a čeština.</li>
+</ul>

@@ -43,4 +43,8 @@
     <string name="default_name_bitcoin_address">Bitcoinová adresa</string>
     <string name="default_name_evm">Ethereum peněženka</string>
     <string name="add_wallet_open_batch">Otevřít hromadný import</string>
+    <string name="add_wallet_scan">Skenovat</string>
+    <string name="qr_hint">Namiř fotoaparát na QR kód adresy nebo xpubu</string>
+    <string name="qr_close">Zavřít skener</string>
+    <string name="qr_no_permission">Ke skenování QR kódů je potřeba přístup k fotoaparátu. Můžeš ho povolit v nastavení aplikace.</string>
 </resources>

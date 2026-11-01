@@ -40,6 +40,11 @@ interface PriceProvider {
     suspend fun history(priceId: String, currency: String, days: Int?): List<PricePoint>
 
     suspend fun markets(coinIds: Collection<String>, currency: String): List<MarketInfo>
+
+    /** Coins matching a name or symbol, for adding to the watchlist. */
+    suspend fun search(query: String): List<CoinSearchResult>
 }
+
+data class CoinSearchResult(val priceId: String, val symbol: String, val name: String, val marketCapRank: Int?)
 
 class PriceDataException(message: String, cause: Throwable? = null) : Exception(message, cause)

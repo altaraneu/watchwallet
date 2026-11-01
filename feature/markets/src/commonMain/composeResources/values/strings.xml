@@ -37,4 +37,11 @@
     <string name="asset_low">Min</string>
     <!-- Volume-weighted average price of the candle -->
     <string name="asset_average">Average</string>
+    <string name="watchlist_add">Add to watchlist</string>
+    <string name="watchlist_search">Search coins</string>
+    <string name="watchlist_cancel">Close</string>
+    <string name="watchlist_watch">Watch</string>
+    <string name="watchlist_watching">Watching</string>
+    <!-- Market capitalisation rank, for example "#12" -->
+    <string name="watchlist_rank">#%1$d</string>
 </resources>

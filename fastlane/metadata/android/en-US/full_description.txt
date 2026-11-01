@@ -1,0 +1,17 @@
+<p>WatchWallet tracks balances, transaction history and the value of your crypto portfolio using <b>public addresses and extended public keys only</b>. It never asks for, accepts or stores a seed phrase or private key and cannot send anything.</p>
+<p><b>Private by design</b></p>
+<ul>
+<li>No accounts, no backend, no analytics, no ads, no Google Play Services.</li>
+<li>All data stays on your device; cloud backup is disabled.</li>
+<li>Every network endpoint is documented; optional Tor / SOCKS5 proxy and your own Bitcoin server.</li>
+<li>Extended public keys never leave the device: addresses are derived locally.</li>
+</ul>
+<p><b>Features</b></p>
+<ul>
+<li>Paste and done: paste an address, xpub or descriptor and the chain is detected automatically.</li>
+<li>Bitcoin (addresses, xpub/ypub/zpub, descriptors) and Ethereum with 20+ EVM networks and tokens.</li>
+<li>Portfolio value over time, allocation, per-asset charts with live candlesticks.</li>
+<li>Groups (for example one portfolio per family member), discreet mode, app lock.</li>
+<li>Batch import from text or CSV, encrypted JSON backup, CSV export.</li>
+<li>Prices in CZK, EUR, USD and more; English and Czech.</li>
+</ul>
