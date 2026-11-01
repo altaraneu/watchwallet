@@ -8,6 +8,7 @@ kotlin {
         commonMain.dependencies {
             api(libs.compose.material3)
             api(libs.compose.components.resources)
+            api(projects.core.model)
             implementation(libs.kotlinx.collections.immutable)
         }
         androidMain.dependencies {

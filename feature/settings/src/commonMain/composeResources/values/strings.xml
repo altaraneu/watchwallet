@@ -29,4 +29,9 @@
     <string name="settings_license">License</string>
     <string name="settings_license_summary">GNU General Public License v3.0</string>
     <string name="settings_version">Version</string>
+    <string name="settings_charts_attribution">Charts by TradingView</string>
+    <string name="settings_charts_attribution_summary">TradingView Lightweight Charts™, Copyright © 2025 TradingView, Inc.</string>
+    <string name="settings_section_developer">Developer</string>
+    <string name="settings_demo_wallets">Add demo wallets</string>
+    <string name="settings_demo_wallets_summary">Public wallets for two people (Alice and Bob), for testing</string>
 </resources>

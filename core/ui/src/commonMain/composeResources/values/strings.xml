@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="script_p2pkh">Legacy</string>
+    <string name="script_p2sh_p2wpkh">Nested SegWit</string>
+    <string name="script_p2wpkh">Native SegWit</string>
+    <string name="script_p2tr">Taproot</string>
+    <string name="script_p2sh">Script</string>
+    <string name="script_p2wsh">SegWit script</string>
+    <string name="family_utxo_bitcoin">Bitcoin</string>
+    <!-- Ethereum and compatible networks -->
+    <string name="family_evm">EVM</string>
+    <!-- %1$s = script type, for example "Native SegWit". -->
+    <string name="target_xpub">%1$s xpub</string>
+    <!-- %1$s = script type or empty -->
+    <string name="target_address">%1$s address</string>
+    <!-- %1$s = chain family, %2$s = wallet kind; for example "Bitcoin · Native SegWit xpub". -->
+    <string name="target_description">%1$s · %2$s</string>
+    <string name="chart_no_data">Not enough data for this range yet</string>
+    <!-- Accessibility description of a value chart; %1$s = range, for example "1Y". -->
+    <string name="chart_description">Value chart, range %1$s. Touch and drag to see values.</string>
+</resources>

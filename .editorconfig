@@ -14,6 +14,8 @@ ktlint_code_style = ktlint_official
 # Composable functions are nouns in PascalCase by convention.
 ktlint_function_naming_ignore_when_annotated_with = Composable
 ij_kotlin_allow_trailing_comma = true
+# Generated Compose resource accessors (Res.string.*) are imported on demand.
+ij_kotlin_packages_to_use_import_on_demand = java.util.*,com.altaran.watchwallet.**
 ij_kotlin_allow_trailing_comma_on_call_site = true
 # Readability over vertical density for multi-line signatures and expressions.
 ktlint_standard_function-signature = disabled

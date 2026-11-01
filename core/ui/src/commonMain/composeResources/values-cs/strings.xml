@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="script_p2pkh">Legacy</string>
+    <string name="script_p2sh_p2wpkh">Nested SegWit</string>
+    <string name="script_p2wpkh">Native SegWit</string>
+    <string name="script_p2tr">Taproot</string>
+    <string name="script_p2sh">Skript</string>
+    <string name="script_p2wsh">SegWit skript</string>
+    <string name="family_utxo_bitcoin">Bitcoin</string>
+    <string name="family_evm">EVM</string>
+    <string name="target_xpub">xpub %1$s</string>
+    <string name="target_address">adresa %1$s</string>
+    <string name="target_description">%1$s · %2$s</string>
+    <string name="chart_no_data">Pro tento rozsah zatím nejsou data</string>
+    <string name="chart_description">Graf hodnoty, rozsah %1$s. Dotkni se a táhni pro zobrazení hodnot.</string>
+</resources>

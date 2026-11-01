@@ -4,4 +4,13 @@
     <string name="amount_hidden">Amount hidden</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_retry">Retry</string>
+    <!-- Chart range chips. Keep them very short. -->
+    <string name="range_24h">24H</string>
+    <string name="range_7d">7D</string>
+    <string name="range_1m">1M</string>
+    <string name="range_3m">3M</string>
+    <string name="range_1y">1Y</string>
+    <!-- Year to date -->
+    <string name="range_ytd">YTD</string>
+    <string name="range_all">All</string>
 </resources>

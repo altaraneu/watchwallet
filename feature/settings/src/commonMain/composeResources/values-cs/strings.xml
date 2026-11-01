@@ -27,4 +27,9 @@
     <string name="settings_license">Licence</string>
     <string name="settings_license_summary">GNU General Public License v3.0</string>
     <string name="settings_version">Verze</string>
+    <string name="settings_charts_attribution">Grafy od TradingView</string>
+    <string name="settings_charts_attribution_summary">TradingView Lightweight Charts™, Copyright © 2025 TradingView, Inc.</string>
+    <string name="settings_section_developer">Pro vývojáře</string>
+    <string name="settings_demo_wallets">Přidat ukázkové peněženky</string>
+    <string name="settings_demo_wallets_summary">Veřejné peněženky pro dvě osoby (Alice a Bob) k testování</string>
 </resources>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<!-- No network access: everything is inlined, and the WebView blocks network loads. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:;">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: transparent; -webkit-user-select: none; user-select: none; }
+  #chart { position: absolute; inset: 0; }
+</style>
+<script>/*LIGHTWEIGHT_CHARTS*/</script>
+</head>
+<body>
+<div id="chart"></div>
+<script>
+  // Bridge between the app and TradingView Lightweight Charts. Called from Kotlin with JSON args.
+  var chart = null, series = null, markersApi = null, options = null, formatter = null;
+
+  function post(name, payload) {
+    try {
+      if (window.WWBridge) { window.WWBridge[name](payload); }
+      else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers[name]) {
+        window.webkit.messageHandlers[name].postMessage(payload);
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function makeFormatter(o) {
+    if (o.hideValues) { return function () { return '•••'; }; }
+    try {
+      if (o.currencyStyle) {
+        var nf = new Intl.NumberFormat(o.locale, { style: 'currency', currency: o.currency, maximumFractionDigits: o.maxDecimals, minimumFractionDigits: Math.min(o.maxDecimals, o.minDecimals) });
+        return function (p) { return nf.format(p); };
+      }
+      var df = new Intl.NumberFormat(o.locale, { maximumFractionDigits: o.maxDecimals });
+      return function (p) { return df.format(p) + (o.suffix ? ' ' + o.suffix : ''); };
+    } catch (e) {
+      return function (p) { return String(p); };
+    }
+  }
+
+  function init(o) {
+    options = o;
+    if (chart) { chart.remove(); chart = null; series = null; markersApi = null; }
+    formatter = makeFormatter(o);
+    var LWC = LightweightCharts;
+    chart = LWC.createChart(document.getElementById('chart'), {
+      autoSize: true,
+      layout: {
+        background: { type: 'solid', color: o.colors.background },
+        textColor: o.colors.text,
+        fontFamily: 'Roboto, system-ui, sans-serif',
+        fontSize: 11,
+        attributionLogo: true
+      },
+      grid: { vertLines: { color: o.colors.grid }, horzLines: { color: o.colors.grid } },
+      rightPriceScale: { borderVisible: false, visible: !o.hideValues, mode: o.logScale ? 1 : 0, scaleMargins: { top: 0.12, bottom: 0.08 } },
+      timeScale: { borderVisible: false, timeVisible: o.intraday, secondsVisible: false, rightOffset: 4, fixLeftEdge: true },
+      crosshair: { mode: 0, vertLine: { labelBackgroundColor: o.colors.accent }, horzLine: { visible: !o.hideValues, labelVisible: !o.hideValues, labelBackgroundColor: o.colors.accent } },
+      localization: { locale: o.locale, priceFormatter: formatter },
+      handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
+      handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true }
+    });
+    if (o.kind === 'candles') {
+      series = chart.addSeries(LWC.CandlestickSeries, {
+        upColor: o.colors.up, downColor: o.colors.down, borderVisible: false,
+        wickUpColor: o.colors.up, wickDownColor: o.colors.down,
+        priceLineVisible: !o.hideValues, lastValueVisible: !o.hideValues
+      });
+    } else {
+      series = chart.addSeries(LWC.AreaSeries, {
+        lineColor: o.colors.line, topColor: o.colors.areaTop, bottomColor: o.colors.areaBottom,
+        lineWidth: 2, priceLineVisible: false, lastValueVisible: !o.hideValues,
+        crosshairMarkerRadius: 4
+      });
+    }
+    chart.subscribeCrosshairMove(function (param) {
+      if (!param || param.time === undefined || !param.point) { post('onCrosshair', JSON.stringify(null)); return; }
+      var d = param.seriesData.get(series);
+      if (!d) { post('onCrosshair', JSON.stringify(null)); return; }
+      var v = d.close !== undefined ? d.close : d.value;
+      post('onCrosshair', JSON.stringify({ time: param.time, value: v, open: d.open, high: d.high, low: d.low }));
+    });
+    post('onReady', '');
+  }
+
+  function setData(points, fit) {
+    if (!series) return;
+    series.setData(points);
+    if (fit) chart.timeScale().fitContent();
+  }
+
+  function update(point) {
+    if (!series) return;
+    try { series.update(point); } catch (e) { /* out-of-order update: ignore */ }
+  }
+
+  function setMarkers(times) {
+    if (!series) return;
+    var markers = times.map(function (t) { return { time: t, position: 'belowBar', color: options.colors.marker, shape: 'circle', size: 0.6 }; });
+    if (!markersApi) { markersApi = LightweightCharts.createSeriesMarkers(series, markers); }
+    else { markersApi.setMarkers(markers); }
+  }
+</script>
+</body>
+</html>

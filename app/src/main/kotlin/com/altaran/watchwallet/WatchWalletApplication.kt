@@ -26,6 +26,7 @@ class WatchWalletApplication : Application() {
                 versionCode = BuildConfig.VERSION_CODE.toLong(),
                 sourceCodeUrl = BuildConfig.SOURCE_CODE_URL,
                 isDynamicColorAvailable = isDynamicColorSupported,
+                isDebug = BuildConfig.DEBUG,
             )
         }
     }

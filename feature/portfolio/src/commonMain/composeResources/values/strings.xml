@@ -9,4 +9,15 @@
     <string name="portfolio_empty_title">Nothing to watch yet</string>
     <string name="portfolio_empty_message">Add a wallet by pasting a public address or an extended public key. WatchWallet never asks for your seed phrase or private keys.</string>
     <string name="portfolio_empty_action">Add wallet</string>
+    <string name="portfolio_assets">Assets</string>
+    <string name="portfolio_allocation">Allocation</string>
+    <!-- Label of the merged allocation slice for small holdings -->
+    <string name="portfolio_other">Other</string>
+    <!-- %1$s = signed value change, %2$s = signed percent; for example "+1 200 Kč (+2.1 %) in 24 hours" -->
+    <string name="portfolio_change_24h">%1$s (%2$s) in 24 hours</string>
+    <plurals name="portfolio_hidden_assets">
+        <item quantity="one">%1$d token hidden (spam or no price)</item>
+        <item quantity="other">%1$d tokens hidden (spam or no price)</item>
+    </plurals>
+    <string name="portfolio_all_wallets">All</string>
 </resources>

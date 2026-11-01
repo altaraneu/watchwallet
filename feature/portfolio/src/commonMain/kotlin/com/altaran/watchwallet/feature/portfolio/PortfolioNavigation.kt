@@ -9,9 +9,9 @@ import org.koin.dsl.module
 @Serializable
 data object PortfolioRoute
 
-fun NavGraphBuilder.portfolioScreen(onAddWallet: () -> Unit) {
+fun NavGraphBuilder.portfolioScreen(onAddWallet: () -> Unit, onOpenHolding: (String) -> Unit) {
     composable<PortfolioRoute> {
-        PortfolioRoute(onAddWallet = onAddWallet)
+        PortfolioRoute(onAddWallet = onAddWallet, onOpenHolding = onOpenHolding)
     }
 }
 

@@ -21,18 +21,32 @@ one is rejected, is not stored anywhere (including logs) and is never sent over 
 
 ## Network endpoints
 
-| Version | Endpoint | Purpose | Data sent |
-|---|---|---|---|
-| 0.1.0 | – | No network access is made yet. | – |
+All requests are plain HTTPS GET/POST calls without cookies, accounts or tracking headers.
+Responses are not cached on disk by the HTTP client.
 
-Planned for upcoming milestones (all configurable in Settings):
+### Blockchain data (sends the individual addresses you track)
 
-- **Blockchain data** (Esplora / Electrum servers, Blockscout, public RPC nodes): individual
-  addresses or script hashes you track, to fetch balances and history. Extended public keys
-  are **never** sent; addresses are derived on the device.
-- **Prices** (CoinGecko, with fallbacks): asset identifiers and the selected currency. No
-  addresses.
-- **Tor / SOCKS5**: all traffic can be routed through a proxy such as Orbot.
+| Service | Used for | Data sent |
+|---|---|---|
+| `mempool.space/api` (Esplora) | Bitcoin balances and history | Individual Bitcoin addresses. For an xpub, the addresses derived **on the device** are queried one by one with random timing; the xpub itself is never sent. |
+| Public JSON-RPC nodes per EVM network (`*.publicnode.com`, `mainnet.era.zksync.io`, `rpc.linea.build`, `rpc.scroll.io`, `rpc.mantle.xyz`, `rpc.gnosischain.com`, `evm.cronos.org`, `rpc.soniclabs.com`, `forno.celo.org`, `etc.rivet.link`, `rpc.hyperliquid.xyz`, `rpc.berachain.com`, `evm-rpc.sei-apis.com`, `mainnet.unichain.org`, `rpc.blast.io`) | Native balance and activity check on each EVM network | The EVM address |
+| Blockscout instances (`eth.`, `base.`, `optimism.`, `arbitrum.`, `polygon.`, `gnosis.`, `zksync.`, `scroll.`, `celo.`, `etc.`, `unichain.blockscout.com`, `explorer.mantle.xyz`) | Token balances and transaction history | The EVM address |
+
+### Prices and market data (no addresses are ever sent)
+
+| Service | Used for | Data sent |
+|---|---|---|
+| `api.coingecko.com` | Current prices, price history, market overview | Coin ids (for example `bitcoin`), token contract addresses (public token identifiers, not your address), selected currency |
+| `api.kraken.com`, `ws.kraken.com` | Candlestick charts and live price updates | Trading pair (for example `BTC/EUR`) and candle interval |
+| `api.frankfurter.dev` (fallback `api.frankfurter.app`) | ECB reference exchange rates for currencies Kraken does not quote (CZK, PLN…) | Currency codes |
+
+Planned: configurable endpoints per chain (own Electrum/Esplora server, custom RPC) and a
+Tor/SOCKS5 proxy option for all traffic.
+
+## Charts
+
+Charts are rendered by TradingView Lightweight Charts, bundled inside the app. The chart view
+has network access blocked; it does not load anything from the internet.
 
 ## Exports
 

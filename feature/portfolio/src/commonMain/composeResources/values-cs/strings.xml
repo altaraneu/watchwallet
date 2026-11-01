@@ -7,4 +7,15 @@
     <string name="portfolio_empty_title">Zatím nic nesleduješ</string>
     <string name="portfolio_empty_message">Přidej peněženku vložením veřejné adresy nebo rozšířeného veřejného klíče. WatchWallet nikdy nechce tvou seed frázi ani privátní klíče.</string>
     <string name="portfolio_empty_action">Přidat peněženku</string>
+    <string name="portfolio_assets">Aktiva</string>
+    <string name="portfolio_allocation">Rozložení</string>
+    <string name="portfolio_other">Ostatní</string>
+    <string name="portfolio_change_24h">%1$s (%2$s) za 24 hodin</string>
+    <plurals name="portfolio_hidden_assets">
+        <item quantity="one">%1$d skrytý token (spam nebo bez ceny)</item>
+        <item quantity="few">%1$d skryté tokeny (spam nebo bez ceny)</item>
+        <item quantity="many">%1$d skrytého tokenu (spam nebo bez ceny)</item>
+        <item quantity="other">%1$d skrytých tokenů (spam nebo bez ceny)</item>
+    </plurals>
+    <string name="portfolio_all_wallets">Vše</string>
 </resources>

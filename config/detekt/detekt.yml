@@ -24,6 +24,9 @@ naming:
     ignoreAnnotated: ['Composable']
 
 style:
+  WildcardImport:
+    # ktlint enforces imports; generated Res accessors are imported with a wildcard.
+    active: false
   MagicNumber:
     # Colors, dp values and test fixtures are clearer inline.
     ignoreAnnotated: ['Composable', 'Preview']

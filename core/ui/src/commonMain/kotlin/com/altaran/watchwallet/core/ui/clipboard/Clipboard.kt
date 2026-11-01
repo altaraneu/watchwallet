@@ -9,3 +9,6 @@ import androidx.compose.ui.platform.ClipEntry
  * hides it. Use for addresses the user tracks; public donation addresses do not need it.
  */
 expect fun plainTextClipEntry(text: String, sensitive: Boolean): ClipEntry
+
+/** Plain text of a clipboard entry, or `null`. Only call this after an explicit user action. */
+expect fun ClipEntry.plainText(): String?

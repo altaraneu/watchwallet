@@ -30,6 +30,7 @@ internal class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val languageController: AppLanguageController,
     appInfo: AppInfo,
+    private val demoWallets: com.altaran.watchwallet.core.data.DemoWallets,
 ) : ViewModel() {
     val uiState: StateFlow<SettingsUiState> = combine(
         settingsRepository.settings,
@@ -60,4 +61,8 @@ internal class SettingsViewModel(
     }
 
     fun setLanguage(tag: String?) = languageController.setLanguage(tag)
+
+    fun seedDemoWallets() {
+        viewModelScope.launch { demoWallets.seed() }
+    }
 }

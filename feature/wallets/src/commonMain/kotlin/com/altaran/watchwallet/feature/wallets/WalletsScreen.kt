@@ -1,101 +1,141 @@
 package com.altaran.watchwallet.feature.wallets
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.lifecycle.ViewModel
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.composable
-import com.altaran.watchwallet.core.data.repository.WalletRepository
+import com.altaran.watchwallet.core.designsystem.component.AmountText
+import com.altaran.watchwallet.core.designsystem.component.CryptoIcon
+import com.altaran.watchwallet.core.designsystem.component.CryptoIcons
 import com.altaran.watchwallet.core.designsystem.component.EmptyState
+import com.altaran.watchwallet.core.designsystem.component.SectionHeader
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
-import com.altaran.watchwallet.core.model.Wallet
+import com.altaran.watchwallet.core.designsystem.icon.painter
+import com.altaran.watchwallet.core.model.ChainFamily
+import com.altaran.watchwallet.core.model.QuoteCurrency
+import com.altaran.watchwallet.core.ui.format.MoneyFormatter
+import com.altaran.watchwallet.core.ui.targetDescription
 import com.altaran.watchwallet.feature.wallets.generated.resources.Res
-import com.altaran.watchwallet.feature.wallets.generated.resources.wallets_empty_message
-import com.altaran.watchwallet.feature.wallets.generated.resources.wallets_empty_title
-import com.altaran.watchwallet.feature.wallets.generated.resources.wallets_title
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.serialization.Serializable
+import com.altaran.watchwallet.feature.wallets.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.module.dsl.viewModelOf
-import org.koin.dsl.module
-
-@Serializable
-data object WalletsRoute
-
-fun NavGraphBuilder.walletsScreen() {
-    composable<WalletsRoute> { WalletsRoute() }
-}
-
-val walletsModule = module {
-    viewModelOf(::WalletsViewModel)
-}
-
-internal class WalletsViewModel(walletRepository: WalletRepository) : ViewModel() {
-    val wallets: StateFlow<ImmutableList<Wallet>> = walletRepository.activeWallets
-        .map { it.toImmutableList() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
-}
 
 @Composable
-private fun WalletsRoute(viewModel: WalletsViewModel = koinViewModel()) {
-    val wallets by viewModel.wallets.collectAsStateWithLifecycle()
-    WalletsScreen(wallets = wallets)
+internal fun WalletsRoute(
+    onAddWallet: () -> Unit,
+    onOpenWallet: (Long) -> Unit,
+    viewModel: WalletsViewModel = koinViewModel(),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    WalletsScreen(state, onAddWallet, onOpenWallet, viewModel::refresh)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun WalletsScreen(wallets: ImmutableList<Wallet>) {
+internal fun WalletsScreen(
+    state: WalletsUiState,
+    onAddWallet: () -> Unit,
+    onOpenWallet: (Long) -> Unit,
+    onRefresh: () -> Unit,
+) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.wallets_title)) },
-                scrollBehavior = scrollBehavior,
+        topBar = { TopAppBar(title = { Text(stringResource(Res.string.wallets_title)) }, scrollBehavior = scrollBehavior) },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = onAddWallet,
+                icon = { Icon(WwIcon.Add.painter(), contentDescription = null) },
+                text = { Text(stringResource(Res.string.wallets_add)) },
             )
         },
     ) { padding ->
-        if (wallets.isEmpty()) {
-            EmptyState(
-                icon = WwIcon.Wallets,
-                title = stringResource(Res.string.wallets_empty_title),
-                message = stringResource(Res.string.wallets_empty_message),
-                modifier = Modifier.padding(padding),
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-            ) {
-                items(wallets, key = Wallet::id) { wallet ->
-                    ListItem(
-                        headlineContent = { Text(wallet.name) },
-                        leadingContent = wallet.emoji?.let { { Text(it) } },
-                    )
+        PullToRefreshBox(isRefreshing = state.refreshing, onRefresh = onRefresh, modifier = Modifier.padding(padding).fillMaxSize()) {
+            if (!state.loading && state.items.isEmpty()) {
+                EmptyState(
+                    icon = WwIcon.Wallets,
+                    title = stringResource(Res.string.wallets_empty_title),
+                    message = stringResource(Res.string.wallets_empty_message),
+                    actionLabel = stringResource(Res.string.wallets_add),
+                    onAction = onAddWallet,
+                )
+            } else {
+                LazyColumn(Modifier.fillMaxSize()) {
+                    val sections = state.items.groupBy { it.wallet.groupId?.takeIf { id -> id in state.groups } }
+                        .entries.sortedBy { (groupId, _) -> if (groupId == null) Long.MAX_VALUE else groupId }
+                    sections.forEach { (groupId, sectionItems) ->
+                        if (state.groups.isNotEmpty()) {
+                            item(key = "g-$groupId") {
+                                SectionHeader(groupId?.let { state.groups.getValue(it) } ?: stringResource(Res.string.wallets_ungrouped))
+                            }
+                        }
+                        items(sectionItems, key = { it.wallet.id }) { item ->
+                            WalletRow(item, state.currency, onClick = { onOpenWallet(item.wallet.id) })
+                            HorizontalDivider(Modifier.padding(start = 72.dp))
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun WalletRow(item: WalletListItem, currency: QuoteCurrency, onClick: () -> Unit) {
+    val target = item.wallet.target
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CryptoIcon(
+            iconKey = when (target?.family) {
+                ChainFamily.UTXO -> "btc"
+                ChainFamily.EVM -> "eth"
+                else -> null
+            },
+            fallbackText = item.wallet.name,
+        )
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
+            Text(item.wallet.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (target != null) {
+                Text(targetDescription(target), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            }
+            if (item.failed) {
+                Text(stringResource(Res.string.wallets_sync_failed), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+        }
+        if (item.syncing) {
+            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+            Spacer(Modifier.width(12.dp))
+        }
+        AmountText(item.value?.let { MoneyFormatter.format(it, currency) } ?: "—", style = MaterialTheme.typography.titleSmall)
     }
 }

@@ -1,6 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="wallets_title">Wallets</string>
+    <string name="wallets_add">Add wallet</string>
     <string name="wallets_empty_title">No wallets yet</string>
-    <string name="wallets_empty_message">Adding wallets arrives with Bitcoin support in the next update. You will be able to paste any address or xpub and WatchWallet will recognise the chain.</string>
+    <string name="wallets_empty_message">Paste any public address or xpub and WatchWallet will recognise the chain. No keys, ever.</string>
+    <string name="wallets_sync_failed">Could not refresh. Showing the last known data.</string>
+    <string name="detail_back">Back</string>
+    <string name="detail_more">More options</string>
+    <string name="detail_rename">Rename</string>
+    <string name="detail_open_explorer">Open in block explorer</string>
+    <string name="detail_delete">Delete</string>
+    <string name="detail_delete_title">Delete this wallet?</string>
+    <string name="detail_delete_message">The wallet and its cached history are removed from this device. Nothing changes on the blockchain; you can add it again anytime.</string>
+    <string name="detail_cancel">Cancel</string>
+    <string name="detail_save">Save</string>
+    <string name="detail_balance">Balance</string>
+    <string name="detail_tab_assets">Assets</string>
+    <string name="detail_tab_activity">Activity</string>
+    <string name="detail_tab_addresses">Addresses</string>
+    <string name="detail_no_assets_title">No assets</string>
+    <string name="detail_no_assets_message">This wallet has no balance right now. Pull down to refresh.</string>
+    <string name="detail_no_activity_title">No transactions yet</string>
+    <string name="detail_no_activity_message">Transactions appear here after the first refresh.</string>
+    <string name="tx_received">Received</string>
+    <string name="tx_sent">Sent</string>
+    <string name="tx_self">Transfer between own addresses</string>
+    <string name="tx_pending">Pending</string>
+    <string name="address_used">Used</string>
+    <string name="address_unused">Unused</string>
+    <string name="address_next_receive">Next unused receive address</string>
+    <string name="address_copy">Copy address</string>
+    <string name="address_copied">Copied</string>
+    <string name="wallets_ungrouped">Other wallets</string>
 </resources>

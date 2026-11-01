@@ -26,15 +26,21 @@ import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
 import com.altaran.watchwallet.core.designsystem.theme.WatchWalletTheme
 import com.altaran.watchwallet.core.model.ThemeMode
+import com.altaran.watchwallet.feature.addwallet.AddWalletRoute
+import com.altaran.watchwallet.feature.addwallet.addWalletScreen
 import com.altaran.watchwallet.feature.donate.DonateRoute
 import com.altaran.watchwallet.feature.donate.donateScreen
+import com.altaran.watchwallet.feature.markets.AssetDetailRoute
 import com.altaran.watchwallet.feature.markets.MarketsRoute
+import com.altaran.watchwallet.feature.markets.assetDetailScreen
 import com.altaran.watchwallet.feature.markets.marketsScreen
 import com.altaran.watchwallet.feature.portfolio.PortfolioRoute
 import com.altaran.watchwallet.feature.portfolio.portfolioScreen
 import com.altaran.watchwallet.feature.settings.SettingsRoute
 import com.altaran.watchwallet.feature.settings.settingsScreen
+import com.altaran.watchwallet.feature.wallets.WalletDetailRoute
 import com.altaran.watchwallet.feature.wallets.WalletsRoute
+import com.altaran.watchwallet.feature.wallets.walletDetailScreen
 import com.altaran.watchwallet.feature.wallets.walletsScreen
 import com.altaran.watchwallet.shared.generated.resources.Res
 import com.altaran.watchwallet.shared.generated.resources.nav_markets
@@ -108,9 +114,22 @@ private fun AppScaffold(navController: NavHostController = rememberNavController
                 .padding(padding)
                 .consumeWindowInsets(padding),
         ) {
-            portfolioScreen(onAddWallet = { navController.navigateToTopLevel(TopLevelDestination.WALLETS) })
-            walletsScreen()
-            marketsScreen()
+            val openHolding: (String) -> Unit = { key -> navController.navigate(AssetDetailRoute(key)) }
+            val openWallet: (Long) -> Unit = { id -> navController.navigate(WalletDetailRoute(id)) }
+            val addWallet: () -> Unit = { navController.navigate(AddWalletRoute) }
+            portfolioScreen(onAddWallet = addWallet, onOpenHolding = openHolding)
+            walletsScreen(onAddWallet = addWallet, onOpenWallet = openWallet)
+            walletDetailScreen(onNavigateUp = navController::navigateUp, onOpenHolding = openHolding)
+            addWalletScreen(
+                onNavigateUp = navController::navigateUp,
+                onWalletAdded = { id ->
+                    navController.navigate(WalletDetailRoute(id)) {
+                        popUpTo<AddWalletRoute> { inclusive = true }
+                    }
+                },
+            )
+            marketsScreen(onOpenAsset = openHolding)
+            assetDetailScreen(onNavigateUp = navController::navigateUp)
             settingsScreen(onOpenSupport = { navController.navigate(DonateRoute) })
             donateScreen(onNavigateUp = navController::navigateUp)
         }

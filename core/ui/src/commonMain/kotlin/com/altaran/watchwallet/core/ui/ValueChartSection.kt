@@ -1,0 +1,151 @@
+package com.altaran.watchwallet.core.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.altaran.watchwallet.core.chart.AreaPoint
+import com.altaran.watchwallet.core.chart.ChartNumberFormat
+import com.altaran.watchwallet.core.chart.ChartSeries
+import com.altaran.watchwallet.core.chart.CrosshairValue
+import com.altaran.watchwallet.core.chart.TradingChart
+import com.altaran.watchwallet.core.designsystem.chart.ChartPoint
+import com.altaran.watchwallet.core.designsystem.component.AmountText
+import com.altaran.watchwallet.core.designsystem.component.ChangeText
+import com.altaran.watchwallet.core.designsystem.component.LocalDiscreetMode
+import com.altaran.watchwallet.core.designsystem.component.RangeSelector
+import com.altaran.watchwallet.core.designsystem.component.rangeLabel
+import com.altaran.watchwallet.core.designsystem.theme.WatchWalletTheme
+import com.altaran.watchwallet.core.model.ChartRange
+import com.altaran.watchwallet.core.model.QuoteCurrency
+import com.altaran.watchwallet.core.ui.format.DateFormatter
+import com.altaran.watchwallet.core.ui.format.MoneyFormatter
+import com.altaran.watchwallet.core.ui.generated.resources.Res
+import com.altaran.watchwallet.core.ui.generated.resources.chart_no_data
+import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Instant
+
+/** Axis/crosshair number format for values in [currency], following the app language. */
+fun chartFormatFor(currency: QuoteCurrency, maxDecimals: Int = currency.displayDecimals): ChartNumberFormat =
+    ChartNumberFormat(
+        localeTag = Locale.current.toLanguageTag(),
+        currency = if (currency.kind == QuoteCurrency.Kind.FIAT) currency.code else null,
+        suffix = if (currency.kind == QuoteCurrency.Kind.CRYPTO) currency.code else null,
+        minDecimals = minOf(currency.displayDecimals, maxDecimals),
+        maxDecimals = maxDecimals,
+    )
+
+/**
+ * Header value + change since range start + interactive area chart (pan, pinch zoom, crosshair)
+ * + range chips. While the user touches the chart, the header shows the value and date under
+ * the finger and the change from the start of the range to that point.
+ *
+ * @param points `null` while loading.
+ */
+@Composable
+fun ValueChartSection(
+    label: String,
+    currentValue: Double?,
+    points: List<ChartPoint>?,
+    range: ChartRange,
+    onRangeChange: (ChartRange) -> Unit,
+    format: (Double) -> String,
+    formatChange: (Double) -> String,
+    numberFormat: ChartNumberFormat,
+    modifier: Modifier = Modifier,
+    logScale: Boolean = false,
+    markerTimes: List<Long> = emptyList(),
+    secondaryLine: String? = null,
+    chartHeight: Dp = 260.dp,
+    ranges: List<ChartRange> = ChartRange.entries,
+) {
+    var crosshair by remember(points) { mutableStateOf<CrosshairValue?>(null) }
+    val shown = crosshair?.value ?: currentValue
+    val start = points?.firstOrNull()?.value
+    val end = crosshair?.value ?: currentValue ?: points?.lastOrNull()?.value
+
+    Column(modifier.fillMaxWidth()) {
+        ValueHeader(
+            label = crosshair?.let { DateFormatter.dateTime(Instant.fromEpochSeconds(it.time)) } ?: label,
+            value = shown?.let(format),
+            change = if (start != null && end != null) end - start else null,
+            changePercent = if (start != null && end != null && start > 0) (end - start) / start else null,
+            formatChange = formatChange,
+            rangeText = rangeLabel(range),
+            secondaryLine = secondaryLine,
+        )
+        Box(Modifier.fillMaxWidth().padding(vertical = 8.dp).height(chartHeight), contentAlignment = Alignment.Center) {
+            when {
+                points == null -> LinearProgressIndicator(Modifier.padding(horizontal = 48.dp).fillMaxWidth())
+                points.size < 2 || points.all { it.value == 0.0 } -> Text(
+                    stringResource(Res.string.chart_no_data),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                else -> {
+                    val colors = WatchWalletTheme.extendedColors
+                    TradingChart(
+                        series = ChartSeries.Area(points.map { AreaPoint(it.timeMillis / 1000, it.value) }),
+                        format = numberFormat,
+                        height = chartHeight,
+                        intraday = range.needsHourlyPrices,
+                        logScale = logScale,
+                        hideValues = LocalDiscreetMode.current,
+                        markerTimes = markerTimes.map { it / 1000 },
+                        lineColor = if (points.last().value >= points.first().value) colors.positive else colors.negative,
+                        onCrosshair = { crosshair = it },
+                    )
+                }
+            }
+        }
+        RangeSelector(selected = range, onSelect = onRangeChange, ranges = ranges)
+    }
+}
+
+/** Big value with label above and the signed change below. Shared by all chart screens. */
+@Composable
+fun ValueHeader(
+    label: String,
+    value: String?,
+    change: Double?,
+    changePercent: Double?,
+    formatChange: (Double) -> String,
+    rangeText: String?,
+    secondaryLine: String? = null,
+) {
+    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        AmountText(value ?: "—", style = MaterialTheme.typography.displaySmall)
+        if (change != null) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                ChangeText(
+                    formatted = formatChange(change) + (changePercent?.let { " (" + MoneyFormatter.formatPercentChange(it) + ")" } ?: ""),
+                    direction = change.compareTo(0.0),
+                    discreetAware = true,
+                )
+                if (rangeText != null) {
+                    Text(rangeText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        if (secondaryLine != null) {
+            AmountText(secondaryLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}

@@ -23,4 +23,6 @@ data class AppInfo(
     val versionCode: Long,
     val sourceCodeUrl: String,
     val isDynamicColorAvailable: Boolean,
+    /** Debug builds show developer tools (demo data). */
+    val isDebug: Boolean = false,
 )

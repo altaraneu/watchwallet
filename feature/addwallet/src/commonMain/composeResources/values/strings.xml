@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_wallet_title">Add wallet</string>
+    <string name="add_wallet_back">Back</string>
+    <string name="add_wallet_intro">Paste a public address, an extended public key (xpub, ypub, zpub) or an output descriptor. WatchWallet detects the chain automatically.</string>
+    <string name="add_wallet_input_label">Address, xpub or descriptor</string>
+    <string name="add_wallet_paste">Paste</string>
+    <string name="add_wallet_continue">Continue</string>
+    <string name="add_wallet_probing">Checking the blockchain…</string>
+    <string name="add_wallet_pick_type">Which one is your wallet?</string>
+    <string name="add_wallet_name_label">Name (optional)</string>
+    <string name="add_wallet_save">Add wallet</string>
+    <string name="add_wallet_open_existing">Open existing wallet</string>
+    <string name="add_wallet_already_tracked">Already tracked</string>
+    <string name="add_wallet_probe_failed">Could not check activity right now. You can still add it.</string>
+    <string name="add_wallet_no_activity">No activity yet</string>
+    <!-- %1$s = comma-separated network names -->
+    <string name="add_wallet_active_on">Active on %1$s</string>
+    <plurals name="add_wallet_used_addresses">
+        <item quantity="one">%1$d used address</item>
+        <item quantity="other">%1$d used addresses</item>
+    </plurals>
+    <plurals name="add_wallet_transactions">
+        <item quantity="one">%1$d transaction</item>
+        <item quantity="other">%1$d transactions</item>
+    </plurals>
+    <!-- %1$s = chain name, for example "Solana" -->
+    <string name="add_wallet_unsupported_title">%1$s is not supported yet</string>
+    <string name="add_wallet_unsupported_message">This looks like a valid address, but this network is not supported yet. Bitcoin and Ethereum-compatible networks work now; more chains are coming soon.</string>
+    <string name="add_wallet_checksum_title">Check the address</string>
+    <string name="add_wallet_checksum_message">The letter case of this address does not match its checksum. It may contain a typo. Copy it again from the original source.</string>
+    <string name="add_wallet_multiple_title">More than one address</string>
+    <string name="add_wallet_multiple_message">Batch import is coming soon. For now, add one address at a time.</string>
+    <string name="add_wallet_unrecognized_title">This doesn’t look like a supported address</string>
+    <string name="add_wallet_unrecognized_message">Check that you copied the whole address or key, without extra characters.</string>
+    <string name="secret_title_mnemonic">This looks like a seed phrase</string>
+    <string name="secret_title_key">This looks like a private key</string>
+    <string name="secret_message">WatchWallet never needs your seed phrase or private keys. The input was cleared and was not saved or sent anywhere. Use a public address or an extended public key (xpub) instead.</string>
+    <string name="secret_scam_hint">If someone asked you to enter it here or anywhere else, it is a scam.</string>
+    <string name="default_name_bitcoin_wallet">Bitcoin wallet</string>
+    <string name="default_name_bitcoin_address">Bitcoin address</string>
+    <string name="default_name_evm">Ethereum wallet</string>
+</resources>

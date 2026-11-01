@@ -16,6 +16,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.core.data)
+            implementation(projects.feature.addwallet)
             implementation(projects.feature.portfolio)
             implementation(projects.feature.wallets)
             implementation(projects.feature.markets)

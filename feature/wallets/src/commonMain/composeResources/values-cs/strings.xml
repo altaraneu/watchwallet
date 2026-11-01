@@ -1,6 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="wallets_title">Peněženky</string>
+    <string name="wallets_add">Přidat peněženku</string>
     <string name="wallets_empty_title">Zatím žádné peněženky</string>
-    <string name="wallets_empty_message">Přidávání peněženek přijde s podporou Bitcoinu v příští aktualizaci. Stačí vložit libovolnou adresu nebo xpub a WatchWallet rozpozná, o jaký blockchain jde.</string>
+    <string name="wallets_empty_message">Vlož libovolnou veřejnou adresu nebo xpub a WatchWallet rozpozná blockchain. Žádné klíče, nikdy.</string>
+    <string name="wallets_sync_failed">Obnovení se nezdařilo. Zobrazuji poslední známá data.</string>
+    <string name="detail_back">Zpět</string>
+    <string name="detail_more">Další možnosti</string>
+    <string name="detail_rename">Přejmenovat</string>
+    <string name="detail_open_explorer">Otevřít v block exploreru</string>
+    <string name="detail_delete">Smazat</string>
+    <string name="detail_delete_title">Smazat tuto peněženku?</string>
+    <string name="detail_delete_message">Peněženka a její uložená historie se z tohoto zařízení odstraní. Na blockchainu se nic nezmění a peněženku můžeš kdykoli přidat znovu.</string>
+    <string name="detail_cancel">Zrušit</string>
+    <string name="detail_save">Uložit</string>
+    <string name="detail_balance">Zůstatek</string>
+    <string name="detail_tab_assets">Aktiva</string>
+    <string name="detail_tab_activity">Aktivita</string>
+    <string name="detail_tab_addresses">Adresy</string>
+    <string name="detail_no_assets_title">Žádná aktiva</string>
+    <string name="detail_no_assets_message">Peněženka teď nemá žádný zůstatek. Stáhni dolů pro obnovení.</string>
+    <string name="detail_no_activity_title">Zatím žádné transakce</string>
+    <string name="detail_no_activity_message">Transakce se zobrazí po prvním obnovení.</string>
+    <string name="tx_received">Přijato</string>
+    <string name="tx_sent">Odesláno</string>
+    <string name="tx_self">Převod mezi vlastními adresami</string>
+    <string name="tx_pending">Čeká na potvrzení</string>
+    <string name="address_used">Použitá</string>
+    <string name="address_unused">Nepoužitá</string>
+    <string name="address_next_receive">Další nepoužitá adresa pro příjem</string>
+    <string name="address_copy">Kopírovat adresu</string>
+    <string name="address_copied">Zkopírováno</string>
+    <string name="wallets_ungrouped">Ostatní peněženky</string>
 </resources>

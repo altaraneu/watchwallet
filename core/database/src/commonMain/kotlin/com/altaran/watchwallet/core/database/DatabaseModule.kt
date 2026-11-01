@@ -9,4 +9,5 @@ internal expect fun Module.databaseBuilder(): Module
 val databaseModule: Module = module {
     databaseBuilder()
     single { get<WatchWalletDatabase>().walletDao() }
+    single { get<WatchWalletDatabase>().priceDao() }
 }

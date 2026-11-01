@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
-internal val JVM_TARGET = JvmTarget.JVM_17
+internal val JVM_TARGET = JvmTarget.JVM_21
 
 /**
  * Shared configuration for every multiplatform module.
@@ -48,8 +48,8 @@ internal fun Project.configureJvmTarget() {
         compilerOptions.jvmTarget.set(JVM_TARGET)
     }
     tasks.withType<JavaCompile>().configureEach {
-        sourceCompatibility = JavaVersion.VERSION_17.toString()
-        targetCompatibility = JavaVersion.VERSION_17.toString()
+        sourceCompatibility = JavaVersion.VERSION_21.toString()
+        targetCompatibility = JavaVersion.VERSION_21.toString()
     }
     tasks.withType<KotlinCompilationTask<*>>().configureEach {
         compilerOptions.allWarningsAsErrors.set(false)

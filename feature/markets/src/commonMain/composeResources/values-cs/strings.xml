@@ -1,6 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="markets_title">Trhy</string>
+    <string name="markets_back">Zpět</string>
     <string name="markets_empty_title">Zatím žádné ceny</string>
     <string name="markets_empty_message">Tady se zobrazí ceny aktiv, která držíš, a tvého seznamu sledovaných.</string>
+    <string name="markets_failed_title">Ceny nejsou dostupné</string>
+    <string name="markets_failed_message">Cenovou službu se nepodařilo kontaktovat. Stáhni dolů a zkus to znovu.</string>
+    <string name="markets_held">Tvá aktiva</string>
+    <string name="markets_watchlist">Sledované</string>
+    <string name="asset_mode_price">Cena</string>
+    <string name="asset_mode_value">Hodnota</string>
+    <string name="asset_mode_balance">Zůstatek</string>
+    <string name="asset_log_scale">Logaritmická osa</string>
+    <string name="asset_your_holding">Tvůj podíl</string>
+    <string name="asset_amount">Množství</string>
+    <string name="asset_market">Trh</string>
+    <string name="asset_change_24h">Změna 24 h</string>
+    <string name="asset_change_7d">Změna 7 d</string>
+    <string name="asset_market_cap">Tržní kapitalizace</string>
+    <string name="interval_1m">1 min</string>
+    <string name="interval_5m">5 min</string>
+    <string name="interval_15m">15 min</string>
+    <string name="interval_1h">1 h</string>
+    <string name="interval_4h">4 h</string>
+    <string name="interval_1d">1 den</string>
+    <string name="interval_1w">1 týden</string>
+    <string name="asset_live_price">Cena %1$s · živě</string>
+    <string name="asset_ohlc">O %1$s · H %2$s · L %3$s</string>
+    <string name="asset_source_kraken">Živé svíčky: veřejná tržní data Kraken. Měny jiné než EUR/USD přepočteny referenčním kurzem ECB.</string>
 </resources>

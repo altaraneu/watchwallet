@@ -1,6 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="markets_title">Markets</string>
+    <string name="markets_back">Back</string>
     <string name="markets_empty_title">No prices yet</string>
     <string name="markets_empty_message">Prices of the assets you hold and of your watchlist will appear here.</string>
+    <string name="markets_failed_title">Prices are unavailable</string>
+    <string name="markets_failed_message">The price service could not be reached. Pull down to try again.</string>
+    <string name="markets_held">Your assets</string>
+    <string name="markets_watchlist">Watchlist</string>
+    <string name="asset_mode_price">Price</string>
+    <string name="asset_mode_value">Value</string>
+    <string name="asset_mode_balance">Balance</string>
+    <!-- Logarithmic chart scale toggle -->
+    <string name="asset_log_scale">Log scale</string>
+    <string name="asset_your_holding">Your holding</string>
+    <string name="asset_amount">Amount</string>
+    <string name="asset_market">Market</string>
+    <string name="asset_change_24h">Change 24 h</string>
+    <string name="asset_change_7d">Change 7 d</string>
+    <string name="asset_market_cap">Market cap</string>
+    <!-- Candle interval chips; keep very short -->
+    <string name="interval_1m">1m</string>
+    <string name="interval_5m">5m</string>
+    <string name="interval_15m">15m</string>
+    <string name="interval_1h">1h</string>
+    <string name="interval_4h">4h</string>
+    <string name="interval_1d">1D</string>
+    <string name="interval_1w">1W</string>
+    <!-- %1$s = asset symbol -->
+    <string name="asset_live_price">%1$s price · live</string>
+    <!-- Open, high, low of the candle under the finger -->
+    <string name="asset_ohlc">O %1$s · H %2$s · L %3$s</string>
+    <string name="asset_source_kraken">Live candles: Kraken public market data. Non-EUR/USD currencies converted with ECB reference rates.</string>
 </resources>

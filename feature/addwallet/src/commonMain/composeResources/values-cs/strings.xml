@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_wallet_title">Přidat peněženku</string>
+    <string name="add_wallet_back">Zpět</string>
+    <string name="add_wallet_intro">Vlož veřejnou adresu, rozšířený veřejný klíč (xpub, ypub, zpub) nebo output deskriptor. WatchWallet blockchain rozpozná sám.</string>
+    <string name="add_wallet_input_label">Adresa, xpub nebo deskriptor</string>
+    <string name="add_wallet_paste">Vložit</string>
+    <string name="add_wallet_continue">Pokračovat</string>
+    <string name="add_wallet_probing">Kontroluji blockchain…</string>
+    <string name="add_wallet_pick_type">Která z nich je tvoje peněženka?</string>
+    <string name="add_wallet_name_label">Název (nepovinný)</string>
+    <string name="add_wallet_save">Přidat peněženku</string>
+    <string name="add_wallet_open_existing">Otevřít existující peněženku</string>
+    <string name="add_wallet_already_tracked">Už sledováno</string>
+    <string name="add_wallet_probe_failed">Aktivitu teď nelze ověřit. Peněženku můžeš přesto přidat.</string>
+    <string name="add_wallet_no_activity">Zatím bez aktivity</string>
+    <string name="add_wallet_active_on">Aktivní na %1$s</string>
+    <plurals name="add_wallet_used_addresses">
+        <item quantity="one">%1$d použitá adresa</item>
+        <item quantity="few">%1$d použité adresy</item>
+        <item quantity="many">%1$d použité adresy</item>
+        <item quantity="other">%1$d použitých adres</item>
+    </plurals>
+    <plurals name="add_wallet_transactions">
+        <item quantity="one">%1$d transakce</item>
+        <item quantity="few">%1$d transakce</item>
+        <item quantity="many">%1$d transakce</item>
+        <item quantity="other">%1$d transakcí</item>
+    </plurals>
+    <string name="add_wallet_unsupported_title">%1$s zatím není podporován</string>
+    <string name="add_wallet_unsupported_message">Vypadá to jako platná adresa, ale tahle síť zatím není podporovaná. Teď fungují Bitcoin a sítě kompatibilní s Ethereem, další přibudou brzy.</string>
+    <string name="add_wallet_checksum_title">Zkontroluj adresu</string>
+    <string name="add_wallet_checksum_message">Velikost písmen v adrese neodpovídá kontrolnímu součtu. Adresa může obsahovat překlep. Zkopíruj ji znovu z původního zdroje.</string>
+    <string name="add_wallet_multiple_title">Více než jedna adresa</string>
+    <string name="add_wallet_multiple_message">Hromadný import přijde brzy. Zatím přidávej adresy po jedné.</string>
+    <string name="add_wallet_unrecognized_title">Tohle nevypadá jako podporovaná adresa</string>
+    <string name="add_wallet_unrecognized_message">Zkontroluj, že jsi zkopíroval celou adresu nebo klíč bez dalších znaků.</string>
+    <string name="secret_title_mnemonic">Tohle vypadá jako seed fráze</string>
+    <string name="secret_title_key">Tohle vypadá jako privátní klíč</string>
+    <string name="secret_message">WatchWallet nikdy nepotřebuje tvou seed frázi ani privátní klíče. Pole bylo vymazáno a nic se neuložilo ani neodeslalo. Použij místo toho veřejnou adresu nebo rozšířený veřejný klíč (xpub).</string>
+    <string name="secret_scam_hint">Pokud po tobě někdo chtěl, abys ji sem nebo kamkoli jinam zadal, jde o podvod.</string>
+    <string name="default_name_bitcoin_wallet">Bitcoinová peněženka</string>
+    <string name="default_name_bitcoin_address">Bitcoinová adresa</string>
+    <string name="default_name_evm">Ethereum peněženka</string>
+</resources>

@@ -1,0 +1,71 @@
+package com.altaran.watchwallet.chain.evm
+
+import com.altaran.watchwallet.core.model.Asset
+import com.altaran.watchwallet.core.model.AssetId
+import com.altaran.watchwallet.core.model.Chain
+import com.altaran.watchwallet.core.model.ChainFamily
+import com.altaran.watchwallet.core.model.ChainId
+
+/**
+ * An EVM network. Adding a network is a data change only: append an entry to [EvmNetworks.DEFAULT].
+ *
+ * @property blockscoutUrl Blockscout instance (open API, no key) for tokens and history; `null`
+ * when the network has none, in which case only the native balance is available via RPC.
+ * @property coingeckoPlatform CoinGecko asset platform id, used to price tokens by contract.
+ */
+data class EvmNetwork(
+    val chainId: Long,
+    val name: String,
+    val nativeSymbol: String,
+    val nativeName: String,
+    val nativePriceId: String?,
+    val rpcUrl: String,
+    val blockscoutUrl: String?,
+    val explorerUrl: String,
+    val coingeckoPlatform: String?,
+    val color: Long,
+) {
+    val id: ChainId get() = ChainId.evm(chainId)
+
+    val chain: Chain
+        get() = Chain(
+            id = id,
+            family = ChainFamily.EVM,
+            name = name,
+            nativeSymbol = nativeSymbol,
+            nativeDecimals = 18,
+            nativePriceId = nativePriceId,
+            explorerTxUrl = "$explorerUrl/tx/{tx}",
+            explorerAddressUrl = "$explorerUrl/address/{address}",
+            color = color,
+        )
+
+    val nativeAsset: Asset
+        get() = Asset(AssetId.native(id), id, nativeSymbol, nativeName, 18, nativePriceId)
+}
+
+object EvmNetworks {
+    val DEFAULT: List<EvmNetwork> = listOf(
+        EvmNetwork(1, "Ethereum", "ETH", "Ether", "ethereum", "https://ethereum-rpc.publicnode.com", "https://eth.blockscout.com", "https://etherscan.io", "ethereum", 0xFF627EEA),
+        EvmNetwork(56, "BNB Smart Chain", "BNB", "BNB", "binancecoin", "https://bsc-rpc.publicnode.com", null, "https://bscscan.com", "binance-smart-chain", 0xFFF0B90B),
+        EvmNetwork(42161, "Arbitrum One", "ETH", "Ether", "ethereum", "https://arbitrum-one-rpc.publicnode.com", "https://arbitrum.blockscout.com", "https://arbiscan.io", "arbitrum-one", 0xFF28A0F0),
+        EvmNetwork(10, "OP Mainnet", "ETH", "Ether", "ethereum", "https://optimism-rpc.publicnode.com", "https://optimism.blockscout.com", "https://optimistic.etherscan.io", "optimistic-ethereum", 0xFFFF0420),
+        EvmNetwork(8453, "Base", "ETH", "Ether", "ethereum", "https://base-rpc.publicnode.com", "https://base.blockscout.com", "https://basescan.org", "base", 0xFF0052FF),
+        EvmNetwork(137, "Polygon PoS", "POL", "Polygon Ecosystem Token", "polygon-ecosystem-token", "https://polygon-bor-rpc.publicnode.com", "https://polygon.blockscout.com", "https://polygonscan.com", "polygon-pos", 0xFF8247E5),
+        EvmNetwork(43114, "Avalanche C-Chain", "AVAX", "Avalanche", "avalanche-2", "https://avalanche-c-chain-rpc.publicnode.com", null, "https://snowtrace.io", "avalanche", 0xFFE84142),
+        EvmNetwork(324, "zkSync Era", "ETH", "Ether", "ethereum", "https://mainnet.era.zksync.io", "https://zksync.blockscout.com", "https://explorer.zksync.io", "zksync", 0xFF8C8DFC),
+        EvmNetwork(59144, "Linea", "ETH", "Ether", "ethereum", "https://rpc.linea.build", null, "https://lineascan.build", "linea", 0xFF61DFFF),
+        EvmNetwork(534352, "Scroll", "ETH", "Ether", "ethereum", "https://rpc.scroll.io", "https://scroll.blockscout.com", "https://scrollscan.com", "scroll", 0xFFEBC28E),
+        EvmNetwork(5000, "Mantle", "MNT", "Mantle", "mantle", "https://rpc.mantle.xyz", "https://explorer.mantle.xyz", "https://explorer.mantle.xyz", "mantle", 0xFF65B3AE),
+        EvmNetwork(100, "Gnosis", "XDAI", "xDAI", "xdai", "https://rpc.gnosischain.com", "https://gnosis.blockscout.com", "https://gnosisscan.io", "xdai", 0xFF04795B),
+        EvmNetwork(25, "Cronos", "CRO", "Cronos", "crypto-com-chain", "https://evm.cronos.org", null, "https://cronoscan.com", "cronos", 0xFF1199FA),
+        EvmNetwork(146, "Sonic", "S", "Sonic", "sonic-3", "https://rpc.soniclabs.com", null, "https://sonicscan.org", "sonic", 0xFFFE9A4C),
+        EvmNetwork(42220, "Celo", "CELO", "Celo", "celo", "https://forno.celo.org", "https://celo.blockscout.com", "https://celoscan.io", "celo", 0xFFFCCF52),
+        EvmNetwork(61, "Ethereum Classic", "ETC", "Ethereum Classic", "ethereum-classic", "https://etc.rivet.link", "https://etc.blockscout.com", "https://etc.blockscout.com", "ethereum-classic", 0xFF3AB83A),
+        EvmNetwork(999, "HyperEVM", "HYPE", "Hyperliquid", "hyperliquid", "https://rpc.hyperliquid.xyz/evm", null, "https://hyperevmscan.io", "hyperevm", 0xFF97FCE4),
+        EvmNetwork(80094, "Berachain", "BERA", "Berachain", "berachain-bera", "https://rpc.berachain.com", null, "https://berascan.com", "berachain", 0xFF814625),
+        EvmNetwork(1329, "Sei EVM", "SEI", "Sei", "sei-network", "https://evm-rpc.sei-apis.com", null, "https://seitrace.com", "sei-v2", 0xFF9E1F19),
+        EvmNetwork(130, "Unichain", "ETH", "Ether", "ethereum", "https://mainnet.unichain.org", "https://unichain.blockscout.com", "https://uniscan.xyz", "unichain", 0xFFF50DB4),
+        EvmNetwork(81457, "Blast", "ETH", "Ether", "ethereum", "https://rpc.blast.io", null, "https://blastscan.io", "blast", 0xFFDCDC00),
+    )
+}

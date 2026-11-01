@@ -29,7 +29,12 @@ import com.altaran.watchwallet.core.ui.format.DisplayNames
 import com.altaran.watchwallet.feature.settings.generated.resources.Res
 import com.altaran.watchwallet.feature.settings.generated.resources.currency_name_btc
 import com.altaran.watchwallet.feature.settings.generated.resources.currency_name_eth
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_charts_attribution
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_charts_attribution_summary
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_currency
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_demo_wallets
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_demo_wallets_summary
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_section_developer
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_currency_label
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_discreet_mode
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_discreet_mode_summary
@@ -70,6 +75,7 @@ internal fun SettingsRoute(
         onDiscreetModeChange = viewModel::setDiscreetMode,
         onSelectLanguage = viewModel::setLanguage,
         onOpenSupport = onOpenSupport,
+        onSeedDemo = viewModel::seedDemoWallets,
     )
 }
 
@@ -83,6 +89,7 @@ internal fun SettingsScreen(
     onDiscreetModeChange: (Boolean) -> Unit,
     onSelectLanguage: (String?) -> Unit,
     onOpenSupport: () -> Unit,
+    onSeedDemo: () -> Unit = {},
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
@@ -151,6 +158,11 @@ internal fun SettingsScreen(
                 onClick = { uriHandler.openUri(uiState.appInfo.sourceCodeUrl) },
             )
             SettingsItem(
+                title = stringResource(Res.string.settings_charts_attribution),
+                summary = stringResource(Res.string.settings_charts_attribution_summary),
+                onClick = { uriHandler.openUri("https://www.tradingview.com/") },
+            )
+            SettingsItem(
                 title = stringResource(Res.string.settings_license),
                 summary = stringResource(Res.string.settings_license_summary),
             )
@@ -158,6 +170,14 @@ internal fun SettingsScreen(
                 title = stringResource(Res.string.settings_version),
                 summary = uiState.appInfo.versionName,
             )
+            if (uiState.appInfo.isDebug) {
+                SectionHeader(stringResource(Res.string.settings_section_developer))
+                SettingsItem(
+                    title = stringResource(Res.string.settings_demo_wallets),
+                    summary = stringResource(Res.string.settings_demo_wallets_summary),
+                    onClick = onSeedDemo,
+                )
+            }
         }
 
         when (openPicker) {

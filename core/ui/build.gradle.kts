@@ -8,6 +8,7 @@ kotlin {
         commonMain.dependencies {
             api(projects.core.model)
             implementation(projects.core.designsystem)
+            api(projects.core.chart)
         }
     }
 }
