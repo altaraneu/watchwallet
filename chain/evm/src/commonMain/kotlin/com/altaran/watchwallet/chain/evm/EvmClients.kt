@@ -17,7 +17,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 
 // ---------------------------------------------------------------- JSON-RPC
 
@@ -38,6 +42,34 @@ internal class EvmRpcClient(private val http: HttpClient) {
     suspend fun balance(rpcUrl: String, address: String): BigInteger = hexCall(rpcUrl, "eth_getBalance", address)
 
     suspend fun transactionCount(rpcUrl: String, address: String): BigInteger = hexCall(rpcUrl, "eth_getTransactionCount", address)
+
+    /** `eth_call` of [data] on contract [to]; returns the raw hex result without `0x`. */
+    suspend fun call(rpcUrl: String, to: String, data: String): String {
+        val response: JsonObject = http.post(rpcUrl) {
+            contentType(ContentType.Application.Json)
+            setBody(
+                buildJsonObject {
+                    put("jsonrpc", "2.0")
+                    put("id", 1)
+                    put("method", "eth_call")
+                    put(
+                        "params",
+                        buildJsonArray {
+                            add(
+                                buildJsonObject {
+                                    put("to", to)
+                                    put("data", data)
+                                },
+                            )
+                            add(JsonPrimitive("latest"))
+                        },
+                    )
+                },
+            )
+        }.body()
+        val result = response["result"]?.jsonPrimitive?.contentOrNull ?: error("eth_call failed: ${response["error"]}")
+        return result.removePrefix("0x")
+    }
 
     private suspend fun hexCall(rpcUrl: String, method: String, address: String): BigInteger {
         val response: RpcResponse = http.post(rpcUrl) {

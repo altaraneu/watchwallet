@@ -57,6 +57,11 @@ object SolanaChain {
 
     val SOL: Asset = nativeAsset(CHAIN)
 
+    /** SOL delegated through native stake accounts the address can withdraw from. */
+    val STAKED_SOL: Asset = tokenAsset(ID, "staked-sol", "SOL", "Solana (staked)", 9, "solana")
+
+    const val STAKE_PROGRAM = "Stake11111111111111111111111111111111111111"
+
     const val DEFAULT_RPC_URL = "https://api.mainnet-beta.solana.com"
     const val TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
     const val TOKEN_2022_PROGRAM = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
@@ -126,12 +131,13 @@ class SolanaAdapter(
         // Balance and one signature decide activity; token accounts (slow on the public RPC for
         // big wallets) are loaded by the first sync.
         val lamports = balance(address)
+        val staked = stakedLamports(address)
         val signatures = signatures(address, before = null, limit = 1)
-        val active = !lamports.isZero() || signatures.isNotEmpty()
+        val active = !lamports.isZero() || !staked.isZero() || signatures.isNotEmpty()
         ProbeResult(
             hasActivity = active,
             activeChains = if (active) listOf(SolanaChain.ID) else emptyList(),
-            balances = listOf(amountOf(SolanaChain.SOL, lamports)),
+            balances = listOf(amountOf(SolanaChain.SOL, lamports)) + stakedAmount(staked),
             transactionCount = null,
         )
     }
@@ -146,7 +152,7 @@ class SolanaAdapter(
      */
     override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, continueHistory: Boolean): SyncResult = chainCall("Solana") {
         val address = address(target)
-        val balances = listOf(amountOf(SolanaChain.SOL, balance(address))) + tokenBalances(address)
+        val balances = listOf(amountOf(SolanaChain.SOL, balance(address))) + stakedAmount(stakedLamports(address)) + tokenBalances(address)
         val tokenAssets = balances.associate { (it.asset.contract ?: "") to it.asset }
 
         // Signatures newest first; stop at the first known one.
@@ -201,6 +207,53 @@ class SolanaAdapter(
 
     private suspend fun balance(address: String): BigInteger =
         parseBigInteger(rpc.call("getBalance", params(address, commitment())).at("value").content)
+
+    /**
+     * Lamports in native stake accounts whose withdraw authority is [address] (wallets like Exodus
+     * or Phantom stake from the main account). Data is not needed, only the lamports.
+     */
+    private suspend fun stakedLamports(address: String): BigInteger {
+        val options = buildJsonObject {
+            put("encoding", "base64")
+            put(
+                "dataSlice",
+                buildJsonObject {
+                    put("offset", 0)
+                    put("length", 0)
+                },
+            )
+            put(
+                "filters",
+                buildJsonArray {
+                    add(
+                        buildJsonObject {
+                            put(
+                                "memcmp",
+                                buildJsonObject {
+                                    put("offset", STAKE_WITHDRAWER_OFFSET)
+                                    put("bytes", address)
+                                },
+                            )
+                        },
+                    )
+                },
+            )
+        }
+        val accounts = try {
+            rpc.call("getProgramAccounts", params(SolanaChain.STAKE_PROGRAM, options)).asList
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (
+            @Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception,
+        ) {
+            // Some RPC providers disable getProgramAccounts: show the liquid balance anyway.
+            return BigInteger.ZERO
+        }
+        return accounts.fold(BigInteger.ZERO) { sum, account -> sum + parseBigInteger(account.at("account").at("lamports").content) }
+    }
+
+    private fun stakedAmount(lamports: BigInteger): List<AssetAmount> =
+        if (lamports.isZero()) emptyList() else listOf(amountOf(SolanaChain.STAKED_SOL, lamports))
 
     private suspend fun signatures(address: String, before: String?, limit: Int): List<JsonElement> {
         val options = buildJsonObject {
@@ -262,6 +315,9 @@ class SolanaAdapter(
 
     private companion object {
         const val SIGNATURE_PAGE = 100
+
+        /** Stake account layout: enum tag (4), rent reserve (8), staker (32), withdrawer (32)… */
+        const val STAKE_WITHDRAWER_OFFSET = 44
         const val FIRST_SYNC_SIGNATURES = 25
         const val BACKFILL_SIGNATURES = 25
         const val MAX_SIGNATURES = 1_000

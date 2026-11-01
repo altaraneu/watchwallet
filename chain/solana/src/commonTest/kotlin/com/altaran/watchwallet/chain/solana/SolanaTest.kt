@@ -69,6 +69,11 @@ class SolanaTest {
                 """{"jsonrpc":"2.0","result":{"context":{"slot":1},"value":1499995000},"id":1}"""
             }
 
+            // One native stake account (2.5 SOL) withdrawable by the owner.
+            "getProgramAccounts" in body -> {
+                """{"jsonrpc":"2.0","result":[{"pubkey":"StakeAcc1111111111111111111111111111111111","account":{"lamports":2500000000,"data":["","base64"],"owner":"Stake11111111111111111111111111111111111111","executable":false,"rentEpoch":0}}],"id":1}"""
+            }
+
             "getTokenAccountsByOwner" in body && "TokenzQd" in body -> {
                 """{"jsonrpc":"2.0","result":{"context":{"slot":1},"value":[]},"id":1}"""
             }
@@ -111,10 +116,12 @@ class SolanaTest {
     fun syncReturnsBalancesAndDeltas() = runTest {
         withContext(Dispatchers.Default) {
             val result = adapter.sync(target, knownTransactions = setOf("sigOld"))
-            assertEquals(listOf("SOL", "USDC"), result.balances.map { it.asset.symbol }, "zero spam balance skipped")
+            assertEquals(listOf("SOL", "SOL", "USDC"), result.balances.map { it.asset.symbol }, "zero spam balance skipped")
             assertEquals("1.499995", result.balances[0].amount.toPlainString())
-            assertEquals("15", result.balances[1].amount.toPlainString())
-            assertEquals("usd-coin", result.balances[1].asset.priceId)
+            assertEquals("2.5", result.balances[1].amount.toPlainString(), "staked SOL")
+            assertEquals("solana", result.balances[1].asset.priceId)
+            assertEquals("15", result.balances[2].amount.toPlainString())
+            assertEquals("usd-coin", result.balances[2].asset.priceId)
 
             val send = result.transactions.filter { it.hash == "sigSend" }.associateBy { it.asset.symbol }
             assertEquals(-500_005_000L, send.getValue("SOL").delta.longValue(), "0.5 SOL + 5000 lamports fee")

@@ -107,6 +107,11 @@ class EvmAdapter(
 
         val tokenBalances = runCatching { blockscout.tokenBalances(base, address) }.getOrDefault(emptyList())
         tokenBalances.filter { it.token.type == "ERC-20" && it.token.contract != null }.forEach { balance ->
+            // Staked POL is held as validator share tokens: report the POL they represent.
+            polygonStake(network, balance.token, address)?.let {
+                balances += it
+                return@forEach
+            }
             val asset = tokenAsset(network, balance.token) ?: return@forEach
             balances += AssetAmount(asset, TokenAmount.parseRaw(balance.value ?: "0", asset.decimals))
         }
@@ -202,6 +207,35 @@ class EvmAdapter(
         return ChainTransaction(network.id, hash, parseTime(transfer.timestamp), asset, delta, null, incoming && outgoing, true)
     }
 
+    /**
+     * Polygon staking on Ethereum: delegators hold "Delegated POL #<validator hex>" share tokens.
+     * The share contract is verified with the StakeManager (symbols can be copied by spam) and
+     * converted with `getTotalStake`, which returns the exact POL amount (rewards excluded).
+     */
+    private suspend fun polygonStake(network: EvmNetwork, token: BsToken, address: String): AssetAmount? {
+        if (network.chainId != 1L) return null
+        val contract = token.contract?.lowercase() ?: return null
+        val name = token.name.orEmpty()
+        if (!name.startsWith("Delegated POL #") && !name.startsWith("Delegated MATIC #")) return null
+        val validatorId = name.substringAfter('#').trim().toLongOrNull(16) ?: return null
+        return runCatching {
+            val registered = rpc.call(network.rpcUrl, POLYGON_STAKE_MANAGER, GET_VALIDATOR_CONTRACT + validatorId.toString(16).padStart(64, '0'))
+            if (!registered.lowercase().endsWith(contract.removePrefix("0x"))) return null
+            val stake = rpc.call(network.rpcUrl, contract, GET_TOTAL_STAKE + address.removePrefix("0x").lowercase().padStart(64, '0'))
+            val amount = parseHex(stake.take(64))
+            val asset = Asset(
+                id = AssetId.token(network.id, contract),
+                chainId = network.id,
+                symbol = "POL",
+                name = "POL (staked, validator $validatorId)",
+                decimals = 18,
+                priceId = POL_PRICE_ID,
+                contract = contract,
+            )
+            AssetAmount(asset, TokenAmount(amount, 18))
+        }.getOrNull()
+    }
+
     private fun tokenAsset(network: EvmNetwork, token: BsToken): Asset? {
         val contract = token.contract?.lowercase() ?: return null
         val decimals = token.decimals?.toIntOrNull() ?: return null
@@ -221,6 +255,10 @@ class EvmAdapter(
 
     private companion object {
         val RPC_TIMEOUT = 10.seconds
+        const val POLYGON_STAKE_MANAGER = "0x5e3Ef299fDDf15eAa0432E6e66473ace8c13D908"
+        const val GET_VALIDATOR_CONTRACT = "0x56342d8c" // getValidatorContract(uint256)
+        const val GET_TOTAL_STAKE = "0x1e7ff8f6" // getTotalStake(address)
+        const val POL_PRICE_ID = "polygon-ecosystem-token"
         val INDEXER_TIMEOUT = 6.seconds
         const val MAX_PAGES = 20
         const val MAX_SYMBOL = 16

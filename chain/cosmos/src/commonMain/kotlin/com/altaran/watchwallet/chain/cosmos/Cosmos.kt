@@ -240,6 +240,11 @@ class CosmosAdapter(
         unbonding.arr("unbonding_responses").forEach { response ->
             response.arr("entries").forEach { staked += parseBigInteger(it.str("balance")) }
         }
+        // Pending rewards are owned too (claimable any time); the API reports decimal amounts.
+        val rewards = runCatching { get("$base/cosmos/distribution/v1beta1/delegators/$address/rewards") }.getOrNull()
+        rewards?.arr("total")?.firstOrNull { it.str("denom") == network.denom }?.str("amount")?.substringBefore('.')?.let {
+            staked += parseBigInteger(it)
+        }
         val result = mutableListOf(amountOf(network.nativeAsset, liquid))
         if (!staked.isZero()) result += amountOf(network.stakedAsset, staked)
         return result
