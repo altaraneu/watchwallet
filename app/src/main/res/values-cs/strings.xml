@@ -3,4 +3,8 @@
     <string name="lock_title">WatchWallet je zamčená</string>
     <string name="lock_unlock">Odemknout</string>
     <string name="lock_prompt_title">Odemknout WatchWallet</string>
+    <string name="widget_label">Hodnota portfolia</string>
+    <string name="widget_description">Celková hodnota sledovaných peněženek</string>
+    <string name="widget_title">Portfolio</string>
+    <string name="widget_change_24h">za 24 h</string>
 </resources>

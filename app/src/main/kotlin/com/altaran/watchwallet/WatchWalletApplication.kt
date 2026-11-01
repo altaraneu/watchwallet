@@ -4,7 +4,11 @@ import android.app.Application
 import com.altaran.watchwallet.core.data.platform.AppInfo
 import com.altaran.watchwallet.core.data.platform.AppLanguageController
 import com.altaran.watchwallet.core.data.platform.AppRestarter
+import androidx.glance.appwidget.updateAll
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
+import com.altaran.watchwallet.core.data.sync.SyncEngine
+import com.altaran.watchwallet.widget.PortfolioWidget
+import kotlinx.coroutines.flow.filter
 import com.altaran.watchwallet.core.designsystem.theme.isDynamicColorSupported
 import com.altaran.watchwallet.platform.AndroidAppRestarter
 import com.altaran.watchwallet.platform.BackgroundRefresh
@@ -31,6 +35,20 @@ class WatchWalletApplication : Application() {
             modules(sharedModules + androidPlatformModule)
         }
         scheduleBackgroundRefresh()
+        keepWidgetFresh()
+    }
+
+    private fun keepWidgetFresh() {
+        val syncEngine: SyncEngine by inject()
+        val settings: SettingsRepository by inject()
+        appScope.launch {
+            syncEngine.state.map { it.running }.distinctUntilChanged().filter { running -> !running }
+                .collect { PortfolioWidget().updateAll(this@WatchWalletApplication) }
+        }
+        appScope.launch {
+            settings.settings.map { it.discreetMode to it.quoteCurrency }.distinctUntilChanged()
+                .collect { PortfolioWidget().updateAll(this@WatchWalletApplication) }
+        }
     }
 
     private fun scheduleBackgroundRefresh() {

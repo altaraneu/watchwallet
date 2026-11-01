@@ -101,6 +101,8 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.glance.appwidget)
+    implementation(projects.core.ui)
 
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)

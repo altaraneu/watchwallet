@@ -5,4 +5,8 @@
     <string name="lock_title">WatchWallet is locked</string>
     <string name="lock_unlock">Unlock</string>
     <string name="lock_prompt_title">Unlock WatchWallet</string>
+    <string name="widget_label">Portfolio value</string>
+    <string name="widget_description">Total value of your tracked wallets</string>
+    <string name="widget_title">Portfolio</string>
+    <string name="widget_change_24h">in 24 h</string>
 </resources>
