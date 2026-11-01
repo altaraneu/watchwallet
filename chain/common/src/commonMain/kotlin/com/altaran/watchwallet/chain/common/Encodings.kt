@@ -241,6 +241,37 @@ object Base32 {
     }
 }
 
+// ---------------------------------------------------------------- Base64
+
+/** RFC 4648 Base64, standard and URL-safe alphabets; padding optional when decoding. */
+object Base64Codec {
+    private const val STANDARD = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    private const val URL_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+
+    fun encode(bytes: ByteArray, urlSafe: Boolean = false): String {
+        val alphabet = if (urlSafe) URL_SAFE else STANDARD
+        val groups = Bech32Codec.convertBits(bytes, 8, 6, pad = true)!!
+        val text = buildString { groups.forEach { append(alphabet[it.toInt()]) } }
+        return text + "=".repeat((4 - text.length % 4) % 4)
+    }
+
+    /** Decodes either alphabet (not mixed); `null` if malformed. */
+    fun decode(text: String): ByteArray? {
+        val body = text.trimEnd('=')
+        if (body.length % 4 == 1) return null
+        val urlSafe = body.any { it == '-' || it == '_' }
+        val alphabet = if (urlSafe) URL_SAFE else STANDARD
+        val groups = ByteArray(body.length)
+        for (i in body.indices) {
+            val value = alphabet.indexOf(body[i])
+            if (value < 0) return null
+            groups[i] = value.toByte()
+        }
+        // Trailing padding bits of the last group must be zero.
+        return Bech32Codec.convertBits(groups, 6, 8, pad = false)
+    }
+}
+
 // ---------------------------------------------------------------- CRC16
 
 object Crc16 {
