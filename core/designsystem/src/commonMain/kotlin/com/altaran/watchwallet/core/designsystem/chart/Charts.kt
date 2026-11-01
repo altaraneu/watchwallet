@@ -15,8 +15,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.min
 
+/** Chart point; [flow] = cumulative net deposits up to this time (for performance without deposits). */
 @Immutable
-data class ChartPoint(val timeMillis: Long, val value: Double)
+data class ChartPoint(val timeMillis: Long, val value: Double, val flow: Double = 0.0)
 
 /** Tiny trend line for list rows. Color conveys direction, so callers also show a signed change. */
 @Composable

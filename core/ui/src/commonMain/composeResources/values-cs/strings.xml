@@ -40,4 +40,5 @@
     <string name="tx_sheet_cost_user">%1$s (%2$s za 1 %3$s), zadáno vámi</string>
     <string name="tx_sheet_edit_cost">Upravit pořizovací cenu</string>
     <string name="tx_open_explorer">Otevřít v průzkumníku bloků</string>
+    <string name="chart_performance">Bez vkladů a výběrů: %1$s</string>
 </resources>

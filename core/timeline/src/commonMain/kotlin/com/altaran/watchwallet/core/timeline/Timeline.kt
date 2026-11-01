@@ -13,7 +13,8 @@ data class TimedDelta(val time: Instant, val delta: BigInteger)
 
 data class TimedPrice(val time: Instant, val price: Double)
 
-data class TimedValue(val time: Instant, val value: Double)
+/** A value at a time; [flow] = cumulative net deposits (in − out, valued at transfer time) up to then. */
+data class TimedValue(val time: Instant, val value: Double, val flow: Double = 0.0)
 
 /** Everything needed to chart one asset of one or more wallets. */
 data class AssetHistory(

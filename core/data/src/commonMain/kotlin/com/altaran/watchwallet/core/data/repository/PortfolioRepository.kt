@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlin.math.pow
 import kotlin.time.Clock
 
 /** One asset aggregated across wallets and chains (ETH on Ethereum + Base = one ETH holding). */
@@ -129,9 +130,12 @@ class PortfolioRepository(
                 priceRepository.history(priceIds, currency).onStart { emit(emptyMap()) },
             ) { (balances, prices), transactions, history ->
                 val histories = buildHistories(balances, transactions.filter { walletIds == null || it.walletId in walletIds }, history, prices)
+                val scopedTxs = transactions.filter { walletIds == null || it.walletId in walletIds }
                 val first = transactions.minOfOrNull { it.timestamp }
                 val (samples, rangeStart) = displaySamples(range, first)
-                displayDownsample(Timeline.portfolio(histories, samples), rangeStart)
+                val flows = cumulativeFlows(scopedTxs, balances, history, samples)
+                val values = Timeline.portfolio(histories, samples).mapIndexed { i, point -> point.copy(flow = flows[i]) }
+                displayDownsample(values, rangeStart)
             }.conflate()
         }.distinctUntilChanged()
             // Hundreds of samples over years of history: never compute on the main thread, and
@@ -158,6 +162,39 @@ class PortfolioRepository(
     private fun displayDownsample(points: List<TimedValue>, rangeStart: kotlin.time.Instant): List<TimedValue> {
         val (older, inRange) = points.partition { it.time < rangeStart }
         return Timeline.downsample(older, maxPoints = OLDER_POINTS) + Timeline.downsample(inRange)
+    }
+
+    /**
+     * Net deposits up to each sample: incoming transfers add their value at that time, outgoing
+     * ones subtract it (fees excluded: they are a cost, not a withdrawal). Transfers between the
+     * user's own wallets cancel out. Only assets that are held (and charted) are counted.
+     */
+    private fun cumulativeFlows(
+        transactions: List<WalletTransaction>,
+        balances: List<BalanceRow>,
+        history: Map<String, List<TimedPrice>>,
+        samples: List<kotlin.time.Instant>,
+    ): DoubleArray {
+        val assets = balances.associate { it.asset.id to it.asset }
+        val events = transactions.filter { it.confirmed && it.direction != com.altaran.watchwallet.core.model.TxDirection.SELF }.mapNotNull { tx ->
+            val asset = assets[tx.assetId] ?: return@mapNotNull null
+            val prices = history[asset.priceId ?: return@mapNotNull null].orEmpty()
+            val price = Timeline.priceAt(prices, tx.timestamp) ?: return@mapNotNull null
+            val scale = 10.0.pow(asset.decimals)
+            val fee = tx.fee?.takeIf { tx.delta.isNegative }?.doubleValue(exactRequired = false) ?: 0.0
+            tx.timestamp to (tx.delta.doubleValue(exactRequired = false) + fee) / scale * price
+        }.sortedBy { it.first }
+        val result = DoubleArray(samples.size)
+        var running = 0.0
+        var index = 0
+        samples.forEachIndexed { i, sample ->
+            while (index < events.size && events[index].first <= sample) {
+                running += events[index].second
+                index++
+            }
+            result[i] = running
+        }
+        return result
     }
 
     /** Balance and value history of one holding (by [Holding.key]). */

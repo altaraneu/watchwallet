@@ -120,7 +120,7 @@ internal class WalletDetailViewModel(
     private val chart = combine(currency, range) { c, r -> c to r }.flatMapLatest { (c, r) ->
         portfolioRepository.valueSeries(c, r, setOf(walletId))
             .map<List<com.altaran.watchwallet.core.timeline.TimedValue>, List<ChartPoint>?> { series ->
-                series.map { ChartPoint(it.time.toEpochMilliseconds(), it.value) }
+                series.map { ChartPoint(it.time.toEpochMilliseconds(), it.value, it.flow) }
             }
             .onStart { emit(null) }
     }

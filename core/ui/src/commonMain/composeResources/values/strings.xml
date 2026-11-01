@@ -55,4 +55,6 @@
     <string name="tx_sheet_cost_user">%1$s (%2$s per %3$s), entered by you</string>
     <string name="tx_sheet_edit_cost">Edit cost basis</string>
     <string name="tx_open_explorer">Open in block explorer</string>
+    <!-- Under the value change: the change without deposits and withdrawals. %1$s = signed amount (and percent). -->
+    <string name="chart_performance">Excluding deposits and withdrawals: %1$s</string>
 </resources>

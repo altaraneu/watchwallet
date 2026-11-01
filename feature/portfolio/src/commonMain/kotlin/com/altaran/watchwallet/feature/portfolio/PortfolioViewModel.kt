@@ -61,7 +61,7 @@ class PortfolioViewModel(
     private val chart = combine(currency, range, walletScope) { c, r, w -> Triple(c, r, w) }.flatMapLatest { (c, r, w) ->
         portfolioRepository.valueSeries(c, r, w)
             .map<List<com.altaran.watchwallet.core.timeline.TimedValue>, List<ChartPoint>?> { series ->
-                series.map { ChartPoint(it.time.toEpochMilliseconds(), it.value) }
+                series.map { ChartPoint(it.time.toEpochMilliseconds(), it.value, it.flow) }
             }
             .onStart { emit(null) }
     }

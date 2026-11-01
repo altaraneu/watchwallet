@@ -42,6 +42,7 @@ import com.altaran.watchwallet.core.ui.generated.resources.chart_a11y_hidden
 import com.altaran.watchwallet.core.ui.generated.resources.chart_a11y_summary
 import com.altaran.watchwallet.core.ui.generated.resources.chart_loading_prices
 import com.altaran.watchwallet.core.ui.generated.resources.chart_no_data
+import com.altaran.watchwallet.core.ui.generated.resources.chart_performance
 import com.altaran.watchwallet.core.ui.generated.resources.chart_visible_range
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -111,6 +112,7 @@ fun ValueChartSection(
             rangeText = if (header.panned) stringResource(Res.string.chart_visible_range) else rangeLabel(range),
             secondaryLine = secondaryLine,
         )
+        PerformanceLine(header, crosshair, points, formatChange)
         LoadingHint(visible = LocalPriceHistoryLoading.current && points != null)
         ChartBody(
             points = points,
@@ -259,15 +261,27 @@ private fun ChartBody(
 private const val MILLIS = 1000L
 
 /** What the header shows without a finger on the chart. */
-private class HeaderValues(val start: Double?, val end: Double?, val endTime: Long?, val panned: Boolean)
+private class HeaderValues(
+    val start: Double?,
+    val end: Double?,
+    val endTime: Long?,
+    val panned: Boolean,
+    /** Net deposits between the start and the end of the window. */
+    val flowDelta: Double = 0.0,
+    val startFlow: Double = 0.0,
+)
 
 /**
  * Start and end of the change shown above the chart. When the visible window ends before the
  * latest point (panned back), both come from the window, so the numbers match what is drawn.
  */
 private fun headerValues(points: List<ChartPoint>?, inRange: List<ChartPoint>?, visible: Pair<Long, Long>?, current: Double?): HeaderValues {
-    val defaultStart = inRange?.firstOrNull()?.value ?: points?.firstOrNull()?.value
-    if (points.isNullOrEmpty() || visible == null) return HeaderValues(defaultStart, current ?: points?.lastOrNull()?.value, null, false)
+    val startPoint = inRange?.firstOrNull() ?: points?.firstOrNull()
+    val defaultStart = startPoint?.value
+    if (points.isNullOrEmpty() || visible == null) {
+        val flowDelta = (points?.lastOrNull()?.flow ?: 0.0) - (startPoint?.flow ?: 0.0)
+        return HeaderValues(defaultStart, current ?: points?.lastOrNull()?.value, null, false, flowDelta, startPoint?.flow ?: 0.0)
+    }
     val (from, to) = visible
     val first = points.firstOrNull { it.timeMillis >= from } ?: points.first()
     val last = points.lastOrNull { it.timeMillis <= to } ?: points.last()
@@ -275,8 +289,33 @@ private fun headerValues(points: List<ChartPoint>?, inRange: List<ChartPoint>?, 
     // before the end) counts as "panned".
     val panned = points.indexOf(last) < points.lastIndex - 1
     return if (panned) {
-        HeaderValues(first.value, last.value, last.timeMillis, true)
+        HeaderValues(first.value, last.value, last.timeMillis, true, last.flow - first.flow, first.flow)
     } else {
-        HeaderValues(first.value, current ?: last.value, null, false)
+        HeaderValues(first.value, current ?: last.value, null, false, points.last().flow - first.flow, first.flow)
     }
+}
+
+/** Minimum net deposits (in the chart currency) for showing the performance line. */
+private const val MIN_FLOW = 0.005
+
+/**
+ * "Excluding deposits and withdrawals": the value change minus what was transferred in or out,
+ * so a deposit does not look like a gain. Relative to the starting value plus new money.
+ */
+@Composable
+private fun PerformanceLine(header: HeaderValues, crosshair: CrosshairValue?, points: List<ChartPoint>?, formatChange: (Double) -> String) {
+    val start = header.start ?: return
+    val crossPoint = crosshair?.let { c -> points?.lastOrNull { it.timeMillis <= c.time * 1000 } }
+    val end = crosshair?.value ?: header.end ?: return
+    val flow = crossPoint?.let { it.flow - header.startFlow } ?: header.flowDelta
+    if (kotlin.math.abs(flow) < MIN_FLOW) return
+    val performance = end - start - flow
+    val base = start + flow.coerceAtLeast(0.0)
+    val percent = if (base > 0) MoneyFormatter.formatPercentChange(performance / base) else null
+    Text(
+        stringResource(Res.string.chart_performance, formatChange(performance) + (percent?.let { " ($it)" } ?: "")),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp),
+    )
 }
