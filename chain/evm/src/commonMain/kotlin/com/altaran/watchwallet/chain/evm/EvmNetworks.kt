@@ -188,7 +188,7 @@ object EvmNetworks {
             "ETC",
             "Ethereum Classic",
             "ethereum-classic",
-            "https://etc.rivet.link",
+            "https://etc.etcdesktop.com",
             "https://etc.blockscout.com",
             "https://etc.blockscout.com",
             "ethereum-classic",

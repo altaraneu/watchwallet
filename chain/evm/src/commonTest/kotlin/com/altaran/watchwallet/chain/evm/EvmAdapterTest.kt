@@ -78,6 +78,19 @@ class EvmAdapterTest {
     }
 
     private val adapter = EvmAdapter(createHttpClient(engine = engine), listOf(mainnet, quiet))
+
+    @Test
+    fun deadRpcHostOfOneNetworkDoesNotFailTheSync() = runTest {
+        withContext(Dispatchers.Default) {
+            val dead = EvmNetwork(61, "Dead", "ETC", "Dead", "ethereum-classic", "https://dead.test", null, "https://x.test", null, 0)
+            val failing = MockEngine { request ->
+                if (request.url.host == "dead.test") error("Unable to resolve host")
+                engine.config.requestHandlers.first().invoke(this, request)
+            }
+            val result = EvmAdapter(createHttpClient(engine = failing), listOf(mainnet, dead)).sync(target, emptySet())
+            assertEquals(listOf(mainnet.id), result.activeChains)
+        }
+    }
     private val target = WatchTarget.Address(ChainFamily.EVM, ChainId.evm(1), address)
 
     @Test

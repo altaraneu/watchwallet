@@ -16,6 +16,7 @@
 <script>
   // Bridge between the app and TradingView Lightweight Charts. Called from Kotlin with JSON args.
   var chart = null, series = null, markersApi = null, options = null, formatter = null;
+  var pinnedTime = null; // bar selected by a tap (touch screens show the crosshair only on long press)
 
   function post(name, payload) {
     try {
@@ -56,7 +57,7 @@
       },
       grid: { vertLines: { color: o.colors.grid }, horzLines: { color: o.colors.grid } },
       rightPriceScale: { borderVisible: false, visible: !o.hideValues, mode: o.logScale ? 1 : 0, scaleMargins: { top: 0.12, bottom: 0.08 } },
-      timeScale: { borderVisible: false, timeVisible: o.intraday, secondsVisible: false, rightOffset: 4, minBarSpacing: 0.5 },
+      timeScale: { borderVisible: false, timeVisible: o.intraday, secondsVisible: false, rightOffset: 4, minBarSpacing: 0.5, maxBarSpacing: 14 },
       crosshair: { mode: 0, vertLine: { labelBackgroundColor: o.colors.accent }, horzLine: { visible: !o.hideValues, labelVisible: !o.hideValues, labelBackgroundColor: o.colors.accent } },
       localization: { locale: o.locale, priceFormatter: formatter },
       handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
@@ -83,19 +84,41 @@
       if (from && to) post('onVisibleRange', JSON.stringify({ from: from.time, to: to.time }));
     });
     chart.subscribeCrosshairMove(function (param) {
-      if (!param || param.time === undefined || !param.point) { post('onCrosshair', JSON.stringify(null)); return; }
-      var d = param.seriesData.get(series);
-      if (!d) { post('onCrosshair', JSON.stringify(null)); return; }
-      var v = d.close !== undefined ? d.close : d.value;
-      post('onCrosshair', JSON.stringify({ time: param.time, value: v, open: d.open, high: d.high, low: d.low }));
+      var d = param && param.time !== undefined ? param.seriesData.get(series) : null;
+      if (!d || (!param.point && pinnedTime === null)) {
+        // Keep a tapped bar selected until the user taps it again or elsewhere off the data.
+        if (pinnedTime === null) post('onCrosshair', JSON.stringify(null));
+        return;
+      }
+      postBar(param.time, d);
+    });
+    // Tap selects a bar and shows its values; tapping the same bar (or empty space) clears it.
+    chart.subscribeClick(function (param) {
+      var d = param && param.time !== undefined ? param.seriesData.get(series) : null;
+      if (!d || param.time === pinnedTime) { clearPin(); return; }
+      pinnedTime = param.time;
+      chart.setCrosshairPosition(d.close !== undefined ? d.close : d.value, param.time, series);
+      postBar(param.time, d);
     });
     post('onReady', '');
+  }
+
+  function postBar(time, d) {
+    var v = d.close !== undefined ? d.close : d.value;
+    post('onCrosshair', JSON.stringify({ time: time, value: v, open: d.open, high: d.high, low: d.low }));
+  }
+
+  function clearPin() {
+    pinnedTime = null;
+    if (chart) chart.clearCrosshairPosition();
+    post('onCrosshair', JSON.stringify(null));
   }
 
   // visibleBars > 0: show only the most recent bars (the user can pan back and zoom out);
   // otherwise fit everything.
   function setData(points, fit, visibleBars) {
     if (!series) return;
+    pinnedTime = null;
     series.setData(points);
     if (!fit) return;
     if (visibleBars && points.length > visibleBars) {

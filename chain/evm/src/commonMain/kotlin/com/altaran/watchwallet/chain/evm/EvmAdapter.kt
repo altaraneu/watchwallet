@@ -73,10 +73,14 @@ class EvmAdapter(
             async {
                 // Fast path: balance and nonce over RPC decide activity for almost every address.
                 val rpcResult = withTimeoutOrNull(RPC_TIMEOUT) {
+                    // The inner scope keeps a failing request (e.g. a dead RPC host) from cancelling the
+                    // whole scan: the exception surfaces here and the network is skipped.
                     runCatching {
-                        val balance = async { rpc.balance(network.rpcUrl, address) }
-                        val nonce = async { rpc.transactionCount(network.rpcUrl, address) }
-                        balance.await() to nonce.await()
+                        coroutineScope {
+                            val balance = async { rpc.balance(network.rpcUrl, address) }
+                            val nonce = async { rpc.transactionCount(network.rpcUrl, address) }
+                            balance.await() to nonce.await()
+                        }
                     }.getOrNull()
                 } ?: return@async null
                 val (balance, nonce) = rpcResult

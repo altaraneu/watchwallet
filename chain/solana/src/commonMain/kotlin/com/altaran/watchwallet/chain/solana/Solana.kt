@@ -197,7 +197,8 @@ class SolanaAdapter(
     private suspend fun transaction(signature: String): JsonElement? {
         val options = buildJsonObject {
             put("encoding", "jsonParsed")
-            put("maxSupportedTransactionVersion", 0)
+            // Version 1 transactions exist since 2026; the parsed format is unchanged.
+            put("maxSupportedTransactionVersion", 1)
             put("commitment", "confirmed")
         }
         return rpc.call("getTransaction", params(signature, options)).takeIf { it is JsonObject }
