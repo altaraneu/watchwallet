@@ -83,11 +83,15 @@ class PolkadotTest {
         // nonce 5, consumers 1, providers 1, sufficients 0; free 12.5 DOT, reserved 2 DOT, frozen 10 DOT, flags.
         val info = "0x05000000" + "01000000" + "01000000" + "00000000" +
             u128(125_000_000_000) + u128(20_000_000_000) + u128(100_000_000_000) + u128(0)
+        // A leftover of 1 DOT stayed on the relay chain after the Asset Hub migration.
+        val relayLeftover = "0x00000000" + "00000000" + "01000000" + "00000000" +
+            u128(10_000_000_000) + u128(0) + u128(0) + u128(0)
         val engine = MockEngine { request ->
             val body = request.body.toByteArray().decodeToString()
             assertTrue("state_getStorage" in body && aliceId in body)
+            val result = if ("asset-hub" in request.url.host) info else relayLeftover
             respond(
-                """{"jsonrpc":"2.0","result":"$info","id":1}""",
+                """{"jsonrpc":"2.0","result":"$result","id":1}""",
                 HttpStatusCode.OK,
                 headersOf(HttpHeaders.ContentType, "application/json"),
             )
@@ -95,7 +99,7 @@ class PolkadotTest {
         val adapter = PolkadotAdapter(createHttpClient(engine = engine))
         val target = assertNotNull(PolkadotAddresses.parse(alicePolkadot))
         val result = adapter.sync(target, emptySet())
-        assertEquals("14.5", result.balances.single().amount.toPlainString(), "free + reserved")
+        assertEquals("15.5", result.balances.single().amount.toPlainString(), "Asset Hub free + reserved + relay leftover")
         assertEquals("10", adapter.lockedBalance(target).toPlainString())
         assertTrue(result.transactions.isEmpty())
         assertFalse(adapter.supportsHistory)

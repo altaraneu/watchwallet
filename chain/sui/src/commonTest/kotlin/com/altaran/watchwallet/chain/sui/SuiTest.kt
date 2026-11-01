@@ -36,79 +36,57 @@ class SuiTest {
         cases.forEach { (input, expected) -> assertEquals(expected, SuiAddresses.parse(input)?.address, input) }
     }
 
-    private fun block(digest: String, sender: String, changes: String) = """{"digest":"$digest","timestampMs":"1717000000000","checkpoint":"1",
-        "effects":{"status":{"status":"success"},"gasUsed":{"computationCost":"750000","storageCost":"1976000","storageRebate":"978120","nonRefundableStorageFee":"9880"},
-          "gasObject":{"owner":{"AddressOwner":"$sender"},"reference":{"objectId":"0x1","version":1,"digest":"x"}}},
-        "balanceChanges":[$changes]}"""
+    private val pad2 = "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI"
 
-    private val sendBlock = block(
-        "D2",
-        ours,
-        """{"owner":{"AddressOwner":"$ours"},"coinType":"0x2::sui::SUI","amount":"-1001747880"},
-           {"owner":{"AddressOwner":"$other"},"coinType":"0x2::sui::SUI","amount":"1000000000"}""",
-    )
-    private val receiveBlock = block(
-        "D1",
-        other,
-        """{"owner":{"AddressOwner":"$other"},"coinType":"$usdc","amount":"-5000000"},
-           {"owner":{"AddressOwner":"$ours"},"coinType":"$usdc","amount":"5000000"}""",
-    )
+    private fun node(digest: String, changes: String) =
+        """{"digest":"$digest","effects":{"timestamp":"2024-05-29T16:26:40Z","balanceChanges":{"nodes":[$changes]}}}"""
 
-    private val engine = MockEngine { request ->
-        val body = request.body.toByteArray().decodeToString()
-        val result = when {
-            "suix_getAllBalances" in body -> {
-                """[{"coinType":"0x2::sui::SUI","coinObjectCount":2,"totalBalance":"3500000000","lockedBalance":{}},
-                {"coinType":"$usdc","coinObjectCount":1,"totalBalance":"5000000","lockedBalance":{}},
-                {"coinType":"0xbad::spam::SPAM","coinObjectCount":1,"totalBalance":"100","lockedBalance":{}}]"""
-            }
+    private fun change(owner: String, coin: String, amount: String) =
+        """{"owner":{"address":"$owner"},"coinType":{"repr":"$coin"},"amount":"$amount"}"""
 
-            "suix_getCoinMetadata" in body && "usdc" in body -> {
-                """{"decimals":6,"name":"USDC","symbol":"USDC","description":"USDC","iconUrl":null,"id":"0x1"}"""
-            }
-
-            "suix_getCoinMetadata" in body -> {
-                "null"
-            }
-
-            "FromAddress" in body -> {
-                """{"data":[$sendBlock],"nextCursor":"D2","hasNextPage":false}"""
-            }
-
-            "ToAddress" in body -> {
-                """{"data":[$sendBlock,$receiveBlock],"nextCursor":"D1","hasNextPage":false}"""
-            }
-
-            else -> {
-                error("Unexpected $body")
-            }
-        }
-        respond(
-            """{"jsonrpc":"2.0","id":1,"result":$result}""",
-            HttpStatusCode.OK,
-            headersOf(HttpHeaders.ContentType, "application/json"),
-        )
+    @Test
+    fun coinTypesAreNormalized() {
+        assertEquals("0x2::sui::SUI", normalizeCoinType(pad2))
+        assertEquals(usdc, normalizeCoinType(usdc))
     }
 
     @Test
-    fun syncUsesBalanceChanges() = runTest {
+    fun syncUsesBalanceChangesFromGraphql() = runTest {
         withContext(Dispatchers.Default) {
-            val adapter = SuiAdapter(createHttpClient(engine = engine), "https://sui.test")
-            val result = adapter.sync(assertNotNull(SuiAddresses.parse(ours)), emptySet())
-            assertEquals(
-                listOf("SUI", "USDC"),
-                result.balances.map {
-                    it.asset.symbol
-                },
-                "coin without metadata skipped",
-            )
-            assertEquals("3.5", result.balances[0].amount.toPlainString())
+            val engine = MockEngine { request ->
+                val body = request.body.toByteArray().decodeToString()
+                val json = when {
+                    "balances(" in body -> {
+                        """{"data":{"address":{"balances":{"nodes":[
+                        {"coinType":{"repr":"$pad2"},"totalBalance":"1500000000"},
+                        {"coinType":{"repr":"$usdc"},"totalBalance":"2500000"}]}}}}"""
+                    }
 
+                    "coinMetadata" in body -> {
+                        """{"data":{"coinMetadata":{"decimals":6,"symbol":"USDC","name":"USD Coin"}}}"""
+                    }
+
+                    "transactions(" in body -> {
+                        """{"data":{"address":{"transactions":{"pageInfo":{"hasPreviousPage":false,"startCursor":"c1"},"nodes":[
+                        ${node("d1", change(ours, pad2, "1000000000") + "," + change(other, pad2, "-1000000000"))},
+                        ${node("d2", change(ours, pad2, "-2000000") + "," + change(ours, usdc, "2500000"))}]}}}}"""
+                    }
+
+                    else -> {
+                        error("unexpected $body")
+                    }
+                }
+                respond(json, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+            }
+            val adapter = SuiAdapter(createHttpClient(engine = engine), "https://sui.test/graphql")
+            val target = assertNotNull(SuiAddresses.parse(ours))
+            val result = adapter.sync(target, emptySet())
+            assertEquals(listOf("SUI", "USDC"), result.balances.map { it.asset.symbol })
+            assertEquals("1.5", result.balances.first().amount.toPlainString())
             val byKey = result.transactions.associateBy { it.hash + "/" + it.asset.symbol }
-            assertEquals(2, byKey.size, "send block merged from both queries")
-            assertEquals(-1_001_747_880L, byKey.getValue("D2/SUI").delta.longValue())
-            assertEquals(1_747_880L, byKey.getValue("D2/SUI").fee?.longValue())
-            assertEquals(5_000_000L, byKey.getValue("D1/USDC").delta.longValue())
+            assertEquals("1000000000", byKey.getValue("d1/SUI").delta.toString())
+            assertEquals("-2000000", byKey.getValue("d2/SUI").delta.toString())
+            assertEquals("2500000", byKey.getValue("d2/USDC").delta.toString())
         }
     }
 }

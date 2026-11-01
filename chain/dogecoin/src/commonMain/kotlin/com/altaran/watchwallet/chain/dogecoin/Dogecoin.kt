@@ -41,7 +41,7 @@ object DogecoinChain {
         priceId = "dogecoin",
     )
 
-    const val DEFAULT_BLOCKBOOK_URL = "https://doge1.trezor.io"
+    const val DEFAULT_BLOCKBOOK_URL = "https://dogecoin.atomicwallet.io"
 }
 
 /** Dogecoin mainnet addresses (`D…` P2PKH, `9…`/`A…` P2SH) and `dgub`/`xpub` account keys (BIP44 coin 3). */

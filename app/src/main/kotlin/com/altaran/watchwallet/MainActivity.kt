@@ -2,6 +2,7 @@ package com.altaran.watchwallet
 
 import android.os.Bundle
 import android.os.SystemClock
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -32,6 +33,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.altaran.watchwallet.core.data.DemoWallets
 import com.altaran.watchwallet.core.data.platform.AppLanguageController
+import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
 import com.altaran.watchwallet.core.designsystem.theme.WatchWalletTheme
@@ -51,6 +53,7 @@ class MainActivity : AppCompatActivity() {
     private val appViewModel: AppViewModel by viewModel()
     private val languageController: AppLanguageController by inject()
     private val demoWallets: DemoWallets by inject()
+    private val syncEngine: SyncEngine by inject()
 
     /** `true` while the app lock covers the content. */
     private var locked by mutableStateOf(true)
@@ -66,8 +69,12 @@ class MainActivity : AppCompatActivity() {
         (languageController as? AndroidAppLanguageController)?.refresh()
         // Debug builds only: `adb shell am start -n <pkg>/com.altaran.watchwallet.MainActivity --ez seed_demo true`.
         if (BuildConfig.DEBUG && intent?.getBooleanExtra(EXTRA_SEED_DEMO, false) == true) {
-            lifecycleScope.launch { demoWallets.seed() }
+            lifecycleScope.launch {
+                val added = runCatching { demoWallets.seed() }
+                Log.i(DEBUG_TAG, "Demo seed: $added")
+            }
         }
+        if (BuildConfig.DEBUG) logSyncErrors()
         observeSecuritySettings()
 
         setContent {
@@ -76,6 +83,15 @@ class MainActivity : AppCompatActivity() {
                 WatchWalletTheme { LockScreen(onUnlock = ::authenticate) }
             } else {
                 WatchWalletApp(viewModel = appViewModel)
+            }
+        }
+    }
+
+    /** Debug builds only: sync failures are otherwise visible only as a generic row warning. */
+    private fun logSyncErrors() {
+        lifecycleScope.launch {
+            syncEngine.state.map { it.errors }.distinctUntilChanged().collect { errors ->
+                errors.forEach { (walletId, message) -> Log.w(DEBUG_TAG, "Sync failed for wallet $walletId: $message") }
             }
         }
     }
@@ -133,6 +149,7 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         const val EXTRA_SEED_DEMO = "seed_demo"
+        const val DEBUG_TAG = "WatchWallet"
 
         /** Lock again when the app was in the background for longer than this. */
         const val LOCK_AFTER_MS = 30_000L

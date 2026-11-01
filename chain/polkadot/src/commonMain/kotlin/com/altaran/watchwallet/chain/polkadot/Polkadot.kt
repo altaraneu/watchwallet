@@ -26,7 +26,11 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.kotlincrypto.hash.blake2.BLAKE2b
 import kotlin.time.Duration.Companion.milliseconds
 
-/** A Substrate relay chain with its SS58 prefix and public RPC. */
+/**
+ * A Substrate relay chain with its SS58 prefix and public RPCs. Since the Asset Hub migration
+ * (Polkadot and Kusama, 2025) account balances live on Asset Hub; the relay chain keeps only
+ * leftovers, so both are read and summed.
+ */
 data class PolkadotNetwork(
     val id: ChainId,
     val name: String,
@@ -35,6 +39,7 @@ data class PolkadotNetwork(
     val decimals: Int,
     val coingeckoId: String,
     val rpcUrl: String,
+    val assetHubRpcUrl: String,
     val explorer: String,
     val color: Long,
 ) {
@@ -63,7 +68,8 @@ object PolkadotChains {
         10,
         "polkadot",
         "https://rpc.polkadot.io",
-        "https://polkadot.subscan.io",
+        "https://polkadot-asset-hub-rpc.polkadot.io",
+        "https://assethub-polkadot.subscan.io",
         0xFFE6007A,
     )
     val KUSAMA = PolkadotNetwork(
@@ -74,7 +80,8 @@ object PolkadotChains {
         12,
         "kusama",
         "https://kusama-rpc.polkadot.io",
-        "https://kusama.subscan.io",
+        "https://kusama-asset-hub-rpc.polkadot.io",
+        "https://assethub-kusama.subscan.io",
         0xFF000000,
     )
     val ALL = listOf(POLKADOT, KUSAMA)
@@ -145,11 +152,15 @@ object PolkadotAddresses {
 data class PolkadotAccountBalances(val free: BigInteger, val reserved: BigInteger, val frozen: BigInteger) {
     /** Everything the account owns: free (incl. frozen/staked) + reserved. */
     val total: BigInteger get() = free + reserved
+
+    operator fun plus(other: PolkadotAccountBalances) =
+        PolkadotAccountBalances(free + other.free, reserved + other.reserved, frozen + other.frozen)
 }
 
 /**
  * Polkadot and Kusama via the public Substrate JSON-RPC: `state_getStorage` of `System.Account`
- * decoded from SCALE. The balance is free + reserved (staked DOT is frozen inside free).
+ * decoded from SCALE, on Asset Hub plus the relay chain (see [PolkadotNetwork]). The balance is
+ * free + reserved (staked DOT is frozen inside free).
  *
  * History is not available: there is no keyless public indexer, so [sync] returns no
  * transactions. Nomination-pool stakes (held by the pool account) are not included.
@@ -160,8 +171,9 @@ class PolkadotAdapter(
 ) : ChainAdapter {
     private val networks = networks
     private val clients = networks.associate { network ->
-        network.id to
-            JsonRpcClient(http, listOf(network.rpcUrl), Throttle(maxConcurrent = 2, minInterval = 100.milliseconds))
+        network.id to listOf(network.assetHubRpcUrl, network.rpcUrl).map { url ->
+            JsonRpcClient(http, listOf(url), Throttle(maxConcurrent = 2, minInterval = 100.milliseconds))
+        }
     }
 
     override val family = ChainFamily.POLKADOT
@@ -210,10 +222,11 @@ class PolkadotAdapter(
         val network = networks.firstOrNull { it.id == target.chainId }
             ?: networks.firstOrNull { it.ss58Prefix == decoded.prefix }
             ?: throw ChainDataException("Unsupported Substrate network")
-        val client = clients.getValue(network.id)
         val key = "0x" + Hex.encode(SubstrateStorage.systemAccountKey(decoded.accountId))
-        val result = client.call("state_getStorage", JsonArray(listOf(JsonPrimitive(key)))).content
-        return network to result?.let { SubstrateStorage.decodeAccountInfo(it) }
+        val parts = clients.getValue(network.id).mapNotNull { client ->
+            client.call("state_getStorage", JsonArray(listOf(JsonPrimitive(key)))).content?.let(SubstrateStorage::decodeAccountInfo)
+        }
+        return network to parts.reduceOrNull(PolkadotAccountBalances::plus)
     }
 }
 

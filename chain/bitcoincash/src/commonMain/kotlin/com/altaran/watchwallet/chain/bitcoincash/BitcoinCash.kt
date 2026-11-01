@@ -42,7 +42,7 @@ object BitcoinCashChain {
         priceId = "bitcoin-cash",
     )
 
-    const val DEFAULT_BLOCKBOOK_URL = "https://bch1.trezor.io"
+    const val DEFAULT_BLOCKBOOK_URL = "https://blockbook.bch.zelcore.io"
 }
 
 /**

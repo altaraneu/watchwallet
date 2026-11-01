@@ -1,11 +1,16 @@
 package com.altaran.watchwallet.core.chart
 
 import android.annotation.SuppressLint
+import android.content.pm.ApplicationInfo
 import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.MotionEvent
+import android.view.ViewGroup
+import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -38,6 +43,9 @@ internal actual fun ChartWebView(
         modifier = modifier,
         factory = { context ->
             WebView(context).apply {
+                // AndroidView defaults to WRAP_CONTENT; a wrap-content WebView lays the page out with a
+                // zero-height viewport, so `height: 100%` collapses and the chart draws nothing.
+                layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                 setBackgroundColor(Color.TRANSPARENT)
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
@@ -85,6 +93,15 @@ internal actual fun ChartWebView(
                         }
 
                     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = true
+                }
+                // Debuggable builds only: forward page console output (chart script errors) to logcat.
+                if (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+                    webChromeClient = object : WebChromeClient() {
+                        override fun onConsoleMessage(message: ConsoleMessage): Boolean {
+                            Log.w("WatchWalletChart", "${message.messageLevel()} ${message.lineNumber()}: ${message.message()}")
+                            return true
+                        }
+                    }
                 }
                 // The chart owns horizontal pan and pinch gestures; the list can still be scrolled
                 // by dragging outside the chart.

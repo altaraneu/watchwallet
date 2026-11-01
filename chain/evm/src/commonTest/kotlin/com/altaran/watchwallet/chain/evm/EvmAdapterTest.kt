@@ -112,3 +112,14 @@ class EvmAdapterTest {
         assertFalse(SpamFilter.isSpam("USDC", "USD Coin"))
     }
 }
+
+class EvmRpcRequestTest {
+    @Test
+    fun requestAlwaysCarriesJsonRpcVersionAndId() {
+        val body = com.altaran.watchwallet.core.network.NetworkJson.encodeToString(
+            RpcRequest.serializer(),
+            RpcRequest(method = "eth_getBalance", params = listOf("0x0", "latest")),
+        )
+        kotlin.test.assertTrue("\"jsonrpc\":\"2.0\"" in body && "\"id\":1" in body, body)
+    }
+}
