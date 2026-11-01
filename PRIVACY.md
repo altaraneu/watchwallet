@@ -69,7 +69,21 @@ has network access blocked; it does not load anything from the internet.
 ## Exports
 
 Exports are created only on your request and delivered through the Android share sheet or the
-system file picker. Optional password encryption will be documented here when it ships.
+system file picker; the app never uploads them anywhere. Formats:
+
+- **Backup (JSON):** wallets (addresses or extended public keys), names, groups, tags and notes.
+  Never balances or key material.
+- **CSV / addresses only:** the same wallets as a table or plain list; CSV can optionally include
+  current values.
+- **Transaction history (CSV):** every stored transaction of the selected wallets (date, asset,
+  amount, fee, transaction hash). This reveals your financial history: share it carefully.
+
+**Password encryption (backup only).** With a password the JSON backup is encrypted with
+AES-256-GCM. The key is derived from the password with PBKDF2-HMAC-SHA256, 600 000 iterations and
+a random 16-byte salt; each export uses a random 12-byte IV, and GCM's authentication tag detects a
+wrong password or a modified file. Salt, IV and parameters are stored in the file next to the
+ciphertext (format `watchwallet-encrypted`, version 1). The password is not stored anywhere; a
+lost password cannot be recovered. CSV and text exports are not encrypted.
 
 ## Contact
 
