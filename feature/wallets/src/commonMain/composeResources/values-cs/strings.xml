@@ -46,4 +46,7 @@
     <string name="cost_dialog_save">Uložit</string>
     <string name="cost_dialog_reset">Použít automatickou</string>
     <string name="cost_dialog_cancel">Zrušit</string>
+    <string name="tx_sheet_cost_auto">%1$s (%2$s za 1 %3$s), automaticky: cena v den převodu</string>
+    <string name="tx_sheet_cost_user">%1$s (%2$s za 1 %3$s), zadáno vámi</string>
+    <string name="tx_sheet_edit_cost">Upravit pořizovací cenu</string>
 </resources>

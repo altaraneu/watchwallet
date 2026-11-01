@@ -50,4 +50,8 @@
     <string name="cost_dialog_save">Save</string>
     <string name="cost_dialog_reset">Use automatic</string>
     <string name="cost_dialog_cancel">Cancel</string>
+    <!-- Cost basis in the transaction sheet. %1$s = total USD, %2$s = USD per coin, %3$s = symbol. -->
+    <string name="tx_sheet_cost_auto">%1$s (%2$s per %3$s), automatic: price on the transfer day</string>
+    <string name="tx_sheet_cost_user">%1$s (%2$s per %3$s), entered by you</string>
+    <string name="tx_sheet_edit_cost">Edit cost basis</string>
 </resources>

@@ -85,9 +85,13 @@ import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_s
 import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_title
 import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_total
 import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_total_hint
+import com.altaran.watchwallet.feature.wallets.generated.resources.detail_open_explorer
 import com.altaran.watchwallet.feature.wallets.generated.resources.tx_cost_auto
 import com.altaran.watchwallet.feature.wallets.generated.resources.tx_cost_unknown
 import com.altaran.watchwallet.feature.wallets.generated.resources.tx_cost_user
+import com.altaran.watchwallet.feature.wallets.generated.resources.tx_sheet_cost_auto
+import com.altaran.watchwallet.feature.wallets.generated.resources.tx_sheet_cost_user
+import com.altaran.watchwallet.feature.wallets.generated.resources.tx_sheet_edit_cost
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -134,6 +138,21 @@ internal fun WalletDetailScreen(
     onSetCost: (WalletTransaction, Double?) -> Unit = { _, _ -> },
 ) {
     var editingCost by remember { mutableStateOf<WalletTransaction?>(null) }
+    var selectedTx by remember { mutableStateOf<WalletTransaction?>(null) }
+    val sheetUriHandler = LocalUriHandler.current
+    selectedTx?.let { tx ->
+        TransactionSheet(
+            tx = tx,
+            state = state,
+            chain = chain(tx.chainId),
+            onEditCost = {
+                selectedTx = null
+                editingCost = tx
+            },
+            onOpenExplorer = { url -> sheetUriHandler.openUri(url) },
+            onDismiss = { selectedTx = null },
+        )
+    }
     editingCost?.let { tx ->
         val asset = state.assets[tx.assetId]
         CostBasisDialog(
@@ -241,7 +260,7 @@ internal fun WalletDetailScreen(
                 val tabs = listOf(DetailTab.ASSETS, DetailTab.ACTIVITY, DetailTab.ADDRESSES)
                 when (tabs.getOrNull(tab)) {
                     DetailTab.ASSETS -> holdings(state, onOpenHolding)
-                    DetailTab.ACTIVITY -> activity(state, chain, onEditCost = { editingCost = it }) { url -> uriHandler.openUri(url) }
+                    DetailTab.ACTIVITY -> activity(state, chain) { tx -> selectedTx = tx }
                     DetailTab.ADDRESSES -> addresses(state)
                     null -> Unit
                 }
@@ -311,34 +330,27 @@ internal fun HoldingRow(holding: Holding, state: WalletDetailUiState, onOpen: (S
 private fun androidx.compose.foundation.lazy.LazyListScope.activity(
     state: WalletDetailUiState,
     chain: (ChainId) -> Chain?,
-    onEditCost: (WalletTransaction) -> Unit,
-    openUrl: (String) -> Unit,
+    onOpen: (WalletTransaction) -> Unit,
 ) {
     if (state.transactions.isEmpty()) {
         item { EmptyState(WwIcon.Markets, stringResource0(Res.string.detail_no_activity_title), stringResource0(Res.string.detail_no_activity_message)) }
         return
     }
     items(state.transactions, key = { "t-" + it.hash + it.assetId.value }) { tx ->
-        TransactionRow(tx, state, chain(tx.chainId), onEditCost) { url -> openUrl(url) }
+        TransactionRow(tx, state, chain(tx.chainId)) { onOpen(tx) }
         HorizontalDivider(Modifier.padding(start = 16.dp))
     }
 }
 
 @Composable
-private fun TransactionRow(
-    tx: WalletTransaction,
-    state: WalletDetailUiState,
-    chain: Chain?,
-    onEditCost: (WalletTransaction) -> Unit,
-    openUrl: (String) -> Unit,
-) {
+private fun TransactionRow(tx: WalletTransaction, state: WalletDetailUiState, chain: Chain?, onOpen: () -> Unit) {
     val asset = state.assets[tx.assetId]
     val symbol = asset?.symbol ?: "?"
     val amount = asset?.let { TokenAmount(tx.delta, it.decimals).toDouble() } ?: 0.0
     val colors = WatchWalletTheme.extendedColors
-    val url = chain?.explorerTxUrl?.replace("{tx}", tx.hash)
+    // One tap target per row: it opens the transaction sheet (cost basis, explorer link).
     Row(
-        Modifier.fillMaxWidth().clickable(enabled = url != null) { url?.let(openUrl) }.padding(horizontal = 16.dp, vertical = 12.dp),
+        Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
@@ -382,8 +394,8 @@ private fun TransactionRow(
                         )
                     } ?: stringResource(Res.string.tx_cost_unknown),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable { onEditCost(tx) }.padding(top = 2.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp),
                 )
             }
         }
@@ -527,3 +539,66 @@ private fun explorerUrl(state: WalletDetailUiState, chain: (ChainId) -> Chain?):
 }
 
 private const val MAX_PRICE_CHARS = 14
+
+/** Details of one transaction: amount, date, cost basis (editable) and the explorer link. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TransactionSheet(
+    tx: WalletTransaction,
+    state: WalletDetailUiState,
+    chain: Chain?,
+    onEditCost: () -> Unit,
+    onOpenExplorer: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val asset = state.assets[tx.assetId]
+    val symbol = asset?.symbol ?: "?"
+    val amount = asset?.let { TokenAmount(tx.delta, it.decimals).toDouble() } ?: 0.0
+    val url = chain?.explorerTxUrl?.replace("{tx}", tx.hash)
+    val cost = state.costs[CostKey(tx.walletId, tx.hash, tx.assetId.value)]
+    val usd = com.altaran.watchwallet.core.model.QuoteCurrency.USD
+    androidx.compose.material3.ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                stringResource(
+                    when (tx.direction) {
+                        TxDirection.IN -> Res.string.tx_received
+                        TxDirection.OUT -> Res.string.tx_sent
+                        TxDirection.SELF -> Res.string.tx_self
+                    },
+                ),
+                style = MaterialTheme.typography.titleLarge,
+            )
+            AmountText(MoneyFormatter.formatCrypto(amount, symbol), style = MaterialTheme.typography.headlineSmall)
+            Text(
+                DateFormatter.dateTime(tx.timestamp) + (chain?.let { " · " + it.name } ?: ""),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (amount > 0 && tx.direction == TxDirection.IN) {
+                androidx.compose.material3.HorizontalDivider()
+                Text(stringResource(Res.string.cost_dialog_title), style = MaterialTheme.typography.titleSmall)
+                Text(
+                    cost?.let {
+                        val perCoin = if (amount > 0) MoneyFormatter.formatPrice(it.valueUsd / amount, usd) else null
+                        stringResource(
+                            if (it.userSet) Res.string.tx_sheet_cost_user else Res.string.tx_sheet_cost_auto,
+                            MoneyFormatter.format(it.valueUsd, usd),
+                            perCoin.orEmpty(),
+                            symbol,
+                        )
+                    } ?: stringResource(Res.string.tx_cost_unknown),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                androidx.compose.material3.FilledTonalButton(onClick = onEditCost, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(Res.string.tx_sheet_edit_cost))
+                }
+            }
+            if (url != null) {
+                androidx.compose.material3.OutlinedButton(onClick = { onOpenExplorer(url) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(Res.string.detail_open_explorer))
+                }
+            }
+        }
+    }
+}
