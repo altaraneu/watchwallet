@@ -13,7 +13,10 @@ import com.altaran.watchwallet.core.importexport.EntryStatus
 import com.altaran.watchwallet.core.importexport.ExportFormat
 import com.altaran.watchwallet.core.importexport.ExportedGroup
 import com.altaran.watchwallet.core.importexport.ExportedWallet
+import com.altaran.watchwallet.core.importexport.TransactionRow
 import com.altaran.watchwallet.core.importexport.WatchWalletExport
+import com.altaran.watchwallet.core.model.AssetId
+import com.altaran.watchwallet.core.model.TokenAmount
 import com.altaran.watchwallet.core.model.WalletGroup
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.security.SecretKind
@@ -161,7 +164,7 @@ internal class ImportViewModel(
     }
 }
 
-enum class ExportFormatOption { JSON, CSV, TEXT }
+enum class ExportFormatOption { JSON, CSV, TEXT, TRANSACTIONS }
 
 data class ExportUiState(
     val groups: List<WalletGroup> = emptyList(),
@@ -229,6 +232,34 @@ internal class ExportViewModel(
             ExportFormatOption.TEXT -> {
                 ExportFormat.toText(wallets) to "watchwallet-addresses-$stamp.txt"
             }
+
+            ExportFormatOption.TRANSACTIONS -> {
+                ExportFormat.transactionsCsv(transactionRows(state.groupId, groupNames)) to "watchwallet-transactions-$stamp.csv"
+            }
+        }
+    }
+
+    /** Stored transactions of the exported wallets, formatted for the history CSV. */
+    private suspend fun transactionRows(groupId: Long?, groupNames: Map<Long, String>): List<TransactionRow> {
+        val wallets = walletRepository.activeWallets.first().filter { groupId == null || it.groupId == groupId }.associateBy { it.id }
+        val assets = walletRepository.assets.first()
+        return walletRepository.allTransactions.first().mapNotNull { tx ->
+            val wallet = wallets[tx.walletId] ?: return@mapNotNull null
+            val asset = assets[tx.assetId] ?: return@mapNotNull null
+            val native = assets[AssetId.native(tx.chainId)]
+            TransactionRow(
+                dateUtc = tx.timestamp.toString(),
+                wallet = wallet.name,
+                group = wallet.groupId?.let(groupNames::get),
+                chain = tx.chainId.value,
+                asset = asset.symbol,
+                amount = TokenAmount(tx.delta, asset.decimals).toPlainString(),
+                fee = tx.fee?.let { fee -> native?.let { TokenAmount(fee, it.decimals).toPlainString() } },
+                feeAsset = native?.symbol?.takeIf { tx.fee != null },
+                direction = tx.direction.name.lowercase(),
+                confirmed = tx.confirmed,
+                hash = tx.hash,
+            )
         }
     }
 

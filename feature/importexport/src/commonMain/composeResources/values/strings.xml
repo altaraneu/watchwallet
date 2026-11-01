@@ -34,6 +34,9 @@
     <string name="export_format_json">Backup (JSON)</string>
     <string name="export_format_csv">CSV</string>
     <string name="export_format_text">Addresses only</string>
+    <string name="export_format_transactions">Transaction history (CSV)</string>
+    <!-- Shown under the format choice; explains what the history export contains. -->
+    <string name="export_transactions_hint">All stored transactions of the selected wallets: date (UTC), asset, signed amount, fee and transaction hash. Older history appears after it has been loaded.</string>
     <string name="export_password">Password</string>
     <string name="export_password_hint">Optional. Encrypts the backup (AES-256-GCM). Without the password it cannot be restored.</string>
     <string name="export_include_values">Include current values</string>

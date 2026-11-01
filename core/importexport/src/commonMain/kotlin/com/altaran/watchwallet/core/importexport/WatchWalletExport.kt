@@ -77,6 +77,23 @@ data class ExportedWallet(
     }
 }
 
+/** One line of the transaction history export, already formatted. */
+data class TransactionRow(
+    /** ISO 8601 instant in UTC, e.g. `2024-05-29T16:26:40Z`. */
+    val dateUtc: String,
+    val wallet: String,
+    val group: String?,
+    val chain: String,
+    val asset: String,
+    val amount: String,
+    val fee: String?,
+    val feeAsset: String?,
+    /** `in`, `out` or `self`. */
+    val direction: String,
+    val confirmed: Boolean,
+    val hash: String,
+)
+
 object ExportFormat {
     const val CURRENT_SCHEMA_VERSION = 1
 
@@ -98,6 +115,30 @@ object ExportFormat {
     }
 
     fun looksLikeExport(text: String): Boolean = text.trimStart().startsWith("{") && "\"schemaVersion\"" in text
+
+    /**
+     * Transaction history CSV: one row per transaction and asset, newest first. Amounts are
+     * signed decimal strings in the asset's unit (outgoing amounts include the fee).
+     */
+    fun transactionsCsv(rows: List<TransactionRow>): String {
+        val header = listOf("date_utc", "wallet", "group", "chain", "asset", "amount", "fee", "fee_asset", "direction", "confirmed", "tx_hash")
+        val lines = rows.sortedByDescending { it.dateUtc }.map { r ->
+            listOf(
+                r.dateUtc,
+                r.wallet,
+                r.group.orEmpty(),
+                r.chain,
+                r.asset,
+                r.amount,
+                r.fee.orEmpty(),
+                r.feeAsset.orEmpty(),
+                r.direction,
+                r.confirmed.toString(),
+                r.hash,
+            )
+        }
+        return (listOf(header) + lines).joinToString("\r\n") { row -> row.joinToString(",") { Csv.escape(it) } } + "\r\n"
+    }
 
     /** CSV export: one row per wallet, optional current value columns. */
     fun toCsv(wallets: List<ExportedWallet>, values: Map<String, String> = emptyMap(), valueHeader: String? = null): String {

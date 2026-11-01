@@ -3,6 +3,7 @@ package com.altaran.watchwallet.feature.importexport
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -279,7 +280,7 @@ internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = 
                 }
             }
             SectionHeader(stringResource(Res.string.export_format))
-            Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ExportFormatOption.entries.forEach { format ->
                     FilterChip(selected = state.format == format, onClick = { viewModel.setFormat(format) }, label = {
                         Text(
@@ -288,6 +289,7 @@ internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = 
                                     ExportFormatOption.JSON -> Res.string.export_format_json
                                     ExportFormatOption.CSV -> Res.string.export_format_csv
                                     ExportFormatOption.TEXT -> Res.string.export_format_text
+                                    ExportFormatOption.TRANSACTIONS -> Res.string.export_format_transactions
                                 },
                             ),
                         )
@@ -314,6 +316,13 @@ internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = 
                 )
 
                 ExportFormatOption.TEXT -> Unit
+
+                ExportFormatOption.TRANSACTIONS -> Text(
+                    stringResource(Res.string.export_transactions_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
             }
             state.message?.let {
                 Text(
@@ -328,7 +337,7 @@ internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = 
                         val (content, name) = viewModel.build()
                         val mime = when (state.format) {
                             ExportFormatOption.JSON -> "application/json"
-                            ExportFormatOption.CSV -> "text/csv"
+                            ExportFormatOption.CSV, ExportFormatOption.TRANSACTIONS -> "text/csv"
                             ExportFormatOption.TEXT -> "text/plain"
                         }
                         documents.saveText(name, mime, content) { ok -> viewModel.showMessage(if (ok) ExportMessage.SAVED else ExportMessage.SAVE_FAILED) }

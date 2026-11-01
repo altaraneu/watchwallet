@@ -30,6 +30,8 @@
     <string name="export_format_json">Záloha (JSON)</string>
     <string name="export_format_csv">CSV</string>
     <string name="export_format_text">Jen adresy</string>
+    <string name="export_format_transactions">Historie transakcí (CSV)</string>
+    <string name="export_transactions_hint">Všechny uložené transakce vybraných peněženek: datum (UTC), aktivum, částka se znaménkem, poplatek a hash transakce. Starší historie se objeví, až se načte.</string>
     <string name="export_password">Heslo</string>
     <string name="export_password_hint">Nepovinné. Zašifruje zálohu (AES-256-GCM). Bez hesla ji nepůjde obnovit.</string>
     <string name="export_include_values">Přidat aktuální hodnoty</string>
