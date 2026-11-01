@@ -94,7 +94,10 @@ class BitcoinAdapter(
         }
     }
 
-    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = wrap {
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult =
+        sync(target, knownTransactions, continueHistory = false)
+
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, continueHistory: Boolean): SyncResult = wrap {
         val scanned: List<ScannedAddress> = when (target) {
             is WatchTarget.Address -> listOf(ScannedAddress(target.address, change = false, index = 0, info = esplora.address(target.address)))
             is WatchTarget.ExtendedPublicKey -> discover(target)
@@ -105,10 +108,15 @@ class BitcoinAdapter(
         var truncated = false
         val transactions = LinkedHashMap<String, EsploraTx>()
         // First sync: only recent pages per address, so large wallets show up quickly; later syncs
-        // stop at known transactions anyway. Older history is marked as truncated.
+        // stop at known transactions anyway. Older history is marked as truncated and fetched in
+        // chunks by the following syncs (continueHistory).
         val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES_PER_ADDRESS
         for (address in scanned.filter { it.info.txCount > 0 }) {
-            val history = fetchHistory(address.address, knownTransactions, maxPages)
+            val history = if (continueHistory && knownTransactions.isNotEmpty()) {
+                backfillHistory(address.address, knownTransactions)
+            } else {
+                fetchHistory(address.address, knownTransactions, maxPages)
+            }
             truncated = truncated || history.truncated
             history.transactions.forEach { transactions.getOrPut(it.txid) { it } }
         }
@@ -175,6 +183,27 @@ class BitcoinAdapter(
         return History(collected, truncated = true)
     }
 
+    /**
+     * Walks the address history past the known transactions and collects up to
+     * [BACKFILL_NEW_PAGES] pages of older ones. Known pages are walked (cheaply, 25 per request)
+     * but do not count against the budget.
+     */
+    private suspend fun backfillHistory(address: String, known: Set<String>): History {
+        val collected = mutableListOf<EsploraTx>()
+        var lastSeen: String? = null
+        var newPages = 0
+        repeat(MAX_BACKFILL_WALK) {
+            val page = esplora.transactions(address, lastSeen)
+            val confirmed = page.filter { it.status.confirmed }
+            val fresh = page.filter { it.txid !in known }
+            collected += fresh
+            if (confirmed.size < EsploraClient.PAGE_SIZE) return History(collected, truncated = false)
+            if (fresh.isNotEmpty() && ++newPages >= BACKFILL_NEW_PAGES) return History(collected, truncated = true)
+            lastSeen = confirmed.last().txid
+        }
+        return History(collected, truncated = true)
+    }
+
     private fun probeResult(txCount: Int, balance: Long, usedAddresses: Int?) = ProbeResult(
         hasActivity = txCount > 0,
         activeChains = if (txCount > 0) listOf(ChainId.BITCOIN) else emptyList(),
@@ -200,6 +229,8 @@ class BitcoinAdapter(
         const val MAX_DERIVED_PER_CHAIN = 2_000
         const val MAX_PAGES_PER_ADDRESS = 40
         const val FIRST_SYNC_PAGES = 4
+        const val BACKFILL_NEW_PAGES = 8
+        const val MAX_BACKFILL_WALK = 400
     }
 }
 

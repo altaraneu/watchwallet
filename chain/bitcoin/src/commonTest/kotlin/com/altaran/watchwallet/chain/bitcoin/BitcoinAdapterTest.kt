@@ -107,4 +107,41 @@ class BitcoinAdapterTest {
         assertEquals(listOf("down.test", "up.test"), hosts.distinct())
         assertEquals("up.test", hosts.last())
     }
+
+    @Test
+    fun continueHistoryFetchesOlderTransactionsPastKnownOnes() = runTest {
+        val address = "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"
+        // 60 transactions, newest first: pages of 25, 25 and 10.
+        val all = (60 downTo 1).map { "t$it" }
+        fun txJson(id: String) =
+            """{"txid":"$id","status":{"confirmed":true,"block_time":${1_700_000_000 + id.drop(
+                1,
+            ).toInt()}},"fee":1,"vin":[{"prevout":{"scriptpubkey_address":"bc1qy","value":1000}}],"vout":[{"scriptpubkey_address":"$address","value":999}]}"""
+        val engine = MockEngine { request ->
+            val path = request.url.encodedPath
+            val body = when {
+                path.endsWith("/address/$address") -> {
+                    """{"address":"$address","chain_stats":{"funded_txo_sum":59940,"spent_txo_sum":0,"tx_count":60},"mempool_stats":{"funded_txo_sum":0,"spent_txo_sum":0,"tx_count":0}}"""
+                }
+
+                else -> {
+                    val after = path.substringAfter("/txs/chain/", "").ifEmpty { null }
+                    val start = after?.let { all.indexOf(it) + 1 } ?: 0
+                    all.drop(start).take(25).joinToString(",", "[", "]") { txJson(it) }
+                }
+            }
+            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val adapter = BitcoinAdapter(createHttpClient(engine = engine), "https://esplora.test/api")
+        val target = WatchTarget.Address(ChainFamily.UTXO, ChainId.BITCOIN, address, ScriptType.P2WPKH)
+        val known = all.take(25).toSet()
+
+        val normal = adapter.sync(target, known)
+        val older = all.drop(25).toSet()
+        assertEquals(emptyList(), normal.transactions.map { it.hash }.filter { it in older }, "incremental sync stops at known history")
+
+        val backfill = adapter.sync(target, known, continueHistory = true)
+        assertEquals(older, backfill.transactions.map { it.hash }.toSet())
+        assertEquals(false, backfill.historyTruncated)
+    }
 }

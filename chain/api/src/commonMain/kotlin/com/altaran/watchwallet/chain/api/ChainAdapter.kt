@@ -34,6 +34,14 @@ interface ChainAdapter {
      * reach them (incremental sync).
      */
     suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult
+
+    /**
+     * Like [sync]; with [continueHistory] (an earlier sync reported `historyTruncated`) adapters
+     * that page history fetch a further chunk of older transactions instead of stopping at the
+     * known ones. The default ignores the flag.
+     */
+    suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, continueHistory: Boolean): SyncResult =
+        sync(target, knownTransactions)
 }
 
 data class ProbeResult(

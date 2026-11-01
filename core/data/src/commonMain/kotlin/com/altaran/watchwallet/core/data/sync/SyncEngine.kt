@@ -83,7 +83,7 @@ class SyncEngine(
         _state.update { it.copy(syncingWallets = it.syncingWallets + wallet.id) }
         try {
             val known = walletDao.knownConfirmedHashes(wallet.id).toSet()
-            val result = adapter.sync(target, known)
+            val result = adapter.sync(target, known, continueHistory = wallet.historyTruncated)
             val now = Clock.System.now().toEpochMilliseconds()
 
             val assets = (result.balances.map { it.asset } + result.transactions.map { it.asset }).distinctBy { it.id }
