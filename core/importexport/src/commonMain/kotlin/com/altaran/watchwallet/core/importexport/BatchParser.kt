@@ -47,7 +47,11 @@ object BatchParser {
     private val NOTES_HEADERS = setOf("notes", "note", "comment", "description")
     private val CHAIN_HEADERS = setOf("chain", "network", "blockchain", "coin")
 
-    fun parse(input: String): BatchResult {
+    /**
+     * [otherChains] recognises formats of chains beyond Bitcoin and EVM (provided by the data
+     * layer, which knows the registered chain adapters); it only sees rows that passed the guard.
+     */
+    fun parse(input: String, otherChains: (String) -> List<WatchTarget> = { emptyList() }): BatchResult {
         // Excel and other tools prepend a byte order mark to UTF-8 files.
         val text = input.removePrefix(BYTE_ORDER_MARK.toString()).trim()
         if (text.isEmpty()) return BatchResult.Empty
@@ -68,10 +72,11 @@ object BatchParser {
         val delimiter = Csv.detectDelimiter(lines.first())
         val header = Csv.split(lines.first(), delimiter).map { it.trim().lowercase() }
         val addressColumn = header.indexOfFirst { it in ADDRESS_HEADERS }
+        val parser = RowParser(otherChains)
         val rows = if (addressColumn >= 0) {
-            fromCsv(lines.drop(1), delimiter, header, addressColumn)
+            parser.fromCsv(lines.drop(1), delimiter, header, addressColumn)
         } else {
-            fromLines(lines, delimiter)
+            parser.fromLines(lines)
         }
         return BatchResult.Entries(markDuplicates(rows))
     }
@@ -94,80 +99,88 @@ object BatchParser {
         ),
     )
 
-    private fun fromCsv(rows: List<String>, delimiter: Char, header: List<String>, addressColumn: Int): List<BatchEntry> {
-        fun col(names: Set<String>) = header.indexOfFirst { it in names }.takeIf { it >= 0 }
-        val label = col(LABEL_HEADERS)
-        val group = col(GROUP_HEADERS)
-        val notes = col(NOTES_HEADERS)
+    /** Row classification for one parse call. */
+    private class RowParser(private val otherChains: (String) -> List<WatchTarget>) {
+        fun fromCsv(rows: List<String>, delimiter: Char, header: List<String>, addressColumn: Int): List<BatchEntry> {
+            fun col(names: Set<String>) = header.indexOfFirst { it in names }.takeIf { it >= 0 }
+            val label = col(LABEL_HEADERS)
+            val group = col(GROUP_HEADERS)
+            val notes = col(NOTES_HEADERS)
 
-        @Suppress("UNUSED_VARIABLE")
-        val chain = col(CHAIN_HEADERS) // Reserved: resolve ambiguous rows by chain.
-        return rows.mapIndexed { i, row ->
-            val cells = Csv.split(row, delimiter)
-            entry(
-                line = i + 2,
-                value = cells.getOrNull(addressColumn).orEmpty().trim(),
-                label = label?.let { cells.getOrNull(it)?.trim() }?.ifBlank { null },
-                group = group?.let { cells.getOrNull(it)?.trim() }?.ifBlank { null },
-                notes = notes?.let { cells.getOrNull(it)?.trim() }?.ifBlank { null },
-            )
+            @Suppress("UNUSED_VARIABLE")
+            val chain = col(CHAIN_HEADERS) // Reserved: resolve ambiguous rows by chain.
+            return rows.mapIndexed { i, row ->
+                val cells = Csv.split(row, delimiter)
+                entry(
+                    line = i + 2,
+                    value = cells.getOrNull(addressColumn).orEmpty().trim(),
+                    label = label?.let { cells.getOrNull(it)?.trim() }?.ifBlank { null },
+                    group = group?.let { cells.getOrNull(it)?.trim() }?.ifBlank { null },
+                    notes = notes?.let { cells.getOrNull(it)?.trim() }?.ifBlank { null },
+                )
+            }
         }
-    }
 
-    /**
-     * `label, address`, `address, label`, or one or more bare addresses per line separated by
-     * commas, semicolons, tabs or spaces. With several addresses on a line, other tokens are
-     * reported as invalid rows instead of being used as labels.
-     */
-    @Suppress("UNUSED_PARAMETER")
-    private fun fromLines(lines: List<String>, delimiter: Char): List<BatchEntry> = lines.flatMapIndexed { i, line ->
-        val cells = line.split(',', ';', '	').map { it.trim() }.filter { it.isNotEmpty() }
-        val recognized = cells.filter { isAddressLike(it) }
-        when {
-            recognized.isEmpty() -> {
-                // Space-separated list of addresses on one line?
-                val words = line.split(' ').filter { it.isNotBlank() }
-                if (words.size > 1 && words.any { isAddressLike(it) }) {
-                    words.map { entry(i + 1, it, null, null, null) }
-                } else {
-                    listOf(entry(i + 1, cells.firstOrNull().orEmpty(), null, null, null))
+        /**
+         * `label, address`, `address, label`, or one or more bare addresses per line separated by
+         * commas, semicolons, tabs or spaces. With several addresses on a line, other tokens are
+         * reported as invalid rows instead of being used as labels.
+         */
+        fun fromLines(lines: List<String>): List<BatchEntry> = lines.flatMapIndexed { i, line ->
+            val cells = line.split(',', ';', '	').map { it.trim() }.filter { it.isNotEmpty() }
+            val recognized = cells.filter { isAddressLike(it) }
+            when {
+                recognized.isEmpty() -> {
+                    // Space-separated list of addresses on one line?
+                    val words = line.split(' ').filter { it.isNotBlank() }
+                    if (words.size > 1 && words.any { isAddressLike(it) }) {
+                        words.map { entry(i + 1, it, null, null, null) }
+                    } else {
+                        listOf(entry(i + 1, cells.firstOrNull().orEmpty(), null, null, null))
+                    }
+                }
+
+                recognized.size == 1 -> {
+                    val label = cells.filterNot { it == recognized.single() }.joinToString(" ").ifBlank { null }
+                    listOf(entry(i + 1, recognized.single(), label, null, null))
+                }
+
+                else -> {
+                    cells.map { entry(i + 1, it, null, null, null) }
                 }
             }
-
-            recognized.size == 1 -> {
-                val label = cells.filterNot { it == recognized.single() }.joinToString(" ").ifBlank { null }
-                listOf(entry(i + 1, recognized.single(), label, null, null))
-            }
-
-            else -> {
-                cells.map { entry(i + 1, it, null, null, null) }
-            }
         }
-    }
 
-    private fun isAddressLike(value: String): Boolean = when (AddressClassifier.classify(value)) {
-        is Classification.Candidates, is Classification.ConfirmationRequired, is Classification.Unsupported, Classification.WrongChecksum -> true
-        else -> false
-    }
+        private fun isAddressLike(value: String): Boolean = when (AddressClassifier.classify(value)) {
+            is Classification.Candidates, is Classification.ConfirmationRequired, is Classification.Unsupported, Classification.WrongChecksum -> true
+            else -> otherChains(value).isNotEmpty()
+        }
 
-    private fun entry(line: Int, value: String, label: String?, group: String?, notes: String?): BatchEntry {
-        val base = BatchEntry(line, value, label, group, notes, EntryStatus.INVALID, emptyList())
-        return when (val result = AddressClassifier.classify(value)) {
-            is Classification.Candidates -> {
-                val targets = result.candidates.map { it.target }
-                base.copy(status = if (targets.size == 1) EntryStatus.READY else EntryStatus.AMBIGUOUS, candidates = targets)
-            }
+        private fun entry(line: Int, value: String, label: String?, group: String?, notes: String?): BatchEntry {
+            val base = BatchEntry(line, value, label, group, notes, EntryStatus.INVALID, emptyList())
+            return when (val result = AddressClassifier.classify(value)) {
+                is Classification.Candidates -> {
+                    val targets = result.candidates.map { it.target }
+                    base.copy(status = if (targets.size == 1) EntryStatus.READY else EntryStatus.AMBIGUOUS, candidates = targets)
+                }
 
-            is Classification.ConfirmationRequired -> {
-                base.copy(status = EntryStatus.NEEDS_CONFIRMATION)
-            }
+                is Classification.ConfirmationRequired -> {
+                    base.copy(status = EntryStatus.NEEDS_CONFIRMATION)
+                }
 
-            is Classification.Unsupported -> {
-                base.copy(status = EntryStatus.UNSUPPORTED, unsupportedFamily = result.family)
-            }
+                is Classification.Unsupported, Classification.Unrecognized -> {
+                    val targets = otherChains(value)
+                    when {
+                        targets.size == 1 -> base.copy(status = EntryStatus.READY, candidates = targets)
+                        targets.size > 1 -> base.copy(status = EntryStatus.AMBIGUOUS, candidates = targets)
+                        result is Classification.Unsupported -> base.copy(status = EntryStatus.UNSUPPORTED, unsupportedFamily = result.family)
+                        else -> base
+                    }
+                }
 
-            else -> {
-                base
+                else -> {
+                    base
+                }
             }
         }
     }

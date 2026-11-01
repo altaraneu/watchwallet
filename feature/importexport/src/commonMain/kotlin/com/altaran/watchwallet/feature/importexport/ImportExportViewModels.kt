@@ -57,6 +57,7 @@ data class ImportUiState(
 internal class ImportViewModel(
     private val walletRepository: WalletRepository,
     private val syncEngine: SyncEngine,
+    private val addWalletService: com.altaran.watchwallet.core.data.AddWalletService,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ImportUiState())
     val state: StateFlow<ImportUiState> = _state.asStateFlow()
@@ -73,7 +74,7 @@ internal class ImportViewModel(
             _state.update { it.copy(text = "", phase = ImportPhase.NeedsPassword) }
             return
         }
-        when (val result = BatchParser.parse(text)) {
+        when (val result = BatchParser.parse(text, addWalletService::parseOtherChains)) {
             is BatchResult.SecretDetected -> _state.value = ImportUiState(phase = ImportPhase.SecretRejected(result.kind, result.line))
 
             BatchResult.Empty -> _state.update { it.copy(text = text, phase = ImportPhase.Input) }

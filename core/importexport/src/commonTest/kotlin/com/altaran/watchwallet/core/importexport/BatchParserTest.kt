@@ -79,4 +79,16 @@ class BatchParserTest {
         assertEquals("Name, with comma", parsed.single().label)
         assertEquals("G", parsed.single().group)
     }
+
+    @Test
+    fun otherChainRowsUseTheProvidedParser() {
+        val solana = WatchTarget.Address(ChainFamily.SOLANA, ChainId("solana"), "7xYnUWgKrcPrahXHX7YMWmYXYX4xmzWrCypzF1fg7JJj")
+        val otherChains: (String) -> List<WatchTarget> = { if (it == solana.address) listOf(solana) else emptyList() }
+        val input = listOf("Trading, ${solana.address}", "not-an-address", "Savings, 1Archive1n2C579dMsAu3iC6tWzuQJz8dN")
+            .joinToString(Char(10).toString())
+        val entries = assertIs<BatchResult.Entries>(BatchParser.parse(input, otherChains)).entries
+        assertEquals(listOf(EntryStatus.READY, EntryStatus.INVALID, EntryStatus.READY), entries.map { it.status })
+        assertEquals(listOf(solana), entries.first().candidates)
+        assertEquals("Trading", entries.first().label)
+    }
 }
