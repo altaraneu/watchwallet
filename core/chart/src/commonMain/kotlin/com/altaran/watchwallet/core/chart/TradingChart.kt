@@ -74,8 +74,12 @@ fun TradingChart(
     hideValues: Boolean = false,
     markerTimes: List<Long> = emptyList(),
     fitOnDataChange: Boolean = true,
+    /** Initially visible number of bars (most recent); 0 = fit all data. */
+    visibleBars: Int = 0,
     lineColor: Color? = null,
     onCrosshair: (CrosshairValue?) -> Unit = {},
+    /** Visible window (UTC seconds of the first and last visible bar) after pan/zoom. */
+    onVisibleRange: (from: Long, to: Long) -> Unit = { _, _ -> },
 ) {
     val html by produceState<String?>(null) { value = loadChartHtml() }
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -83,6 +87,7 @@ fun TradingChart(
     val kind = if (series is ChartSeries.Candles) "candles" else "area"
     val controller = remember { ChartController() }
     val currentOnCrosshair by rememberUpdatedState(onCrosshair)
+    val currentOnVisibleRange by rememberUpdatedState(onVisibleRange)
 
     val initOptions = remember(kind, colors, format, intraday, logScale, hideValues, dark) {
         JSON.encodeToString(
@@ -111,7 +116,7 @@ fun TradingChart(
             is ChartSeries.Candles -> JSON.encodeToString(series.candles.distinctBy { it.time }.sortedBy { it.time })
             is ChartSeries.Area -> JSON.encodeToString(series.points.distinctBy { it.time }.sortedBy { it.time })
         }
-        controller.setData("setData($json, $fitOnDataChange)")
+        controller.setData("setData($json, $fitOnDataChange, $visibleBars)")
     }
     LaunchedEffect(live) {
         live?.let { controller.run("update(${JSON.encodeToString(it)})") }
@@ -125,6 +130,7 @@ fun TradingChart(
             html = it,
             controller = controller,
             onCrosshair = { payload -> currentOnCrosshair(payload) },
+            onVisibleRange = { from, to -> currentOnVisibleRange(from, to) },
             modifier = modifier.fillMaxWidth().height(height),
         )
     }
@@ -167,6 +173,7 @@ internal expect fun ChartWebView(
     html: String,
     controller: ChartController,
     onCrosshair: (CrosshairValue?) -> Unit,
+    onVisibleRange: (Long, Long) -> Unit,
     modifier: Modifier,
 )
 
@@ -174,6 +181,12 @@ internal val JSON = Json { encodeDefaults = true; explicitNulls = false; ignoreU
 
 @Serializable
 internal data class CrosshairPayload(val time: Long, val value: Double, val open: Double? = null, val high: Double? = null, val low: Double? = null)
+
+@Serializable
+internal data class VisibleRangePayload(val from: Long, val to: Long)
+
+internal fun parseVisibleRange(payload: String?): Pair<Long, Long>? =
+    payload?.let { runCatching { JSON.decodeFromString<VisibleRangePayload>(it) }.getOrNull() }?.let { it.from to it.to }
 
 internal fun parseCrosshair(payload: String?): CrosshairValue? {
     if (payload.isNullOrBlank() || payload == "null") return null

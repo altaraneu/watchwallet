@@ -2,6 +2,7 @@ package com.altaran.watchwallet.core.data
 
 import com.altaran.watchwallet.chain.api.ChainAdapter
 import com.altaran.watchwallet.chain.bitcoin.BitcoinAdapter
+import com.altaran.watchwallet.chain.bitcoin.BitcoinChain
 import com.altaran.watchwallet.chain.evm.EvmAdapter
 import com.altaran.watchwallet.core.data.chain.ChainRegistry
 import com.altaran.watchwallet.core.data.repository.DefaultSettingsRepository
@@ -14,7 +15,12 @@ import com.altaran.watchwallet.core.data.repository.WalletRepository
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.database.databaseModule
 import com.altaran.watchwallet.core.datastore.dataStoreModule
+import com.altaran.watchwallet.core.datastore.SettingsDataSource
+import com.altaran.watchwallet.core.model.NetworkSettings
+import com.altaran.watchwallet.core.network.ProxyConfig
 import com.altaran.watchwallet.core.network.createHttpClient
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import com.altaran.watchwallet.core.pricing.CoinGeckoProvider
 import com.altaran.watchwallet.core.pricing.FxRates
 import com.altaran.watchwallet.core.pricing.KrakenMarketData
@@ -26,10 +32,24 @@ import org.koin.dsl.module
 val dataModule: Module = module {
     includes(dataStoreModule, databaseModule)
 
-    single<HttpClient> { createHttpClient() }
-    single<List<ChainAdapter>> { listOf(BitcoinAdapter(get()), EvmAdapter(get())) }
+    // Network settings are read once at startup; changing them asks the user to restart the app.
+    single<NetworkSettings> { runBlocking { get<SettingsDataSource>().settings.first().network } }
+    single<HttpClient> {
+        val network = get<NetworkSettings>()
+        createHttpClient(proxy = if (network.proxyEnabled) ProxyConfig(network.proxyHost, network.proxyPort) else null)
+    }
+    single<List<ChainAdapter>> {
+        val network = get<NetworkSettings>()
+        listOf(
+            BitcoinAdapter(get(), network.esploraUrl ?: BitcoinChain.DEFAULT_ESPLORA_URL),
+            EvmAdapter(get()),
+        )
+    }
     single { ChainRegistry(get()) }
-    single<PriceProvider> { CoinGeckoProvider(get()) }
+    single<PriceProvider> {
+        val key = get<NetworkSettings>().coinGeckoApiKey
+        CoinGeckoProvider(get(), apiKey = { key })
+    }
     single { KrakenMarketData(get()) }
     single { FxRates(get()) }
     single { MarketDataRepository(get(), get()) }

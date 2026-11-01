@@ -34,4 +34,39 @@
     <string name="settings_section_developer">Developer</string>
     <string name="settings_demo_wallets">Add demo wallets</string>
     <string name="settings_demo_wallets_summary">Public wallets for two people (Alice and Bob), for testing</string>
+    <string name="settings_app_lock">App lock</string>
+    <string name="settings_app_lock_summary">Require fingerprint, face or screen lock to open the app</string>
+    <string name="settings_secure_screen">Block screenshots</string>
+    <string name="settings_secure_screen_summary">Also hides the app in the recent apps preview</string>
+    <string name="settings_section_refresh">Data refresh</string>
+    <string name="settings_background_refresh">Background refresh</string>
+    <string name="settings_refresh_off">Off</string>
+    <plurals name="settings_refresh_every_hours">
+        <item quantity="one">Every hour</item>
+        <item quantity="other">Every %1$d hours</item>
+    </plurals>
+    <string name="settings_wifi_only">Only on Wi-Fi</string>
+    <string name="settings_section_network">Network</string>
+    <!-- SOCKS5 proxy such as Orbot (Tor) -->
+    <string name="settings_proxy">Tor / SOCKS5 proxy</string>
+    <string name="settings_proxy_summary">Route all traffic through a proxy such as Orbot</string>
+    <string name="settings_proxy_address">Proxy address</string>
+    <string name="settings_proxy_help">Orbot listens on 127.0.0.1 port 9050 by default.</string>
+    <string name="settings_proxy_host">Host</string>
+    <string name="settings_proxy_port">Port</string>
+    <string name="settings_esplora">Bitcoin server (Esplora)</string>
+    <string name="settings_esplora_hint">Base URL of your own Esplora / electrs REST server, for example https://my-node.local/api. Leave empty for mempool.space.</string>
+    <string name="settings_default_server">Default (mempool.space)</string>
+    <string name="settings_coingecko_key">CoinGecko API key</string>
+    <string name="settings_coingecko_hint">Optional free demo key for higher price-request limits and longer price history.</string>
+    <string name="settings_not_set">Not set</string>
+    <string name="settings_restart_required">Restart the app to apply the network settings.</string>
+    <string name="settings_restart">Restart</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_cancel">Cancel</string>
+    <string name="settings_section_data">Wallets</string>
+    <string name="settings_import">Import wallets</string>
+    <string name="settings_import_summary">From text, CSV or a WatchWallet backup</string>
+    <string name="settings_export">Export wallets</string>
+    <string name="settings_export_summary">Backup as JSON (optionally encrypted), CSV or text</string>
 </resources>

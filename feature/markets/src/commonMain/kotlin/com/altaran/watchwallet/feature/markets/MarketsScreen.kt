@@ -223,42 +223,50 @@ private fun priceDecimals(price: Double?): Int = when {
     else -> 8
 }
 
-/** Exchange-style candlestick chart with interval chips; updates live from the exchange feed. */
+/**
+ * Exchange-style candlestick chart with interval chips; updates live from the exchange feed.
+ * The header shows the change across the **visible** window (it follows pan and zoom); tapping a
+ * candle shows its date with high, low and volume-weighted average price.
+ */
 @Composable
 private fun CandleSection(state: AssetDetailUiState, candles: CandleChartState.Ready, symbol: String, onIntervalChange: (CandleInterval) -> Unit) {
     var crosshair by remember(candles.candles) { mutableStateOf<CrosshairValue?>(null) }
-    val last = candles.live ?: candles.candles.lastOrNull()
-    val first = candles.candles.firstOrNull()
-    val shown = crosshair?.value ?: last?.close
+    var window by remember(candles.candles) { mutableStateOf<Pair<Long, Long>?>(null) }
     val currency = state.currency
+    val all = candles.candles
+    val live = candles.live
+    val last = live ?: all.lastOrNull()
+    val firstVisible = window?.let { (from, _) -> all.firstOrNull { it.time >= from } } ?: all.getOrNull(all.size - state.interval.visibleBars) ?: all.firstOrNull()
+    val lastVisible = window?.let { (_, to) -> (listOfNotNull(live) + all.asReversed()).firstOrNull { it.time <= to } } ?: last
+    val shown = crosshair?.value ?: lastVisible?.close
+    val selected = crosshair?.let { c -> (listOfNotNull(live) + all).firstOrNull { it.time == c.time } }
+
     ValueHeader(
-        label = crosshair?.let { c ->
-            DateFormatter.dateTime(Instant.fromEpochSeconds(c.time)) +
-                if (c.open != null && c.high != null && c.low != null) {
-                    "  " + stringResource(
-                        Res.string.asset_ohlc,
-                        MoneyFormatter.formatPrice(c.open!!, currency),
-                        MoneyFormatter.formatPrice(c.high!!, currency),
-                        MoneyFormatter.formatPrice(c.low!!, currency),
-                    )
-                } else {
-                    ""
-                }
-        } ?: stringResource(Res.string.asset_live_price, symbol),
+        label = crosshair?.let { DateFormatter.dateTime(Instant.fromEpochSeconds(it.time)) } ?: stringResource(Res.string.asset_live_price, symbol),
         value = shown?.let { MoneyFormatter.formatPrice(it, currency) },
-        change = if (first != null && shown != null) shown - first.open else null,
-        changePercent = if (first != null && shown != null && first.open > 0) (shown - first.open) / first.open else null,
+        change = if (firstVisible != null && shown != null) shown - firstVisible.open else null,
+        changePercent = if (firstVisible != null && shown != null && firstVisible.open > 0) (shown - firstVisible.open) / firstVisible.open else null,
         formatChange = { MoneyFormatter.formatChange(it, currency) },
-        rangeText = null,
+        rangeText = if (crosshair == null) stringResource(Res.string.asset_visible_range) else null,
     )
+    if (selected != null) {
+        val vwap = candles.vwap[selected.time]?.takeIf { it > 0 }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            CandleStat(stringResource(Res.string.asset_high), MoneyFormatter.formatPrice(selected.high, currency))
+            CandleStat(stringResource(Res.string.asset_low), MoneyFormatter.formatPrice(selected.low, currency))
+            if (vwap != null) CandleStat(stringResource(Res.string.asset_average), MoneyFormatter.formatPrice(vwap, currency))
+        }
+    }
     TradingChart(
-        series = ChartSeries.Candles(candles.candles),
-        live = candles.live,
+        series = ChartSeries.Candles(all),
+        live = live,
         format = chartFormatFor(currency, maxDecimals = priceDecimals(last?.close)),
         height = 320.dp,
         intraday = state.interval.isIntraday,
         logScale = state.logScale,
+        visibleBars = state.interval.visibleBars,
         onCrosshair = { crosshair = it },
+        onVisibleRange = { from, to -> window = from to to },
         modifier = Modifier.padding(vertical = 8.dp),
     )
     Row(
@@ -275,6 +283,14 @@ private fun CandleSection(state: AssetDetailUiState, candles: CandleChartState.R
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
     )
+}
+
+@Composable
+private fun CandleStat(label: String, value: String) {
+    Column {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodyMedium)
+    }
 }
 
 @Composable

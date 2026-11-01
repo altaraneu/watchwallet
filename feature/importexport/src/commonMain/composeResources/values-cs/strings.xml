@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ie_back">Zpět</string>
+    <string name="import_title">Import peněženek</string>
+    <string name="import_intro">Vlož adresy nebo xpuby (jednu na řádek, nebo oddělené čárkou, středníkem či mezerou), CSV soubor s hlavičkou nebo zálohu WatchWallet. Před importem vše zkontroluješ.</string>
+    <string name="import_paste_label">Adresy, CSV nebo záloha</string>
+    <string name="import_choose_file">Vybrat soubor</string>
+    <string name="import_preview">Zkontrolovat</string>
+    <string name="import_group">Přidat do skupiny (nepovinné)</string>
+    <string name="import_action">Importovat %1$d peněženek</string>
+    <string name="import_status_tracked">Už sledováno, přeskočí se</string>
+    <string name="import_status_duplicate">Duplicita v tomto seznamu</string>
+    <string name="import_status_unsupported">%1$s zatím není podporován</string>
+    <string name="import_status_confirm">Adresa Sui nebo Aptos: přidej ji na obrazovce Přidat peněženku, kde se vyžaduje potvrzení</string>
+    <string name="import_status_invalid">Nerozpoznaná adresa</string>
+    <string name="import_secret_title">Import zastaven: nalezen privátní klíč nebo seed fráze</string>
+    <string name="import_secret_message">Vstup obsahoval něco, co vypadá jako privátní klíč nebo seed fráze. Nic se neimportovalo, neuložilo ani neodeslalo a vstup byl vymazán. Odstraň tuto položku a zkus to znovu.</string>
+    <string name="import_encrypted">Záloha je šifrovaná. Zadej heslo.</string>
+    <string name="import_wrong_password">Špatné heslo nebo poškozený soubor</string>
+    <string name="import_decrypt">Dešifrovat</string>
+    <string name="import_done_title">Import dokončen</string>
+    <string name="import_done_summary">Importováno: %1$d · přeskočeno: %2$d · chyby: %3$d</string>
+    <string name="import_done_sync">Zůstatky a historie se načítají na pozadí.</string>
+    <string name="import_done_action">Zobrazit peněženky</string>
+    <string name="export_title">Export peněženek</string>
+    <string name="export_notice">Soubor neobsahuje žádné klíče, ale odhaluje všechny sledované adresy, a tím i tvůj majetek. Ukládej a sdílej ho opatrně.</string>
+    <string name="export_scope">Peněženky</string>
+    <string name="export_all">Všechny (%1$d)</string>
+    <string name="export_format">Formát</string>
+    <string name="export_format_json">Záloha (JSON)</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_text">Jen adresy</string>
+    <string name="export_password">Heslo</string>
+    <string name="export_password_hint">Nepovinné. Zašifruje zálohu (AES-256-GCM). Bez hesla ji nepůjde obnovit.</string>
+    <string name="export_include_values">Přidat aktuální hodnoty</string>
+    <string name="export_save">Uložit do souboru</string>
+    <string name="export_share">Sdílet</string>
+    <string name="export_saved">Uloženo</string>
+    <string name="export_save_failed">Soubor se nepodařilo uložit</string>
+</resources>

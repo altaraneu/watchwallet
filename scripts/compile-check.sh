@@ -7,7 +7,9 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 target="${1:-:shared}"
-./gradlew "${target}:compileAndroidMain" :app:compileDebugKotlin --continue --console=plain -q 2>&1 \
-  | grep -E '^e:|What went wrong|FAILED' \
-  | sed -e "s#file:///$(pwd | sed 's#^/\([a-z]\)/#\U\1:/#')/##" \
-  || echo "Compile OK"
+log="$(mktemp)"
+./gradlew "${target}:compileAndroidMain" :app:compileDebugKotlin --continue --console=plain -q >"$log" 2>&1
+status=$?
+grep -E '^e:|What went wrong|FAILED' "$log" | sed -e 's#file:///[A-Za-z]:/[^ ]*/watchwallet/##'
+rm -f "$log"
+if [ "$status" -eq 0 ]; then echo "Compile OK"; else echo "Compile FAILED"; exit 1; fi

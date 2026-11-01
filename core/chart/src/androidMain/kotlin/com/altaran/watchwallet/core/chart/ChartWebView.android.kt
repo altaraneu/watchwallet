@@ -27,9 +27,11 @@ internal actual fun ChartWebView(
     html: String,
     controller: ChartController,
     onCrosshair: (CrosshairValue?) -> Unit,
+    onVisibleRange: (Long, Long) -> Unit,
     modifier: Modifier,
 ) {
     val callback by rememberUpdatedState(onCrosshair)
+    val rangeCallback by rememberUpdatedState(onVisibleRange)
     val main = Handler(Looper.getMainLooper())
 
     AndroidView(
@@ -54,6 +56,11 @@ internal actual fun ChartWebView(
                         @JavascriptInterface
                         fun onCrosshair(payload: String?) {
                             main.post { callback(parseCrosshair(payload)) }
+                        }
+
+                        @JavascriptInterface
+                        fun onVisibleRange(payload: String?) {
+                            parseVisibleRange(payload)?.let { (from, to) -> main.post { rangeCallback(from, to) } }
                         }
 
                         @JavascriptInterface

@@ -93,11 +93,14 @@ androidComponents {
 dependencies {
     implementation(projects.shared)
     implementation(projects.core.designsystem)
+    implementation(projects.core.data)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.work.runtime)
 
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)

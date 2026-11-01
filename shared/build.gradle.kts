@@ -22,6 +22,7 @@ kotlin {
             implementation(projects.feature.markets)
             implementation(projects.feature.settings)
             implementation(projects.feature.donate)
+            implementation(projects.feature.importexport)
         }
     }
 }

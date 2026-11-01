@@ -9,9 +9,9 @@ import org.koin.dsl.module
 @Serializable
 data object AddWalletRoute
 
-fun NavGraphBuilder.addWalletScreen(onNavigateUp: () -> Unit, onWalletAdded: (Long) -> Unit) {
+fun NavGraphBuilder.addWalletScreen(onNavigateUp: () -> Unit, onWalletAdded: (Long) -> Unit, onBatchImport: (String) -> Unit = {}) {
     composable<AddWalletRoute> {
-        AddWalletRoute(onNavigateUp = onNavigateUp, onWalletAdded = onWalletAdded)
+        AddWalletRoute(onNavigateUp = onNavigateUp, onWalletAdded = onWalletAdded, onBatchImport = onBatchImport)
     }
 }
 

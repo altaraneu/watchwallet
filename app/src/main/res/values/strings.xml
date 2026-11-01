@@ -2,4 +2,7 @@
 <resources>
     <!-- Product name: not translated. All other user-facing text lives in composeResources. -->
     <string name="app_name" translatable="false">WatchWallet</string>
+    <string name="lock_title">WatchWallet is locked</string>
+    <string name="lock_unlock">Unlock</string>
+    <string name="lock_prompt_title">Unlock WatchWallet</string>
 </resources>

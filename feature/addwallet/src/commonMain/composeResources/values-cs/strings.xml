@@ -32,7 +32,7 @@
     <string name="add_wallet_checksum_title">Zkontroluj adresu</string>
     <string name="add_wallet_checksum_message">Velikost písmen v adrese neodpovídá kontrolnímu součtu. Adresa může obsahovat překlep. Zkopíruj ji znovu z původního zdroje.</string>
     <string name="add_wallet_multiple_title">Více než jedna adresa</string>
-    <string name="add_wallet_multiple_message">Hromadný import přijde brzy. Zatím přidávej adresy po jedné.</string>
+    <string name="add_wallet_multiple_message">Vložil jsi více adres. V hromadném importu je můžeš zkontrolovat a přidat všechny najednou.</string>
     <string name="add_wallet_unrecognized_title">Tohle nevypadá jako podporovaná adresa</string>
     <string name="add_wallet_unrecognized_message">Zkontroluj, že jsi zkopíroval celou adresu nebo klíč bez dalších znaků.</string>
     <string name="secret_title_mnemonic">Tohle vypadá jako seed fráze</string>
@@ -42,4 +42,5 @@
     <string name="default_name_bitcoin_wallet">Bitcoinová peněženka</string>
     <string name="default_name_bitcoin_address">Bitcoinová adresa</string>
     <string name="default_name_evm">Ethereum peněženka</string>
+    <string name="add_wallet_open_batch">Otevřít hromadný import</string>
 </resources>

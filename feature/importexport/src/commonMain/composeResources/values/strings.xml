@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ie_back">Back</string>
+    <string name="import_title">Import wallets</string>
+    <string name="import_intro">Paste addresses or xpubs (one per line, or separated by commas, semicolons or spaces), a CSV file with a header row, or a WatchWallet backup. You can review everything before importing.</string>
+    <string name="import_paste_label">Addresses, CSV or backup</string>
+    <string name="import_choose_file">Choose file</string>
+    <string name="import_preview">Review</string>
+    <string name="import_group">Add to group (optional)</string>
+    <!-- %1$d = number of selected wallets -->
+    <string name="import_action">Import %1$d wallets</string>
+    <string name="import_status_tracked">Already tracked, will be skipped</string>
+    <string name="import_status_duplicate">Duplicate in this list</string>
+    <!-- %1$s = chain name -->
+    <string name="import_status_unsupported">%1$s is not supported yet</string>
+    <string name="import_status_confirm">Sui or Aptos address: add it on the Add wallet screen, which asks for confirmation</string>
+    <string name="import_status_invalid">Not a recognised address</string>
+    <string name="import_secret_title">Import stopped: private key or seed phrase found</string>
+    <string name="import_secret_message">The input contained something that looks like a private key or seed phrase. Nothing was imported, saved or sent anywhere, and the input was cleared. Remove that entry and try again.</string>
+    <string name="import_encrypted">This backup is encrypted. Enter its password.</string>
+    <string name="import_wrong_password">Wrong password or damaged file</string>
+    <string name="import_decrypt">Decrypt</string>
+    <string name="import_done_title">Import finished</string>
+    <!-- %1$d imported, %2$d skipped, %3$d failed -->
+    <string name="import_done_summary">Imported: %1$d · skipped: %2$d · failed: %3$d</string>
+    <string name="import_done_sync">Balances and history are loading in the background.</string>
+    <string name="import_done_action">Show wallets</string>
+    <string name="export_title">Export wallets</string>
+    <string name="export_notice">The file contains no keys, but it reveals all your tracked addresses and therefore your holdings. Store and share it carefully.</string>
+    <string name="export_scope">Wallets</string>
+    <!-- %1$d = number of wallets -->
+    <string name="export_all">All (%1$d)</string>
+    <string name="export_format">Format</string>
+    <string name="export_format_json">Backup (JSON)</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_text">Addresses only</string>
+    <string name="export_password">Password</string>
+    <string name="export_password_hint">Optional. Encrypts the backup (AES-256-GCM). Without the password it cannot be restored.</string>
+    <string name="export_include_values">Include current values</string>
+    <string name="export_save">Save to file</string>
+    <string name="export_share">Share</string>
+    <string name="export_saved">Saved</string>
+    <string name="export_save_failed">Could not save the file</string>
+</resources>

@@ -25,4 +25,11 @@ data class AppInfo(
     val isDynamicColorAvailable: Boolean,
     /** Debug builds show developer tools (demo data). */
     val isDebug: Boolean = false,
+    /** Biometrics or a device credential are set up, so the app lock can be offered. */
+    val isAppLockAvailable: Boolean = false,
 )
+
+/** Restarts the app so network settings (proxy, endpoints) take effect. */
+fun interface AppRestarter {
+    fun restart()
+}

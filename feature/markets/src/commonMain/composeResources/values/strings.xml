@@ -32,4 +32,9 @@
     <!-- Open, high, low of the candle under the finger -->
     <string name="asset_ohlc">O %1$s · H %2$s · L %3$s</string>
     <string name="asset_source_kraken">Live candles: Kraken public market data. Non-EUR/USD currencies converted with ECB reference rates.</string>
+    <string name="asset_visible_range">in the visible range</string>
+    <string name="asset_high">Max</string>
+    <string name="asset_low">Min</string>
+    <!-- Volume-weighted average price of the candle -->
+    <string name="asset_average">Average</string>
 </resources>

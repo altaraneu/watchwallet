@@ -2,6 +2,7 @@ package com.altaran.watchwallet.shared
 
 import com.altaran.watchwallet.core.data.dataModule
 import com.altaran.watchwallet.feature.addwallet.addWalletModule
+import com.altaran.watchwallet.feature.importexport.importExportModule
 import com.altaran.watchwallet.feature.markets.marketsModule
 import com.altaran.watchwallet.feature.portfolio.portfolioModule
 import com.altaran.watchwallet.feature.settings.settingsModule
@@ -26,4 +27,5 @@ val sharedModules: List<Module> = listOf(
     addWalletModule,
     marketsModule,
     settingsModule,
+    importExportModule,
 )

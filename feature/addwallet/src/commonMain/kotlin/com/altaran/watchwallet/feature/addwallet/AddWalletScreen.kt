@@ -66,6 +66,7 @@ import org.koin.compose.viewmodel.koinViewModel
 internal fun AddWalletRoute(
     onNavigateUp: () -> Unit,
     onWalletAdded: (Long) -> Unit,
+    onBatchImport: (String) -> Unit = {},
     viewModel: AddWalletViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -79,6 +80,7 @@ internal fun AddWalletRoute(
         onSelectCandidate = viewModel::onSelectCandidate,
         onNameChange = viewModel::onNameChange,
         onSave = viewModel::onSave,
+        onBatchImport = onBatchImport,
     )
 }
 
@@ -93,6 +95,7 @@ internal fun AddWalletScreen(
     onSelectCandidate: (Int) -> Unit,
     onNameChange: (String) -> Unit,
     onSave: (defaultName: String) -> Unit,
+    onBatchImport: (String) -> Unit = {},
 ) {
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
@@ -161,10 +164,13 @@ internal fun AddWalletScreen(
                     stringResource(Res.string.add_wallet_checksum_title),
                     stringResource(Res.string.add_wallet_checksum_message),
                 )
-                AddWalletPhase.MultipleEntries -> InfoCard(
-                    stringResource(Res.string.add_wallet_multiple_title),
-                    stringResource(Res.string.add_wallet_multiple_message),
-                )
+                AddWalletPhase.MultipleEntries -> {
+                    InfoCard(
+                        stringResource(Res.string.add_wallet_multiple_title),
+                        stringResource(Res.string.add_wallet_multiple_message),
+                    )
+                    FilledTonalButton(onClick = { onBatchImport(state.input) }) { Text(stringResource(Res.string.add_wallet_open_batch)) }
+                }
                 AddWalletPhase.Unrecognized -> InfoCard(
                     stringResource(Res.string.add_wallet_unrecognized_title),
                     stringResource(Res.string.add_wallet_unrecognized_message),

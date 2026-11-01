@@ -32,6 +32,11 @@ import com.altaran.watchwallet.feature.settings.generated.resources.currency_nam
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_charts_attribution
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_charts_attribution_summary
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_currency
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_export
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_export_summary
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_import
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_import_summary
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_section_data
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_demo_wallets
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_demo_wallets_summary
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_section_developer
@@ -64,6 +69,8 @@ private enum class Picker { CURRENCY, THEME, LANGUAGE }
 @Composable
 internal fun SettingsRoute(
     onOpenSupport: () -> Unit,
+    onOpenImport: () -> Unit = {},
+    onOpenExport: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -75,7 +82,14 @@ internal fun SettingsRoute(
         onDiscreetModeChange = viewModel::setDiscreetMode,
         onSelectLanguage = viewModel::setLanguage,
         onOpenSupport = onOpenSupport,
+        onOpenImport = onOpenImport,
+        onOpenExport = onOpenExport,
         onSeedDemo = viewModel::seedDemoWallets,
+        onAppLockChange = viewModel::setAppLock,
+        onSecureScreenChange = viewModel::setSecureScreen,
+        onBackgroundRefreshChange = viewModel::setBackgroundRefresh,
+        onNetworkChange = viewModel::setNetwork,
+        onRestart = viewModel::restart,
     )
 }
 
@@ -89,7 +103,14 @@ internal fun SettingsScreen(
     onDiscreetModeChange: (Boolean) -> Unit,
     onSelectLanguage: (String?) -> Unit,
     onOpenSupport: () -> Unit,
+    onOpenImport: () -> Unit = {},
+    onOpenExport: () -> Unit = {},
     onSeedDemo: () -> Unit = {},
+    onAppLockChange: (Boolean) -> Unit = {},
+    onSecureScreenChange: (Boolean) -> Unit = {},
+    onBackgroundRefreshChange: (Int, Boolean) -> Unit = { _, _ -> },
+    onNetworkChange: (com.altaran.watchwallet.core.model.NetworkSettings) -> Unit = {},
+    onRestart: () -> Unit = {},
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
@@ -137,12 +158,34 @@ internal fun SettingsScreen(
                 onClick = { openPicker = Picker.LANGUAGE },
             )
 
+            SectionHeader(stringResource(Res.string.settings_section_data))
+            SettingsItem(
+                title = stringResource(Res.string.settings_import),
+                summary = stringResource(Res.string.settings_import_summary),
+                showChevron = true,
+                onClick = onOpenImport,
+            )
+            SettingsItem(
+                title = stringResource(Res.string.settings_export),
+                summary = stringResource(Res.string.settings_export_summary),
+                showChevron = true,
+                onClick = onOpenExport,
+            )
+
             SectionHeader(stringResource(Res.string.settings_section_privacy))
             SettingsSwitchItem(
                 title = stringResource(Res.string.settings_discreet_mode),
                 summary = stringResource(Res.string.settings_discreet_mode_summary),
                 checked = settings.discreetMode,
                 onCheckedChange = onDiscreetModeChange,
+            )
+            AdvancedSettingsSections(
+                state = uiState,
+                onAppLockChange = onAppLockChange,
+                onSecureScreenChange = onSecureScreenChange,
+                onBackgroundRefreshChange = onBackgroundRefreshChange,
+                onNetworkChange = onNetworkChange,
+                onRestart = onRestart,
             )
 
             SectionHeader(stringResource(Res.string.settings_section_about))

@@ -56,7 +56,7 @@
       },
       grid: { vertLines: { color: o.colors.grid }, horzLines: { color: o.colors.grid } },
       rightPriceScale: { borderVisible: false, visible: !o.hideValues, mode: o.logScale ? 1 : 0, scaleMargins: { top: 0.12, bottom: 0.08 } },
-      timeScale: { borderVisible: false, timeVisible: o.intraday, secondsVisible: false, rightOffset: 4, fixLeftEdge: true },
+      timeScale: { borderVisible: false, timeVisible: o.intraday, secondsVisible: false, rightOffset: 4, minBarSpacing: 0.5 },
       crosshair: { mode: 0, vertLine: { labelBackgroundColor: o.colors.accent }, horzLine: { visible: !o.hideValues, labelVisible: !o.hideValues, labelBackgroundColor: o.colors.accent } },
       localization: { locale: o.locale, priceFormatter: formatter },
       handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
@@ -75,6 +75,13 @@
         crosshairMarkerRadius: 4
       });
     }
+    // Report the visible window so the app can show the change for what the user sees.
+    chart.timeScale().subscribeVisibleLogicalRangeChange(function (range) {
+      if (!range || !series) return;
+      var from = series.dataByIndex(Math.max(0, Math.ceil(range.from)), 1);
+      var to = series.dataByIndex(Math.floor(range.to), -1);
+      if (from && to) post('onVisibleRange', JSON.stringify({ from: from.time, to: to.time }));
+    });
     chart.subscribeCrosshairMove(function (param) {
       if (!param || param.time === undefined || !param.point) { post('onCrosshair', JSON.stringify(null)); return; }
       var d = param.seriesData.get(series);
@@ -85,10 +92,17 @@
     post('onReady', '');
   }
 
-  function setData(points, fit) {
+  // visibleBars > 0: show only the most recent bars (the user can pan back and zoom out);
+  // otherwise fit everything.
+  function setData(points, fit, visibleBars) {
     if (!series) return;
     series.setData(points);
-    if (fit) chart.timeScale().fitContent();
+    if (!fit) return;
+    if (visibleBars && points.length > visibleBars) {
+      chart.timeScale().setVisibleLogicalRange({ from: points.length - visibleBars, to: points.length + 2 });
+    } else {
+      chart.timeScale().fitContent();
+    }
   }
 
   function update(point) {

@@ -30,6 +30,9 @@ import com.altaran.watchwallet.feature.addwallet.AddWalletRoute
 import com.altaran.watchwallet.feature.addwallet.addWalletScreen
 import com.altaran.watchwallet.feature.donate.DonateRoute
 import com.altaran.watchwallet.feature.donate.donateScreen
+import com.altaran.watchwallet.feature.importexport.ExportRoute
+import com.altaran.watchwallet.feature.importexport.ImportRoute
+import com.altaran.watchwallet.feature.importexport.importExportScreens
 import com.altaran.watchwallet.feature.markets.AssetDetailRoute
 import com.altaran.watchwallet.feature.markets.MarketsRoute
 import com.altaran.watchwallet.feature.markets.assetDetailScreen
@@ -122,6 +125,7 @@ private fun AppScaffold(navController: NavHostController = rememberNavController
             walletDetailScreen(onNavigateUp = navController::navigateUp, onOpenHolding = openHolding)
             addWalletScreen(
                 onNavigateUp = navController::navigateUp,
+                onBatchImport = { text -> navController.navigate(ImportRoute(text)) },
                 onWalletAdded = { id ->
                     navController.navigate(WalletDetailRoute(id)) {
                         popUpTo<AddWalletRoute> { inclusive = true }
@@ -130,7 +134,15 @@ private fun AppScaffold(navController: NavHostController = rememberNavController
             )
             marketsScreen(onOpenAsset = openHolding)
             assetDetailScreen(onNavigateUp = navController::navigateUp)
-            settingsScreen(onOpenSupport = { navController.navigate(DonateRoute) })
+            settingsScreen(
+                onOpenSupport = { navController.navigate(DonateRoute) },
+                onOpenImport = { navController.navigate(ImportRoute()) },
+                onOpenExport = { navController.navigate(ExportRoute) },
+            )
+            importExportScreens(
+                onNavigateUp = navController::navigateUp,
+                onImportDone = { navController.navigateToTopLevel(TopLevelDestination.WALLETS) },
+            )
             donateScreen(onNavigateUp = navController::navigateUp)
         }
     }

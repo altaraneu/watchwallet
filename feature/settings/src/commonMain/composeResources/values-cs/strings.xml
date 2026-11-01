@@ -32,4 +32,40 @@
     <string name="settings_section_developer">Pro vývojáře</string>
     <string name="settings_demo_wallets">Přidat ukázkové peněženky</string>
     <string name="settings_demo_wallets_summary">Veřejné peněženky pro dvě osoby (Alice a Bob) k testování</string>
+    <string name="settings_app_lock">Zámek aplikace</string>
+    <string name="settings_app_lock_summary">Vyžadovat otisk prstu, obličej nebo zámek obrazovky při otevření</string>
+    <string name="settings_secure_screen">Blokovat snímky obrazovky</string>
+    <string name="settings_secure_screen_summary">Skryje aplikaci i v náhledu posledních aplikací</string>
+    <string name="settings_section_refresh">Obnova dat</string>
+    <string name="settings_background_refresh">Obnova na pozadí</string>
+    <string name="settings_refresh_off">Vypnuto</string>
+    <plurals name="settings_refresh_every_hours">
+        <item quantity="one">Každou hodinu</item>
+        <item quantity="few">Každé %1$d hodiny</item>
+        <item quantity="many">Každých %1$d hodin</item>
+        <item quantity="other">Každých %1$d hodin</item>
+    </plurals>
+    <string name="settings_wifi_only">Jen přes Wi-Fi</string>
+    <string name="settings_section_network">Síť</string>
+    <string name="settings_proxy">Tor / SOCKS5 proxy</string>
+    <string name="settings_proxy_summary">Směrovat veškerý provoz přes proxy, např. Orbot</string>
+    <string name="settings_proxy_address">Adresa proxy</string>
+    <string name="settings_proxy_help">Orbot ve výchozím stavu naslouchá na 127.0.0.1 portu 9050.</string>
+    <string name="settings_proxy_host">Hostitel</string>
+    <string name="settings_proxy_port">Port</string>
+    <string name="settings_esplora">Bitcoin server (Esplora)</string>
+    <string name="settings_esplora_hint">Základní URL vlastního Esplora / electrs REST serveru, např. https://muj-uzel.local/api. Prázdné = mempool.space.</string>
+    <string name="settings_default_server">Výchozí (mempool.space)</string>
+    <string name="settings_coingecko_key">API klíč CoinGecko</string>
+    <string name="settings_coingecko_hint">Volitelný bezplatný demo klíč pro vyšší limity dotazů na ceny a delší historii cen.</string>
+    <string name="settings_not_set">Nenastaveno</string>
+    <string name="settings_restart_required">Pro použití síťových nastavení restartuj aplikaci.</string>
+    <string name="settings_restart">Restartovat</string>
+    <string name="settings_save">Uložit</string>
+    <string name="settings_cancel">Zrušit</string>
+    <string name="settings_section_data">Peněženky</string>
+    <string name="settings_import">Importovat peněženky</string>
+    <string name="settings_import_summary">Z textu, CSV nebo zálohy WatchWallet</string>
+    <string name="settings_export">Exportovat peněženky</string>
+    <string name="settings_export_summary">Záloha jako JSON (volitelně šifrovaný), CSV nebo text</string>
 </resources>

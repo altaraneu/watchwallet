@@ -80,7 +80,12 @@ enum class AssetChartMode { PRICE, VALUE, BALANCE }
 sealed interface CandleChartState {
     data object Loading : CandleChartState
 
-    data class Ready(val candles: List<Candle>, val live: Candle?) : CandleChartState
+    data class Ready(
+        val candles: List<Candle>,
+        val live: Candle?,
+        /** Candle start (UTC seconds) → VWAP, for the tap details. */
+        val vwap: Map<Long, Double> = emptyMap(),
+    ) : CandleChartState
 
     data object Unavailable : CandleChartState
 }
@@ -153,8 +158,14 @@ internal class AssetDetailViewModel(
                 candles.value = CandleChartState.Loading
                 marketData.candles(s, c, i).collect { feed ->
                     candles.value = when (feed) {
-                        is CandleFeed.History -> CandleChartState.Ready(feed.candles.map { it.toChart() }, null)
-                        is CandleFeed.Live -> (candles.value as? CandleChartState.Ready)?.copy(live = feed.candle.toChart()) ?: candles.value
+                        is CandleFeed.History -> CandleChartState.Ready(
+                            candles = feed.candles.map { it.toChart() },
+                            live = null,
+                            vwap = feed.candles.associate { it.time to it.vwap },
+                        )
+                        is CandleFeed.Live -> (candles.value as? CandleChartState.Ready)?.let { ready ->
+                            ready.copy(live = feed.candle.toChart(), vwap = ready.vwap + (feed.candle.time to feed.candle.vwap))
+                        } ?: candles.value
                         CandleFeed.Unavailable -> CandleChartState.Unavailable
                     }
                 }

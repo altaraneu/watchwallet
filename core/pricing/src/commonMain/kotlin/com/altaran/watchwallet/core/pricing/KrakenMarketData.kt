@@ -27,8 +27,16 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 /** OHLC candle; [time] = interval start in UTC seconds. */
-data class OhlcCandle(val time: Long, val open: Double, val high: Double, val low: Double, val close: Double) {
-    fun scaled(factor: Double) = OhlcCandle(time, open * factor, high * factor, low * factor, close * factor)
+data class OhlcCandle(
+    val time: Long,
+    val open: Double,
+    val high: Double,
+    val low: Double,
+    val close: Double,
+    /** Volume-weighted average price of the interval (0 when unknown). */
+    val vwap: Double = 0.0,
+) {
+    fun scaled(factor: Double) = OhlcCandle(time, open * factor, high * factor, low * factor, close * factor, vwap * factor)
 }
 
 /**
@@ -59,6 +67,7 @@ class KrakenMarketData(
                 high = a[2].jsonPrimitive.content.toDouble(),
                 low = a[3].jsonPrimitive.content.toDouble(),
                 close = a[4].jsonPrimitive.content.toDouble(),
+                vwap = a.getOrNull(5)?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0,
             )
         }
     }
@@ -111,6 +120,7 @@ class KrakenMarketData(
                 high = o["high"]?.jsonPrimitive?.doubleOrNull ?: return@mapNotNull null,
                 low = o["low"]?.jsonPrimitive?.doubleOrNull ?: return@mapNotNull null,
                 close = o["close"]?.jsonPrimitive?.doubleOrNull ?: return@mapNotNull null,
+                vwap = o["vwap"]?.jsonPrimitive?.doubleOrNull ?: 0.0,
             )
         }
     }

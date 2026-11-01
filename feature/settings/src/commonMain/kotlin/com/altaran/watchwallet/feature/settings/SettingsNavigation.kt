@@ -9,9 +9,9 @@ import org.koin.dsl.module
 @Serializable
 data object SettingsRoute
 
-fun NavGraphBuilder.settingsScreen(onOpenSupport: () -> Unit) {
+fun NavGraphBuilder.settingsScreen(onOpenSupport: () -> Unit, onOpenImport: () -> Unit, onOpenExport: () -> Unit) {
     composable<SettingsRoute> {
-        SettingsRoute(onOpenSupport = onOpenSupport)
+        SettingsRoute(onOpenSupport = onOpenSupport, onOpenImport = onOpenImport, onOpenExport = onOpenExport)
     }
 }
 
