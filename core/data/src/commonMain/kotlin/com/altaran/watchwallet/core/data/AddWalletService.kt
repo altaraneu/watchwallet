@@ -1,6 +1,7 @@
 package com.altaran.watchwallet.core.data
 
 import com.altaran.watchwallet.chain.api.ProbeResult
+import com.altaran.watchwallet.chain.cosmos.CosmosAddresses
 import com.altaran.watchwallet.core.classifier.AddressClassifier
 import com.altaran.watchwallet.core.classifier.Candidate
 import com.altaran.watchwallet.core.classifier.Classification
@@ -78,10 +79,27 @@ class AddWalletService(
         }.awaitAll()
     }
 
-    /** Saves the wallet and starts its first sync in the background. */
+    /**
+     * Saves the wallet and starts its first sync in the background. For a Cosmos SDK account the
+     * same key on the sister chains (same coin type, different prefix) is checked as well, and
+     * the ones with activity are added as separate wallets named "<name> (<chain>)".
+     */
     suspend fun save(target: WatchTarget, name: String, probe: ProbeResult?): Long {
         val id = walletRepository.addWallet(target, name, probe?.activeChains.orEmpty())
         syncEngine.syncWallet(id)
+        if (target is WatchTarget.Address && target.family == ChainFamily.COSMOS) addRelatedCosmos(target, name)
         return id
+    }
+
+    private suspend fun addRelatedCosmos(target: WatchTarget.Address, name: String) = coroutineScope {
+        CosmosAddresses.relatedAddresses(target.address).filter { registry.supports(it) }.map { related ->
+            async {
+                if (walletRepository.findExisting(related) != null) return@async
+                val probe = registry.adapter(related)?.let { runCatching { it.probe(related) }.getOrNull() } ?: return@async
+                if (!probe.hasActivity) return@async
+                val id = walletRepository.addWallet(related, "$name (${chainName(related.chainId)})", probe.activeChains)
+                syncEngine.syncWallet(id)
+            }
+        }.awaitAll()
     }
 }
