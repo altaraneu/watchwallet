@@ -5,6 +5,8 @@
    English source `values/strings.xml` in the same module, with the same placeholders.
 2. No hardcoded user-facing text: `Text("...")` with a string literal is not allowed in
    production Kotlin code (use string resources).
+3. No Android-style escapes in Compose resources: `\'` and `\"` are shown literally there;
+   write the character itself (prefer the typographic apostrophe).
 
 Exit code 0 when clean, 1 when problems were found.
 """
@@ -70,8 +72,19 @@ def check_hardcoded_text() -> list[str]:
     return problems
 
 
+def check_escapes() -> list[str]:
+    problems: list[str] = []
+    for path in sorted(ROOT.glob("**/composeResources/values*/strings.xml")):
+        if SKIP_DIRS & set(path.relative_to(ROOT).parts):
+            continue
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            if "\\'" in line or '\\"' in line:
+                problems.append(f"{path.relative_to(ROOT)}:{number}: escaped quote is shown literally in Compose: {line.strip()}")
+    return problems
+
+
 def main() -> int:
-    problems = check_translations() + check_hardcoded_text()
+    problems = check_translations() + check_hardcoded_text() + check_escapes()
     for problem in problems:
         print(problem)
     if problems:

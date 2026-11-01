@@ -6,10 +6,13 @@ import com.altaran.watchwallet.core.data.repository.PriceRepository
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.model.UserSettings
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -25,7 +28,7 @@ sealed interface AppUiState {
  * app-start refresh: one sync of all wallets and a price refresh whenever the currency changes.
  */
 class AppViewModel(
-    settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
     syncEngine: SyncEngine,
     priceRepository: PriceRepository,
 ) : ViewModel() {
@@ -34,7 +37,23 @@ class AppViewModel(
         .map<UserSettings, AppUiState> { AppUiState.Ready(it) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, AppUiState.Loading)
 
+    private val _showDonateReminder = MutableStateFlow(false)
+
+    /** A gentle donation reminder on the 5th, 10th and 30th launch (unless turned off). */
+    val showDonateReminder: StateFlow<Boolean> = _showDonateReminder.asStateFlow()
+
+    fun dismissDonateReminder(forever: Boolean) {
+        _showDonateReminder.value = false
+        if (forever) viewModelScope.launch { settingsRepository.disableDonateReminder() }
+    }
+
     init {
+        viewModelScope.launch {
+            val launches = settingsRepository.recordLaunch()
+            if (launches in DONATE_REMINDER_LAUNCHES && !settingsRepository.donateReminderDisabled.first()) {
+                _showDonateReminder.value = true
+            }
+        }
         syncEngine.syncAll()
         viewModelScope.launch {
             settingsRepository.settings
@@ -54,5 +73,6 @@ class AppViewModel(
 
     private companion object {
         const val PRICE_REFRESH_MS = 60_000L
+        val DONATE_REMINDER_LAUNCHES = setOf(5, 10, 30)
     }
 }

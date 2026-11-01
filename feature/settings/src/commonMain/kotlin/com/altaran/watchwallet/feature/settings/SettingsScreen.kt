@@ -5,9 +5,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -33,6 +36,12 @@ import com.altaran.watchwallet.feature.settings.generated.resources.settings_cha
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_charts_attribution_summary
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_currency
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_currency_label
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_delete_all
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_delete_all_cancel
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_delete_all_confirm
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_delete_all_message
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_delete_all_summary
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_delete_all_title
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_demo_wallets
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_demo_wallets_summary
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_discreet_mode
@@ -61,6 +70,7 @@ import com.altaran.watchwallet.feature.settings.generated.resources.settings_the
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_theme_system
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_title
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_version
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -74,8 +84,11 @@ internal fun SettingsRoute(
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val walletCount by viewModel.walletCount.collectAsStateWithLifecycle()
     SettingsScreen(
         uiState = uiState,
+        walletCount = walletCount,
+        onDeleteAllWallets = viewModel::deleteAllWallets,
         onSelectCurrency = viewModel::setQuoteCurrency,
         onSelectTheme = viewModel::setThemeMode,
         onDynamicColorChange = viewModel::setUseDynamicColor,
@@ -97,6 +110,8 @@ internal fun SettingsRoute(
 @Composable
 internal fun SettingsScreen(
     uiState: SettingsUiState,
+    walletCount: Int = 0,
+    onDeleteAllWallets: () -> Unit = {},
     onSelectCurrency: (QuoteCurrency) -> Unit,
     onSelectTheme: (ThemeMode) -> Unit,
     onDynamicColorChange: (Boolean) -> Unit,
@@ -124,6 +139,7 @@ internal fun SettingsScreen(
     ) { padding ->
         if (uiState !is SettingsUiState.Ready) return@Scaffold
         var openPicker by rememberSaveable { mutableStateOf<Picker?>(null) }
+        var confirmDeleteAll by rememberSaveable { mutableStateOf(false) }
         val settings = uiState.settings
         val uriHandler = LocalUriHandler.current
 
@@ -133,6 +149,13 @@ internal fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState()),
         ) {
+            SettingsItem(
+                title = stringResource(Res.string.settings_support),
+                summary = stringResource(Res.string.settings_support_summary),
+                showChevron = true,
+                onClick = onOpenSupport,
+            )
+
             SectionHeader(stringResource(Res.string.settings_section_display))
             SettingsItem(
                 title = stringResource(Res.string.settings_currency),
@@ -171,6 +194,13 @@ internal fun SettingsScreen(
                 showChevron = true,
                 onClick = onOpenExport,
             )
+            if (walletCount > 0) {
+                SettingsItem(
+                    title = stringResource(Res.string.settings_delete_all),
+                    summary = pluralStringResource(Res.plurals.settings_delete_all_summary, walletCount, walletCount),
+                    onClick = { confirmDeleteAll = true },
+                )
+            }
 
             SectionHeader(stringResource(Res.string.settings_section_privacy))
             SettingsSwitchItem(
@@ -189,12 +219,6 @@ internal fun SettingsScreen(
             )
 
             SectionHeader(stringResource(Res.string.settings_section_about))
-            SettingsItem(
-                title = stringResource(Res.string.settings_support),
-                summary = stringResource(Res.string.settings_support_summary),
-                showChevron = true,
-                onClick = onOpenSupport,
-            )
             SettingsItem(
                 title = stringResource(Res.string.settings_source_code),
                 summary = uiState.appInfo.sourceCodeUrl,
@@ -221,6 +245,25 @@ internal fun SettingsScreen(
                     onClick = onSeedDemo,
                 )
             }
+        }
+
+        if (confirmDeleteAll) {
+            AlertDialog(
+                onDismissRequest = { confirmDeleteAll = false },
+                title = { Text(stringResource(Res.string.settings_delete_all_title)) },
+                text = { Text(stringResource(Res.string.settings_delete_all_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        confirmDeleteAll = false
+                        onDeleteAllWallets()
+                    }) {
+                        Text(stringResource(Res.string.settings_delete_all_confirm), color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirmDeleteAll = false }) { Text(stringResource(Res.string.settings_delete_all_cancel)) }
+                },
+            )
         }
 
         when (openPicker) {

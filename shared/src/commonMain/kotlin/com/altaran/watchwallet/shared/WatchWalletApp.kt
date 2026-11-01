@@ -1,14 +1,17 @@
 package com.altaran.watchwallet.shared
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -46,6 +49,11 @@ import com.altaran.watchwallet.feature.wallets.WalletsRoute
 import com.altaran.watchwallet.feature.wallets.walletDetailScreen
 import com.altaran.watchwallet.feature.wallets.walletsScreen
 import com.altaran.watchwallet.shared.generated.resources.Res
+import com.altaran.watchwallet.shared.generated.resources.donate_reminder_later
+import com.altaran.watchwallet.shared.generated.resources.donate_reminder_message
+import com.altaran.watchwallet.shared.generated.resources.donate_reminder_never
+import com.altaran.watchwallet.shared.generated.resources.donate_reminder_support
+import com.altaran.watchwallet.shared.generated.resources.donate_reminder_title
 import com.altaran.watchwallet.shared.generated.resources.nav_markets
 import com.altaran.watchwallet.shared.generated.resources.nav_portfolio
 import com.altaran.watchwallet.shared.generated.resources.nav_settings
@@ -67,9 +75,38 @@ fun WatchWalletApp(viewModel: AppViewModel) {
     }
     WatchWalletTheme(darkTheme = darkTheme, dynamicColor = settings.useDynamicColor) {
         CompositionLocalProvider(LocalDiscreetMode provides settings.discreetMode) {
-            AppScaffold()
+            val navController = rememberNavController()
+            AppScaffold(navController)
+            val showReminder by viewModel.showDonateReminder.collectAsStateWithLifecycle()
+            if (showReminder) {
+                DonateReminderDialog(
+                    onSupport = {
+                        viewModel.dismissDonateReminder(forever = false)
+                        navController.navigate(DonateRoute)
+                    },
+                    onLater = { viewModel.dismissDonateReminder(forever = false) },
+                    onNever = { viewModel.dismissDonateReminder(forever = true) },
+                )
+            }
         }
     }
+}
+
+/** Shown on the 5th, 10th and 30th launch; "Don't ask again" turns it off for good. */
+@Composable
+private fun DonateReminderDialog(onSupport: () -> Unit, onLater: () -> Unit, onNever: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onLater,
+        title = { Text(stringResource(Res.string.donate_reminder_title)) },
+        text = { Text(stringResource(Res.string.donate_reminder_message)) },
+        confirmButton = { TextButton(onClick = onSupport) { Text(stringResource(Res.string.donate_reminder_support)) } },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onNever) { Text(stringResource(Res.string.donate_reminder_never)) }
+                TextButton(onClick = onLater) { Text(stringResource(Res.string.donate_reminder_later)) }
+            }
+        },
+    )
 }
 
 private enum class TopLevelDestination(

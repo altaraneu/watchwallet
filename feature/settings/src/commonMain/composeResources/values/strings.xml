@@ -69,4 +69,14 @@
     <string name="settings_import_summary">From text, CSV or a WatchWallet backup</string>
     <string name="settings_export">Export wallets</string>
     <string name="settings_export_summary">Backup as JSON (optionally encrypted), CSV or text</string>
+    <string name="settings_delete_all">Delete all wallets</string>
+    <plurals name="settings_delete_all_summary">
+        <item quantity="one">%1$d wallet with its history and groups</item>
+        <item quantity="other">%1$d wallets with their history and groups</item>
+    </plurals>
+    <string name="settings_delete_all_title">Delete all wallets?</string>
+    <!-- Confirmation text; settings and the watchlist are kept. -->
+    <string name="settings_delete_all_message">All wallets, their cached history and groups are removed from this device. Settings and the watchlist stay. Nothing changes on any blockchain. Consider exporting a backup first.</string>
+    <string name="settings_delete_all_confirm">Delete all</string>
+    <string name="settings_delete_all_cancel">Cancel</string>
 </resources>

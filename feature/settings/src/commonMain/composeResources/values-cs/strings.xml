@@ -68,4 +68,15 @@
     <string name="settings_import_summary">Z textu, CSV nebo zálohy WatchWallet</string>
     <string name="settings_export">Exportovat peněženky</string>
     <string name="settings_export_summary">Záloha jako JSON (volitelně šifrovaný), CSV nebo text</string>
+    <string name="settings_delete_all">Smazat všechny peněženky</string>
+    <plurals name="settings_delete_all_summary">
+        <item quantity="one">%1$d peněženka s historií a skupinami</item>
+        <item quantity="few">%1$d peněženky s historií a skupinami</item>
+        <item quantity="many">%1$d peněženky s historií a skupinami</item>
+        <item quantity="other">%1$d peněženek s historií a skupinami</item>
+    </plurals>
+    <string name="settings_delete_all_title">Smazat všechny peněženky?</string>
+    <string name="settings_delete_all_message">Ze zařízení se odstraní všechny peněženky, jejich uložená historie i skupiny. Nastavení a sledované mince zůstanou. Na žádném blockchainu se nic nezmění. Zvažte nejdřív export zálohy.</string>
+    <string name="settings_delete_all_confirm">Smazat vše</string>
+    <string name="settings_delete_all_cancel">Zrušit</string>
 </resources>

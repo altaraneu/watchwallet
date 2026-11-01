@@ -4,4 +4,10 @@
     <string name="nav_wallets">Wallets</string>
     <string name="nav_markets">Markets</string>
     <string name="nav_settings">Settings</string>
+    <!-- Donation reminder dialog, shown on the 5th, 10th and 30th app launch. -->
+    <string name="donate_reminder_title">Enjoying WatchWallet?</string>
+    <string name="donate_reminder_message">WatchWallet is free, open source and has no ads or tracking. If it is useful to you, a small donation helps keep it that way.</string>
+    <string name="donate_reminder_support">Support</string>
+    <string name="donate_reminder_later">Not now</string>
+    <string name="donate_reminder_never">Don’t ask again</string>
 </resources>

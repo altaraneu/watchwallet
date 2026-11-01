@@ -36,7 +36,16 @@ internal class SettingsViewModel(
     /** Network settings the running app was started with. */
     private val activeNetwork: com.altaran.watchwallet.core.model.NetworkSettings,
     private val restarter: com.altaran.watchwallet.core.data.platform.AppRestarter,
+    private val walletRepository: com.altaran.watchwallet.core.data.repository.WalletRepository,
 ) : ViewModel() {
+    /** Number of tracked wallets, for the "delete all" row. */
+    val walletCount: StateFlow<Int> = walletRepository.activeWalletCount
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    fun deleteAllWallets() {
+        viewModelScope.launch { walletRepository.deleteAll() }
+    }
+
     val uiState: StateFlow<SettingsUiState> = combine(
         settingsRepository.settings,
         languageController.selectedLanguageTag,

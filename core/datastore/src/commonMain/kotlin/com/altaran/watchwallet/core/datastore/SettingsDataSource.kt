@@ -83,6 +83,20 @@ class SettingsDataSource(
         it[Keys.COINGECKO_KEY] = network.coinGeckoApiKey.orEmpty()
     }
 
+    /** Counts app launches (local only) and returns the new count. */
+    suspend fun recordLaunch(): Int {
+        var count = 0
+        dataStore.edit { prefs ->
+            count = (prefs[Keys.LAUNCH_COUNT] ?: 0) + 1
+            prefs[Keys.LAUNCH_COUNT] = count
+        }
+        return count
+    }
+
+    val donateReminderDisabled: Flow<Boolean> = dataStore.data.map { it[Keys.DONATE_REMINDER_OFF] ?: false }
+
+    suspend fun disableDonateReminder() = edit { it[Keys.DONATE_REMINDER_OFF] = true }
+
     private suspend fun edit(block: (MutablePreferences) -> Unit) {
         dataStore.edit { block(it) }
     }
@@ -101,5 +115,7 @@ class SettingsDataSource(
         val PROXY_PORT = intPreferencesKey("proxy_port")
         val ESPLORA_URL = stringPreferencesKey("esplora_url")
         val COINGECKO_KEY = stringPreferencesKey("coingecko_api_key")
+        val LAUNCH_COUNT = intPreferencesKey("launch_count")
+        val DONATE_REMINDER_OFF = booleanPreferencesKey("donate_reminder_off")
     }
 }

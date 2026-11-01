@@ -21,6 +21,13 @@ interface SettingsRepository {
     suspend fun setSecureScreen(enabled: Boolean)
     suspend fun setBackgroundRefresh(hours: Int, wifiOnly: Boolean)
     suspend fun setNetwork(network: NetworkSettings)
+
+    /** Counts this app launch; returns the total number of launches. */
+    suspend fun recordLaunch(): Int
+
+    val donateReminderDisabled: Flow<Boolean>
+
+    suspend fun disableDonateReminder()
 }
 
 internal class DefaultSettingsRepository(
@@ -38,4 +45,7 @@ internal class DefaultSettingsRepository(
     override suspend fun setSecureScreen(enabled: Boolean) = dataSource.setSecureScreen(enabled)
     override suspend fun setBackgroundRefresh(hours: Int, wifiOnly: Boolean) = dataSource.setBackgroundRefresh(hours, wifiOnly)
     override suspend fun setNetwork(network: NetworkSettings) = dataSource.setNetwork(network)
+    override suspend fun recordLaunch(): Int = dataSource.recordLaunch()
+    override val donateReminderDisabled: Flow<Boolean> = dataSource.donateReminderDisabled
+    override suspend fun disableDonateReminder() = dataSource.disableDonateReminder()
 }

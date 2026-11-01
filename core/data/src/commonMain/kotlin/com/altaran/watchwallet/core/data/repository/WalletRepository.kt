@@ -46,6 +46,9 @@ interface WalletRepository {
     suspend fun findGroup(name: String): Long?
     suspend fun rename(id: Long, name: String)
     suspend fun delete(id: Long)
+
+    /** Removes all wallets, their cached history and all groups. Settings and watchlist stay. */
+    suspend fun deleteAll()
     suspend fun setAssetVisibility(asset: Asset, visible: Boolean?)
 }
 
@@ -134,6 +137,8 @@ internal class DefaultWalletRepository(
     override suspend fun rename(id: Long, name: String) = walletDao.rename(id, name.trim())
 
     override suspend fun delete(id: Long) = walletDao.delete(id)
+
+    override suspend fun deleteAll() = walletDao.deleteAllWallets()
 
     override suspend fun setAssetVisibility(asset: Asset, visible: Boolean?) =
         walletDao.setAssetVisibility(asset.id.value, visible)

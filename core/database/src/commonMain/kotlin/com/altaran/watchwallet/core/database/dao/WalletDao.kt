@@ -65,6 +65,31 @@ abstract class WalletDao {
     @Query("DELETE FROM wallet WHERE id = :id")
     abstract suspend fun delete(id: Long)
 
+    @Query("DELETE FROM wallet_balance")
+    protected abstract suspend fun deleteAllBalances()
+
+    @Query("DELETE FROM wallet_tx")
+    protected abstract suspend fun deleteAllTransactions()
+
+    @Query("DELETE FROM derived_address")
+    protected abstract suspend fun deleteAllDerived()
+
+    @Query("DELETE FROM wallet")
+    protected abstract suspend fun deleteAllWalletRows()
+
+    @Query("DELETE FROM wallet_group")
+    protected abstract suspend fun deleteAllGroups()
+
+    /** Removes every wallet with its cached chain data, and all groups, in one transaction. */
+    @Transaction
+    open suspend fun deleteAllWallets() {
+        deleteAllBalances()
+        deleteAllTransactions()
+        deleteAllDerived()
+        deleteAllWalletRows()
+        deleteAllGroups()
+    }
+
     @Query("SELECT * FROM wallet_group ORDER BY sort_order, id")
     abstract fun observeGroups(): Flow<List<WalletGroupEntity>>
 
