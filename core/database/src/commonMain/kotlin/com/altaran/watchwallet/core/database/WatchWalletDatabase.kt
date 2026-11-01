@@ -12,6 +12,7 @@ import com.altaran.watchwallet.core.database.entity.AssetEntity
 import com.altaran.watchwallet.core.database.entity.DerivedAddressEntity
 import com.altaran.watchwallet.core.database.entity.PriceCurrentEntity
 import com.altaran.watchwallet.core.database.entity.PricePointEntity
+import com.altaran.watchwallet.core.database.entity.TxCostBasisEntity
 import com.altaran.watchwallet.core.database.entity.WalletBalanceEntity
 import com.altaran.watchwallet.core.database.entity.WalletEntity
 import com.altaran.watchwallet.core.database.entity.WalletGroupEntity
@@ -25,6 +26,7 @@ import kotlinx.coroutines.IO
  * - 1: wallet, wallet_group
  * - 2: watch target columns on wallet; asset, wallet_balance, wallet_tx, derived_address,
  *      price_current, price_point, watchlist (additive auto-migration, no data loss)
+ * - 3: tx_cost_basis (additive auto-migration, no data loss)
  */
 @Database(
     entities = [
@@ -37,10 +39,11 @@ import kotlinx.coroutines.IO
         PriceCurrentEntity::class,
         PricePointEntity::class,
         WatchlistEntity::class,
+        TxCostBasisEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 @ConstructedBy(WatchWalletDatabaseConstructor::class)
 abstract class WatchWalletDatabase : RoomDatabase() {

@@ -93,6 +93,8 @@ data class WalletDetailUiState(
     val range: ChartRange = ChartRange.M1,
     val syncing: Boolean = false,
     val failed: Boolean = false,
+    /** Cost basis (USD) of incoming transfers, by transaction leg. */
+    val costs: Map<com.altaran.watchwallet.core.data.repository.CostKey, com.altaran.watchwallet.core.data.repository.CostBasisEntry> = emptyMap(),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -103,8 +105,16 @@ internal class WalletDetailViewModel(
     settingsRepository: SettingsRepository,
     private val syncEngine: SyncEngine,
     private val registry: ChainRegistry,
+    private val costBasis: com.altaran.watchwallet.core.data.repository.CostBasisRepository,
 ) : ViewModel() {
     private val range = MutableStateFlow(ChartRange.M1)
+
+    /** Saves what a transfer really cost in USD; `null` returns to the automatic value. */
+    fun setCost(tx: com.altaran.watchwallet.core.model.WalletTransaction, valueUsd: Double?) {
+        viewModelScope.launch {
+            costBasis.setUserValue(com.altaran.watchwallet.core.data.repository.CostKey(tx.walletId, tx.hash, tx.assetId.value), valueUsd)
+        }
+    }
     private val currency = settingsRepository.settings.map { it.quoteCurrency }
 
     private val chart = combine(currency, range) { c, r -> c to r }.flatMapLatest { (c, r) ->
@@ -121,9 +131,9 @@ internal class WalletDetailViewModel(
         walletRepository.wallet(walletId),
         snapshot,
         combine(walletRepository.transactions(walletId), walletRepository.derivedAddresses(walletId), walletRepository.assets) { a, b, c -> Triple(a, b, c) },
-        combine(chart, range) { c, r -> c to r },
+        combine(chart, range, costBasis.entries) { c, r, costs -> Triple(c, r, costs) },
         syncEngine.state,
-    ) { wallet, (cur, snap), (txs, derived, assets), (points, selectedRange), sync ->
+    ) { wallet, (cur, snap), (txs, derived, assets), (points, selectedRange, costs), sync ->
         WalletDetailUiState(
             wallet = wallet,
             deleted = wallet == null,
@@ -137,10 +147,12 @@ internal class WalletDetailViewModel(
             range = selectedRange,
             syncing = walletId in sync.syncingWallets,
             failed = walletId in sync.errors,
+            costs = costs,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WalletDetailUiState())
 
     init {
+        viewModelScope.launch { costBasis.fillAutomatic() }
         // Price history for the chart is fetched lazily when the range changes.
         viewModelScope.launch {
             combine(currency, range, portfolioRepository.snapshot(QuoteCurrency.DEFAULT, setOf(walletId))) { c, r, snap ->

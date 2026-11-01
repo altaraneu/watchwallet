@@ -48,6 +48,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.altaran.watchwallet.core.data.repository.CostBasisEntry
+import com.altaran.watchwallet.core.data.repository.CostKey
 import com.altaran.watchwallet.core.data.repository.Holding
 import com.altaran.watchwallet.core.designsystem.component.AmountText
 import com.altaran.watchwallet.core.designsystem.component.AssetRow
@@ -72,6 +74,15 @@ import com.altaran.watchwallet.core.ui.shortAddress
 import com.altaran.watchwallet.core.ui.targetDescription
 import com.altaran.watchwallet.feature.wallets.generated.resources.*
 import com.altaran.watchwallet.feature.wallets.generated.resources.Res
+import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_cancel
+import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_label
+import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_message
+import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_reset
+import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_save
+import com.altaran.watchwallet.feature.wallets.generated.resources.cost_dialog_title
+import com.altaran.watchwallet.feature.wallets.generated.resources.tx_cost_auto
+import com.altaran.watchwallet.feature.wallets.generated.resources.tx_cost_unknown
+import com.altaran.watchwallet.feature.wallets.generated.resources.tx_cost_user
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -93,6 +104,7 @@ internal fun WalletDetailRoute(
         onRefresh = viewModel::refresh,
         onRangeChange = viewModel::setRange,
         onRename = viewModel::rename,
+        onSetCost = viewModel::setCost,
         onDelete = {
             viewModel.delete()
             onNavigateUp()
@@ -114,7 +126,19 @@ internal fun WalletDetailScreen(
     onRename: (String) -> Unit,
     onDelete: () -> Unit,
     onOpenHolding: (String) -> Unit,
+    onSetCost: (WalletTransaction, Double?) -> Unit = { _, _ -> },
 ) {
+    var editingCost by remember { mutableStateOf<WalletTransaction?>(null) }
+    editingCost?.let { tx ->
+        CostBasisDialog(
+            current = state.costs[CostKey(tx.walletId, tx.hash, tx.assetId.value)],
+            onSave = { value ->
+                onSetCost(tx, value)
+                editingCost = null
+            },
+            onDismiss = { editingCost = null },
+        )
+    }
     var menuOpen by remember { mutableStateOf(false) }
     var renameOpen by remember { mutableStateOf(false) }
     var deleteOpen by remember { mutableStateOf(false) }
@@ -209,7 +233,7 @@ internal fun WalletDetailScreen(
                 val tabs = listOf(DetailTab.ASSETS, DetailTab.ACTIVITY, DetailTab.ADDRESSES)
                 when (tabs.getOrNull(tab)) {
                     DetailTab.ASSETS -> holdings(state, onOpenHolding)
-                    DetailTab.ACTIVITY -> activity(state, chain) { url -> uriHandler.openUri(url) }
+                    DetailTab.ACTIVITY -> activity(state, chain, onEditCost = { editingCost = it }) { url -> uriHandler.openUri(url) }
                     DetailTab.ADDRESSES -> addresses(state)
                     null -> Unit
                 }
@@ -279,6 +303,7 @@ internal fun HoldingRow(holding: Holding, state: WalletDetailUiState, onOpen: (S
 private fun androidx.compose.foundation.lazy.LazyListScope.activity(
     state: WalletDetailUiState,
     chain: (ChainId) -> Chain?,
+    onEditCost: (WalletTransaction) -> Unit,
     openUrl: (String) -> Unit,
 ) {
     if (state.transactions.isEmpty()) {
@@ -286,13 +311,19 @@ private fun androidx.compose.foundation.lazy.LazyListScope.activity(
         return
     }
     items(state.transactions, key = { "t-" + it.hash + it.assetId.value }) { tx ->
-        TransactionRow(tx, state, chain(tx.chainId)) { url -> openUrl(url) }
+        TransactionRow(tx, state, chain(tx.chainId), onEditCost) { url -> openUrl(url) }
         HorizontalDivider(Modifier.padding(start = 16.dp))
     }
 }
 
 @Composable
-private fun TransactionRow(tx: WalletTransaction, state: WalletDetailUiState, chain: Chain?, openUrl: (String) -> Unit) {
+private fun TransactionRow(
+    tx: WalletTransaction,
+    state: WalletDetailUiState,
+    chain: Chain?,
+    onEditCost: (WalletTransaction) -> Unit,
+    openUrl: (String) -> Unit,
+) {
     val asset = state.assets[tx.assetId]
     val symbol = asset?.symbol ?: "?"
     val amount = asset?.let { TokenAmount(tx.delta, it.decimals).toDouble() } ?: 0.0
@@ -326,12 +357,65 @@ private fun TransactionRow(tx: WalletTransaction, state: WalletDetailUiState, ch
         } else {
             ""
         }
-        AmountText(
-            sign + MoneyFormatter.formatCrypto(kotlin.math.abs(amount), symbol),
-            style = MaterialTheme.typography.titleSmall,
-            color = if (amount > 0) colors.positive else MaterialTheme.colorScheme.onSurface,
-        )
+        Column(horizontalAlignment = Alignment.End) {
+            AmountText(
+                sign + MoneyFormatter.formatCrypto(kotlin.math.abs(amount), symbol),
+                style = MaterialTheme.typography.titleSmall,
+                color = if (amount > 0) colors.positive else MaterialTheme.colorScheme.onSurface,
+            )
+            // Incoming transfers carry a cost basis (USD) that the user can correct.
+            if (amount > 0 && tx.direction == TxDirection.IN) {
+                val cost = state.costs[CostKey(tx.walletId, tx.hash, tx.assetId.value)]
+                Text(
+                    cost?.let {
+                        stringResource(
+                            if (it.userSet) Res.string.tx_cost_user else Res.string.tx_cost_auto,
+                            MoneyFormatter.format(it.valueUsd, com.altaran.watchwallet.core.model.QuoteCurrency.USD),
+                        )
+                    } ?: stringResource(Res.string.tx_cost_unknown),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { onEditCost(tx) }.padding(top = 2.dp),
+                )
+            }
+        }
     }
+}
+
+/** Edit the USD cost of one incoming transfer, or return to the automatic value. */
+@Composable
+private fun CostBasisDialog(current: CostBasisEntry?, onSave: (Double?) -> Unit, onDismiss: () -> Unit) {
+    var text by remember { mutableStateOf(current?.valueUsd?.let { ((it * 100).toLong() / 100.0).toString() }.orEmpty()) }
+    val value = text.replace(',', '.').replace(Char(0x00A0).toString(), "").replace(" ", "").toDoubleOrNull()
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.cost_dialog_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(Res.string.cost_dialog_message), style = MaterialTheme.typography.bodyMedium)
+                androidx.compose.material3.OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text(stringResource(Res.string.cost_dialog_label)) },
+                    singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                )
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = { onSave(value) }, enabled = value != null && value >= 0) {
+                Text(stringResource(Res.string.cost_dialog_save))
+            }
+        },
+        dismissButton = {
+            Row {
+                if (current?.userSet == true) {
+                    androidx.compose.material3.TextButton(onClick = { onSave(null) }) { Text(stringResource(Res.string.cost_dialog_reset)) }
+                }
+                androidx.compose.material3.TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cost_dialog_cancel)) }
+            }
+        },
+    )
 }
 
 private fun androidx.compose.foundation.lazy.LazyListScope.addresses(state: WalletDetailUiState) {

@@ -27,5 +27,5 @@ fun NavGraphBuilder.assetDetailScreen(onNavigateUp: () -> Unit) {
 
 val marketsModule = module {
     viewModelOf(::MarketsViewModel)
-    viewModel { params -> AssetDetailViewModel(params.get(), get(), get(), get(), get()) }
+    viewModel { params -> AssetDetailViewModel(params.get(), get(), get(), get(), get(), get(), get(), get()) }
 }

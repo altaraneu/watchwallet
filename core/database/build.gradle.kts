@@ -15,5 +15,10 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.koin.android)
         }
+        getByName("androidHostTest").dependencies {
+            implementation(libs.kotlinx.serialization.json)
+            // Desktop natives of the bundled SQLite (the Android artifact only ships .so files).
+            implementation(libs.androidx.sqlite.bundled.jvm)
+        }
     }
 }

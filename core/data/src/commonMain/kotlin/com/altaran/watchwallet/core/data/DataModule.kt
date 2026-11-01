@@ -100,6 +100,7 @@ val dataModule: Module = module {
     single<WalletRepository> { DefaultWalletRepository(get()) }
     single { PriceRepository(get(), get(), get(), get()) }
     single { PortfolioRepository(get(), get()) }
+    single { com.altaran.watchwallet.core.data.repository.CostBasisRepository(get(), get()) }
     single { SyncEngine(get(), get(), get()) }
     single { AddWalletService(get(), get(), get()) }
     single { DemoWallets(get(), get()) }

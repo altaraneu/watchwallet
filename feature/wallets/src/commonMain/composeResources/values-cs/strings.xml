@@ -32,4 +32,13 @@
     <string name="address_copy">Kopírovat adresu</string>
     <string name="address_copied">Zkopírováno</string>
     <string name="wallets_ungrouped">Ostatní peněženky</string>
+    <string name="tx_cost_auto">Pořizovací cena %1$s</string>
+    <string name="tx_cost_user">Pořizovací cena %1$s (vaše)</string>
+    <string name="tx_cost_unknown">Zadat pořizovací cenu</string>
+    <string name="cost_dialog_title">Pořizovací cena</string>
+    <string name="cost_dialog_message">Kolik vás tyto mince stály v amerických dolarech? Automatická hodnota používá cenu v den převodu. Pokud jste je koupili dřív (třeba na burze) a sem je jen převedli, zadejte, kolik jste zaplatili.</string>
+    <string name="cost_dialog_label">Cena v USD</string>
+    <string name="cost_dialog_save">Uložit</string>
+    <string name="cost_dialog_reset">Použít automatickou</string>
+    <string name="cost_dialog_cancel">Zrušit</string>
 </resources>

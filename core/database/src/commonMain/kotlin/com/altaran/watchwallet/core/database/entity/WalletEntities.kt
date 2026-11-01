@@ -140,3 +140,24 @@ data class WatchlistEntity(
     val name: String,
     @ColumnInfo(name = "sort_order") val sortOrder: Int,
 )
+
+/**
+ * Cost basis of an incoming transfer in USD (schema v3): what the received amount cost. Filled
+ * automatically with the USD price on the transfer day, or entered by the user (for example the
+ * original purchase price on an exchange before the coins were moved here). User values are
+ * irreplaceable; automatic ones may be recomputed.
+ */
+@Entity(
+    tableName = "tx_cost_basis",
+    primaryKeys = ["wallet_id", "hash", "asset_id"],
+    foreignKeys = [ForeignKey(WalletEntity::class, ["id"], ["wallet_id"], onDelete = ForeignKey.CASCADE)],
+)
+data class TxCostBasisEntity(
+    @ColumnInfo(name = "wallet_id") val walletId: Long,
+    val hash: String,
+    @ColumnInfo(name = "asset_id") val assetId: String,
+    @ColumnInfo(name = "value_usd") val valueUsd: Double,
+    /** `true` = entered by the user (never overwritten automatically). */
+    @ColumnInfo(name = "user_set") val userSet: Boolean,
+    @ColumnInfo(name = "updated_at") val updatedAt: Long,
+)

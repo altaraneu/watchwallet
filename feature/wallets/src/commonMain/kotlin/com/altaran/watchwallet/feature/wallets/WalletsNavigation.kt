@@ -27,5 +27,5 @@ fun NavGraphBuilder.walletDetailScreen(onNavigateUp: () -> Unit, onOpenHolding: 
 
 val walletsModule = module {
     viewModelOf(::WalletsViewModel)
-    viewModel { params -> WalletDetailViewModel(params.get(), get(), get(), get(), get(), get()) }
+    viewModel { params -> WalletDetailViewModel(params.get(), get(), get(), get(), get(), get(), get()) }
 }

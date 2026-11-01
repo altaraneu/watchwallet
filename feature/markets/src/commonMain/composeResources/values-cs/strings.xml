@@ -39,4 +39,7 @@
     <string name="watchlist_watching">Sleduji</string>
     <string name="watchlist_rank">#%1$d</string>
     <string name="asset_chart_a11y">Graf ceny %1$s, poslední cena %2$s</string>
+    <string name="asset_cost_basis">Pořizovací cena (USD)</string>
+    <string name="asset_unrealized">Nerealizovaný zisk/ztráta</string>
+    <string name="asset_cost_incomplete">Některé převody zatím nemají pořizovací cenu; nastavte ji v aktivitě peněženky.</string>
 </resources>

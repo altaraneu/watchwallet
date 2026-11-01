@@ -9,6 +9,7 @@ import androidx.room.Update
 import androidx.room.Upsert
 import com.altaran.watchwallet.core.database.entity.AssetEntity
 import com.altaran.watchwallet.core.database.entity.DerivedAddressEntity
+import com.altaran.watchwallet.core.database.entity.TxCostBasisEntity
 import com.altaran.watchwallet.core.database.entity.WalletBalanceEntity
 import com.altaran.watchwallet.core.database.entity.WalletEntity
 import com.altaran.watchwallet.core.database.entity.WalletGroupEntity
@@ -65,6 +66,18 @@ abstract class WalletDao {
     @Query("DELETE FROM wallet WHERE id = :id")
     abstract suspend fun delete(id: Long)
 
+    @Query("SELECT * FROM tx_cost_basis")
+    abstract fun observeCostBasis(): Flow<List<TxCostBasisEntity>>
+
+    @Query("SELECT * FROM tx_cost_basis")
+    abstract suspend fun costBasis(): List<TxCostBasisEntity>
+
+    @Upsert
+    abstract suspend fun upsertCostBasis(rows: List<TxCostBasisEntity>)
+
+    @Query("DELETE FROM tx_cost_basis WHERE wallet_id = :walletId AND hash = :hash AND asset_id = :assetId")
+    abstract suspend fun deleteCostBasis(walletId: Long, hash: String, assetId: String)
+
     /** Time of the oldest stored transaction of any wallet (epoch ms), or `null`. */
     @Query("SELECT MIN(timestamp) FROM wallet_tx")
     abstract suspend fun earliestTransactionTime(): Long?
@@ -84,12 +97,16 @@ abstract class WalletDao {
     @Query("DELETE FROM wallet_group")
     protected abstract suspend fun deleteAllGroups()
 
+    @Query("DELETE FROM tx_cost_basis")
+    protected abstract suspend fun deleteAllCostBasis()
+
     /** Removes every wallet with its cached chain data, and all groups, in one transaction. */
     @Transaction
     open suspend fun deleteAllWallets() {
         deleteAllBalances()
         deleteAllTransactions()
         deleteAllDerived()
+        deleteAllCostBasis()
         deleteAllWalletRows()
         deleteAllGroups()
     }

@@ -32,4 +32,14 @@
     <string name="address_copy">Copy address</string>
     <string name="address_copied">Copied</string>
     <string name="wallets_ungrouped">Other wallets</string>
+    <!-- Cost basis under an incoming transfer. %1$s = amount in USD. -->
+    <string name="tx_cost_auto">Cost %1$s</string>
+    <string name="tx_cost_user">Cost %1$s (yours)</string>
+    <string name="tx_cost_unknown">Set cost</string>
+    <string name="cost_dialog_title">Cost basis</string>
+    <string name="cost_dialog_message">What did these coins cost you, in US dollars? The automatic value uses the price on the transfer day. If you bought them earlier (for example on an exchange) and only moved them here now, enter what you paid.</string>
+    <string name="cost_dialog_label">Cost in USD</string>
+    <string name="cost_dialog_save">Save</string>
+    <string name="cost_dialog_reset">Use automatic</string>
+    <string name="cost_dialog_cancel">Cancel</string>
 </resources>

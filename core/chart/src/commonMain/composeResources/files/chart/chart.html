@@ -17,6 +17,8 @@
   // Bridge between the app and TradingView Lightweight Charts. Called from Kotlin with JSON args.
   var chart = null, series = null, markersApi = null, options = null, formatter = null;
   var pinnedTime = null; // bar selected by a tap (touch screens show the crosshair only on long press)
+  // The user panned or zoomed: data refreshes keep their view instead of jumping back.
+  var userMoved = false, lastVisibleBars = null, programmaticUntil = 0;
 
   function post(name, payload) {
     try {
@@ -84,6 +86,7 @@
     // Report the visible window so the app can show the change for what the user sees.
     chart.timeScale().subscribeVisibleLogicalRangeChange(function (range) {
       if (!range || !series) return;
+      if (Date.now() > programmaticUntil) userMoved = true;
       var from = series.dataByIndex(Math.max(0, Math.ceil(range.from)), 1);
       var to = series.dataByIndex(Math.floor(range.to), -1);
       if (from && to) post('onVisibleRange', JSON.stringify({ from: from.time, to: to.time }));
@@ -165,8 +168,14 @@
   // otherwise fit everything.
   function setData(points, fit, visibleBars) {
     if (!series) return;
-    pinnedTime = null;
+    var sameWindow = visibleBars === lastVisibleBars;
+    var keep = userMoved && sameWindow ? chart.timeScale().getVisibleRange() : null;
+    lastVisibleBars = visibleBars;
+    if (!sameWindow) pinnedTime = null;
+    programmaticUntil = Date.now() + 300;
     series.setData(points);
+    if (keep) { chart.timeScale().setVisibleRange(keep); return; }
+    userMoved = false;
     if (!fit) return;
     if (visibleBars && points.length > visibleBars) {
       chart.timeScale().setVisibleLogicalRange({ from: points.length - visibleBars, to: points.length - 1 });

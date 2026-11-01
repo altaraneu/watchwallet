@@ -58,6 +58,9 @@ import com.altaran.watchwallet.core.ui.format.DateFormatter
 import com.altaran.watchwallet.core.ui.format.MoneyFormatter
 import com.altaran.watchwallet.feature.markets.generated.resources.*
 import com.altaran.watchwallet.feature.markets.generated.resources.Res
+import com.altaran.watchwallet.feature.markets.generated.resources.asset_cost_basis
+import com.altaran.watchwallet.feature.markets.generated.resources.asset_cost_incomplete
+import com.altaran.watchwallet.feature.markets.generated.resources.asset_unrealized
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -257,6 +260,26 @@ internal fun AssetDetailScreen(
                 SectionHeader(stringResource(Res.string.asset_your_holding))
                 Stat(stringResource(Res.string.asset_amount), MoneyFormatter.formatCrypto(holding.amount, holding.symbol))
                 holding.value?.let { Stat(stringResource(Res.string.asset_mode_value), MoneyFormatter.format(it, currency)) }
+                state.costUsd?.let { costUsd ->
+                    val usd = com.altaran.watchwallet.core.model.QuoteCurrency.USD
+                    Stat(stringResource(Res.string.asset_cost_basis), MoneyFormatter.format(costUsd, usd))
+                    state.valueUsd?.let { value ->
+                        val pl = value - costUsd
+                        val pct = if (costUsd > 0) MoneyFormatter.formatPercentChange(pl / costUsd) else null
+                        Stat(
+                            stringResource(Res.string.asset_unrealized),
+                            MoneyFormatter.formatChange(pl, usd) + (pct?.let { " ($it)" } ?: ""),
+                        )
+                    }
+                    if (!state.costComplete) {
+                        Text(
+                            stringResource(Res.string.asset_cost_incomplete),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        )
+                    }
+                }
             }
             state.market?.let { market ->
                 SectionHeader(stringResource(Res.string.asset_market))

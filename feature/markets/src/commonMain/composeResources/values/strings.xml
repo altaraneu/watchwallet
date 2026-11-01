@@ -46,4 +46,8 @@
     <string name="watchlist_rank">#%1$d</string>
     <!-- Screen reader summary of the candle chart. %1$s = asset symbol, %2$s = latest price. -->
     <string name="asset_chart_a11y">%1$s price chart, latest price %2$s</string>
+    <string name="asset_cost_basis">Cost basis (USD)</string>
+    <string name="asset_unrealized">Unrealized profit/loss</string>
+    <!-- Shown when some incoming transfers have no cost basis (no price for that day). -->
+    <string name="asset_cost_incomplete">Some transfers have no cost yet; set it in the wallet’s activity.</string>
 </resources>

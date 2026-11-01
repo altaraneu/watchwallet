@@ -133,16 +133,25 @@ data class AssetDetailUiState(
     val chart: List<ChartPoint>? = null,
     /** `null` when the asset cannot be watched (unpriced token). */
     val watched: Boolean? = null,
+    /** Cost basis of the holding in USD (average cost), and whether every transfer has one. */
+    val costUsd: Double? = null,
+    val costComplete: Boolean = true,
+    /** Current value of the holding in USD (for the profit/loss). */
+    val valueUsd: Double? = null,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class AssetDetailViewModel(
     private val key: String,
-    settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
     private val priceRepository: PriceRepository,
     private val portfolioRepository: PortfolioRepository,
     private val marketData: MarketDataRepository,
+    private val walletRepository: com.altaran.watchwallet.core.data.repository.WalletRepository,
+    private val costBasis: com.altaran.watchwallet.core.data.repository.CostBasisRepository,
+    private val fx: com.altaran.watchwallet.core.pricing.FxRates,
 ) : ViewModel() {
+    private val cost = MutableStateFlow<Triple<Double?, Boolean, Double?>>(Triple(null, true, null))
     private val mode = MutableStateFlow(AssetChartMode.PRICE)
     private val range = MutableStateFlow(ChartRange.M1)
     private val interval = MutableStateFlow(CandleInterval.H1)
@@ -187,9 +196,32 @@ internal class AssetDetailViewModel(
             points,
             watched = if (key.startsWith("token:") || key.contains(':')) null else w,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AssetDetailUiState())
+    }.combine(cost) { s, (c, complete, usd) -> s.copy(costUsd = c, costComplete = complete, valueUsd = usd) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AssetDetailUiState())
 
     init {
+        viewModelScope.launch { costBasis.fillAutomatic() }
+        // Cost basis and USD value of the holding (profit/loss is shown in USD, like the costs).
+        viewModelScope.launch {
+            combine(holding, walletRepository.allTransactions, costBasis.entries, walletRepository.assets) { h, txs, costs, assets ->
+                if (h == null) return@combine Triple(null, true, null)
+                val ids = h.assets.map { it.id }.toSet()
+                val relevant = txs.filter { it.assetId in ids }
+                val result = com.altaran.watchwallet.core.data.repository.CostBasisRepository.holdingCost(relevant, costs) { tx ->
+                    assets[tx.assetId]?.let { com.altaran.watchwallet.core.model.TokenAmount(tx.delta, it.decimals).toDouble() } ?: 0.0
+                }
+                Triple(result.costUsd.takeIf { relevant.isNotEmpty() }, result.complete, h.value)
+            }.collect { (c, complete, value) ->
+                val code = settingsRepository.settings.first().quoteCurrency
+                val usd = when {
+                    value == null -> null
+                    code == com.altaran.watchwallet.core.model.QuoteCurrency.USD -> value
+                    code.kind == com.altaran.watchwallet.core.model.QuoteCurrency.Kind.FIAT -> runCatching { value / fx.rate("USD", code.code) }.getOrNull()
+                    else -> null
+                }
+                cost.value = Triple(c, complete, usd)
+            }
+        }
         viewModelScope.launch {
             combine(currency, range) { c, r -> c to r }.collect { (c, r) ->
                 if (!key.startsWith("token:") && !key.contains(":native")) {
