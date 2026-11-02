@@ -7,6 +7,9 @@ import com.altaran.watchwallet.core.model.QuoteCurrency
 import com.altaran.watchwallet.core.model.WalletTransaction
 import com.altaran.watchwallet.core.pricing.CurrentPrice
 import com.altaran.watchwallet.core.timeline.AssetHistory
+import com.altaran.watchwallet.core.timeline.ChartDetail
+import com.altaran.watchwallet.core.timeline.ChartDetailPlanner
+import com.altaran.watchwallet.core.timeline.PriceResolution
 import com.altaran.watchwallet.core.timeline.TimedDelta
 import com.altaran.watchwallet.core.timeline.TimedPrice
 import com.altaran.watchwallet.core.timeline.TimedValue
@@ -14,15 +17,22 @@ import com.altaran.watchwallet.core.timeline.Timeline
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import kotlin.math.pow
 import kotlin.time.Clock
 
@@ -67,10 +77,11 @@ data class HiddenAsset(val key: String, val symbol: String, val name: String, va
  * Portfolio-level view: holdings, total value and value history. Pure combination of cached
  * data; network refreshes are triggered separately (sync engine, price repository).
  */
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class PortfolioRepository(
     private val walletRepository: WalletRepository,
     private val priceRepository: PriceRepository,
+    private val priceDetail: PriceDetailRepository,
 ) {
     fun snapshot(currency: QuoteCurrency, walletIds: Set<Long>? = null): Flow<PortfolioSnapshot> =
         combine(walletRepository.balances, priceRepository.currentPrices(currency)) { balances, prices ->
@@ -112,8 +123,18 @@ class PortfolioRepository(
             }
         }
 
-    /** Total value over time for the range (all wallets or a subset), downsampled for rendering. */
-    fun valueSeries(currency: QuoteCurrency, range: ChartRange, walletIds: Set<Long>? = null): Flow<List<TimedValue>> {
+    /**
+     * Total value over time for the range (all wallets or a subset), downsampled for rendering.
+     * What [detail] names is refined with minute or hourly prices, which are loaded while this flow
+     * is collected. The series always has bars back to the first activity, so the chart can be
+     * panned anywhere; it draws from what is stored and improves as better prices arrive.
+     */
+    fun valueSeries(
+        currency: QuoteCurrency,
+        range: ChartRange,
+        walletIds: Set<Long>? = null,
+        detail: Flow<ChartDetail?> = flowOf(null),
+    ): Flow<List<TimedValue>> {
         val inputs = chartInputs(currency, walletIds)
         // Restart only when the set of assets changes; balance and price updates (every sync and
         // minute) just trigger a recomputation, so a long computation is never cancelled forever.
@@ -121,19 +142,85 @@ class PortfolioRepository(
             combine(
                 inputs,
                 priceRepository.history(priceIds, currency).onStart { emit(emptyMap()) },
-            ) { input, history ->
+                detailPrices(currency, priceIds, inputs, detail),
+                minuteTicks(),
+            ) { input, history, fine, _ ->
                 val histories = buildHistories(input.rows, input.transactions, history, input.prices)
                 val first = input.transactions.minOfOrNull { it.timestamp }
                 val (samples, rangeStart) = displaySamples(range, first)
                 val flows = cumulativeFlows(input.transactions, input.rows, history, samples)
                 val values = Timeline.portfolio(histories, samples).mapIndexed { i, point -> point.copy(flow = flows[i]) }
-                displayDownsample(values, rangeStart)
+                val base = displayDownsample(values, rangeStart)
+                val grid = fine?.let { refinedGrid(it.detail, samples) }.orEmpty()
+                if (fine == null || grid.isEmpty()) return@combine base
+                val refined = buildHistories(input.rows, input.transactions, fine.over(history), input.prices)
+                val gridFlows = cumulativeFlows(input.transactions, input.rows, history, grid)
+                val detailValues = Timeline.portfolio(refined, grid, lastIsLive = fine.detail.live).mapIndexed { i, point -> point.copy(flow = gridFlows[i]) }
+                ChartDetailPlanner.mergePoints(base, detailValues)
             }.conflate()
         }.distinctUntilChanged()
             // Hundreds of samples over years of history: never compute on the main thread, and
             // skip intermediate states while prices stream in.
             .conflate()
             .flowOn(Dispatchers.Default)
+    }
+
+    /** The series ends at now even when no price or balance changed for a while. */
+    private fun minuteTicks(): Flow<Unit> = flow {
+        while (true) {
+            emit(Unit)
+            delay(SERIES_TICK_MS)
+        }
+    }
+
+    /** Refined samples of the window, never older than the first bar of the chart. */
+    private fun refinedGrid(detail: ChartDetail, samples: List<kotlin.time.Instant>): List<kotlin.time.Instant> {
+        val start = samples.firstOrNull() ?: return emptyList()
+        return ChartDetailPlanner.grid(detail, Clock.System.now().toEpochMilliseconds()).filter { it >= start }.takeIf { it.size >= 2 }.orEmpty()
+    }
+
+    /**
+     * Refined prices of the current window. Fetching runs alongside and stops with the collector;
+     * a new window cancels whatever is still in flight for the old one, and the old prices stay in
+     * use until those of the new window have been read.
+     */
+    private fun detailPrices(currency: QuoteCurrency, priceIds: List<String>, inputs: Flow<ChartInputs>, detail: Flow<ChartDetail?>): Flow<DetailPrices?> =
+        detail.distinctUntilChanged().flatMapLatest { window ->
+            when {
+                window == null -> {
+                    flowOf<DetailPrices?>(null)
+                }
+
+                window.resolution == PriceResolution.DAY -> {
+                    // Daily prices are already part of the long history: only the samples change.
+                    flowOf<DetailPrices?>(DetailPrices(window))
+                }
+
+                else -> {
+                    channelFlow<DetailPrices?> {
+                        launch { priceDetail.keepLoaded(currency, window) { detailPriceIds(inputs.first(), window) } }
+                        // One update per batch of arriving assets, not one per asset: the total
+                        // should not wander while half of the assets are refined.
+                        priceDetail.observe(priceIds, currency, window).debounce(DETAIL_BATCH_MS).collect { send(it) }
+                    }
+                }
+            }
+        }.onStart { emit(null) }
+
+    /** Assets that had a balance in the window, most valuable first: one request for each. */
+    private fun detailPriceIds(input: ChartInputs, window: ChartDetail): List<String> {
+        val edges = listOf(kotlin.time.Instant.fromEpochMilliseconds(window.from), kotlin.time.Instant.fromEpochMilliseconds(window.to))
+        val deltas = input.transactions.groupBy { it.walletId to it.assetId }
+        val weights = HashMap<String, Double>()
+        input.rows.forEach { row ->
+            val priceId = row.asset.priceId ?: return@forEach
+            val rowDeltas = deltas[row.walletId to row.asset.id].orEmpty()
+            val history = AssetHistory(row.balance, row.decimals, rowDeltas.map { TimedDelta(it.timestamp, it.delta) }, emptyList(), null)
+            val held = Timeline.balances(history, edges).max()
+            val active = rowDeltas.any { it.timestamp >= edges[0] && it.timestamp <= edges[1] }
+            if (held > 0.0 || active) weights[priceId] = (weights[priceId] ?: 0.0) + held * (input.prices[priceId]?.price ?: 0.0)
+        }
+        return weights.entries.sortedByDescending { it.value }.map { it.key }
     }
 
     /**
@@ -181,10 +268,11 @@ class PortfolioRepository(
      */
     private fun displaySamples(range: ChartRange, firstActivity: kotlin.time.Instant?): Pair<List<kotlin.time.Instant>, kotlin.time.Instant> {
         val now = Clock.System.now()
-        val fine = Timeline.sampleTimes(range, now, firstActivity)
+        val fine = Timeline.alignedSamples(Timeline.sampleTimes(range, now, firstActivity), range.step.inWholeMilliseconds)
         val start = fine.firstOrNull() ?: now
         if (range == ChartRange.ALL) return fine to start
-        val coarse = Timeline.sampleTimes(ChartRange.ALL, now, firstActivity).filter { it < start }
+        val all = Timeline.alignedSamples(Timeline.sampleTimes(ChartRange.ALL, now, firstActivity), ChartRange.ALL.step.inWholeMilliseconds)
+        val coarse = all.filter { it < start }
         return (coarse + fine) to start
     }
 
@@ -229,7 +317,7 @@ class PortfolioRepository(
     }
 
     /** Balance and value history of one holding (by [Holding.key]). */
-    fun holdingSeries(currency: QuoteCurrency, holdingKey: String, range: ChartRange): Flow<HoldingSeries> {
+    fun holdingSeries(currency: QuoteCurrency, holdingKey: String, range: ChartRange, detail: Flow<ChartDetail?> = flowOf(null)): Flow<HoldingSeries> {
         val inputs = chartInputs(currency, null)
         return inputs.map { input ->
             input.rows.filter { keyOf(it.asset) == holdingKey }.mapNotNull { it.asset.priceId }.distinct().sorted()
@@ -239,7 +327,9 @@ class PortfolioRepository(
                 priceRepository.history(priceIds, currency).onStart {
                     emit(emptyMap())
                 },
-            ) { input, history ->
+                detailPrices(currency, priceIds, inputs.map { it.only(holdingKey) }, detail),
+                minuteTicks(),
+            ) { input, history, fine, _ ->
                 val rows = input.rows.filter { keyOf(it.asset) == holdingKey }
                 val txs = input.transactions
                 val histories = buildHistories(rows, txs, history, input.prices)
@@ -251,9 +341,18 @@ class PortfolioRepository(
                 // Balances of each asset once (not once per sample), then summed per sample.
                 val perAsset = histories.map { Timeline.balances(it, samples) }
                 val balanceSeries = samples.indices.map { i -> TimedValue(samples[i], perAsset.sumOf { it[i] }) }
+                val grid = fine?.let { refinedGrid(it.detail, samples) }.orEmpty()
+                val refined = if (fine != null && grid.isNotEmpty()) buildHistories(rows, txs, fine.over(history), input.prices) else emptyList()
+                val fineBalances = refined.map { Timeline.balances(it, grid) }
                 HoldingSeries(
-                    balance = displayDownsample(balanceSeries, rangeStart),
-                    value = displayDownsample(Timeline.portfolio(histories, samples), rangeStart),
+                    balance = ChartDetailPlanner.mergePoints(
+                        displayDownsample(balanceSeries, rangeStart),
+                        if (refined.isEmpty()) emptyList() else grid.indices.map { i -> TimedValue(grid[i], fineBalances.sumOf { it[i] }) },
+                    ),
+                    value = ChartDetailPlanner.mergePoints(
+                        displayDownsample(Timeline.portfolio(histories, samples), rangeStart),
+                        if (refined.isEmpty()) emptyList() else Timeline.portfolio(refined, grid, lastIsLive = fine?.detail?.live == true),
+                    ),
                     price = Timeline.downsample(
                         priceIds.firstOrNull()?.let { id ->
                             history[id].orEmpty().filter { it.time >= samples.first() }.map { TimedValue(it.time, it.price) }
@@ -311,6 +410,12 @@ class PortfolioRepository(
         }.sortedWith(compareByDescending<Holding> { it.value ?: -1.0 }.thenBy { it.symbol })
 
     companion object {
+        /** The value series is recomputed at least this often, so it ends at now. */
+        private const val SERIES_TICK_MS = 60_000L
+
+        /** Refined prices arriving closer together than this form one update of the chart. */
+        private const val DETAIL_BATCH_MS = 200L
+
         /** Points kept for the history before the selected range (panning back). */
         private const val OLDER_POINTS = 400
 
@@ -351,6 +456,9 @@ internal class ChartInputs(
     val prices: Map<String, CurrentPrice>,
 ) {
     val priceIds: List<String> = rows.mapNotNull { it.asset.priceId }.distinct().sorted()
+
+    /** The same inputs restricted to one holding. */
+    fun only(holdingKey: String) = ChartInputs(rows.filter { PortfolioRepository.keyOf(it.asset) == holdingKey }, transactions, prices)
 }
 
 data class HoldingSeries(
