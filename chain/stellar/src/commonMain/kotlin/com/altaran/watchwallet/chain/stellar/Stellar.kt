@@ -248,7 +248,7 @@ class StellarAdapter(
                 items += record
             }
             if (records.size < PAGE_SIZE) return Records(items, truncated = false)
-            cursor = records.last().str("paging_token") ?: return Records(items, truncated = false)
+            cursor = records.last().str("paging_token") ?: return Records(items, truncated = true)
         }
         return Records(items, truncated = true)
     }

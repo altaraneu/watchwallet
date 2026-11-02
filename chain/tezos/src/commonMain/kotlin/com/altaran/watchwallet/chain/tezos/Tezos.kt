@@ -130,7 +130,10 @@ class TezosAdapter(
                 operations += op
             }
             if (page.size < PAGE_SIZE) break
-            lastId = page.last().long("id") ?: break
+            lastId = page.last().long("id") ?: run {
+                truncated = true
+                null
+            } ?: break
             if (++pages >= maxPages) {
                 truncated = true
                 break

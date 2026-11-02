@@ -199,7 +199,9 @@ class CosmosAdapter(
         val balances = balances(network, address)
         var truncated = false
         val transactions = try {
-            history(network, address, knownTransactions)
+            val history = history(network, address, knownTransactions)
+            truncated = history.truncated
+            history.transactions
         } catch (e: CancellationException) {
             throw e
         } catch (
@@ -264,9 +266,15 @@ class CosmosAdapter(
         false
     }
 
-    /** Sent and received transactions (two event queries), newest first, merged by hash. */
-    private suspend fun history(network: CosmosNetwork, address: String, known: Set<String>): List<ChainTransaction> {
+    private class History(val transactions: List<ChainTransaction>, val truncated: Boolean)
+
+    /**
+     * Sent and received transactions (two event queries), newest first, merged by hash. Only the
+     * newest page is read, so a full page without a known transaction means older ones are missing.
+     */
+    private suspend fun history(network: CosmosNetwork, address: String, known: Set<String>): History {
         val responses = LinkedHashMap<String, JsonElement>()
+        var truncated = false
         for (query in listOf("message.sender='$address'", "transfer.recipient='$address'")) {
             val page = get("${base(network)}/cosmos/tx/v1beta1/txs") {
                 // SDK >= 0.50 uses `query`, older versions `events`; send both.
@@ -277,13 +285,15 @@ class CosmosAdapter(
                 parameter("limit", PAGE_SIZE)
                 parameter("page", 1)
             }
-            for (response in page.arr("tx_responses")) {
+            val rows = page.arr("tx_responses")
+            for (response in rows) {
                 val hash = response.str("txhash") ?: continue
                 if (hash in known) break
                 responses.getOrPut(hash) { response }
             }
+            if (rows.size >= PAGE_SIZE && rows.none { it.str("txhash") in known }) truncated = true
         }
-        return responses.values.mapNotNull { parseCosmosTransaction(network, it, address) }
+        return History(responses.values.mapNotNull { parseCosmosTransaction(network, it, address) }, truncated)
     }
 
     private suspend fun get(url: String, block: HttpRequestBuilder.() -> Unit = {}): JsonElement =

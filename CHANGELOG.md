@@ -29,6 +29,11 @@ All notable changes to this project are documented here. The format follows
 - Value charts no longer project balances without transactions (staked coins, rewards) over the
   time before they existed: stake moves count as a pair, and such balances start at the wallet's
   first transaction on that chain. Wallets with cut-off history keep the old projection.
+- Failures no longer read as empty data: a Solana node error no longer drops staked SOL, a held Tron
+  token without a recent transfer stays, and malformed answers fail the sync instead of showing a
+  zero balance (JSON-RPC, Tron, Dogecoin, Bitcoin Cash, Litecoin). Algorand and Hedera holdings are
+  not crowded out by empty token entries.
+- Cut-off history is marked as such on Cosmos, and on paging ends of Stellar, Tezos and Blockbook.
 - Prices no longer follow an exchange that halted trading or froze; such assets use the next source,
   and so do assets priced more than 10 % away from it.
 

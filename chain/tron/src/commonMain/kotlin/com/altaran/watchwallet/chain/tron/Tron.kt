@@ -158,7 +158,7 @@ class TronAdapter(
             if (TronTokens.isImpersonation(contract, info.str("symbol"))) return@mapNotNull null
             contract to trc20Asset(contract, info.str("symbol"), info.str("name"), decimals)
         }.toMap()
-        val balances = balances(account, seenTokens)
+        val balances = balances(account, seenTokens + tokensWithoutRecentTransfer(account, seenTokens))
         val heldContracts = balances.mapNotNull { it.asset.contract }.toSet()
 
         val trx = pages("$base/v1/accounts/$address/transactions", maxPages) { it.str("txID") in knownTransactions }
@@ -182,8 +182,12 @@ class TronAdapter(
         (target as? WatchTarget.Address)?.address ?: throw ChainDataException("Tron supports addresses only")
 
     /** Account object, or `null` when the address was never activated. */
-    private suspend fun account(address: String): JsonElement? =
-        get("$base/v1/accounts/$address").arr("data").firstOrNull()
+    private suspend fun account(address: String): JsonElement? {
+        val response = get("$base/v1/accounts/$address")
+        // A refused request also has empty data; it must not read as a never activated account.
+        if (response.str("success") == "false") throw ChainDataException("TronGrid refused the request")
+        return response.arr("data").firstOrNull()
+    }
 
     private suspend fun balances(account: JsonElement, seenTokens: Map<String, Asset>): List<AssetAmount> {
         // Liquid TRX plus TRX staked for resources (Stake 2.0) and TRX waiting to be unstaked.
@@ -211,6 +215,25 @@ class TronAdapter(
             result += amountOf(asset, raw)
         }
         return result
+    }
+
+    /**
+     * Held TRC-20 tokens that neither have a known entry nor a transfer in this sync: an incremental
+     * sync without a new transfer would otherwise drop them from the balances. A failed lookup fails
+     * the sync, which keeps the stored balances.
+     */
+    private suspend fun tokensWithoutRecentTransfer(account: JsonElement, seenTokens: Map<String, Asset>): Map<String, Asset> {
+        val contracts = account.arr("trc20").mapNotNull { entry ->
+            (entry as? JsonObject)?.entries?.firstOrNull()?.takeIf { !parseBigInteger(it.value.content).isZero() }?.key
+        }.filter { it !in TronTokens.KNOWN && it !in seenTokens }
+        return contracts.chunked(TOKEN_INFO_BATCH).flatMap { batch ->
+            get("$base/v1/trc20/info") { parameter("contract_list", batch.joinToString(",")) }.arr("data").mapNotNull { info ->
+                val contract = info.str("contract_address") ?: return@mapNotNull null
+                val decimals = info.str("decimals")?.toIntOrNull() ?: return@mapNotNull null
+                if (TronTokens.isImpersonation(contract, info.str("symbol"))) return@mapNotNull null
+                contract to trc20Asset(contract, info.str("symbol"), info.str("name"), decimals)
+            }
+        }.toMap()
     }
 
     private suspend fun trc10Asset(id: String): Asset? {
@@ -249,6 +272,7 @@ class TronAdapter(
         withRateLimitBackoff(RATE_LIMIT_RETRIES) { throttle.run { http.get(url, block).body<JsonElement>() } }
 
     private companion object {
+        const val TOKEN_INFO_BATCH = 20
         const val PAGE_SIZE = 200
         const val FIRST_SYNC_PAGES = 2
         const val MAX_PAGES = 20

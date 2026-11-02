@@ -14,8 +14,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 internal data class EsploraAddress(
-    @SerialName("chain_stats") val chainStats: EsploraStats = EsploraStats(),
-    @SerialName("mempool_stats") val mempoolStats: EsploraStats = EsploraStats(),
+    @SerialName("chain_stats") val chainStats: EsploraStats,
+    @SerialName("mempool_stats") val mempoolStats: EsploraStats,
 )
 
 @Serializable

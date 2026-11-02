@@ -67,6 +67,13 @@ class TronTest {
          "block_timestamp":1715000000000,"from":"$other","to":"$ours","type":"Transfer","value":"200000000"}],
         "success":true,"meta":{"at":1717000000000,"page_size":3}}"""
 
+    private val holder = other.reversed()
+    private val heldToken = "THeldToken1111111111111111111111111"
+    private val holderAccount = """{"data":[{"balance":1,"trc20":[{"$heldToken":"42"}],"assetV2":[]}],"success":true}"""
+
+    private val tokenInfo = """{"data":[{"contract_address":"$heldToken","symbol":"HELD","name":"Held","decimals":"0"},
+        {"contract_address":"TSpamToken1111111111111111111111111","symbol":"USDT","name":"Tether USD","decimals":"6"}],"success":true}"""
+
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath
         val response = when {
@@ -74,6 +81,8 @@ class TronTest {
             path.endsWith("/transactions") -> trxHistory
             path == "/v1/accounts/$ours" -> account
             path == "/v1/accounts/$other" -> """{"data":[],"success":true,"meta":{"at":1,"page_size":0}}"""
+            path == "/v1/accounts/$holder" -> holderAccount
+            path == "/v1/trc20/info" -> tokenInfo
             else -> error("Unexpected $path")
         }
         respond(response, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
@@ -97,6 +106,30 @@ class TronTest {
             assertEquals(10_000_000L, byKey.getValue("t1/TRX").delta.longValue())
             assertEquals(200_000_000L, byKey.getValue("t0/USDT").delta.longValue())
             assertFalse(result.transactions.any { it.hash == "poison" }, "address-poisoning token dropped")
+        }
+    }
+
+    @Test
+    fun heldTokenWithoutANewTransferIsKept() = runTest {
+        withContext(Dispatchers.Default) {
+            val target = com.altaran.watchwallet.core.model.WatchTarget.Address(
+                com.altaran.watchwallet.core.model.ChainFamily.TRON,
+                TronChain.ID,
+                holder,
+            )
+            // Everything in the transfer lists is known: this sync sees no metadata of the token.
+            val result = adapter.sync(target, setOf("t2", "t1", "t0", "poison"))
+            assertEquals("42", result.balances.single { it.asset.symbol == "HELD" }.amount.toPlainString())
+        }
+    }
+
+    @Test
+    fun refusedRequestIsNoUnactivatedAccount() = runTest {
+        withContext(Dispatchers.Default) {
+            val refusing = MockEngine { respond("""{"data":[],"success":false}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json")) }
+            kotlin.test.assertFailsWith<com.altaran.watchwallet.chain.api.ChainDataException> {
+                TronAdapter(createHttpClient(engine = refusing), "https://tron.test").sync(assertNotNull(TronAddresses.parse(ours)), emptySet())
+            }
         }
     }
 

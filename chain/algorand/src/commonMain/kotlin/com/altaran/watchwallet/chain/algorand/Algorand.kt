@@ -132,7 +132,8 @@ class AlgorandAdapter(
                 transactions += parseAlgorandTransaction(tx, address) { assetId -> asa(assetId) }
             }
             next = page.str("next-token")
-            if (next == null || items.size < PAGE_SIZE) break
+            // Only the token ends the list: the indexer can return short pages before the end.
+            if (next == null || items.isEmpty()) break
             if (++pages >= maxPages) {
                 truncated = true
                 break
@@ -150,10 +151,11 @@ class AlgorandAdapter(
 
     private suspend fun balances(account: JsonElement): List<AssetAmount> {
         val result = mutableListOf(amountOf(AlgorandChain.ALGO, account.str("amount")))
-        for (holding in account.arr("assets").take(MAX_ASSETS)) {
+        // Opt-ins without a balance must not use up the limit before real holdings.
+        val held = account.arr("assets").filterNot { parseBigInteger(it.str("amount")).isZero() }
+        for (holding in held.take(MAX_ASSETS)) {
             val id = holding.str("asset-id") ?: continue
             val raw = parseBigInteger(holding.str("amount"))
-            if (raw.isZero()) continue
             result += amountOf(asa(id) ?: continue, raw)
         }
         return result

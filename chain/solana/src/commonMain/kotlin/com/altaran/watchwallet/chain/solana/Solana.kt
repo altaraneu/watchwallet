@@ -164,25 +164,8 @@ class SolanaAdapter(
             knownTransactions.isEmpty() -> FIRST_SYNC_SIGNATURES
             else -> MAX_SIGNATURES
         }
-        val newSignatures = mutableListOf<JsonElement>()
-        var before: String? = null
-        var truncated = false
-        paging@ while (true) {
-            val page = signatures(address, before, SIGNATURE_PAGE)
-            for (entry in page) {
-                val signature = entry.str("signature") ?: continue
-                if (signature in knownTransactions) {
-                    if (backfill) continue else break@paging
-                }
-                if (newSignatures.size >= maxSignatures) {
-                    truncated = true
-                    break@paging
-                }
-                newSignatures += entry
-            }
-            if (page.size < SIGNATURE_PAGE) break
-            before = page.last().str("signature")
-        }
+        val (newSignatures, signaturesTruncated) = newSignatures(address, knownTransactions, backfill, maxSignatures)
+        var truncated = signaturesTruncated
 
         val transactions = newSignatures.flatMap { entry ->
             val signature = entry.str("signature")!!
@@ -193,6 +176,11 @@ class SolanaAdapter(
                 // confirmed transaction fails the sync; skipping it would leave a permanent gap
                 // because later syncs stop at the newer signatures stored now.
                 if (!confirmed) return@flatMap emptyList()
+                if (backfill) {
+                    // Nodes prune very old transactions. Going back further must not block balances.
+                    truncated = true
+                    return@flatMap emptyList()
+                }
                 throw ChainDataException("Solana transaction $signature not available")
             }
             parseTransaction(signature, tx, address, tokenAssets, confirmed)
@@ -209,6 +197,25 @@ class SolanaAdapter(
             },
             historyTruncated = truncated,
         )
+    }
+
+    /** Signatures to fetch, newest first, and whether more remain. */
+    private suspend fun newSignatures(address: String, known: Set<String>, backfill: Boolean, maxSignatures: Int): Pair<List<JsonElement>, Boolean> {
+        val result = mutableListOf<JsonElement>()
+        var before: String? = null
+        while (true) {
+            val page = signatures(address, before, SIGNATURE_PAGE)
+            for (entry in page) {
+                val signature = entry.str("signature") ?: continue
+                if (signature in known) {
+                    if (backfill) continue else return result to false
+                }
+                if (result.size >= maxSignatures) return result to true
+                result += entry
+            }
+            if (page.size < SIGNATURE_PAGE) return result to false
+            before = page.last().str("signature")
+        }
     }
 
     private fun address(target: WatchTarget): String =
@@ -250,11 +257,11 @@ class SolanaAdapter(
         }
         val accounts = try {
             rpc.call("getProgramAccounts", params(SolanaChain.STAKE_PROGRAM, options)).asList
-        } catch (
-            @Suppress("SwallowedException") e: RpcErrorException,
-        ) {
-            // Some RPC providers disable getProgramAccounts (an RPC error): show the liquid balance
-            // anyway. Transport failures propagate, so stored staked balances are not wiped.
+        } catch (e: RpcErrorException) {
+            // Some RPC providers disable getProgramAccounts: show the liquid balance anyway. Other
+            // RPC errors (node behind, overloaded) and transport failures propagate, so stored
+            // staked balances are not wiped.
+            if (e.code != RPC_METHOD_NOT_FOUND) throw e
             return BigInteger.ZERO
         } catch (e: io.ktor.client.plugins.ResponseException) {
             // Some providers refuse the method with HTTP 403/410 instead.
@@ -329,6 +336,8 @@ class SolanaAdapter(
         const val SIGNATURE_PAGE = 100
         const val HTTP_FORBIDDEN = 403
         const val HTTP_GONE = 410
+
+        const val RPC_METHOD_NOT_FOUND = -32601L
 
         /** Stake account layout: enum tag (4), rent reserve (8), staker (32), withdrawer (32)… */
         const val STAKE_WITHDRAWER_OFFSET = 44

@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 internal data class BlockbookAddress(
     val page: Int = 1,
     val totalPages: Int = 1,
-    val balance: String = "0",
+    val balance: String,
     val unconfirmedBalance: String = "0",
     val txs: Int = 0,
     val unconfirmedTxs: Int = 0,
@@ -70,11 +70,9 @@ class BlockbookBackend(
             val txs = info.transactions.map { it.toUtxoTx() }
             collected += txs
             val reachedKnown = txs.any { it.confirmed && it.txid in known }
-            if (reachedKnown || page >= info.totalPages ||
-                txs.isEmpty()
-            ) {
-                return UtxoHistory(collected, truncated = false)
-            }
+            if (reachedKnown || page >= info.totalPages) return UtxoHistory(collected, truncated = false)
+            // An empty page before the last one: the rest is unknown.
+            if (txs.isEmpty()) return UtxoHistory(collected, truncated = true)
         }
         return UtxoHistory(collected, truncated = true)
     }

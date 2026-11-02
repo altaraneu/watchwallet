@@ -154,10 +154,11 @@ class HederaAdapter(
 
     private suspend fun balances(account: JsonElement): List<AssetAmount> {
         val result = mutableListOf(amountOf(HederaChain.HBAR, account.at("balance").str("balance")))
-        for (entry in account.at("balance").arr("tokens").take(MAX_TOKENS)) {
+        // Associated tokens without a balance must not use up the limit before real holdings.
+        val held = account.at("balance").arr("tokens").filterNot { parseBigInteger(it.str("balance")).isZero() }
+        for (entry in held.take(MAX_TOKENS)) {
             val tokenId = entry.str("token_id") ?: continue
             val raw = parseBigInteger(entry.str("balance"))
-            if (raw.isZero()) continue
             result += amountOf(token(tokenId) ?: continue, raw)
         }
         return result
