@@ -26,6 +26,7 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.TokenAmount
 import com.altaran.watchwallet.core.model.WatchTarget
+import com.altaran.watchwallet.core.network.HostHealth
 import com.altaran.watchwallet.core.network.Throttle
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
@@ -123,32 +124,21 @@ internal class XrplClient(
     private val http: HttpClient,
     private val urls: List<String>,
     private val throttle: Throttle,
+    private val health: HostHealth = HostHealth(),
 ) {
-    suspend fun call(method: String, params: JsonObject): JsonElement {
-        var last: Exception? = null
-        for (url in urls) {
-            try {
-                val response: JsonObject = throttle.run {
-                    http.post(url) {
-                        contentType(ContentType.Application.Json)
-                        setBody(
-                            buildJsonObject {
-                                put("method", method)
-                                put("params", buildJsonArray { add(params) })
-                            },
-                        )
-                    }.body()
-                }
-                return response["result"] ?: throw ChainDataException("XRPL $method: no result")
-            } catch (e: CancellationException) {
-                throw e
-            } catch (
-                @Suppress("TooGenericExceptionCaught") e: Exception,
-            ) {
-                last = e
-            }
+    suspend fun call(method: String, params: JsonObject): JsonElement = health.firstAvailable(urls) { url ->
+        val response: JsonObject = throttle.run {
+            http.post(url) {
+                contentType(ContentType.Application.Json)
+                setBody(
+                    buildJsonObject {
+                        put("method", method)
+                        put("params", buildJsonArray { add(params) })
+                    },
+                )
+            }.body()
         }
-        throw last ?: ChainDataException("No XRPL endpoint")
+        response["result"] ?: throw ChainDataException("XRPL $method: no result")
     }
 }
 

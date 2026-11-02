@@ -1,5 +1,6 @@
 package com.altaran.watchwallet.chain.bitcoin
 
+import com.altaran.watchwallet.core.network.HostHealth
 import com.altaran.watchwallet.core.network.Throttle
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -58,38 +59,21 @@ internal data class EsploraVout(
  * Minimal Esplora REST client (mempool.space, blockstream.info, self-hosted electrs/esplora).
  * Only individual addresses are sent; never an extended public key.
  *
- * With several [baseUrls] a failing instance (timeout, rate limit, outage) is skipped and the
- * last working one is preferred for later calls. Paging uses txids, so it works across them.
+ * With several [baseUrls] a failing instance (timeout, rate limit, outage) is left alone for a
+ * while, so later calls do not wait for it. Paging uses txids, so it works across instances.
  */
 internal class EsploraClient(
     private val http: HttpClient,
     private val baseUrls: List<String>,
     private val throttle: Throttle,
+    private val health: HostHealth = HostHealth(),
 ) {
     init {
         require(baseUrls.isNotEmpty())
     }
 
-    private var preferred = 0
-
-    private suspend inline fun <reified T> get(path: String): T {
-        var lastError: Exception? = null
-        for (offset in baseUrls.indices) {
-            val index = (preferred + offset) % baseUrls.size
-            try {
-                val result: T = throttle.run { http.get("${baseUrls[index].trimEnd('/')}/$path").body() }
-                preferred = index
-                return result
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (
-                @Suppress("TooGenericExceptionCaught") e: Exception,
-            ) {
-                lastError = e
-            }
-        }
-        throw lastError ?: IllegalStateException("No Esplora instance")
-    }
+    private suspend inline fun <reified T> get(path: String): T =
+        health.firstAvailable(baseUrls) { base -> throttle.run { http.get("${base.trimEnd('/')}/$path").body() } }
 
     suspend fun address(address: String): EsploraAddress = get("address/$address")
 

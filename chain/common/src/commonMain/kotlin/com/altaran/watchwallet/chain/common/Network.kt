@@ -1,6 +1,7 @@
 package com.altaran.watchwallet.chain.common
 
 import com.altaran.watchwallet.chain.api.ChainDataException
+import com.altaran.watchwallet.core.network.HostHealth
 import com.altaran.watchwallet.core.network.Throttle
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -73,29 +74,20 @@ class JsonRpcClient(
     private val throttle: Throttle,
     /** Extra retries with exponential backoff when the node answers HTTP 429. */
     private val rateLimitRetries: Int = 0,
+    private val health: HostHealth = HostHealth(),
 ) {
     init {
         require(urls.isNotEmpty())
     }
 
-    /** Calls [method]; tries the fallback URLs on transport failures (not on RPC errors). */
-    suspend fun call(method: String, params: JsonElement = JsonArray(emptyList())): JsonElement {
-        var last: Exception? = null
-        for (url in urls) {
-            try {
-                return withRateLimitBackoff(rateLimitRetries) { callOnce(url, method, params) }
-            } catch (e: RpcErrorException) {
-                throw e
-            } catch (e: CancellationException) {
-                throw e
-            } catch (
-                @Suppress("TooGenericExceptionCaught") e: Exception,
-            ) {
-                last = e
-            }
+    /**
+     * Calls [method]; tries the fallback URLs on transport failures (not on RPC errors) and leaves a
+     * failing URL alone for a while.
+     */
+    suspend fun call(method: String, params: JsonElement = JsonArray(emptyList())): JsonElement =
+        health.firstAvailable(urls, { it !is RpcErrorException }) { url ->
+            withRateLimitBackoff(rateLimitRetries) { callOnce(url, method, params) }
         }
-        throw last ?: ChainDataException("No RPC endpoint")
-    }
 
     private suspend fun callOnce(url: String, method: String, params: JsonElement): JsonElement {
         val response: JsonObject = throttle.run {
@@ -113,7 +105,8 @@ class JsonRpcClient(
         }
         val error = response["error"]
         if (error != null && error !is JsonNull) throw RpcErrorException(method, error)
-        return response["result"] ?: JsonNull
+        // An explicit null is an answer; none at all must not read as "empty" and wipe balances.
+        return response["result"] ?: throw ChainDataException("RPC $method: no result")
     }
 }
 
