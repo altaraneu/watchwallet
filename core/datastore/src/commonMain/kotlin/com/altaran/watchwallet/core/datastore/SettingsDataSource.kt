@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.altaran.watchwallet.core.model.NetworkSettings
 import com.altaran.watchwallet.core.model.QuoteCurrency
 import com.altaran.watchwallet.core.model.ThemeMode
@@ -100,6 +101,13 @@ class SettingsDataSource(
 
     suspend fun setEndpointConfigLastCheck(seconds: Long) = edit { it[Keys.ENDPOINTS_LAST_CHECK] = seconds }
 
+    /** Which stored prices came from which source, as marks of `:core:pricing`; stays on the device. */
+    val priceSourceMarks: Flow<Set<String>> = dataStore.data.map { it[Keys.PRICE_SOURCE_MARKS].orEmpty() }
+
+    suspend fun updatePriceSourceMarks(transform: (Set<String>) -> Set<String>) = edit {
+        it[Keys.PRICE_SOURCE_MARKS] = transform(it[Keys.PRICE_SOURCE_MARKS].orEmpty())
+    }
+
     /** Counts app launches (local only) and returns the new count. */
     suspend fun recordLaunch(): Int {
         var count = 0
@@ -162,6 +170,7 @@ class SettingsDataSource(
         val ENDPOINTS_AUTO_UPDATE = booleanPreferencesKey("endpoints_auto_update")
         val ENDPOINTS_CONFIG = stringPreferencesKey("endpoints_config")
         val ENDPOINTS_LAST_CHECK = longPreferencesKey("endpoints_last_check")
+        val PRICE_SOURCE_MARKS = stringSetPreferencesKey("price_source_marks")
         val LAUNCH_COUNT = intPreferencesKey("launch_count")
         val RATE_PROMPT_OFF = booleanPreferencesKey("rate_prompt_off")
         val RATE_PROMPT_NEXT = intPreferencesKey("rate_prompt_next")

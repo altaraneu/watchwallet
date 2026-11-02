@@ -10,6 +10,7 @@ import com.altaran.watchwallet.core.datastore.SettingsDataSource
 import com.altaran.watchwallet.core.model.ChartRange
 import com.altaran.watchwallet.core.model.QuoteCurrency
 import com.altaran.watchwallet.core.network.SingleFlight
+import com.altaran.watchwallet.core.pricing.CoinGeckoUsage
 import com.altaran.watchwallet.core.pricing.CurrentPrice
 import com.altaran.watchwallet.core.pricing.MarketInfo
 import com.altaran.watchwallet.core.pricing.PriceProvider
@@ -52,6 +53,7 @@ class PriceRepository(
     private val settings: SettingsDataSource,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     private val now: () -> Instant = { Clock.System.now() },
+    private val coinGecko: CoinGeckoUsage = CoinGeckoUsage(),
 ) : CurrentPriceRefresher {
     private val stateLock = Mutex()
     private val historyRequests = MutableStateFlow(0)
@@ -63,6 +65,9 @@ class PriceRepository(
     private class CurrentRefresh(val at: Instant, val ids: Set<String>, val succeeded: Boolean)
 
     private val lastCurrentRefresh = mutableMapOf<String, CurrentRefresh>()
+
+    /** Assets with stored prices from CoinGecko, which has to be credited where they are displayed. */
+    val coinGeckoPriceIds: Flow<Set<String>> get() = coinGecko.priceIds
 
     /** Chart history is being downloaded; charts show a progress hint meanwhile. */
     val historyLoading: Flow<Boolean> = historyRequests.map { it > 0 }.distinctUntilChanged()

@@ -178,7 +178,8 @@ class ExchangePrices(
 
     /**
      * Closes in USD of the finished [stepMinutes] candles that close between [from] and [to], oldest
-     * first, dated at their close like [history]. One request, at most [MAX_CANDLES] candles.
+     * first, dated at their close like [history]. One request, at most [MAX_CANDLES] candles. A window
+     * reaching the present whose newest candle is much too old counts as frozen, and has no closes.
      */
     suspend fun closes(symbol: String, stepMinutes: Int, from: Instant, to: Instant): List<ExchangeCandle> {
         if (symbol in STABLECOINS || isUnlisted(symbol)) return emptyList()
@@ -196,15 +197,19 @@ class ExchangePrices(
             unlistedLock.withLock { unlisted += symbol }
             return emptyList()
         }
-        val now = Clock.System.now().toEpochMilliseconds()
-        return rows.mapNotNull { row ->
+        val time = now().toEpochMilliseconds()
+        val candles = rows.mapNotNull { row ->
             val cells = row as? JsonArray ?: return@mapNotNull null
             val openTime = cells.getOrNull(0)?.jsonPrimitive?.longOrNull ?: return@mapNotNull null
             val close = cells.getOrNull(4)?.jsonPrimitive?.contentOrNull?.toDoubleOrNull() ?: return@mapNotNull null
             val closeTime = openTime + intervalMs
-            if (closeTime > now) return@mapNotNull null
+            if (closeTime > time) return@mapNotNull null
             ExchangeCandle(Instant.fromEpochMilliseconds(closeTime), close)
         }
+        val limit = FROZEN_CANDLE_INTERVALS * intervalMs
+        val reachesNow = time - to.toEpochMilliseconds() <= limit && rows.size < MAX_CANDLES
+        val frozen = reachesNow && candles.isNotEmpty() && time - candles.last().time.toEpochMilliseconds() > limit
+        return if (frozen) emptyList() else candles
     }
 
     private suspend fun fetchTickers(symbols: List<String>): Map<String, ExchangeTicker> {

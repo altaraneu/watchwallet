@@ -128,6 +128,7 @@ internal fun MarketsScreen(state: MarketsUiState, onOpenAsset: (String) -> Unit,
                     items(held, key = { "h" + it.priceId }) { row -> MarketRow(row, state, onOpenAsset) }
                     if (others.isNotEmpty()) item { SectionHeader(stringResource(Res.string.markets_watchlist)) }
                     items(others, key = { "w" + it.priceId }) { row -> MarketRow(row, state, onOpenAsset) }
+                    if (state.poweredByCoinGecko) item { PoweredByCoinGecko(Modifier.padding(16.dp)) }
                 }
             }
         }
@@ -337,8 +338,20 @@ internal fun AssetDetailScreen(
                 market.change7dPercent?.let { Stat(stringResource(Res.string.asset_change_7d), MoneyFormatter.formatPercentChange(it / 100), discreet = false) }
                 market.marketCap?.let { Stat(stringResource(Res.string.asset_market_cap), MoneyFormatter.format(it, currency), discreet = false) }
             }
+            if (state.poweredByCoinGecko) PoweredByCoinGecko(Modifier.padding(16.dp))
         }
     }
+}
+
+/** Required by CoinGecko's API terms where its data is displayed. The name is not translated. */
+@Composable
+private fun PoweredByCoinGecko(modifier: Modifier = Modifier) {
+    Text(
+        stringResource(Res.string.powered_by_coingecko),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -367,6 +380,8 @@ private fun WatchlistSearchDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                // Search results always come from CoinGecko.
+                if (results.isNotEmpty()) PoweredByCoinGecko(Modifier.padding(top = 8.dp))
                 Column(Modifier.padding(top = 8.dp).verticalScroll(rememberScrollState())) {
                     results.forEach { coin ->
                         Row(

@@ -24,6 +24,8 @@ data class MarketInfo(
     val marketCap: Double?,
     /** Hourly prices over the last 7 days (sparkline). */
     val sparkline7d: List<Double>,
+    /** This row is CoinGecko data, which has to be credited wherever it is displayed. */
+    val fromCoinGecko: Boolean = false,
 )
 
 /**

@@ -30,6 +30,7 @@ class LayeredPriceProvider(
     private val fallback: PriceProvider,
     private val exchange: ExchangePrices,
     private val fx: FxRates,
+    private val coinGecko: CoinGeckoUsage = CoinGeckoUsage(),
     private val now: () -> Instant = { Clock.System.now() },
 ) : PriceProvider {
     private class MarketRow(val info: MarketInfo, val at: Instant)
@@ -60,10 +61,18 @@ class LayeredPriceProvider(
             if (e is CancellationException) throw e
             emptyMap()
         }
-        if (fromExchange.isNotEmpty()) onBatch(fromExchange)
+        if (fromExchange.isNotEmpty()) {
+            onBatch(fromExchange)
+            coinGecko.replacedCurrent(fromExchange.keys)
+        }
         val rest = ids.filter { it !in fromExchange }
         try {
-            if (rest.isNotEmpty()) fallback.currentInBatches(rest, currency, onBatch)
+            if (rest.isNotEmpty()) {
+                fallback.currentInBatches(rest, currency) { batch ->
+                    onBatch(batch)
+                    coinGecko.servedCurrent(batch.keys)
+                }
+            }
             crossCheck(fromExchange, currency, onBatch)
         } catch (e: CancellationException) {
             throw e
@@ -97,6 +106,7 @@ class LayeredPriceProvider(
         if (outliers.isEmpty()) return
         trustLock.withLock { outliers.keys.forEach { distrustedUntil[it] = time + DISTRUST_PERIOD } }
         onBatch(outliers)
+        coinGecko.servedCurrent(outliers.keys)
     }
 
     override suspend fun history(priceId: String, currency: String, days: Int?): List<PricePoint> {
@@ -108,7 +118,9 @@ class LayeredPriceProvider(
             }
             if (points.isNotEmpty()) return points
         }
-        return fallback.history(priceId, currency, days)
+        val points = fallback.history(priceId, currency, days)
+        if (points.isNotEmpty()) coinGecko.servedHistory(priceId)
+        return points
     }
 
     /** Screens asking at the same time, or moments apart, share one request. */
@@ -122,7 +134,8 @@ class LayeredPriceProvider(
     private suspend fun loadMarkets(ids: List<String>, currency: String, cached: List<MarketRow>): List<MarketInfo> {
         // CoinGecko has names and market caps but is often slow; do not let it block the list.
         val rich = withTimeoutOrNull(MARKETS_TIMEOUT) { runCatching { fallback.markets(ids, currency) }.getOrNull() }
-        val rows = rich?.takeIf { it.isNotEmpty() } ?: runCatching { exchangeMarkets(ids, currency) }.getOrDefault(emptyList())
+        val rows = rich?.takeIf { it.isNotEmpty() }?.map { it.copy(fromCoinGecko = true) }
+            ?: runCatching { exchangeMarkets(ids, currency) }.getOrDefault(emptyList())
         if (rows.isEmpty()) {
             return cached.map { it.info }.ifEmpty { throw PriceDataException("No market data source available") }
         }
@@ -146,6 +159,8 @@ class LayeredPriceProvider(
     /** Exchange candles only: never a per-asset CoinGecko call, its keyless tier could not bear it. */
     override suspend fun candleCloses(priceId: String, currency: String, stepMinutes: Int, from: Instant, to: Instant): List<PricePoint> {
         val symbol = KnownAssets.symbolOf(priceId) ?: return emptyList()
+        // An exchange found to be far off the market does not refine the chart either.
+        if (trustLock.withLock { distrustedUntil[priceId]?.let { now() < it } == true }) return emptyList()
         val conversion = conversion(currency) ?: return emptyList()
         val candles = exchange.closes(symbol, stepMinutes, from, to)
         if (conversion.needs.isEmpty()) return candles.map { PricePoint(it.time, it.closeUsd * conversion.fiatFactor) }

@@ -48,6 +48,7 @@ import com.altaran.watchwallet.core.data.repository.MarketDataRepository
 import com.altaran.watchwallet.core.data.repository.PortfolioRepository
 import com.altaran.watchwallet.core.data.repository.PriceRepository
 import com.altaran.watchwallet.core.data.repository.SettingsEndpointConfigStore
+import com.altaran.watchwallet.core.data.repository.SettingsPriceSourceStore
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.repository.WalletRepository
 import com.altaran.watchwallet.core.data.sync.DataStoreWalletSyncStateStore
@@ -66,6 +67,7 @@ import com.altaran.watchwallet.core.network.ProxyConfig
 import com.altaran.watchwallet.core.network.createHttpClient
 import com.altaran.watchwallet.core.pricing.BinanceMarketData
 import com.altaran.watchwallet.core.pricing.CoinGeckoProvider
+import com.altaran.watchwallet.core.pricing.CoinGeckoUsage
 import com.altaran.watchwallet.core.pricing.ExchangePrices
 import com.altaran.watchwallet.core.pricing.FxRates
 import com.altaran.watchwallet.core.pricing.KrakenMarketData
@@ -128,10 +130,11 @@ val dataModule: Module = module {
         )
     }
     single { ChainRegistry(get()) }
+    single { CoinGeckoUsage(SettingsPriceSourceStore(get())) }
     single<PriceProvider> {
         val key = get<NetworkSettings>().coinGeckoApiKey
         // Exchange data first (fast, generous limits), CoinGecko for the long tail.
-        LayeredPriceProvider(CoinGeckoProvider(get(), apiKey = { key }), ExchangePrices(get()), get())
+        LayeredPriceProvider(CoinGeckoProvider(get(), apiKey = { key }), ExchangePrices(get()), get(), get())
     }
     single { KrakenMarketData(get()) }
     single { FxRates(get()) }
@@ -140,7 +143,7 @@ val dataModule: Module = module {
 
     single<SettingsRepository> { DefaultSettingsRepository(get()) }
     single<WalletRepository> { DefaultWalletRepository(get()) }
-    single { PriceRepository(get(), get(), get(), get()) }
+    single { PriceRepository(get(), get(), get(), get(), coinGecko = get()) }
     single { com.altaran.watchwallet.core.data.repository.PriceDetailRepository(get(), get()) }
     single { PortfolioRepository(get(), get(), get()) }
     single { com.altaran.watchwallet.core.data.repository.CostBasisRepository(get(), get()) }

@@ -50,7 +50,10 @@ data class MarketsUiState(
     /** Rows of held assets first (by value), then the watchlist. */
     val rows: List<MarketInfo> = emptyList(),
     val heldIds: Set<String> = emptySet(),
-)
+) {
+    /** Credited only while something on the list is really its data. */
+    val poweredByCoinGecko: Boolean get() = rows.any { it.fromCoinGecko }
+}
 
 internal class MarketsViewModel(
     private val settingsRepository: SettingsRepository,
@@ -159,6 +162,8 @@ data class AssetDetailUiState(
     val wallets: List<WalletShare> = emptyList(),
     /** Transactions of this asset across all wallets, newest first. */
     val activity: List<com.altaran.watchwallet.core.ui.TxView> = emptyList(),
+    /** Prices or market data of this asset came from CoinGecko. */
+    val poweredByCoinGecko: Boolean = false,
 )
 
 /** Amount of an asset held in one wallet. */
@@ -246,6 +251,7 @@ internal class AssetDetailViewModel(
         )
     }.combine(cost) { s, (c, complete, usd) -> s.copy(costUsd = c, costComplete = complete, valueUsd = usd) }
         .combine(extras) { s, (w, a) -> s.copy(wallets = w, activity = a) }
+        .combine(priceRepository.coinGeckoPriceIds) { s, ids -> s.copy(poweredByCoinGecko = s.market?.fromCoinGecko == true || key in ids) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AssetDetailUiState())
 
     init {

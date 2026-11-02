@@ -12,6 +12,7 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -210,6 +211,60 @@ class PriceDedupTest {
         assertTrue(prices.history("BTC", hourly = true, limit = 10).isNotEmpty())
     }
 
+    @Test
+    fun coinGeckoIsCreditedOnlyForWhatItServed() = runBlocking {
+        val now = Instant.fromEpochSeconds(2_000_000)
+        val usage = CoinGeckoUsage()
+        val market = Market(status = "HALT", price = "1.0")
+        val client = createHttpClient(engine = exchange(market))
+        val provider = LayeredPriceProvider(
+            FallbackPrices(price = 120.0),
+            ExchangePrices(client, hosts = listOf("https://ex.test"), now = { now }),
+            FxRates(client, listOf("https://fx.test")),
+            usage,
+            now = { now },
+        )
+        provider.current(listOf("bitcoin"), "usd")
+        assertEquals(setOf("bitcoin"), usage.priceIds.first(), "the exchange is halted, so the price is CoinGecko's")
+        provider.history("token:base:0xunknown", "usd", null)
+        assertEquals(setOf("bitcoin", "token:base:0xunknown"), usage.priceIds.first(), "no exchange lists the token")
+        usage.replacedCurrent(listOf("bitcoin"))
+        assertEquals(setOf("token:base:0xunknown"), usage.priceIds.first(), "another source took over the current price")
+    }
+
+    @Test
+    fun priceFromTheExchangeNeedsNoCredit() = runBlocking {
+        val now = Instant.fromEpochSeconds(2_000_000)
+        val usage = CoinGeckoUsage()
+        usage.servedCurrent(listOf("bitcoin"))
+        val client = createHttpClient(engine = exchange(Market(price = "100.0")))
+        val provider = LayeredPriceProvider(
+            FallbackPrices(price = 100.0),
+            ExchangePrices(client, hosts = listOf("https://ex.test"), now = { now }),
+            FxRates(client, listOf("https://fx.test")),
+            usage,
+            now = { now },
+        )
+        provider.current(listOf("bitcoin"), "usd")
+        assertTrue(usage.priceIds.first().isEmpty())
+    }
+
+    @Test
+    fun marketRowsSayWhereTheyCameFrom() = runBlocking {
+        val rich = LayeredPriceProvider(CountingProvider(), ExchangePrices(offline, hosts = listOf("https://ex.test")), FxRates(offline, listOf("https://fx.test")), now = { time })
+        assertTrue(rich.markets(listOf("bitcoin"), "usd").all { it.fromCoinGecko })
+    }
+
+    @Test
+    fun frozenCandlesDoNotRefineAWindowReachingThePresent() = runBlocking {
+        val now = Instant.fromEpochSeconds(2_000_000)
+        val market = Market(close = 2_000_000 - 3_600)
+        val prices = ExchangePrices(createHttpClient(engine = exchange(market)), hosts = listOf("https://ex.test")) { now }
+        val from = now - kotlin.time.Duration.parse("1d")
+        assertTrue(prices.closes("BTC", 1, from, now).isEmpty(), "the newest minute candle is an hour old")
+        assertTrue(prices.closes("BTC", 1, from, now - kotlin.time.Duration.parse("1h")).isNotEmpty(), "a window in the past is not affected")
+    }
+
     private class FallbackPrices(var price: Double = 100.0) : PriceProvider {
         val asked = mutableListOf<Collection<String>>()
 
@@ -231,7 +286,7 @@ class PriceDedupTest {
             fallback,
             ExchangePrices(client, hosts = listOf("https://ex.test"), now = now),
             FxRates(client, listOf("https://fx.test")),
-            now,
+            now = now,
         )
     }
 

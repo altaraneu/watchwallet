@@ -19,6 +19,8 @@ All notable changes to this project are documented here. The format follows
   only; bundled servers always work offline and a custom server always wins. Can be turned off in
   Settings → Network. See `docs/endpoints-config.md`.
 - `scripts/sign_endpoints.py` to sign and verify that file.
+- "Powered by CoinGecko" on the Markets list, coin details and watchlist search, only while something
+  displayed there really came from CoinGecko, as its API terms require.
 
 ### Changed
 - Much faster EVM refresh: only networks where the wallet is active are refreshed; all networks are
@@ -54,7 +56,7 @@ All notable changes to this project are documented here. The format follows
   not crowded out by empty token entries.
 - Cut-off history is marked as such on Cosmos, and on paging ends of Stellar, Tezos and Blockbook.
 - Prices no longer follow an exchange that halted trading or froze; such assets use the next source,
-  and so do assets priced more than 10 % away from it.
+  and so do assets priced more than 10 % away from it. This holds for refined chart windows too.
 - The crosshair stays on the selected point through pan, zoom and refreshes, and its line and axis
   label show that point's value.
 - The value series ends at the present even when no price changed for a while.
