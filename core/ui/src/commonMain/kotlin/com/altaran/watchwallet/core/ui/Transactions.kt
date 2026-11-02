@@ -309,7 +309,7 @@ fun CostBasisDialog(tx: TxView, onSave: (Double?) -> Unit, onDismiss: () -> Unit
                             amount > 0 -> stringResource(Res.string.cost_dialog_per_coin_hint, MoneyFormatter.formatPrice(entered / amount, USD), tx.symbol)
                             else -> null
                         }
-                        other?.let { Text(it) }
+                        other?.let { hint -> if (LocalDiscreetMode.current) AmountText(hint) else Text(hint) }
                     },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
