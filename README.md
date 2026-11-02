@@ -7,8 +7,8 @@ and extended public keys only**. It never asks for, accepts or stores a seed phr
 key: it cannot sign or send anything.
 
 - **Private by design** – no accounts, no backend, no analytics, no ads, no Google Play Services.
-  Everything stays on your device. Every network endpoint is listed in [PRIVACY.md](PRIVACY.md)
-  and configurable in the app.
+  Everything stays on your device. Every network endpoint is listed in [PRIVACY.md](PRIVACY.md).
+  You can use your own Bitcoin server and a SOCKS5 proxy, and turn off server list updates.
 - **Multichain, one design** – Bitcoin, Ethereum and EVM networks, Solana, XRP and more in one
   consistent interface.
 - **Paste and done** – paste an address, an xpub or a name; WatchWallet detects the chain.

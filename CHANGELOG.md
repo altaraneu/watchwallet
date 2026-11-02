@@ -75,6 +75,43 @@ All notable changes to this project are documented here. The format follows
 - Price changes of cheap coins show enough decimals instead of `-0.00`.
 - The price in the Market section follows the live price.
 
+### Security
+
+Fixes from the review in `docs/security/audit-2026-11-02.md`.
+
+- The Android HTTP engine really stops following redirects now; until this change it still followed
+  them, despite the entry under Fixed. Every bundled and fixed endpoint was checked to answer without one.
+- Cardano stake wallets: a payment address from the server is offered only if it carries the wallet's
+  stake key, checked at sync and on every display; otherwise only the stake key is shown. The app cannot
+  check the payment part of that address, so the screen now says to compare it with your wallet app.
+  Such an address no longer counts as "contained" in the wallet when adding another one.
+- A backup can no longer be written empty, or empty an older file, after the device rotated or the app
+  was killed in the file picker. Without its content nothing is written, the file the picker created is
+  removed if empty, and the failure is shown. Cancelling the picker no longer reports a failure.
+- Server list: Settings → Network shows the version, dates and every host in use, and the app says once
+  when the hosts change. A list valid for more than 200 days is ignored, each build has a version floor,
+  and the verifier can pin an offline recovery key. The documents now state what a stolen signing key
+  could do, and that updates stay on by default by the owner's decision.
+  **Before release:** the owner must generate that recovery key and enter it; none is set.
+- CSV exports: cells a spreadsheet could run as a formula are marked as text; import restores the
+  original and negative amounts stay numbers.
+- Export password: must be repeated and have at least 12 characters.
+- Discreet mode also hides amounts in the add-wallet preview, hidden assets, the allocation shares,
+  the "excluding deposits" line of charts and the hints of the cost dialog.
+- Deleting a wallet also removes the tokens and prices only it used and the cached logos. Deleted
+  database content is overwritten, the database is compacted and its log emptied. The remaining limits
+  are in `PRIVACY.md`.
+- `sign_endpoints.py` compares with the published file, not only the local one, and refuses an expiry
+  apps would ignore.
+- Large exports go to the share sheet as a file instead of intent text, and imported files are read
+  with a limit rather than read whole and then measured.
+- A cost reference in a backup is checked: its asset id must look like one, and neither part may hide a
+  seed phrase.
+- `PRIVACY.md` says that JSON backups hold cost basis with transaction references and subtract links.
+- Addresses, token ids and cursors are encoded wherever they become part of a request URL, so a hostile
+  value stored by an older backup import cannot change which path of a host is asked. Dot segments and
+  empty values are refused, and a Hedera paging cursor can no longer name another host.
+
 ## [1.0.0] - 2026-11-02
 
 ### Added
