@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Plain http must stay possible for a custom server on the local network, and this file has no way
+    to name private address ranges. So the platform allows it and the app decides: the CleartextGuard
+    plugin of :core:network refuses every plain request except to .onion, localhost and private
+    addresses, and every built-in or signed server is https only. Only system certificates are trusted.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

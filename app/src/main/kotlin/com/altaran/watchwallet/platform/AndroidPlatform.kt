@@ -13,6 +13,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.altaran.watchwallet.core.data.platform.AppRestarter
+import com.altaran.watchwallet.core.data.platform.LockAuthenticator
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -25,7 +26,20 @@ internal const val LOCK_AUTHENTICATORS = BIOMETRIC_STRONG or DEVICE_CREDENTIAL
 internal fun isAppLockAvailable(context: Context): Boolean =
     BiometricManager.from(context).canAuthenticate(LOCK_AUTHENTICATORS) == BiometricManager.BIOMETRIC_SUCCESS
 
+/** Uses the prompt of the visible screen. Without a screen there is nobody to ask, so nothing passes. */
+internal class ActivityLockAuthenticator : LockAuthenticator {
+    var host: com.altaran.watchwallet.MainActivity? = null
+
+    override suspend fun authenticate(): Boolean {
+        val activity = host ?: return false
+        return kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+            activity.authenticate { passed -> if (continuation.isActive) continuation.resumeWith(Result.success(passed)) }
+        }
+    }
+}
+
 /** Relaunches the app in a fresh process so network settings (proxy, endpoints) apply. */
+
 internal class AndroidAppRestarter(private val context: Context) : AppRestarter {
     override fun restart() {
         val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)

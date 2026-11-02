@@ -81,4 +81,5 @@
     <string name="settings_remote_icons">Загружать значки монет</string>
     <string name="settings_remote_icons_summary">Логотипы монет и токенов из репозитория ресурсов Trust Wallet на GitHub, сохраняются на устройстве. Раскрывает только то, какие монеты показываются, но никогда — ваши адреса.</string>
     <string name="settings_privacy_policy">Политика конфиденциальности</string>
+    <string name="settings_esplora_invalid">Введите полный адрес https://. Обычный http:// работает только для адресов .onion, localhost и адресов в вашей собственной сети.</string>
 </resources>

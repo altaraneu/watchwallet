@@ -3,10 +3,13 @@ package com.altaran.watchwallet.feature.addwallet
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.altaran.watchwallet.core.classifier.Classification
-import com.altaran.watchwallet.core.data.AddWalletService
+import com.altaran.watchwallet.core.data.AddWalletOperations
 import com.altaran.watchwallet.core.data.CandidatePreview
 import com.altaran.watchwallet.core.model.ChainFamily
+import com.altaran.watchwallet.core.security.SecretCheck
+import com.altaran.watchwallet.core.security.SecretGuard
 import com.altaran.watchwallet.core.security.SecretKind
+import com.altaran.watchwallet.core.security.SecretRejectedException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,8 +31,14 @@ sealed interface AddWalletPhase {
 
     data object MultipleEntries : AddWalletPhase
 
-    /** `0x` + 64 hex: the user must pick the chain explicitly (it may also be a private key). */
-    data class ConfirmChain(val value: String, val options: List<ChainFamily>) : AddWalletPhase
+    /** The separate route for Sui and Aptos: first the chain… */
+    data class DeliberateChain(val options: List<ChainFamily>) : AddWalletPhase
+
+    /** …then the warning that the format is identical to a private key and goes to a public server… */
+    data class DeliberateWarning(val family: ChainFamily) : AddWalletPhase
+
+    /** …and only then a `0x` + 64 hex value is accepted in the input field. */
+    data class DeliberateEntry(val family: ChainFamily, val invalid: Boolean = false) : AddWalletPhase
 
     /** The chosen address has never been used: second, stronger warning before saving. */
     data class ConfirmUnused(val preview: CandidatePreview) : AddWalletPhase
@@ -55,10 +64,12 @@ data class AddWalletUiState(
     /** Group (person or purpose) for the new wallet; empty = none. */
     val groupName: String = "",
     val groups: List<String> = emptyList(),
+    /** A name or group was refused as key material and cleared; the rest of the screen stays. */
+    val fieldRejected: Boolean = false,
 )
 
 internal class AddWalletViewModel(
-    private val service: AddWalletService,
+    private val service: AddWalletOperations,
 ) : ViewModel() {
     private val _state = MutableStateFlow(AddWalletUiState())
     val state: StateFlow<AddWalletUiState> = _state.asStateFlow()
@@ -67,19 +78,65 @@ internal class AddWalletViewModel(
         viewModelScope.launch { service.groups.collect { groups -> _state.update { it.copy(groups = groups.map { g -> g.name }) } } }
     }
 
-    fun onGroupChange(value: String) {
-        _state.update { it.copy(groupName = value) }
+    /** Returns `true` when the value was refused, so the screen can clear the clipboard as well. */
+    fun onGroupChange(value: String): Boolean {
+        val secret = SecretGuard.isSecret(value)
+        _state.update { it.copy(groupName = if (secret) "" else value, fieldRejected = secret) }
+        return secret
     }
     private var probeJob: Job? = null
 
     fun chainName(id: com.altaran.watchwallet.core.model.ChainId): String = service.chainName(id)
 
-    fun onInputChange(value: String) {
-        _state.update { it.copy(input = value, phase = AddWalletPhase.Idle) }
+    /**
+     * Runs on every change of the field, however the text got there. Returns `true` when it was
+     * rejected: the value is then gone from the state and the screen clears the clipboard too.
+     */
+    fun onInputChange(value: String): Boolean {
+        val deliberate = _state.value.phase as? AddWalletPhase.DeliberateEntry
+        val check = if (deliberate != null) SecretGuard.checkDeliberateAddress(value) else SecretGuard.check(value)
+        if (check is SecretCheck.Secret) {
+            reject(check.kind)
+            return true
+        }
+        _state.update { it.copy(input = value, phase = deliberate?.copy(invalid = false) ?: AddWalletPhase.Idle) }
+        return false
     }
 
-    fun onNameChange(value: String) {
-        _state.update { it.copy(name = value) }
+    /** Returns `true` when the value was refused, so the screen can clear the clipboard as well. */
+    fun onNameChange(value: String): Boolean {
+        val secret = SecretGuard.isSecret(value)
+        _state.update { it.copy(name = if (secret) "" else value, fieldRejected = secret) }
+        return secret
+    }
+
+    /** Discards everything the user entered. The rejected value stays in no state and no message. */
+    private fun reject(kind: SecretKind) {
+        probeJob?.cancel()
+        _state.update { AddWalletUiState(phase = AddWalletPhase.SecretRejected(kind), groups = it.groups) }
+    }
+
+    /** A scanned QR code. Raw bytes of a seed's length are a compact SeedQR. */
+    fun onScanned(text: String, bytes: ByteArray?) {
+        val binary = bytes?.let(SecretGuard::checkBinary)
+        if (binary is SecretCheck.Secret) reject(binary.kind) else onSubmit(text.trim())
+    }
+
+    /** The deliberate route for Sui and Aptos addresses. */
+    fun onStartDeliberate() {
+        probeJob?.cancel()
+        val options = listOf(ChainFamily.SUI, ChainFamily.APTOS).filter(service::isSupported)
+        _state.update { it.copy(input = "", phase = AddWalletPhase.DeliberateChain(options), autoSave = false) }
+    }
+
+    fun onPickDeliberateChain(family: ChainFamily) {
+        if (_state.value.phase !is AddWalletPhase.DeliberateChain) return
+        _state.update { it.copy(phase = AddWalletPhase.DeliberateWarning(family)) }
+    }
+
+    fun onAcceptDeliberateWarning() {
+        val phase = _state.value.phase as? AddWalletPhase.DeliberateWarning ?: return
+        _state.update { it.copy(phase = AddWalletPhase.DeliberateEntry(phase.family)) }
     }
 
     /**
@@ -98,22 +155,18 @@ internal class AddWalletViewModel(
     fun onSubmit(text: String = _state.value.input, saveWhenUnambiguous: Boolean = false) {
         probeJob?.cancel()
         _state.update { it.copy(autoSave = false) }
+        (_state.value.phase as? AddWalletPhase.DeliberateEntry)?.let { entry ->
+            submitDeliberate(text, entry.family)
+            return
+        }
         when (val result = service.classify(text)) {
             is Classification.Secret -> {
                 // Discard immediately: the secret is not kept in the field, state or anywhere else.
-                _state.update { AddWalletUiState(phase = AddWalletPhase.SecretRejected(result.kind)) }
+                reject(result.kind)
             }
 
             is Classification.Unsupported -> {
                 setPhase(text, AddWalletPhase.Unsupported(result.family))
-            }
-
-            is Classification.ConfirmationRequired -> {
-                val options = result.options.filter(service::isSupported)
-                setPhase(
-                    text,
-                    if (options.isEmpty()) AddWalletPhase.Unsupported(result.options.first()) else AddWalletPhase.ConfirmChain(result.value, options),
-                )
             }
 
             Classification.WrongChecksum -> {
@@ -143,13 +196,17 @@ internal class AddWalletViewModel(
     }
 
     /** Probes only the chain the user picked; never any other. */
-    fun onConfirmChain(family: ChainFamily) {
-        val phase = _state.value.phase as? AddWalletPhase.ConfirmChain ?: return
-        val target = service.confirmedTarget(phase.value, family) ?: run {
-            _state.update { it.copy(phase = AddWalletPhase.Unrecognized) }
+    private fun submitDeliberate(text: String, family: ChainFamily) {
+        val check = SecretGuard.checkDeliberateAddress(text)
+        if (check is SecretCheck.Secret) {
+            reject(check.kind)
             return
         }
-        _state.update { it.copy(phase = AddWalletPhase.Probing) }
+        val target = service.confirmedTarget(text.trim(), family) ?: run {
+            _state.update { it.copy(input = text, phase = AddWalletPhase.DeliberateEntry(family, invalid = true)) }
+            return
+        }
+        _state.update { it.copy(input = text, phase = AddWalletPhase.Probing) }
         probeJob = viewModelScope.launch {
             val preview = service.probe(
                 listOf(com.altaran.watchwallet.core.classifier.Candidate(target, com.altaran.watchwallet.core.classifier.Confidence.CERTAIN)),
@@ -167,7 +224,7 @@ internal class AddWalletViewModel(
     /** Discards the input (for example after the user realised it was a private key). */
     fun onClear() {
         probeJob?.cancel()
-        _state.value = AddWalletUiState()
+        _state.update { AddWalletUiState(groups = it.groups) }
     }
 
     fun onSelectCandidate(index: Int) {
@@ -202,8 +259,13 @@ internal class AddWalletViewModel(
         val current = _state.value
         _state.update { it.copy(saving = true) }
         viewModelScope.launch {
-            val id = service.save(preview.candidate.target, current.name.ifBlank { defaultName }, preview.probe, current.groupName, subtractFrom)
-            _state.update { it.copy(saving = false, savedWalletId = id) }
+            try {
+                val id = service.save(preview.candidate.target, current.name.ifBlank { defaultName }, preview.probe, current.groupName, subtractFrom)
+                _state.update { it.copy(saving = false, savedWalletId = id) }
+            } catch (e: SecretRejectedException) {
+                // The last line of defence: a warning, never a crash.
+                reject(e.kind)
+            }
         }
     }
 

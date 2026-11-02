@@ -15,7 +15,7 @@
     <string name="import_status_tracked">ইতিমধ্যে ট্র্যাক করা হচ্ছে, বাদ দেওয়া হবে</string>
     <string name="import_status_duplicate">এই তালিকায় সদৃশ</string>
     <string name="import_status_unsupported">%1$s এখনো সমর্থিত নয়</string>
-    <string name="import_status_confirm">Sui বা Aptos ঠিকানা: ওয়ালেট যোগ করুন স্ক্রিনে এটি যোগ করুন, সেখানে নিশ্চিতকরণ চাওয়া হয়</string>
+    <string name="import_status_confirm">Sui বা Aptos ঠিকানা: পর্যালোচনা না করা পর্যন্ত নির্বাচিত হবে না</string>
     <string name="import_status_invalid">শনাক্তযোগ্য ঠিকানা নয়</string>
     <string name="import_secret_title">ইমপোর্ট বন্ধ করা হয়েছে: প্রাইভেট কী বা সিড ফ্রেজ পাওয়া গেছে</string>
     <string name="import_secret_message">ইনপুটে প্রাইভেট কী বা সিড ফ্রেজের মতো দেখতে কিছু ছিল। কিছুই ইমপোর্ট, সংরক্ষণ বা কোথাও পাঠানো হয়নি, এবং ইনপুট মুছে ফেলা হয়েছে। ওই এন্ট্রিটি সরিয়ে আবার চেষ্টা করুন।</string>
@@ -43,4 +43,10 @@
     <string name="export_share">শেয়ার করুন</string>
     <string name="export_saved">সংরক্ষিত</string>
     <string name="export_save_failed">ফাইল সংরক্ষণ করা যায়নি</string>
+    <string name="import_confirm_action">পর্যালোচনা</string>
+    <string name="import_confirm_title">এই ফরম্যাট প্রাইভেট কী-র সঙ্গে হুবহু এক</string>
+    <string name="import_confirm_message">অ্যাপ এই মানকে Ethereum বা অন্য চেইনের প্রাইভেট কী থেকে আলাদা করতে পারে না। নিশ্চিত করলে এটি সংরক্ষণ করা হবে এবং %1$s-এর পাবলিক সার্ভারে পাঠানো হবে। শুধু এটি আপনার নিজের ব্যাকআপ এবং মানটি পাবলিক ঠিকানা হলেই নিশ্চিত করুন।</string>
+    <string name="import_confirm_accept">বুঝেছি, এটি একটি পাবলিক ঠিকানা</string>
+    <string name="import_confirm_cancel">এখন নয়</string>
+    <string name="import_secret_hex_hint">0x এবং ৬৪টি হেক্সাডেসিমেল অক্ষরের মানও প্রত্যাখ্যান করা হয়, কারণ প্রাইভেট কী দেখতে একই রকম। Sui ও Aptos ঠিকানা ওয়ালেট যোগ করার স্ক্রিনে যোগ করুন, অথবা JSON ব্যাকআপ থেকে ফিরিয়ে আনুন।</string>
 </resources>

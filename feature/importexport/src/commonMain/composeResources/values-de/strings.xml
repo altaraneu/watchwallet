@@ -15,7 +15,7 @@
     <string name="import_status_tracked">Wird bereits beobachtet, wird übersprungen</string>
     <string name="import_status_duplicate">Duplikat in dieser Liste</string>
     <string name="import_status_unsupported">%1$s wird noch nicht unterstützt</string>
-    <string name="import_status_confirm">Sui- oder Aptos-Adresse: Füge sie unter „Wallet hinzufügen“ hinzu, dort wird eine Bestätigung abgefragt</string>
+    <string name="import_status_confirm">Sui- oder Aptos-Adresse: erst nach deiner Prüfung ausgewählt</string>
     <string name="import_status_invalid">Keine erkannte Adresse</string>
     <string name="import_secret_title">Import abgebrochen: privater Schlüssel oder Seed-Phrase gefunden</string>
     <string name="import_secret_message">Die Eingabe enthielt etwas, das wie ein privater Schlüssel oder eine Seed-Phrase aussieht. Es wurde nichts importiert, gespeichert oder irgendwohin gesendet, und die Eingabe wurde gelöscht. Entferne diesen Eintrag und versuche es erneut.</string>
@@ -43,4 +43,10 @@
     <string name="export_share">Teilen</string>
     <string name="export_saved">Gespeichert</string>
     <string name="export_save_failed">Datei konnte nicht gespeichert werden</string>
+    <string name="import_confirm_action">Prüfen</string>
+    <string name="import_confirm_title">Dieses Format ist identisch mit einem privaten Schlüssel</string>
+    <string name="import_confirm_message">Die App kann diesen Wert nicht vom privaten Schlüssel von Ethereum oder einer anderen Chain unterscheiden. Nach der Bestätigung wird er gespeichert und an den öffentlichen %1$s-Server gesendet. Bestätige nur, wenn dies deine eigene Sicherung ist und der Wert eine öffentliche Adresse ist.</string>
+    <string name="import_confirm_accept">Verstanden, das ist eine öffentliche Adresse</string>
+    <string name="import_confirm_cancel">Nicht jetzt</string>
+    <string name="import_secret_hex_hint">Auch ein Wert aus 0x und 64 Hexadezimalzeichen wird abgelehnt, weil ein privater Schlüssel genauso aussieht. Füge Sui- und Aptos-Adressen unter „Wallet hinzufügen“ hinzu oder stelle sie aus einer JSON-Sicherung wieder her.</string>
 </resources>

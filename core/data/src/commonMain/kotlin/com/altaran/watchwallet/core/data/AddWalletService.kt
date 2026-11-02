@@ -36,12 +36,29 @@ data class CandidatePreview(
  * Secrets never get past [classify]: the classifier runs the secret guard first, and the input
  * is not stored or sent anywhere when it reports a secret.
  */
+interface AddWalletOperations {
+    val groups: kotlinx.coroutines.flow.Flow<List<com.altaran.watchwallet.core.model.WalletGroup>>
+
+    fun classify(input: String): Classification
+
+    fun confirmedTarget(value: String, family: ChainFamily): WatchTarget?
+
+    fun isSupported(family: ChainFamily): Boolean
+
+    fun chainName(id: com.altaran.watchwallet.core.model.ChainId): String
+
+    suspend fun probe(candidates: List<Candidate>): List<CandidatePreview>
+
+    /** @throws com.altaran.watchwallet.core.security.SecretRejectedException when the name or group looks like key material. */
+    suspend fun save(target: WatchTarget, name: String, probe: ProbeResult?, groupName: String? = null, subtractFrom: Long? = null): Long
+}
+
 class AddWalletService(
     private val registry: ChainRegistry,
     private val walletRepository: WalletRepository,
     private val syncEngine: SyncEngine,
-) {
-    fun classify(input: String): Classification = when (val result = AddressClassifier.classify(input)) {
+) : AddWalletOperations {
+    override fun classify(input: String): Classification = when (val result = AddressClassifier.classify(input)) {
         is Classification.Candidates -> {
             val supported = result.candidates.filter { registry.supports(it.target) }
             if (supported.isEmpty()) Classification.Unsupported(result.candidates.first().target.family) else Classification.Candidates(supported)
@@ -62,17 +79,20 @@ class AddWalletService(
         }
     }
 
-    /** Interprets a `0x` + 64 hex value after the user explicitly picked Sui or Aptos. */
-    fun confirmedTarget(value: String, family: ChainFamily): WatchTarget? = ChainParsers.parseConfirmed(value, family)
+    /** Interprets a Sui or Aptos value after the user explicitly chose that chain and accepted the warning. */
+    override fun confirmedTarget(value: String, family: ChainFamily): WatchTarget? = ChainParsers.parseConfirmed(value, family)
 
     /** Non-Bitcoin/EVM parsing for batch import. */
     fun parseOtherChains(input: String): List<WatchTarget> = ChainParsers.parse(input).filter { registry.supports(it) }
 
-    fun isSupported(family: ChainFamily): Boolean = family in registry.supportedFamilies
+    /** The chain validation of manual entry, for a target read from a backup. */
+    fun validatedImport(target: WatchTarget): WatchTarget? = ChainParsers.validated(target)?.takeIf { registry.supports(it) }
 
-    fun chainName(id: com.altaran.watchwallet.core.model.ChainId): String = registry.chain(id)?.name ?: id.value
+    override fun isSupported(family: ChainFamily): Boolean = family in registry.supportedFamilies
 
-    suspend fun probe(candidates: List<Candidate>): List<CandidatePreview> = coroutineScope {
+    override fun chainName(id: com.altaran.watchwallet.core.model.ChainId): String = registry.chain(id)?.name ?: id.value
+
+    override suspend fun probe(candidates: List<Candidate>): List<CandidatePreview> = coroutineScope {
         candidates.map { candidate ->
             async {
                 val existing = walletRepository.findExisting(candidate.target)
@@ -89,7 +109,7 @@ class AddWalletService(
      * same key on the sister chains (same coin type, different prefix) is checked as well, and
      * the ones with activity are added as separate wallets named "<name> (<chain>)".
      */
-    suspend fun save(target: WatchTarget, name: String, probe: ProbeResult?, groupName: String? = null, subtractFrom: Long? = null): Long {
+    override suspend fun save(target: WatchTarget, name: String, probe: ProbeResult?, groupName: String?, subtractFrom: Long?): Long {
         // A group is a person or purpose ("Partner", "Savings"); created on first use.
         val groupId = groupName?.trim()?.takeIf { it.isNotEmpty() }?.let { walletRepository.findGroup(it) ?: walletRepository.createGroup(it) }
         val id = walletRepository.addWallet(target, name, probe?.activeChains.orEmpty(), groupId, subtractFrom = subtractFrom)
@@ -99,7 +119,7 @@ class AddWalletService(
     }
 
     /** Existing groups, offered when adding a wallet. */
-    val groups get() = walletRepository.groups
+    override val groups get() = walletRepository.groups
 
     private suspend fun addRelatedCosmos(target: WatchTarget.Address, name: String, groupId: Long?) = coroutineScope {
         CosmosAddresses.relatedAddresses(target.address).filter { registry.supports(it) }.map { related ->

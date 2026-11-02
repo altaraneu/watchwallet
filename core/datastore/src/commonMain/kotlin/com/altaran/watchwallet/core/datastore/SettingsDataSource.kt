@@ -36,7 +36,8 @@ class SettingsDataSource(
             useDynamicColor = prefs[Keys.DYNAMIC_COLOR] ?: true,
             discreetMode = prefs[Keys.DISCREET_MODE] ?: false,
             appLock = prefs[Keys.APP_LOCK] ?: false,
-            secureScreen = prefs[Keys.SECURE_SCREEN] ?: false,
+            // On unless switched off: the key exists only after the user has used the switch.
+            secureScreen = prefs[Keys.SECURE_SCREEN] ?: true,
             remoteIcons = prefs[Keys.REMOTE_ICONS] ?: true,
             backgroundRefreshHours = prefs[Keys.BACKGROUND_HOURS] ?: 0,
             backgroundRefreshWifiOnly = prefs[Keys.BACKGROUND_WIFI_ONLY] ?: true,

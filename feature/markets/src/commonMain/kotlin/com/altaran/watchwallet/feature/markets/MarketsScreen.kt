@@ -83,11 +83,14 @@ import kotlin.time.Instant
 internal fun MarketsRoute(onOpenAsset: (String) -> Unit, viewModel: MarketsViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val results by viewModel.searchResults.collectAsStateWithLifecycle()
+    val rejected by viewModel.searchRejected.collectAsStateWithLifecycle()
     var searching by remember { mutableStateOf(false) }
     MarketsScreen(state, onOpenAsset, viewModel::refresh, onAdd = { searching = true })
     if (searching) {
         WatchlistSearchDialog(
             results = results,
+            rejected = rejected,
+            onQueryInput = viewModel::onSearchInput,
             onQuery = viewModel::search,
             onPick = { coin ->
                 viewModel.addToWatchlist(coin)
@@ -357,11 +360,14 @@ private fun PoweredByCoinGecko(modifier: Modifier = Modifier) {
 @Composable
 private fun WatchlistSearchDialog(
     results: List<com.altaran.watchwallet.core.pricing.CoinSearchResult>,
+    rejected: Boolean,
+    onQueryInput: (String) -> Boolean,
     onQuery: (String) -> Unit,
     onPick: (com.altaran.watchwallet.core.pricing.CoinSearchResult) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
+    val scrubClipboard = com.altaran.watchwallet.core.ui.secret.rememberClipboardScrubber()
     androidx.compose.runtime.LaunchedEffect(query) {
         if (query.length >= 2) {
             kotlinx.coroutines.delay(SEARCH_DEBOUNCE_MS)
@@ -373,13 +379,25 @@ private fun WatchlistSearchDialog(
         title = { Text(stringResource(Res.string.watchlist_add)) },
         text = {
             Column {
-                androidx.compose.material3.OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = { Text(stringResource(Res.string.watchlist_search)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                com.altaran.watchwallet.core.ui.secret.SensitiveInput {
+                    androidx.compose.material3.OutlinedTextField(
+                        value = query,
+                        onValueChange = { text ->
+                            if (onQueryInput(text)) {
+                                query = text
+                            } else {
+                                query = ""
+                                scrubClipboard(text)
+                            }
+                        },
+                        label = { Text(stringResource(Res.string.watchlist_search)) },
+                        isError = rejected,
+                        supportingText = if (rejected) ({ Text(stringResource(Res.string.watchlist_search_rejected)) }) else null,
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(autoCorrectEnabled = false),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 // Search results always come from CoinGecko.
                 if (results.isNotEmpty()) PoweredByCoinGecko(Modifier.padding(top = 8.dp))
                 Column(Modifier.padding(top = 8.dp).verticalScroll(rememberScrollState())) {

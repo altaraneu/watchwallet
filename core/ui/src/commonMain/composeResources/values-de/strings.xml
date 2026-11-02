@@ -44,4 +44,5 @@
     <string name="chart_performance">Ohne Ein- und Auszahlungen: %1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
     <string name="chart_current_value">Jetzt: %1$s</string>
+    <string name="secret_field_warning">Das sieht nach einer Seed-Phrase oder einem privaten Schlüssel aus. WatchWallet braucht sie nie. Das Feld wurde geleert, und nichts wurde gespeichert oder gesendet.</string>
 </resources>

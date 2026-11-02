@@ -29,7 +29,17 @@ data class AppInfo(
     val canAskForRating: Boolean = false,
     /** Biometrics or a device credential are set up, so the app lock can be offered. */
     val isAppLockAvailable: Boolean = false,
-)
+) {
+    /** The privacy policy of exactly this version: `main` may already say something else. */
+    val privacyPolicyUrl: String
+        get() = "$sourceCodeUrl/blob/v${versionName.substringBefore('-')}/PRIVACY.md"
+}
+
+/** Asks for the device's biometrics or screen lock. Owned by the platform shell. */
+fun interface LockAuthenticator {
+    /** `true` when the user passed, or when the device has no credential left that could ask. */
+    suspend fun authenticate(): Boolean
+}
 
 /** Restarts the app so network settings (proxy, endpoints) take effect. */
 fun interface AppRestarter {

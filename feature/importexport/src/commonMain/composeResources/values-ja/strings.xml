@@ -14,7 +14,7 @@
     <string name="import_status_tracked">追跡中のためスキップします</string>
     <string name="import_status_duplicate">このリスト内で重複しています</string>
     <string name="import_status_unsupported">%1$s にはまだ対応していません</string>
-    <string name="import_status_confirm">Sui または Aptos のアドレス:確認が必要なため「ウォレットを追加」画面で追加してください</string>
+    <string name="import_status_confirm">Sui または Aptos のアドレス: 確認するまで選択されません</string>
     <string name="import_status_invalid">認識できないアドレスです</string>
     <string name="import_secret_title">インポートを中止しました:秘密鍵またはシードフレーズが見つかりました</string>
     <string name="import_secret_message">入力内容に秘密鍵またはシードフレーズと思われるものが含まれていました。何もインポート、保存、送信されておらず、入力内容は消去されました。該当する項目を削除してもう一度お試しください。</string>
@@ -42,4 +42,10 @@
     <string name="export_share">共有</string>
     <string name="export_saved">保存しました</string>
     <string name="export_save_failed">ファイルを保存できませんでした</string>
+    <string name="import_confirm_action">確認</string>
+    <string name="import_confirm_title">この形式は秘密鍵とまったく同じです</string>
+    <string name="import_confirm_message">アプリはこの値と Ethereum などの秘密鍵を区別できません。確認すると保存され、%1$s の公開サーバーに送信されます。ご自身のバックアップで、値が公開アドレスである場合のみ確認してください。</string>
+    <string name="import_confirm_accept">理解しました。これは公開アドレスです</string>
+    <string name="import_confirm_cancel">今はしない</string>
+    <string name="import_secret_hex_hint">0x と 16 進数 64 文字の値も、秘密鍵と同じ形式のため拒否されます。Sui と Aptos のアドレスはウォレット追加画面で追加するか、JSON バックアップから復元してください。</string>
 </resources>

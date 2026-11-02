@@ -45,4 +45,5 @@
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
     <string name="asset_current_price">Jetzt: %1$s</string>
+    <string name="watchlist_search_rejected">Das sieht nicht nach einem Coin-Namen aus, sondern möglicherweise nach einer Adresse oder einem Schlüssel. Das Feld wurde geleert, und nichts wurde gesendet.</string>
 </resources>

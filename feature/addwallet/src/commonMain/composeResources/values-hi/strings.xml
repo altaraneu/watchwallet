@@ -43,8 +43,6 @@
     <string name="qr_close">स्कैनर बंद करें</string>
     <string name="qr_no_permission">QR कोड स्कैन करने के लिए कैमरे की अनुमति चाहिए। आप इसे ऐप सेटिंग्स में दे सकते हैं।</string>
     <string name="default_name_generic">%1$s वॉलेट</string>
-    <string name="confirm_chain_title">नेटवर्क चुनें</string>
-    <string name="confirm_chain_message">यह Sui या Aptos पता लगता है, लेकिन कई चेन की निजी कुंजी बिल्कुल ऐसी ही दिखती हैं। अभी तक न कुछ जाँचा गया है, न भेजा गया है। इस पते का नेटवर्क चुनें। अगर आपने गलती से निजी कुंजी कॉपी कर ली है, तो उसे मिटा दें।</string>
     <string name="confirm_unused_title">यह पता कभी इस्तेमाल नहीं हुआ</string>
     <string name="confirm_unused_message">अगर आपने गलती से निजी कुंजी कॉपी कर ली है, तो उसे अभी मिटा दें और कभी किसी से साझा न करें। इसे तभी जोड़ें जब आपको पक्का पता हो कि यह नया, अप्रयुक्त पता है।</string>
     <string name="confirm_add_anyway">फिर भी जोड़ें</string>
@@ -55,4 +53,14 @@
     <string name="overlap_message">इसे अलग वॉलेट के रूप में जोड़ा जाएगा। अगर आप इसे %1$s से घटाते हैं, तो इसका बैलेंस दो बार नहीं गिना जाएगा और आप दोनों वॉलेट अलग-अलग देख सकेंगे।</string>
     <string name="overlap_subtract">जोड़ें और घटाएँ</string>
     <string name="overlap_keep_both">जोड़ें और दोनों गिनें</string>
+    <string name="add_sui_aptos_action">Sui या Aptos पता जोड़ें</string>
+    <string name="deliberate_pick_title">यह पता किस नेटवर्क पर है?</string>
+    <string name="deliberate_pick_message">इन पतों के लिए अलग रास्ता है, क्योंकि ये बिल्कुल निजी कुंजी जैसे दिखते हैं। अभी कुछ जाँचा या भेजा नहीं गया है।</string>
+    <string name="deliberate_warning_title">यह प्रारूप निजी कुंजी जैसा ही है</string>
+    <string name="deliberate_warning_message">ऐप किसी पते को Ethereum या अन्य चेन की निजी कुंजी से अलग नहीं कर सकता: दोनों 0x और 64 हेक्साडेसिमल अक्षर होते हैं। यहाँ जो आप दर्ज करेंगे, वह %1$s के सार्वजनिक सर्वर पर भेजा जाएगा। केवल अपने वॉलेट की रिसीव स्क्रीन से कॉपी किए गए सार्वजनिक पते के साथ आगे बढ़ें। निजी कुंजी कभी दर्ज न करें।</string>
+    <string name="deliberate_accept">मैं समझता/समझती हूँ, यह सार्वजनिक पता है</string>
+    <string name="deliberate_entry_title">ऊपर %1$s पता दर्ज करें</string>
+    <string name="deliberate_entry_message">केवल यहीं इस रूप का मान स्वीकार होता है। जोड़ने पर यह उस नेटवर्क के सार्वजनिक सर्वर पर भेजा जाता है।</string>
+    <string name="deliberate_entry_invalid">यह उस नेटवर्क का मान्य पता नहीं है।</string>
+    <string name="secret_hex_hint">यदि यह Sui या Aptos पता था, तो नीचे “Sui या Aptos पता जोड़ें” का उपयोग करें।</string>
 </resources>

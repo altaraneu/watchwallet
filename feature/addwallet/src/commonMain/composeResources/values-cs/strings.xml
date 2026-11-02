@@ -47,8 +47,6 @@
     <string name="qr_close">Zavřít skener</string>
     <string name="qr_no_permission">Ke skenování QR kódů je potřeba přístup k fotoaparátu. Můžeš ho povolit v nastavení aplikace.</string>
     <string name="default_name_generic">Peněženka %1$s</string>
-    <string name="confirm_chain_title">Vyber síť</string>
-    <string name="confirm_chain_message">Vypadá to jako adresa Sui nebo Aptos, ale stejně vypadají i privátní klíče několika blockchainů. Zatím se nic neověřovalo ani neodeslalo. Vyber síť této adresy. Pokud jsi omylem zkopíroval privátní klíč, smaž ho.</string>
     <string name="confirm_unused_title">Adresa nebyla nikdy použita</string>
     <string name="confirm_unused_message">Pokud jsi omylem zkopíroval privátní klíč, hned ho smaž a nikomu ho neukazuj. Přidej ji, jen pokud si jsi jistý, že jde o novou, dosud nepoužitou adresu.</string>
     <string name="confirm_add_anyway">Přesto přidat</string>
@@ -59,4 +57,14 @@
     <string name="overlap_message">Přidá se jako samostatná peněženka. Když ji od peněženky %1$s odečteš, její zůstatek se nezapočítá dvakrát a obě peněženky můžeš sledovat zvlášť.</string>
     <string name="overlap_subtract">Přidat a odečíst</string>
     <string name="overlap_keep_both">Přidat a počítat obě</string>
+    <string name="add_sui_aptos_action">Přidat adresu Sui nebo Aptos</string>
+    <string name="deliberate_pick_title">Na které síti adresa je?</string>
+    <string name="deliberate_pick_message">Tyto adresy mají vlastní cestu, protože vypadají přesně jako privátní klíč. Zatím se nic nekontroluje ani neposílá.</string>
+    <string name="deliberate_warning_title">Tento formát je totožný s privátním klíčem</string>
+    <string name="deliberate_warning_message">Aplikace nerozezná adresu od privátního klíče Etherea nebo jiného řetězce: obojí je 0x a 64 hexadecimálních znaků. Co sem zadáš, se odešle na veřejný server sítě %1$s. Pokračuj jen s veřejnou adresou zkopírovanou z obrazovky pro příjem ve své peněžence. Privátní klíč nikdy nezadávej.</string>
+    <string name="deliberate_accept">Rozumím, je to veřejná adresa</string>
+    <string name="deliberate_entry_title">Zadej adresu %1$s výše</string>
+    <string name="deliberate_entry_message">Jen tady se hodnota tohoto tvaru přijme. Po přidání se odešle na veřejný server dané sítě.</string>
+    <string name="deliberate_entry_invalid">Tohle není platná adresa v dané síti.</string>
+    <string name="secret_hex_hint">Pokud to byla adresa Sui nebo Aptos, použij níže „Přidat adresu Sui nebo Aptos“.</string>
 </resources>

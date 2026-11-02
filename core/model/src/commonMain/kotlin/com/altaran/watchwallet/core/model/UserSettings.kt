@@ -30,11 +30,14 @@ data class UserSettings(
     /** Require biometrics or the device credential when opening the app. */
     val appLock: Boolean = false,
     /** Block screenshots and hide the app content in the recent-apps preview. */
-    val secureScreen: Boolean = false,
+    val secureScreen: Boolean = true,
     /** Load coin logos from the internet (Trust Wallet assets); otherwise bundled icons only. */
     val remoteIcons: Boolean = true,
     /** Background refresh interval in hours; 0 = off. */
     val backgroundRefreshHours: Int = 0,
     val backgroundRefreshWifiOnly: Boolean = true,
     val network: NetworkSettings = NetworkSettings(),
-)
+) {
+    /** The home screen is outside the app: with the lock on it must not show what the lock protects. */
+    val widgetHidesAmounts: Boolean get() = discreetMode || appLock
+}

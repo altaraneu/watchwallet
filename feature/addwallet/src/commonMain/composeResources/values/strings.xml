@@ -46,8 +46,6 @@
     <string name="qr_no_permission">Camera access is needed to scan QR codes. You can allow it in the app settings.</string>
     <!-- %1$s = chain name, for example "Solana" -->
     <string name="default_name_generic">%1$s wallet</string>
-    <string name="confirm_chain_title">Choose the network</string>
-    <string name="confirm_chain_message">This looks like a Sui or Aptos address, but private keys of several chains look exactly the same. Nothing has been checked or sent yet. Pick the network of this address. If you copied a private key by mistake, clear it.</string>
     <string name="confirm_unused_title">This address has never been used</string>
     <string name="confirm_unused_message">If you copied a private key by mistake, clear it now and never share it. Add it only if you are sure this is a new, unused address.</string>
     <string name="confirm_add_anyway">Add anyway</string>
@@ -59,4 +57,14 @@
     <string name="overlap_message">It will be added as its own wallet. If you subtract it from %1$s, its balance is not counted twice and you can follow both wallets separately.</string>
     <string name="overlap_subtract">Add and subtract</string>
     <string name="overlap_keep_both">Add and count both</string>
+    <string name="add_sui_aptos_action">Add a Sui or Aptos address</string>
+    <string name="deliberate_pick_title">Which network is the address on?</string>
+    <string name="deliberate_pick_message">These addresses need their own route, because they look exactly like a private key. Nothing is checked or sent yet.</string>
+    <string name="deliberate_warning_title">This format is identical to a private key</string>
+    <string name="deliberate_warning_message">The app cannot tell an address from the private key of Ethereum or another chain: both are 0x and 64 hexadecimal characters. What you enter here is sent to the public %1$s server. Continue only with a public address copied from the receive screen of your wallet. Never enter a private key.</string>
+    <string name="deliberate_accept">I understand, this is a public address</string>
+    <string name="deliberate_entry_title">Enter the %1$s address above</string>
+    <string name="deliberate_entry_message">Only here a value of this form is accepted. It is sent to that network’s public server when you add it.</string>
+    <string name="deliberate_entry_invalid">This is not a valid address on that network.</string>
+    <string name="secret_hex_hint">If this was a Sui or Aptos address, use “Add a Sui or Aptos address” below.</string>
 </resources>

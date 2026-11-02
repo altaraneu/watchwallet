@@ -4,13 +4,16 @@ import com.altaran.watchwallet.core.database.dao.WalletDao
 import com.altaran.watchwallet.core.database.entity.WalletEntity
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.AssetBalance
+import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.DerivedAddress
 import com.altaran.watchwallet.core.model.TokenAmount
 import com.altaran.watchwallet.core.model.Wallet
 import com.altaran.watchwallet.core.model.WalletTransaction
 import com.altaran.watchwallet.core.model.WatchTarget
+import com.altaran.watchwallet.core.security.SecretCheck
 import com.altaran.watchwallet.core.security.SecretGuard
+import com.altaran.watchwallet.core.security.SecretRejectedException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -28,6 +31,11 @@ data class BalanceRow(
     val userVisible: Boolean?,
 )
 
+/**
+ * Functions that store names, groups, notes or targets throw
+ * [com.altaran.watchwallet.core.security.SecretRejectedException] for anything that looks like key
+ * material. Reading and syncing wallets that are already stored is never checked or blocked.
+ */
 interface WalletRepository {
     val activeWallets: Flow<List<Wallet>>
     val activeWalletCount: Flow<Int>
@@ -157,7 +165,7 @@ internal class DefaultWalletRepository(
     ): Long {
         notes?.let { requireNoSecret(it) }
         // Defense in depth: never persist anything that looks like key material.
-        requireNoSecret(target.storedValue())
+        requireStorableTarget(target)
         requireNoSecret(name)
         findExisting(target)?.let { return it }
         val entity = WalletEntity(
@@ -200,8 +208,17 @@ internal class DefaultWalletRepository(
 }
 
 /** Defense in depth: never persist free text or targets that look like key material. */
-private fun requireNoSecret(value: String) {
-    require(!SecretGuard.isSecret(value)) { "Refusing to store key material" }
+private fun requireNoSecret(value: String) = throwIfSecret(SecretGuard.check(value))
+
+/** Sui and Aptos addresses have the form of a hex key and reach this point only through their own route. */
+private fun requireStorableTarget(target: WatchTarget) {
+    val deliberate = target is WatchTarget.Address && (target.family == ChainFamily.SUI || target.family == ChainFamily.APTOS)
+    val value = target.storedValue()
+    throwIfSecret(if (deliberate) SecretGuard.checkDeliberateAddress(value) else SecretGuard.check(value))
+}
+
+private fun throwIfSecret(check: SecretCheck) {
+    if (check is SecretCheck.Secret) throw SecretRejectedException(check.kind)
 }
 
 /** Converts current balances to the domain type (used by repositories and tests). */

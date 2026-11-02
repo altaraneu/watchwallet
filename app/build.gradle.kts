@@ -64,6 +64,13 @@ android {
         }
     }
 
+    packaging {
+        resources {
+            // :core:crypto brings the desktop secp256k1 for JVM tests; Android uses its own .so files.
+            excludes += "fr/acinq/secp256k1/jni/native/**"
+        }
+    }
+
     dependenciesInfo {
         // F-Droid / reproducible builds: no Google-encrypted dependency metadata blob.
         includeInApk = false
@@ -112,6 +119,7 @@ dependencies {
     implementation(projects.shared)
     implementation(projects.core.designsystem)
     implementation(projects.core.data)
+    implementation(projects.core.common)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

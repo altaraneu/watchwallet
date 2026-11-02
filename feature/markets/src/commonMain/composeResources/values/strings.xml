@@ -56,4 +56,5 @@
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
     <!-- Current price, shown while a past candle is selected. -->
     <string name="asset_current_price">Now: %1$s</string>
+    <string name="watchlist_search_rejected">This does not look like a coin name: it may be an address or a key. The field was cleared and nothing was sent.</string>
 </resources>

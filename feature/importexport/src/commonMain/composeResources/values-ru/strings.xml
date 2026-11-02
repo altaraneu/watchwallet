@@ -17,7 +17,7 @@
     <string name="import_status_tracked">Уже отслеживается, будет пропущен</string>
     <string name="import_status_duplicate">Дубликат в этом списке</string>
     <string name="import_status_unsupported">%1$s пока не поддерживается</string>
-    <string name="import_status_confirm">Адрес Sui или Aptos: добавьте его на экране «Добавить кошелёк», там потребуется подтверждение</string>
+    <string name="import_status_confirm">Адрес Sui или Aptos: не выбран, пока вы его не проверите</string>
     <string name="import_status_invalid">Адрес не распознан</string>
     <string name="import_secret_title">Импорт остановлен: найден приватный ключ или сид-фраза</string>
     <string name="import_secret_message">Введённые данные содержали что-то похожее на приватный ключ или сид-фразу. Ничего не импортировано, не сохранено и никуда не отправлено, а введённые данные удалены. Уберите эту запись и повторите попытку.</string>
@@ -45,4 +45,10 @@
     <string name="export_share">Поделиться</string>
     <string name="export_saved">Сохранено</string>
     <string name="export_save_failed">Не удалось сохранить файл</string>
+    <string name="import_confirm_action">Проверить</string>
+    <string name="import_confirm_title">Этот формат идентичен приватному ключу</string>
+    <string name="import_confirm_message">Приложение не может отличить это значение от приватного ключа Ethereum или другой сети. После подтверждения оно будет сохранено и отправлено на публичный сервер %1$s. Подтверждайте, только если это ваша собственная резервная копия и значение является публичным адресом.</string>
+    <string name="import_confirm_accept">Понятно, это публичный адрес</string>
+    <string name="import_confirm_cancel">Не сейчас</string>
+    <string name="import_secret_hex_hint">Значение из 0x и 64 шестнадцатеричных символов тоже отклоняется, потому что приватный ключ выглядит так же. Добавляйте адреса Sui и Aptos на экране добавления кошелька или восстанавливайте их из резервной копии JSON.</string>
 </resources>

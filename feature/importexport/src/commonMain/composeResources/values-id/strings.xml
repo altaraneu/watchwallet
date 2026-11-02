@@ -14,7 +14,7 @@
     <string name="import_status_tracked">Sudah dipantau, akan dilewati</string>
     <string name="import_status_duplicate">Duplikat dalam daftar ini</string>
     <string name="import_status_unsupported">%1$s belum didukung</string>
-    <string name="import_status_confirm">Alamat Sui atau Aptos: tambahkan di layar Tambah dompet, yang akan meminta konfirmasi</string>
+    <string name="import_status_confirm">Alamat Sui atau Aptos: tidak dipilih sampai Anda meninjaunya</string>
     <string name="import_status_invalid">Bukan alamat yang dikenali</string>
     <string name="import_secret_title">Impor dihentikan: kunci privat atau frasa benih ditemukan</string>
     <string name="import_secret_message">Input berisi sesuatu yang tampak seperti kunci privat atau frasa benih. Tidak ada yang diimpor, disimpan, atau dikirim ke mana pun, dan input telah dihapus. Hapus entri tersebut lalu coba lagi.</string>
@@ -42,4 +42,10 @@
     <string name="export_share">Bagikan</string>
     <string name="export_saved">Tersimpan</string>
     <string name="export_save_failed">Tidak dapat menyimpan file</string>
+    <string name="import_confirm_action">Tinjau</string>
+    <string name="import_confirm_title">Format ini identik dengan kunci pribadi</string>
+    <string name="import_confirm_message">Aplikasi tidak bisa membedakan nilai ini dari kunci pribadi Ethereum atau chain lain. Jika dikonfirmasi, nilai disimpan dan dikirim ke server publik %1$s. Konfirmasi hanya jika ini cadangan Anda sendiri dan nilainya adalah alamat publik.</string>
+    <string name="import_confirm_accept">Saya mengerti, ini alamat publik</string>
+    <string name="import_confirm_cancel">Jangan sekarang</string>
+    <string name="import_secret_hex_hint">Nilai 0x dan 64 karakter heksadesimal juga ditolak karena kunci pribadi terlihat sama. Tambahkan alamat Sui dan Aptos di layar Tambah dompet, atau pulihkan dari cadangan JSON.</string>
 </resources>

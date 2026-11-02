@@ -75,4 +75,5 @@
     <string name="settings_remote_icons">コインのアイコンをダウンロード</string>
     <string name="settings_remote_icons_summary">コインとトークンのロゴを GitHub の Trust Wallet アセットリポジトリから取得し、デバイスにキャッシュします。分かるのは表示されるコインのみで、アドレスが知られることはありません。</string>
     <string name="settings_privacy_policy">プライバシーポリシー</string>
+    <string name="settings_esplora_invalid">https:// から始まる完全なアドレスを入力してください。http:// は .onion アドレス、localhost、自分のネットワーク内のアドレスでのみ使えます。</string>
 </resources>

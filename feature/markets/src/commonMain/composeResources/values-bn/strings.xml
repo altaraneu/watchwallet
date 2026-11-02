@@ -45,4 +45,5 @@
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
     <string name="asset_current_price">এখন: %1$s</string>
+    <string name="watchlist_search_rejected">এটি কয়েনের নাম বলে মনে হচ্ছে না: এটি ঠিকানা বা কী হতে পারে। ঘরটি মুছে ফেলা হয়েছে এবং কিছুই পাঠানো হয়নি।</string>
 </resources>

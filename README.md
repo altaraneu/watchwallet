@@ -3,8 +3,8 @@
 **An open-source, watch-only crypto portfolio tracker for Android.**
 
 WatchWallet tracks balances, transaction history and portfolio value using **public addresses
-and extended public keys only**. It never asks for, accepts or stores a seed phrase or private
-key: it cannot sign or send anything.
+and extended public keys only**. It never asks for a seed phrase or private key and cannot sign or
+send anything; input that looks like one is rejected ([limits](SECURITY.md)).
 
 - **Private by design** – no accounts, no backend, no analytics, no ads, no Google Play Services.
   Everything stays on your device. Every network endpoint is listed in [PRIVACY.md](PRIVACY.md)
@@ -20,8 +20,8 @@ key: it cannot sign or send anything.
 ## Features
 
 - **Paste, scan or import**: addresses, xpub/ypub/zpub, output descriptors; QR scanner; batch
-  import from text, CSV or a WatchWallet backup. Seed phrases and private keys are always
-  rejected and never stored or sent.
+  import from text, CSV or a WatchWallet backup. Input that looks like a seed phrase or private key
+  is rejected and not stored or sent; [SECURITY.md](SECURITY.md) lists what cannot be told from an address.
 - **Bitcoin**: single addresses and extended public keys with local derivation and gap limit.
 - **Ethereum and EVM networks**: one `0x` address scanned across 21 networks (Ethereum, Base,
   Arbitrum, OP, Polygon, BNB Chain, Avalanche, zkSync, Linea, Scroll, …), ERC-20 tokens, spam

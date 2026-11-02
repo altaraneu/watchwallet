@@ -43,8 +43,6 @@
     <string name="qr_close">Scanner schließen</string>
     <string name="qr_no_permission">Zum Scannen von QR-Codes wird Kamerazugriff benötigt. Du kannst ihn in den App-Einstellungen erlauben.</string>
     <string name="default_name_generic">%1$s-Wallet</string>
-    <string name="confirm_chain_title">Netzwerk auswählen</string>
-    <string name="confirm_chain_message">Das sieht nach einer Sui- oder Aptos-Adresse aus, aber private Schlüssel mehrerer Chains sehen genauso aus. Bisher wurde nichts geprüft oder gesendet. Wähle das Netzwerk dieser Adresse. Falls du versehentlich einen privaten Schlüssel kopiert hast, lösche ihn.</string>
     <string name="confirm_unused_title">Diese Adresse wurde noch nie verwendet</string>
     <string name="confirm_unused_message">Falls du versehentlich einen privaten Schlüssel kopiert hast, lösche ihn jetzt und gib ihn niemals weiter. Füge den Eintrag nur hinzu, wenn du sicher bist, dass es eine neue, unbenutzte Adresse ist.</string>
     <string name="confirm_add_anyway">Trotzdem hinzufügen</string>
@@ -55,4 +53,14 @@
     <string name="overlap_message">Sie wird als eigene Wallet hinzugefügt. Wenn du sie von %1$s abziehst, wird ihr Guthaben nicht doppelt gezählt und du kannst beide Wallets getrennt verfolgen.</string>
     <string name="overlap_subtract">Hinzufügen und abziehen</string>
     <string name="overlap_keep_both">Hinzufügen, beide zählen</string>
+    <string name="add_sui_aptos_action">Sui- oder Aptos-Adresse hinzufügen</string>
+    <string name="deliberate_pick_title">In welchem Netzwerk liegt die Adresse?</string>
+    <string name="deliberate_pick_message">Diese Adressen haben einen eigenen Weg, weil sie genau wie ein privater Schlüssel aussehen. Bisher wird nichts geprüft oder gesendet.</string>
+    <string name="deliberate_warning_title">Dieses Format ist identisch mit einem privaten Schlüssel</string>
+    <string name="deliberate_warning_message">Die App kann eine Adresse nicht vom privaten Schlüssel von Ethereum oder einer anderen Chain unterscheiden: Beide bestehen aus 0x und 64 Hexadezimalzeichen. Was du hier eingibst, wird an den öffentlichen %1$s-Server gesendet. Fahre nur mit einer öffentlichen Adresse fort, die du aus dem Empfangsbildschirm deiner Wallet kopiert hast. Gib niemals einen privaten Schlüssel ein.</string>
+    <string name="deliberate_accept">Verstanden, das ist eine öffentliche Adresse</string>
+    <string name="deliberate_entry_title">Gib oben die %1$s-Adresse ein</string>
+    <string name="deliberate_entry_message">Nur hier wird ein Wert dieser Form akzeptiert. Beim Hinzufügen wird er an den öffentlichen Server dieses Netzwerks gesendet.</string>
+    <string name="deliberate_entry_invalid">Das ist keine gültige Adresse in diesem Netzwerk.</string>
+    <string name="secret_hex_hint">War das eine Sui- oder Aptos-Adresse, nutze unten „Sui- oder Aptos-Adresse hinzufügen“.</string>
 </resources>

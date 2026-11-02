@@ -16,7 +16,7 @@
     <string name="import_status_tracked">Ya en seguimiento, se omitirá</string>
     <string name="import_status_duplicate">Duplicada en esta lista</string>
     <string name="import_status_unsupported">%1$s aún no es compatible</string>
-    <string name="import_status_confirm">Dirección de Sui o Aptos: agrégala en la pantalla Agregar billetera, que pide confirmación</string>
+    <string name="import_status_confirm">Dirección de Sui o Aptos: no se selecciona hasta que la revises</string>
     <string name="import_status_invalid">Dirección no reconocida</string>
     <string name="import_secret_title">Importación detenida: se encontró una clave privada o frase semilla</string>
     <string name="import_secret_message">El contenido incluía algo que parece una clave privada o una frase semilla. No se importó, guardó ni envió nada a ningún lugar, y el contenido se borró. Elimina esa entrada e inténtalo de nuevo.</string>
@@ -44,4 +44,10 @@
     <string name="export_share">Compartir</string>
     <string name="export_saved">Guardado</string>
     <string name="export_save_failed">No se pudo guardar el archivo</string>
+    <string name="import_confirm_action">Revisar</string>
+    <string name="import_confirm_title">Este formato es idéntico al de una clave privada</string>
+    <string name="import_confirm_message">La app no puede distinguir este valor de la clave privada de Ethereum u otra cadena. Si confirmas, se guarda y se envía al servidor público de %1$s. Confirma solo si es tu propia copia de seguridad y el valor es una dirección pública.</string>
+    <string name="import_confirm_accept">Entendido, es una dirección pública</string>
+    <string name="import_confirm_cancel">Ahora no</string>
+    <string name="import_secret_hex_hint">También se rechaza un valor de 0x y 64 caracteres hexadecimales, porque una clave privada tiene el mismo aspecto. Añade las direcciones de Sui y Aptos en la pantalla de añadir monedero o restáuralas desde una copia JSON.</string>
 </resources>

@@ -24,12 +24,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.altaran.watchwallet.core.common.CustomServerUrl
 import com.altaran.watchwallet.core.designsystem.component.SectionHeader
 import com.altaran.watchwallet.core.designsystem.component.SettingsItem
 import com.altaran.watchwallet.core.designsystem.component.SettingsSwitchItem
 import com.altaran.watchwallet.core.designsystem.component.SingleChoiceDialog
 import com.altaran.watchwallet.core.model.NetworkSettings
 import com.altaran.watchwallet.core.network.proxySupported
+import com.altaran.watchwallet.core.ui.secret.SensitiveInput
+import com.altaran.watchwallet.core.ui.secret.rememberSecretFieldGuard
 import com.altaran.watchwallet.feature.settings.generated.resources.*
 import com.altaran.watchwallet.feature.settings.generated.resources.Res
 import org.jetbrains.compose.resources.pluralStringResource
@@ -53,7 +56,8 @@ internal fun AdvancedSettingsSections(
     var refreshPicker by rememberSaveable { mutableStateOf(false) }
     var dialog by rememberSaveable { mutableStateOf<NetworkDialog?>(null) }
 
-    if (state.appInfo.isAppLockAvailable) {
+    // Also while it is on without a credential left on the device: it must stay possible to turn off.
+    if (state.appInfo.isAppLockAvailable || settings.appLock) {
         SettingsSwitchItem(
             title = stringResource(Res.string.settings_app_lock),
             summary = stringResource(Res.string.settings_app_lock_summary),
@@ -151,10 +155,12 @@ internal fun AdvancedSettingsSections(
             title = stringResource(Res.string.settings_esplora),
             hint = stringResource(Res.string.settings_esplora_hint),
             initial = network.esploraUrl.orEmpty(),
+            invalidMessage = stringResource(Res.string.settings_esplora_invalid),
+            isValid = { it.isBlank() || CustomServerUrl.validate(it) != null },
             onDismiss = { dialog = null },
         ) { value ->
             dialog = null
-            onNetworkChange(network.copy(esploraUrl = value.trim().trimEnd('/').takeIf { it.startsWith("https://") || it.startsWith("http://") }))
+            onNetworkChange(network.copy(esploraUrl = value.trim().ifBlank { null }?.let(CustomServerUrl::validate)))
         }
 
         NetworkDialog.COINGECKO -> TextDialog(
@@ -179,6 +185,7 @@ private fun refreshLabel(hours: Int): String =
 private fun ProxyDialog(network: NetworkSettings, onDismiss: () -> Unit, onConfirm: (String, Int) -> Unit) {
     var host by remember { mutableStateOf(network.proxyHost) }
     var port by remember { mutableStateOf(network.proxyPort.toString()) }
+    val guard = rememberSecretFieldGuard()
     val portValue = port.toIntOrNull()?.takeIf { it in 1..65535 }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -186,9 +193,17 @@ private fun ProxyDialog(network: NetworkSettings, onDismiss: () -> Unit, onConfi
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(Res.string.settings_proxy_help), style = MaterialTheme.typography.bodySmall)
-                OutlinedTextField(value = host, onValueChange = {
-                    host = it.trim()
-                }, label = { Text(stringResource(Res.string.settings_proxy_host)) }, singleLine = true)
+                SensitiveInput {
+                    OutlinedTextField(
+                        value = host,
+                        onValueChange = { host = guard.filter(it.trim()) },
+                        label = { Text(stringResource(Res.string.settings_proxy_host)) },
+                        supportingText = guard.warning,
+                        isError = guard.rejected,
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false),
+                    )
+                }
                 OutlinedTextField(
                     value = port,
                     onValueChange = { port = it.filter(Char::isDigit).take(5) },
@@ -208,18 +223,46 @@ private fun ProxyDialog(network: NetworkSettings, onDismiss: () -> Unit, onConfi
 }
 
 @Composable
-private fun TextDialog(title: String, hint: String, initial: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+private fun TextDialog(
+    title: String,
+    hint: String,
+    initial: String,
+    onDismiss: () -> Unit,
+    invalidMessage: String? = null,
+    isValid: (String) -> Boolean = { true },
+    onConfirm: (String) -> Unit,
+) {
     var value by remember { mutableStateOf(initial) }
+    var invalid by remember { mutableStateOf(false) }
+    val guard = rememberSecretFieldGuard()
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(hint, style = MaterialTheme.typography.bodySmall)
-                OutlinedTextField(value = value, onValueChange = { value = it }, singleLine = true)
+                SensitiveInput {
+                    OutlinedTextField(
+                        value = value,
+                        onValueChange = {
+                            value = guard.filter(it)
+                            invalid = false
+                        },
+                        isError = guard.rejected || invalid,
+                        supportingText = when {
+                            guard.rejected -> guard.warning
+                            invalid && invalidMessage != null -> ({ Text(invalidMessage) })
+                            else -> null
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, keyboardType = KeyboardType.Uri),
+                    )
+                }
             }
         },
-        confirmButton = { TextButton(onClick = { onConfirm(value) }) { Text(stringResource(Res.string.settings_save)) } },
+        confirmButton = {
+            TextButton(onClick = { if (isValid(value)) onConfirm(value) else invalid = true }) { Text(stringResource(Res.string.settings_save)) }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.settings_cancel)) } },
     )
 }

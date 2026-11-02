@@ -62,6 +62,9 @@ import com.altaran.watchwallet.core.security.SecretKind
 import com.altaran.watchwallet.core.ui.clipboard.plainText
 import com.altaran.watchwallet.core.ui.familyLabel
 import com.altaran.watchwallet.core.ui.format.MoneyFormatter
+import com.altaran.watchwallet.core.ui.secret.SecretFieldWarning
+import com.altaran.watchwallet.core.ui.secret.SensitiveInput
+import com.altaran.watchwallet.core.ui.secret.rememberClipboardScrubber
 import com.altaran.watchwallet.core.ui.targetDescription
 import com.altaran.watchwallet.feature.addwallet.generated.resources.*
 import com.altaran.watchwallet.feature.addwallet.generated.resources.Res
@@ -94,7 +97,10 @@ internal fun AddWalletRoute(
         onAdd = { text -> viewModel.onSubmit(text, saveWhenUnambiguous = true) },
         onGroupChange = viewModel::onGroupChange,
         onBatchImport = onBatchImport,
-        onConfirmChain = viewModel::onConfirmChain,
+        onScanned = viewModel::onScanned,
+        onStartDeliberate = viewModel::onStartDeliberate,
+        onPickDeliberateChain = viewModel::onPickDeliberateChain,
+        onAcceptDeliberateWarning = viewModel::onAcceptDeliberateWarning,
         onConfirmUnused = viewModel::onConfirmUnused,
         onResolveOverlap = viewModel::onResolveOverlap,
         onClear = viewModel::onClear,
@@ -107,7 +113,8 @@ internal fun AddWalletScreen(
     state: AddWalletUiState,
     chainName: (com.altaran.watchwallet.core.model.ChainId) -> String,
     onNavigateUp: () -> Unit,
-    onInputChange: (String) -> Unit,
+    /** Returns `true` when the text was rejected as key material. */
+    onInputChange: (String) -> Boolean,
     onSubmit: (String) -> Unit,
     /** Submits pasted text; returns `true` when it was rejected as key material. */
     onPaste: (String) -> Boolean = {
@@ -116,15 +123,21 @@ internal fun AddWalletScreen(
     },
     onSelectCandidate: (Int) -> Unit,
     onAdd: (String) -> Unit = onSubmit,
-    onGroupChange: (String) -> Unit = {},
-    onNameChange: (String) -> Unit,
+    onGroupChange: (String) -> Boolean = { false },
+    onNameChange: (String) -> Boolean,
     onSave: (defaultName: String) -> Unit,
     onBatchImport: (String) -> Unit = {},
-    onConfirmChain: (ChainFamily) -> Unit = {},
+    onScanned: (String, ByteArray?) -> Unit = { text, _ -> onSubmit(text) },
+    onStartDeliberate: () -> Unit = {},
+    onPickDeliberateChain: (ChainFamily) -> Unit = {},
+    onAcceptDeliberateWarning: () -> Unit = {},
     onConfirmUnused: () -> Unit = {},
     onResolveOverlap: (Boolean) -> Unit = {},
     onClear: () -> Unit = {},
 ) {
+    val scrubClipboard = rememberClipboardScrubber()
+    // Whatever the source of the text (keyboard, system paste, drag): a rejected value also leaves the clipboard.
+    val guarded: ((String) -> Boolean) -> (String) -> Unit = { change -> { text -> if (change(text)) scrubClipboard(text) } }
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
     val keyboard = LocalSoftwareKeyboardController.current
@@ -149,9 +162,11 @@ internal fun AddWalletScreen(
     }
     var scanning by rememberSaveable { mutableStateOf(false) }
     if (scanning) {
-        QrScannerDialog(onResult = { text ->
+        QrScannerDialog(onResult = { text, bytes ->
             scanning = false
-            submit(text.trim())
+            keyboard?.hide()
+            focusManager.clearFocus()
+            onScanned(text, bytes)
         }, onDismiss = { scanning = false })
     }
     Scaffold(
@@ -176,23 +191,25 @@ internal fun AddWalletScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(stringResource(Res.string.add_wallet_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            OutlinedTextField(
-                value = state.input,
-                onValueChange = onInputChange,
-                label = { Text(stringResource(Res.string.add_wallet_input_label)) },
-                textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                maxLines = 4,
-                // No autocorrect / suggestions: the keyboard must not learn or sync what is typed here.
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.None,
-                    autoCorrectEnabled = false,
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done,
-                ),
-                keyboardActions = KeyboardActions(onDone = { if (state.input.isNotBlank()) submit(state.input) }),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            GroupField(state.groupName, state.groups, onGroupChange)
+            SensitiveInput {
+                OutlinedTextField(
+                    value = state.input,
+                    onValueChange = guarded(onInputChange),
+                    label = { Text(stringResource(Res.string.add_wallet_input_label)) },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                    maxLines = 4,
+                    // No autocorrect / suggestions: the keyboard must not learn or sync what is typed here.
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.None,
+                        autoCorrectEnabled = false,
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done,
+                    ),
+                    keyboardActions = KeyboardActions(onDone = { if (state.input.isNotBlank()) submit(state.input) }),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            GroupField(state.groupName, state.groups, state.fieldRejected, guarded(onGroupChange))
             InputActions(
                 onPaste = {
                     scope.launch {
@@ -216,15 +233,22 @@ internal fun AddWalletScreen(
                     onAdd(state.input)
                 },
             )
+            val deliberate =
+                state.phase is AddWalletPhase.DeliberateChain || state.phase is AddWalletPhase.DeliberateWarning ||
+                    state.phase is AddWalletPhase.DeliberateEntry
+            if (!deliberate) {
+                androidx.compose.material3.TextButton(onClick = onStartDeliberate) { Text(stringResource(Res.string.add_sui_aptos_action)) }
+            }
 
             PhaseContent(
                 state = state,
                 chainName = chainName,
                 onSelectCandidate = onSelectCandidate,
-                onNameChange = onNameChange,
+                onNameChange = guarded(onNameChange),
                 onSave = { save() },
                 onBatchImport = onBatchImport,
-                onConfirmChain = onConfirmChain,
+                onPickDeliberateChain = onPickDeliberateChain,
+                onAcceptDeliberateWarning = onAcceptDeliberateWarning,
                 onConfirmUnused = onConfirmUnused,
                 onResolveOverlap = onResolveOverlap,
                 onClear = onClear,
@@ -253,6 +277,13 @@ private fun SecretWarning(kind: SecretKind) {
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
                 Text(stringResource(Res.string.secret_message), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer)
+                if (kind == SecretKind.HEX_PRIVATE_KEY) {
+                    Text(
+                        stringResource(Res.string.secret_hex_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                }
                 Text(
                     stringResource(Res.string.secret_scam_hint),
                     style = MaterialTheme.typography.bodySmall,
@@ -309,16 +340,20 @@ private fun PreviewSection(
         val selected = phase.previews.getOrNull(phase.selected)
         val defaultName = selected?.let { defaultName(it.candidate.target) }.orEmpty()
         if (selected?.existingWalletId == null) {
-            OutlinedTextField(
-                value = state.name,
-                onValueChange = onNameChange,
-                label = { Text(stringResource(Res.string.add_wallet_name_label)) },
-                placeholder = { Text(defaultName) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { onSave(defaultName) }),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            SensitiveInput {
+                OutlinedTextField(
+                    value = state.name,
+                    onValueChange = onNameChange,
+                    label = { Text(stringResource(Res.string.add_wallet_name_label)) },
+                    placeholder = { Text(defaultName) },
+                    isError = state.fieldRejected,
+                    supportingText = if (state.fieldRejected) ({ SecretFieldWarning() }) else null,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { onSave(defaultName) }),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
         Button(onClick = { onSave(defaultName) }, enabled = !state.saving && selected != null, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(if (selected?.existingWalletId != null) Res.string.add_wallet_open_existing else Res.string.add_wallet_save))
@@ -419,7 +454,8 @@ private fun PhaseContent(
     onNameChange: (String) -> Unit,
     onSave: () -> Unit,
     onBatchImport: (String) -> Unit,
-    onConfirmChain: (ChainFamily) -> Unit,
+    onPickDeliberateChain: (ChainFamily) -> Unit,
+    onAcceptDeliberateWarning: () -> Unit,
     onConfirmUnused: () -> Unit,
     onResolveOverlap: (Boolean) -> Unit,
     onClear: () -> Unit,
@@ -444,16 +480,34 @@ private fun PhaseContent(
             )
         }
 
-        is AddWalletPhase.ConfirmChain -> {
-            WarningCard(
-                title = stringResource(Res.string.confirm_chain_title),
-                message = stringResource(Res.string.confirm_chain_message),
-            ) {
+        is AddWalletPhase.DeliberateChain -> {
+            InfoCard(stringResource(Res.string.deliberate_pick_title), stringResource(Res.string.deliberate_pick_message))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 phase.options.forEach { family ->
-                    FilledTonalButton(onClick = { onConfirmChain(family) }) { Text(familyLabel(family)) }
+                    FilledTonalButton(onClick = { onPickDeliberateChain(family) }) { Text(familyLabel(family)) }
                 }
                 androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
             }
+        }
+
+        is AddWalletPhase.DeliberateWarning -> {
+            WarningCard(
+                title = stringResource(Res.string.deliberate_warning_title),
+                message = stringResource(Res.string.deliberate_warning_message, familyLabel(phase.family)),
+            ) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
+                    FilledTonalButton(onClick = onAcceptDeliberateWarning) { Text(stringResource(Res.string.deliberate_accept)) }
+                }
+            }
+        }
+
+        is AddWalletPhase.DeliberateEntry -> {
+            InfoCard(
+                stringResource(Res.string.deliberate_entry_title, familyLabel(phase.family)),
+                stringResource(if (phase.invalid) Res.string.deliberate_entry_invalid else Res.string.deliberate_entry_message),
+            )
+            androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
         }
 
         is AddWalletPhase.ConfirmUnused -> {
@@ -512,16 +566,21 @@ private fun PhaseContent(
 
 /** Optional group (whose wallet: "Partner", "Me", "Savings"…), with existing groups as chips. */
 @Composable
-private fun GroupField(value: String, groups: List<String>, onChange: (String) -> Unit) {
+private fun GroupField(value: String, groups: List<String>, rejected: Boolean, onChange: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onChange,
-            label = { Text(stringResource(Res.string.add_wallet_group_label)) },
-            placeholder = { Text(stringResource(Res.string.add_wallet_group_hint)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        SensitiveInput {
+            OutlinedTextField(
+                value = value,
+                onValueChange = onChange,
+                label = { Text(stringResource(Res.string.add_wallet_group_label)) },
+                placeholder = { Text(stringResource(Res.string.add_wallet_group_hint)) },
+                isError = rejected,
+                supportingText = if (rejected) ({ SecretFieldWarning() }) else null,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(autoCorrectEnabled = false),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         if (groups.isNotEmpty()) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 groups.forEach { group ->

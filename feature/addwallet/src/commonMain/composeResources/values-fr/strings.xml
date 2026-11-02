@@ -45,8 +45,6 @@
     <string name="qr_close">Fermer le scanner</string>
     <string name="qr_no_permission">L’accès à la caméra est nécessaire pour scanner les codes QR. Vous pouvez l’autoriser dans les paramètres de l’application.</string>
     <string name="default_name_generic">Portefeuille %1$s</string>
-    <string name="confirm_chain_title">Choisissez le réseau</string>
-    <string name="confirm_chain_message">Cela ressemble à une adresse Sui ou Aptos, mais les clés privées de plusieurs chaînes ont exactement le même aspect. Rien n’a encore été vérifié ni envoyé. Choisissez le réseau de cette adresse. Si vous avez copié une clé privée par erreur, effacez-la.</string>
     <string name="confirm_unused_title">Cette adresse n’a jamais été utilisée</string>
     <string name="confirm_unused_message">Si vous avez copié une clé privée par erreur, effacez-la maintenant et ne la partagez jamais. N’ajoutez cet élément que s’il s’agit à coup sûr d’une adresse neuve et inutilisée.</string>
     <string name="confirm_add_anyway">Ajouter quand même</string>
@@ -57,4 +55,14 @@
     <string name="overlap_message">Elle sera ajoutée comme portefeuille distinct. Si vous la soustrayez de %1$s, son solde ne sera pas compté deux fois et vous pourrez suivre les deux portefeuilles séparément.</string>
     <string name="overlap_subtract">Ajouter et soustraire</string>
     <string name="overlap_keep_both">Ajouter et compter les deux</string>
+    <string name="add_sui_aptos_action">Ajouter une adresse Sui ou Aptos</string>
+    <string name="deliberate_pick_title">Sur quel réseau se trouve l’adresse ?</string>
+    <string name="deliberate_pick_message">Ces adresses ont leur propre parcours, car elles ressemblent exactement à une clé privée. Rien n’est encore vérifié ni envoyé.</string>
+    <string name="deliberate_warning_title">Ce format est identique à celui d’une clé privée</string>
+    <string name="deliberate_warning_message">L’application ne peut pas distinguer une adresse de la clé privée d’Ethereum ou d’une autre chaîne : les deux sont 0x et 64 caractères hexadécimaux. Ce que vous saisissez ici est envoyé au serveur public de %1$s. Continuez uniquement avec une adresse publique copiée depuis l’écran de réception de votre portefeuille. Ne saisissez jamais de clé privée.</string>
+    <string name="deliberate_accept">J’ai compris, c’est une adresse publique</string>
+    <string name="deliberate_entry_title">Saisissez l’adresse %1$s ci-dessus</string>
+    <string name="deliberate_entry_message">Seul cet écran accepte une valeur de cette forme. Elle est envoyée au serveur public de ce réseau lorsque vous l’ajoutez.</string>
+    <string name="deliberate_entry_invalid">Ce n’est pas une adresse valide sur ce réseau.</string>
+    <string name="secret_hex_hint">S’il s’agissait d’une adresse Sui ou Aptos, utilisez « Ajouter une adresse Sui ou Aptos » ci-dessous.</string>
 </resources>

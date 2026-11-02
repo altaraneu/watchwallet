@@ -45,4 +45,5 @@
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
     <string name="asset_current_price">Sekarang: %1$s</string>
+    <string name="watchlist_search_rejected">Ini tidak terlihat seperti nama koin: mungkin alamat atau kunci. Kolom telah dikosongkan dan tidak ada yang dikirim.</string>
 </resources>

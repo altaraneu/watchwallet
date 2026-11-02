@@ -16,7 +16,7 @@
     <string name="import_status_tracked">Déjà suivi, sera ignoré</string>
     <string name="import_status_duplicate">Doublon dans cette liste</string>
     <string name="import_status_unsupported">%1$s n’est pas encore pris en charge</string>
-    <string name="import_status_confirm">Adresse Sui ou Aptos : ajoutez-la depuis l’écran Ajouter un portefeuille, qui demande une confirmation</string>
+    <string name="import_status_confirm">Adresse Sui ou Aptos : non sélectionnée tant que vous ne l’avez pas vérifiée</string>
     <string name="import_status_invalid">Adresse non reconnue</string>
     <string name="import_secret_title">Importation interrompue : clé privée ou phrase de récupération détectée</string>
     <string name="import_secret_message">La saisie contenait un élément qui ressemble à une clé privée ou à une phrase de récupération. Rien n’a été importé, enregistré ni envoyé où que ce soit, et la saisie a été effacée. Retirez cet élément et réessayez.</string>
@@ -44,4 +44,10 @@
     <string name="export_share">Partager</string>
     <string name="export_saved">Enregistré</string>
     <string name="export_save_failed">Impossible d’enregistrer le fichier</string>
+    <string name="import_confirm_action">Vérifier</string>
+    <string name="import_confirm_title">Ce format est identique à celui d’une clé privée</string>
+    <string name="import_confirm_message">L’application ne peut pas distinguer cette valeur de la clé privée d’Ethereum ou d’une autre chaîne. Si vous confirmez, elle est enregistrée et envoyée au serveur public de %1$s. Confirmez uniquement s’il s’agit de votre propre sauvegarde et que la valeur est une adresse publique.</string>
+    <string name="import_confirm_accept">J’ai compris, c’est une adresse publique</string>
+    <string name="import_confirm_cancel">Pas maintenant</string>
+    <string name="import_secret_hex_hint">Une valeur de 0x et 64 caractères hexadécimaux est aussi refusée, car une clé privée a le même aspect. Ajoutez les adresses Sui et Aptos depuis l’écran d’ajout de portefeuille, ou restaurez-les depuis une sauvegarde JSON.</string>
 </resources>

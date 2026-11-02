@@ -95,7 +95,6 @@ class SecretGuardTest {
             "zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs",
             "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
             "ethereum:0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed@1",
-            "0x" + "a1".repeat(32), // Sui / Aptos address: handled by the confirmation flow
             "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
             "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
             "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ",

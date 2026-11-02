@@ -75,4 +75,5 @@
     <string name="settings_remote_icons">Unduh ikon koin</string>
     <string name="settings_remote_icons_summary">Logo koin dan token dari repositori aset Trust Wallet di GitHub, di-cache di perangkat. Hanya mengungkap koin yang ditampilkan, tidak pernah alamat Anda.</string>
     <string name="settings_privacy_policy">Kebijakan privasi</string>
+    <string name="settings_esplora_invalid">Masukkan alamat https:// lengkap. http:// biasa hanya berfungsi untuk alamat .onion, localhost, dan alamat di jaringan Anda sendiri.</string>
 </resources>

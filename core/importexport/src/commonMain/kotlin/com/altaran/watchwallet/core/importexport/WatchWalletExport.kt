@@ -4,8 +4,13 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.ScriptType
 import com.altaran.watchwallet.core.model.WatchTarget
+import com.altaran.watchwallet.core.security.SecretGuard
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * The WatchWallet JSON export format. Versioned: [schemaVersion] increases with incompatible
@@ -77,6 +82,11 @@ data class ExportedWallet(
     /** [value] of the extended key wallet this address is subtracted from. */
     val subtractFrom: String? = null,
 ) {
+    /** An address on a chain whose addresses have the same form as a private key. */
+    fun isDeliberateChainAddress(): Boolean =
+        kind == "ADDRESS" && (family == ChainFamily.SUI.name || family == ChainFamily.APTOS.name) && SecretGuard.isHexAddressForm(value)
+
+    /** Built from the fields as they stand: only for the chain validation, never to be used directly. */
     fun toTarget(): WatchTarget? {
         val family = ChainFamily.entries.firstOrNull { it.name == family } ?: return null
         val script = scriptType?.let { s -> ScriptType.entries.firstOrNull { it.name == s } }
@@ -150,6 +160,21 @@ object ExportFormat {
         if (parsed.app != "WatchWallet") return null
         // Future schema versions add migrations here (parsed.schemaVersion < CURRENT_SCHEMA_VERSION).
         return parsed.takeIf { it.schemaVersion <= CURRENT_SCHEMA_VERSION }
+    }
+
+    /** Every string value in a JSON text, including fields this version does not know. */
+    internal fun stringValues(text: String): List<String> {
+        val root = runCatching { json.parseToJsonElement(text) }.getOrNull() ?: return emptyList()
+        val values = ArrayList<String>()
+        fun walk(element: JsonElement) {
+            when (element) {
+                is JsonObject -> element.values.forEach(::walk)
+                is JsonArray -> element.forEach(::walk)
+                is JsonPrimitive -> if (element.isString) values += element.content
+            }
+        }
+        walk(root)
+        return values
     }
 
     fun looksLikeExport(text: String): Boolean = text.trimStart().startsWith("{") && "\"schemaVersion\"" in text

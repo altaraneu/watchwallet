@@ -44,4 +44,5 @@
     <string name="chart_performance">入出金を除く:%1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
     <string name="chart_current_value">現在: %1$s</string>
+    <string name="secret_field_warning">シードフレーズまたは秘密鍵のようです。WatchWallet には一切必要ありません。入力欄を消去しました。何も保存・送信されていません。</string>
 </resources>

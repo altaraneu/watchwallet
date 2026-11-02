@@ -45,8 +45,6 @@
     <string name="qr_close">Cerrar escáner</string>
     <string name="qr_no_permission">Se necesita acceso a la cámara para escanear códigos QR. Puedes permitirlo en los ajustes de la app.</string>
     <string name="default_name_generic">Billetera %1$s</string>
-    <string name="confirm_chain_title">Elige la red</string>
-    <string name="confirm_chain_message">Parece una dirección de Sui o Aptos, pero las claves privadas de varias cadenas tienen exactamente el mismo aspecto. Todavía no se ha comprobado ni enviado nada. Elige la red de esta dirección. Si copiaste una clave privada por error, bórrala.</string>
     <string name="confirm_unused_title">Esta dirección nunca se ha usado</string>
     <string name="confirm_unused_message">Si copiaste una clave privada por error, bórrala ahora y nunca la compartas. Agrega esto solo si tienes la certeza de que es una dirección nueva y sin usar.</string>
     <string name="confirm_add_anyway">Agregar igualmente</string>
@@ -57,4 +55,14 @@
     <string name="overlap_message">Se agregará como billetera propia. Si la restas de %1$s, su saldo no se contará dos veces y podrás seguir ambas billeteras por separado.</string>
     <string name="overlap_subtract">Agregar y restar</string>
     <string name="overlap_keep_both">Agregar y contar ambas</string>
+    <string name="add_sui_aptos_action">Añadir una dirección de Sui o Aptos</string>
+    <string name="deliberate_pick_title">¿En qué red está la dirección?</string>
+    <string name="deliberate_pick_message">Estas direcciones tienen su propia vía porque se ven exactamente como una clave privada. Todavía no se comprueba ni se envía nada.</string>
+    <string name="deliberate_warning_title">Este formato es idéntico al de una clave privada</string>
+    <string name="deliberate_warning_message">La app no puede distinguir una dirección de la clave privada de Ethereum u otra cadena: ambas son 0x y 64 caracteres hexadecimales. Lo que introduzcas aquí se envía al servidor público de %1$s. Continúa solo con una dirección pública copiada de la pantalla de recepción de tu monedero. Nunca introduzcas una clave privada.</string>
+    <string name="deliberate_accept">Entendido, es una dirección pública</string>
+    <string name="deliberate_entry_title">Introduce arriba la dirección de %1$s</string>
+    <string name="deliberate_entry_message">Solo aquí se acepta un valor de esta forma. Al añadirlo se envía al servidor público de esa red.</string>
+    <string name="deliberate_entry_invalid">No es una dirección válida en esa red.</string>
+    <string name="secret_hex_hint">Si era una dirección de Sui o Aptos, usa «Añadir una dirección de Sui o Aptos» más abajo.</string>
 </resources>

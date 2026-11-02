@@ -77,4 +77,5 @@
     <string name="settings_remote_icons">কয়েন আইকন ডাউনলোড করুন</string>
     <string name="settings_remote_icons_summary">GitHub-এ Trust Wallet অ্যাসেট রিপোজিটরি থেকে কয়েন ও টোকেনের লোগো, ডিভাইসে ক্যাশ করা হয়। এতে শুধু কোন কয়েনগুলো দেখানো হচ্ছে তা প্রকাশ পায়, আপনার ঠিকানা কখনোই নয়।</string>
     <string name="settings_privacy_policy">গোপনীয়তা নীতি</string>
+    <string name="settings_esplora_invalid">সম্পূর্ণ https:// ঠিকানা লিখুন। সাধারণ http:// শুধু .onion ঠিকানা, localhost এবং আপনার নিজের নেটওয়ার্কের ঠিকানায় কাজ করে।</string>
 </resources>

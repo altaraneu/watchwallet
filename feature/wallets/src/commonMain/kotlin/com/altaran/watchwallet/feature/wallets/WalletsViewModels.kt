@@ -84,6 +84,8 @@ internal class WalletsViewModel(
 
 data class WalletDetailUiState(
     val wallet: Wallet? = null,
+    /** A new name was refused as key material. */
+    val secretRejected: Boolean = false,
     /** The wallet this address is subtracted from, if any. */
     val subtractedFromName: String? = null,
     /** Addresses tracked separately and taken out of this wallet. */
@@ -114,6 +116,7 @@ internal class WalletDetailViewModel(
     private val costBasis: com.altaran.watchwallet.core.data.repository.CostBasisRepository,
 ) : ViewModel() {
     private val range = MutableStateFlow(ChartRange.M1)
+    private val secretRejected = MutableStateFlow(false)
 
     /** Saves what a transfer really cost in USD; `null` returns to the automatic value. */
     fun setCost(tx: com.altaran.watchwallet.core.ui.TxView, valueUsd: Double?) {
@@ -161,7 +164,8 @@ internal class WalletDetailViewModel(
             syncHealth = sync.healthOf(walletId),
             costs = costs,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WalletDetailUiState())
+    }.combine(secretRejected) { state, rejected -> state.copy(secretRejected = rejected) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WalletDetailUiState())
 
     init {
         viewModelScope.launch { costBasis.fillAutomatic() }
@@ -196,7 +200,19 @@ internal class WalletDetailViewModel(
 
     fun rename(name: String) {
         if (name.isBlank()) return
-        viewModelScope.launch { walletRepository.rename(walletId, name) }
+        viewModelScope.launch {
+            try {
+                walletRepository.rename(walletId, name)
+            } catch (
+                @Suppress("SwallowedException") e: com.altaran.watchwallet.core.security.SecretRejectedException,
+            ) {
+                secretRejected.value = true
+            }
+        }
+    }
+
+    fun onSecretWarningShown() {
+        secretRejected.value = false
     }
 
     fun delete() {

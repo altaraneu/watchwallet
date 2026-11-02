@@ -6,6 +6,38 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+- `0x` and 64 hex characters is now rejected like any private key, everywhere. Sui and Aptos addresses
+  have the same form and get a separate route: pick the chain, read the warning, confirm. Such a key
+  entered there still reaches that chain's server; `SECURITY.md` says so plainly.
+- Seed phrase detection rewritten: all official BIP-39 languages, numbered words, Chinese without
+  separators, Unicode spaces, hyphens, quotes, JSON, typos, 11 words, phrases inside longer notes, run
+  together text. Ordinary sentences pass, also long ones.
+- Secrets are now checked on every change of a field, not just on submit, and in names, groups, the
+  rename dialog, watchlist search and settings fields. The clipboard is cleared when it holds the same
+  text, however it was pasted, and those fields ask the keyboard not to learn.
+- Watchlist search sends nothing that looks like an address, a key or a sentence.
+- SeedQR (digits, and raw bytes from the scanner) is rejected. Byte arrays of 32 or 64 numbers are found
+  inside longer text. Extended private keys are recognised by their content under any prefix, and an
+  unknown version of that form is refused.
+- Backups no longer skip validation: every address and xpub passes the same chain validation as manual
+  entry, invalid ones are marked and never sent, and Sui and Aptos entries wait for a confirmation.
+- The app lock now locks on every cold start. Nothing is shown until settings are loaded and
+  authentication passed; turning the lock off needs authentication; a new screen (widget tap, another
+  app) no longer skips it. A device with no credential left opens without asking.
+- Screenshot blocking is on by default, also for existing installs that never changed the switch.
+  While the lock is on it stays on, and the widget hides amounts.
+- A custom server may use plain http only on `.onion`, localhost and private addresses; the same rule is
+  enforced for every request. Such a server now actually works on Android 9 and later.
+- A stored name or group that looks like a secret now gives a warning instead of a crash.
+
+### Changed
+- The privacy policy link opens the version matching the installed app.
+- `PRIVACY.md`: search text, the CoinGecko API key, what price and logo services can see, and how xpub
+  lookups really work (bursts the server can link).
+- Desktop secp256k1 libraries are no longer packaged in the APK; unused BouncyCastle and Vico entries
+  removed from the version catalog.
+
 ### Added
 - Value charts refine like a map: they draw at once from stored prices, then load better prices
   only for the visible window (one bar per minute for views up to 8 hours, per hour up to 14 days,

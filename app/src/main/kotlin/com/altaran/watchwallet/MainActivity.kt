@@ -7,6 +7,7 @@ import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,15 +29,16 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.altaran.watchwallet.core.common.AppLockGate
 import com.altaran.watchwallet.core.data.DemoWallets
 import com.altaran.watchwallet.core.data.platform.AppLanguageController
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
 import com.altaran.watchwallet.core.designsystem.theme.WatchWalletTheme
+import com.altaran.watchwallet.platform.ActivityLockAuthenticator
 import com.altaran.watchwallet.platform.LOCK_AUTHENTICATORS
 import com.altaran.watchwallet.shared.AppUiState
 import com.altaran.watchwallet.shared.AppViewModel
@@ -55,14 +57,21 @@ class MainActivity : AppCompatActivity() {
     private val demoWallets: DemoWallets by inject()
     private val syncEngine: SyncEngine by inject()
 
-    /** `true` while the app lock covers the content. */
-    private var locked by mutableStateOf(true)
-    private var backgroundedAt = 0L
-    private var appLockEnabled = false
+    /** Outlives this screen, so a new instance (rotation, widget, another app) is still locked. */
+    private val lockGate: AppLockGate by inject()
+    private val lockAuthenticator: ActivityLockAuthenticator by inject()
+
+    /** Read during composition; set in the same step as the gate, so no frame shows old content. */
+    private var display by mutableStateOf(AppLockGate.Display.HIDDEN_UNTIL_SETTINGS_LOADED)
+    private var promptShowing = false
+    private var started = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        // Secure until the settings say otherwise: no screenshot or task switcher image while loading.
+        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        display = lockGate.display
         // Keep the splash until settings (theme, discreet mode) are loaded: no flash of wrong theme.
         splashScreen.setKeepOnScreenCondition { appViewModel.uiState.value is AppUiState.Loading }
         enableEdgeToEdge()
@@ -78,11 +87,13 @@ class MainActivity : AppCompatActivity() {
         observeSecuritySettings()
 
         setContent {
-            val state by appViewModel.uiState.collectAsStateWithLifecycle()
-            if (locked && appLockEnabled && state is AppUiState.Ready) {
-                WatchWalletTheme { LockScreen(onUnlock = ::authenticate) }
-            } else {
-                WatchWalletApp(viewModel = appViewModel)
+            when (display) {
+                // The splash is still up; nothing may be composed behind it.
+                AppLockGate.Display.HIDDEN_UNTIL_SETTINGS_LOADED -> Unit
+
+                AppLockGate.Display.LOCKED -> WatchWalletTheme { LockScreen(onUnlock = ::unlock) }
+
+                AppLockGate.Display.CONTENT -> WatchWalletApp(viewModel = appViewModel)
             }
         }
     }
@@ -102,16 +113,14 @@ class MainActivity : AppCompatActivity() {
                 appViewModel.uiState.filterIsInstance<AppUiState.Ready>().map { it.settings }
                     .distinctUntilChanged()
                     .collect { settings ->
-                        if (settings.secureScreen) {
+                        if (AppLockGate.isWindowSecure(settings.secureScreen, settings.appLock)) {
                             window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
                         } else {
                             window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                         }
-                        val wasEnabled = appLockEnabled
-                        appLockEnabled = settings.appLock
-                        // Enabling the lock while using the app must not lock the user out immediately.
-                        if (!wasEnabled && settings.appLock) locked = false
-                        if (!settings.appLock) locked = false
+                        lockGate.onSettings(settings.appLock)
+                        display = lockGate.display
+                        if (started) unlock()
                     }
             }
         }
@@ -119,23 +128,58 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        val away = SystemClock.elapsedRealtime() - backgroundedAt
-        if (backgroundedAt != 0L && away > LOCK_AFTER_MS) locked = true
-        if (locked && appLockEnabled) authenticate()
+        started = true
+        lockGate.onForegrounded(SystemClock.elapsedRealtime())
+        display = lockGate.display
+        lockAuthenticator.host = this
+        unlock()
     }
 
     override fun onStop() {
+        started = false
+        lockGate.onBackgrounded(SystemClock.elapsedRealtime())
+        if (lockAuthenticator.host === this) lockAuthenticator.host = null
         super.onStop()
-        backgroundedAt = SystemClock.elapsedRealtime()
     }
 
-    private fun authenticate() {
+    /** Asks for authentication when the lock is closed; only a success (or no credential left) opens it. */
+    private fun unlock() {
+        if (!lockGate.needsAuthentication) return
+        authenticate { passed ->
+            if (passed) {
+                lockGate.onAuthenticated()
+                display = lockGate.display
+            }
+        }
+    }
+
+    /**
+     * [onResult] gets `true` after a success, and when the device has no biometrics or screen lock
+     * left: without a credential nobody could ever pass, and removing the screen lock takes the
+     * credential itself. Failing, cancelling or a temporary lockout give `false`.
+     */
+    internal fun authenticate(onResult: (Boolean) -> Unit) {
+        if (promptShowing) {
+            onResult(false)
+            return
+        }
+        if (hasNoCredential()) {
+            onResult(true)
+            return
+        }
+        promptShowing = true
         val prompt = BiometricPrompt(
             this,
             ContextCompat.getMainExecutor(this),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    locked = false
+                    promptShowing = false
+                    onResult(true)
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    promptShowing = false
+                    onResult(hasNoCredential())
                 }
             },
         )
@@ -147,12 +191,18 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    private fun hasNoCredential(): Boolean = when (BiometricManager.from(this).canAuthenticate(LOCK_AUTHENTICATORS)) {
+        BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED,
+        BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
+        BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED,
+        -> true
+
+        else -> false
+    }
+
     private companion object {
         const val EXTRA_SEED_DEMO = "seed_demo"
         const val DEBUG_TAG = "WatchWallet"
-
-        /** Lock again when the app was in the background for longer than this. */
-        const val LOCK_AFTER_MS = 30_000L
     }
 }
 

@@ -16,7 +16,7 @@
     <string name="import_status_tracked">Já acompanhada, será ignorada</string>
     <string name="import_status_duplicate">Duplicada nesta lista</string>
     <string name="import_status_unsupported">%1$s ainda não é compatível</string>
-    <string name="import_status_confirm">Endereço Sui ou Aptos: adicione-o na tela Adicionar carteira, que pede confirmação</string>
+    <string name="import_status_confirm">Endereço Sui ou Aptos: não fica selecionado até o rever</string>
     <string name="import_status_invalid">Endereço não reconhecido</string>
     <string name="import_secret_title">Importação interrompida: chave privada ou frase-semente encontrada</string>
     <string name="import_secret_message">O conteúdo tinha algo que parece uma chave privada ou frase-semente. Nada foi importado, salvo ou enviado a lugar nenhum, e o conteúdo foi apagado. Remova esse item e tente novamente.</string>
@@ -44,4 +44,10 @@
     <string name="export_share">Compartilhar</string>
     <string name="export_saved">Salvo</string>
     <string name="export_save_failed">Não foi possível salvar o arquivo</string>
+    <string name="import_confirm_action">Rever</string>
+    <string name="import_confirm_title">Este formato é idêntico ao de uma chave privada</string>
+    <string name="import_confirm_message">A app não consegue distinguir este valor da chave privada da Ethereum ou de outra rede. Se confirmar, é guardado e enviado para o servidor público de %1$s. Confirme apenas se esta for a sua própria cópia de segurança e o valor for um endereço público.</string>
+    <string name="import_confirm_accept">Compreendo, é um endereço público</string>
+    <string name="import_confirm_cancel">Agora não</string>
+    <string name="import_secret_hex_hint">Um valor de 0x e 64 caracteres hexadecimais também é recusado, porque uma chave privada tem o mesmo aspeto. Adicione endereços Sui e Aptos no ecrã de adicionar carteira, ou restaure-os de uma cópia JSON.</string>
 </resources>

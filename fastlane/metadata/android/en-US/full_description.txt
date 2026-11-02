@@ -1,4 +1,4 @@
-<p>WatchWallet tracks balances, transaction history and the value of your crypto portfolio using <b>public addresses and extended public keys only</b>. It never asks for, accepts or stores a seed phrase or private key and cannot send anything.</p>
+<p>WatchWallet tracks balances, transaction history and the value of your crypto portfolio using <b>public addresses and extended public keys only</b>. It never asks for a seed phrase or private key and cannot send anything. Input that looks like one is rejected and cleared; a few formats cannot be told from an address, such as a Solana key in base58 or a key entered in the separate Sui and Aptos route.</p>
 <p><b>Private by design</b></p>
 <ul>
 <li>No accounts, no backend, no analytics, no ads, no Google Play Services.</li>

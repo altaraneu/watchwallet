@@ -91,6 +91,7 @@ internal fun WalletDetailRoute(
         onVisibleWindow = viewModel::onVisibleWindow,
         onRename = viewModel::rename,
         onStopSubtracting = viewModel::stopSubtracting,
+        onSecretWarningShown = viewModel::onSecretWarningShown,
         onSetCost = viewModel::setCost,
         onDelete = {
             viewModel.delete()
@@ -116,6 +117,7 @@ internal fun WalletDetailScreen(
     onOpenHolding: (String) -> Unit,
     onSetCost: (TxView, Double?) -> Unit = { _, _ -> },
     onStopSubtracting: () -> Unit = {},
+    onSecretWarningShown: () -> Unit = {},
 ) {
     // Only the key is saved (a TxView is not saveable); the view is rebuilt from the state.
     var selectedTxKey by rememberSaveable { mutableStateOf<String?>(null) }
@@ -237,6 +239,13 @@ internal fun WalletDetailScreen(
         }
     }
 
+    if (state.secretRejected) {
+        AlertDialog(
+            onDismissRequest = onSecretWarningShown,
+            text = { com.altaran.watchwallet.core.ui.secret.SecretFieldWarning() },
+            confirmButton = { TextButton(onClick = onSecretWarningShown) { Text(stringResource(Res.string.detail_cancel)) } },
+        )
+    }
     if (renameOpen && wallet != null) {
         RenameDialog(wallet.name, onDismiss = { renameOpen = false }) {
             renameOpen = false
@@ -370,10 +379,22 @@ private fun NextAddressCard(address: String) {
 @Composable
 private fun RenameDialog(current: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
     var name by rememberSaveable { mutableStateOf(current) }
+    val guard = com.altaran.watchwallet.core.ui.secret.rememberSecretFieldGuard()
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(Res.string.detail_rename)) },
-        text = { OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true) },
+        text = {
+            com.altaran.watchwallet.core.ui.secret.SensitiveInput {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = guard.filter(it) },
+                    isError = guard.rejected,
+                    supportingText = guard.warning,
+                    singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(autoCorrectEnabled = false),
+                )
+            }
+        },
         confirmButton = { TextButton(onClick = { onConfirm(name) }, enabled = name.isNotBlank()) { Text(stringResource(Res.string.detail_save)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.detail_cancel)) } },
     )
