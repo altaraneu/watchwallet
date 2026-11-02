@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ie_back">Zurück</string>
+    <string name="import_title">Wallets importieren</string>
+    <string name="import_intro">Füge Adressen oder xpubs ein (eine pro Zeile oder getrennt durch Kommas, Semikolons oder Leerzeichen), eine CSV-Datei mit Kopfzeile oder ein WatchWallet-Backup. Du kannst vor dem Import alles prüfen.</string>
+    <string name="import_paste_label">Adressen, CSV oder Backup</string>
+    <string name="import_choose_file">Datei auswählen</string>
+    <string name="import_preview">Prüfen</string>
+    <string name="import_group">Zu Gruppe hinzufügen (optional)</string>
+    <plurals name="import_action">
+        <item quantity="one">%1$d Wallet importieren</item>
+        <item quantity="other">%1$d Wallets importieren</item>
+    </plurals>
+    <string name="import_row_target_group">%1$s · %2$s</string>
+    <string name="import_status_tracked">Wird bereits beobachtet, wird übersprungen</string>
+    <string name="import_status_duplicate">Duplikat in dieser Liste</string>
+    <string name="import_status_unsupported">%1$s wird noch nicht unterstützt</string>
+    <string name="import_status_confirm">Sui- oder Aptos-Adresse: Füge sie unter „Wallet hinzufügen“ hinzu, dort wird eine Bestätigung abgefragt</string>
+    <string name="import_status_invalid">Keine erkannte Adresse</string>
+    <string name="import_secret_title">Import abgebrochen: privater Schlüssel oder Seed-Phrase gefunden</string>
+    <string name="import_secret_message">Die Eingabe enthielt etwas, das wie ein privater Schlüssel oder eine Seed-Phrase aussieht. Es wurde nichts importiert, gespeichert oder irgendwohin gesendet, und die Eingabe wurde gelöscht. Entferne diesen Eintrag und versuche es erneut.</string>
+    <string name="import_encrypted">Dieses Backup ist verschlüsselt. Gib das Passwort ein.</string>
+    <string name="import_wrong_password">Falsches Passwort oder beschädigte Datei</string>
+    <string name="import_decrypt">Entschlüsseln</string>
+    <string name="import_done_title">Import abgeschlossen</string>
+    <string name="import_done_summary">Importiert: %1$d · übersprungen: %2$d · fehlgeschlagen: %3$d</string>
+    <string name="import_done_sync">Guthaben und Verlauf werden im Hintergrund geladen.</string>
+    <string name="import_done_action">Wallets anzeigen</string>
+    <string name="export_title">Wallets exportieren</string>
+    <string name="export_notice">Die Datei enthält keine Schlüssel, verrät aber alle deine beobachteten Adressen und damit deine Bestände. Bewahre sie sorgfältig auf und teile sie nur mit Bedacht.</string>
+    <string name="export_scope">Wallets</string>
+    <string name="export_all">Alle (%1$d)</string>
+    <string name="export_format">Format</string>
+    <string name="export_format_json">Backup (JSON)</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_text">Nur Adressen</string>
+    <string name="export_format_transactions">Transaktionsverlauf (CSV)</string>
+    <string name="export_transactions_hint">Alle gespeicherten Transaktionen der ausgewählten Wallets: Datum (UTC), Asset, Betrag mit Vorzeichen, Gebühr und Transaktions-Hash. Älterer Verlauf erscheint, sobald er geladen wurde.</string>
+    <string name="export_password">Passwort</string>
+    <string name="export_password_hint">Optional. Verschlüsselt das Backup (AES-256-GCM). Ohne das Passwort lässt es sich nicht wiederherstellen.</string>
+    <string name="export_include_values">Aktuelle Werte einschließen</string>
+    <string name="export_save">In Datei speichern</string>
+    <string name="export_share">Teilen</string>
+    <string name="export_saved">Gespeichert</string>
+    <string name="export_save_failed">Datei konnte nicht gespeichert werden</string>
+</resources>

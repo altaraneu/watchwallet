@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_wallet_title">Добавить кошелёк</string>
+    <string name="add_wallet_back">Назад</string>
+    <string name="add_wallet_intro">Вставьте публичный адрес, расширенный публичный ключ (xpub, ypub, zpub) или дескриптор выходов. WatchWallet определит сеть автоматически.</string>
+    <string name="add_wallet_input_label">Адрес, xpub или дескриптор</string>
+    <string name="add_wallet_paste">Вставить</string>
+    <string name="add_wallet_probing">Проверка блокчейна…</string>
+    <string name="add_wallet_pick_type">Какой из них ваш кошелёк?</string>
+    <string name="add_wallet_name_label">Название (необязательно)</string>
+    <string name="add_wallet_save">Добавить кошелёк</string>
+    <string name="add_wallet_open_existing">Открыть существующий кошелёк</string>
+    <string name="add_wallet_already_tracked">Уже отслеживается</string>
+    <string name="add_wallet_probe_failed">Сейчас не удалось проверить активность. Кошелёк всё равно можно добавить.</string>
+    <string name="add_wallet_no_activity">Активности пока нет</string>
+    <string name="add_wallet_active_on">Активен в сетях: %1$s</string>
+    <plurals name="add_wallet_used_addresses">
+        <item quantity="one">%1$d использованный адрес</item>
+        <item quantity="few">%1$d использованных адреса</item>
+        <item quantity="many">%1$d использованных адресов</item>
+        <item quantity="other">%1$d использованного адреса</item>
+    </plurals>
+    <plurals name="add_wallet_transactions">
+        <item quantity="one">%1$d транзакция</item>
+        <item quantity="few">%1$d транзакции</item>
+        <item quantity="many">%1$d транзакций</item>
+        <item quantity="other">%1$d транзакции</item>
+    </plurals>
+    <string name="add_wallet_unsupported_title">%1$s пока не поддерживается</string>
+    <string name="add_wallet_unsupported_message">Похоже, это действительный адрес, но эта сеть пока не поддерживается. Сейчас работают Bitcoin и сети, совместимые с Ethereum; скоро появятся и другие.</string>
+    <string name="add_wallet_checksum_title">Проверьте адрес</string>
+    <string name="add_wallet_checksum_message">Регистр букв в этом адресе не соответствует контрольной сумме. Возможно, в нём опечатка. Скопируйте адрес ещё раз из исходного источника.</string>
+    <string name="add_wallet_multiple_title">Несколько адресов</string>
+    <string name="add_wallet_multiple_message">Вставлено несколько адресов. Используйте пакетный импорт, чтобы проверить и добавить их все сразу.</string>
+    <string name="add_wallet_unrecognized_title">Это не похоже на поддерживаемый адрес</string>
+    <string name="add_wallet_unrecognized_message">Убедитесь, что вы скопировали адрес или ключ целиком, без лишних символов.</string>
+    <string name="secret_title_mnemonic">Похоже, это сид-фраза</string>
+    <string name="secret_title_key">Похоже, это приватный ключ</string>
+    <string name="secret_message">WatchWallet никогда не нужны ваша сид-фраза или приватные ключи. Введённые данные удалены, они нигде не сохранены и никуда не отправлены. Вместо них используйте публичный адрес или расширенный публичный ключ (xpub).</string>
+    <string name="secret_scam_hint">Если кто-то попросил вас ввести их здесь или где-либо ещё, это мошенничество.</string>
+    <string name="default_name_bitcoin_wallet">Кошелёк Bitcoin</string>
+    <string name="default_name_bitcoin_address">Адрес Bitcoin</string>
+    <string name="default_name_evm">Кошелёк Ethereum</string>
+    <string name="add_wallet_open_batch">Открыть пакетный импорт</string>
+    <string name="add_wallet_scan">Сканировать</string>
+    <string name="qr_hint">Наведите камеру на QR-код адреса или xpub</string>
+    <string name="qr_close">Закрыть сканер</string>
+    <string name="qr_no_permission">Для сканирования QR-кодов нужен доступ к камере. Его можно разрешить в настройках приложения.</string>
+    <string name="default_name_generic">Кошелёк %1$s</string>
+    <string name="confirm_chain_title">Выберите сеть</string>
+    <string name="confirm_chain_message">Похоже, это адрес Sui или Aptos, но приватные ключи некоторых сетей выглядят точно так же. Пока ничего не проверено и не отправлено. Выберите сеть этого адреса. Если вы по ошибке скопировали приватный ключ, удалите его.</string>
+    <string name="confirm_unused_title">Этот адрес никогда не использовался</string>
+    <string name="confirm_unused_message">Если вы по ошибке скопировали приватный ключ, удалите его сейчас и никому его не передавайте. Добавляйте, только если уверены, что это новый, неиспользованный адрес.</string>
+    <string name="confirm_add_anyway">Всё равно добавить</string>
+    <string name="confirm_clear">Удалить</string>
+    <string name="add_wallet_group_label">Группа (необязательно)</string>
+    <string name="add_wallet_group_hint">например, Партнёр, Сбережения, Бизнес</string>
+</resources>

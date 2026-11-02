@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wallets_title">المحافظ</string>
+    <string name="wallets_add">إضافة محفظة</string>
+    <string name="wallets_empty_title">لا توجد محافظ بعد</string>
+    <string name="wallets_empty_message">الصق أي عنوان عام أو xpub وسيتعرف WatchWallet على الشبكة. بلا مفاتيح، أبدًا.</string>
+    <string name="wallets_sync_failed">تعذر التحديث. يتم عرض آخر البيانات المعروفة.</string>
+    <string name="detail_back">رجوع</string>
+    <string name="detail_more">خيارات إضافية</string>
+    <string name="detail_rename">إعادة التسمية</string>
+    <string name="detail_open_explorer">فتح في مستكشف الكتل</string>
+    <string name="detail_delete">حذف</string>
+    <string name="detail_delete_title">هل تريد حذف هذه المحفظة؟</string>
+    <string name="detail_delete_message">ستُزال المحفظة وسجلها المخزن من هذا الجهاز. لن يتغير شيء على سلسلة الكتل، ويمكنك إضافتها مرة أخرى في أي وقت.</string>
+    <string name="detail_cancel">إلغاء</string>
+    <string name="detail_save">حفظ</string>
+    <string name="detail_balance">الرصيد</string>
+    <string name="detail_tab_assets">الأصول</string>
+    <string name="detail_tab_activity">النشاط</string>
+    <string name="detail_tab_addresses">العناوين</string>
+    <string name="detail_no_assets_title">لا توجد أصول</string>
+    <string name="detail_no_assets_message">لا يوجد رصيد في هذه المحفظة حاليًا. اسحب لأسفل للتحديث.</string>
+    <string name="detail_no_activity_title">لا توجد معاملات بعد</string>
+    <string name="detail_no_activity_message">تظهر المعاملات هنا بعد أول تحديث.</string>
+    <string name="address_used">مستخدم</string>
+    <string name="address_unused">غير مستخدم</string>
+    <string name="address_next_receive">عنوان الاستلام التالي غير المستخدم</string>
+    <string name="address_copy">نسخ العنوان</string>
+    <string name="detail_address">العنوان</string>
+    <string name="detail_show_qr">عرض رمز QR</string>
+    <string name="detail_qr_description">رمز QR لهذا العنوان</string>
+    <string name="detail_address_evm_hint">يعمل العنوان نفسه على جميع شبكات EVM. تأكد من أن المرسل يستخدم الشبكة الصحيحة.</string>
+    <string name="detail_address_cardano_hint">أحد عناوين هذه المحفظة.</string>
+    <string name="detail_stake_key">مفتاح Stake</string>
+    <string name="detail_stake_key_hint">لا يمكن لمفتاح Stake استلام المدفوعات. استخدم عنوان دفع من تطبيق محفظتك.</string>
+    <string name="wallets_ungrouped">محافظ أخرى</string>
+    <string name="wallets_syncing">جارٍ المزامنة</string>
+</resources>

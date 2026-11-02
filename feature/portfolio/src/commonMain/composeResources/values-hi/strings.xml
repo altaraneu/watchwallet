@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="portfolio_title">पोर्टफोलियो</string>
+    <string name="portfolio_total_value">कुल मूल्य</string>
+    <string name="portfolio_discreet_on">राशियाँ छिपाएँ</string>
+    <string name="portfolio_discreet_off">राशियाँ दिखाएँ</string>
+    <string name="portfolio_empty_title">अभी देखने के लिए कुछ नहीं</string>
+    <string name="portfolio_empty_message">सार्वजनिक पता या एक्सटेंडेड सार्वजनिक कुंजी पेस्ट करके वॉलेट जोड़ें। WatchWallet कभी भी आपका सीड फ़्रेज़ या निजी कुंजी नहीं माँगता।</string>
+    <string name="portfolio_empty_action">वॉलेट जोड़ें</string>
+    <string name="portfolio_assets">एसेट</string>
+    <string name="portfolio_allocation">आवंटन</string>
+    <string name="portfolio_other">अन्य</string>
+    <string name="portfolio_change_24h">24 घंटे में %1$s (%2$s)</string>
+    <plurals name="portfolio_hidden_assets">
+        <item quantity="one">%1$d टोकन छिपा है (स्पैम, कोई कीमत नहीं या आपने छिपाया)</item>
+        <item quantity="other">%1$d टोकन छिपे हैं (स्पैम, कोई कीमत नहीं या आपने छिपाए)</item>
+    </plurals>
+    <string name="portfolio_all_wallets">सभी</string>
+    <string name="portfolio_hide_asset">यह टोकन छिपाएँ</string>
+    <string name="portfolio_show_asset">दिखाएँ</string>
+    <string name="portfolio_hidden_reason_spam">%1$s · स्पैम जैसा लगता है</string>
+    <string name="portfolio_hidden_reason_other">%1$s · कोई कीमत नहीं या आपने छिपाया</string>
+    <string name="portfolio_add_wallet">वॉलेट जोड़ें</string>
+    <string name="portfolio_hidden_expanded">खुला हुआ</string>
+    <string name="portfolio_hidden_collapsed">बंद</string>
+</resources>

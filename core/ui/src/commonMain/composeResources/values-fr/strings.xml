@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="script_p2pkh">Legacy</string>
+    <string name="script_p2sh_p2wpkh">Nested SegWit</string>
+    <string name="script_p2wpkh">Native SegWit</string>
+    <string name="script_p2tr">Taproot</string>
+    <string name="script_p2sh">Script</string>
+    <string name="script_p2wsh">SegWit script</string>
+    <string name="family_utxo_bitcoin">Bitcoin</string>
+    <string name="family_evm">EVM</string>
+    <string name="target_xpub">xpub %1$s</string>
+    <string name="target_address">Adresse %1$s</string>
+    <string name="target_description">%1$s · %2$s</string>
+    <string name="chart_no_data">Pas encore assez de données pour cette période</string>
+    <string name="chart_a11y_summary">Graphique sur %1$s : de %2$s à %3$s, variation %4$s</string>
+    <string name="chart_a11y_hidden">Graphique sur %1$s, montants masqués</string>
+    <string name="target_cardano_wallet">portefeuille entier (clé de staking)</string>
+    <string name="chart_loading_prices">Chargement de l’historique des prix… le graphique se complète à mesure que les prix arrivent.</string>
+    <string name="chart_visible_range">sur la période visible</string>
+    <string name="tx_received">Reçu</string>
+    <string name="tx_sent">Envoyé</string>
+    <string name="tx_self">Transfert entre vos propres adresses</string>
+    <string name="tx_label_pending">%1$s · En attente</string>
+    <string name="copy_action">Copier</string>
+    <string name="copy_done">Copié</string>
+    <string name="tx_cost_auto">Coût %1$s</string>
+    <string name="tx_cost_user">Coût %1$s (le vôtre)</string>
+    <string name="tx_cost_unknown">Définir le coût</string>
+    <string name="cost_dialog_title">Coût d’acquisition</string>
+    <string name="cost_dialog_message">Combien ces cryptos vous ont-elles coûté, en dollars américains ? La valeur automatique utilise le prix du jour du transfert. Si vous les avez achetées plus tôt (par exemple sur une plateforme d’échange) et que vous venez seulement de les transférer ici, saisissez ce que vous avez payé.</string>
+    <string name="cost_dialog_label">Coût total en USD</string>
+    <string name="cost_dialog_total">Total</string>
+    <string name="cost_dialog_per_coin">Par %1$s</string>
+    <string name="cost_dialog_label_per_coin">USD par %1$s</string>
+    <string name="cost_dialog_total_hint">Total %1$s</string>
+    <string name="cost_dialog_per_coin_hint">%1$s par %2$s</string>
+    <string name="cost_dialog_save">Enregistrer</string>
+    <string name="cost_dialog_reset">Utiliser l’automatique</string>
+    <string name="cost_dialog_cancel">Annuler</string>
+    <string name="tx_sheet_cost_auto">%1$s (%2$s par %3$s), automatique : prix du jour du transfert</string>
+    <string name="tx_sheet_cost_user">%1$s (%2$s par %3$s), saisi par vous</string>
+    <string name="tx_sheet_edit_cost">Modifier le coût d’acquisition</string>
+    <string name="tx_open_explorer">Ouvrir dans l’explorateur de blocs</string>
+    <string name="chart_performance">Hors dépôts et retraits : %1$s</string>
+    <string name="chart_value_with_percent">%1$s (%2$s)</string>
+</resources>

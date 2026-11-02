@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="script_p2pkh">Legacy</string>
+    <string name="script_p2sh_p2wpkh">Nested SegWit</string>
+    <string name="script_p2wpkh">Native SegWit</string>
+    <string name="script_p2tr">Taproot</string>
+    <string name="script_p2sh">Script</string>
+    <string name="script_p2wsh">SegWit script</string>
+    <string name="family_utxo_bitcoin">Bitcoin</string>
+    <string name="family_evm">EVM</string>
+    <string name="target_xpub">%1$s xpub</string>
+    <string name="target_address">%1$s ঠিকানা</string>
+    <string name="target_description">%1$s · %2$s</string>
+    <string name="chart_no_data">এই সময়সীমার জন্য এখনো যথেষ্ট ডেটা নেই</string>
+    <string name="chart_a11y_summary">%1$s-এর চার্ট: %2$s থেকে %3$s, পরিবর্তন %4$s</string>
+    <string name="chart_a11y_hidden">%1$s-এর চার্ট, পরিমাণ লুকানো আছে</string>
+    <string name="target_cardano_wallet">পুরো ওয়ালেট (স্টেক কী)</string>
+    <string name="chart_loading_prices">দামের ইতিহাস লোড হচ্ছে… দাম আসার সাথে সাথে চার্ট পূর্ণ হবে।</string>
+    <string name="chart_visible_range">দৃশ্যমান সময়সীমায়</string>
+    <string name="tx_received">প্রাপ্ত</string>
+    <string name="tx_sent">প্রেরিত</string>
+    <string name="tx_self">নিজের ঠিকানাগুলোর মধ্যে স্থানান্তর</string>
+    <string name="tx_label_pending">%1$s · অপেক্ষমাণ</string>
+    <string name="copy_action">কপি করুন</string>
+    <string name="copy_done">কপি হয়েছে</string>
+    <string name="tx_cost_auto">ক্রয়মূল্য %1$s</string>
+    <string name="tx_cost_user">ক্রয়মূল্য %1$s (আপনার দেওয়া)</string>
+    <string name="tx_cost_unknown">ক্রয়মূল্য দিন</string>
+    <string name="cost_dialog_title">ক্রয়মূল্য</string>
+    <string name="cost_dialog_message">এই কয়েনগুলোর জন্য আপনার মার্কিন ডলারে কত খরচ হয়েছে? স্বয়ংক্রিয় মান স্থানান্তরের দিনের দাম ব্যবহার করে। আপনি যদি এগুলো আগে কিনে থাকেন (যেমন কোনো এক্সচেঞ্জে) এবং এখন শুধু এখানে এনে থাকেন, তাহলে যা দিয়েছিলেন তা লিখুন।</string>
+    <string name="cost_dialog_label">USD-তে মোট খরচ</string>
+    <string name="cost_dialog_total">মোট</string>
+    <string name="cost_dialog_per_coin">প্রতি %1$s</string>
+    <string name="cost_dialog_label_per_coin">প্রতি %1$s USD</string>
+    <string name="cost_dialog_total_hint">মোট %1$s</string>
+    <string name="cost_dialog_per_coin_hint">প্রতি %2$s %1$s</string>
+    <string name="cost_dialog_save">সংরক্ষণ করুন</string>
+    <string name="cost_dialog_reset">স্বয়ংক্রিয় মান ব্যবহার করুন</string>
+    <string name="cost_dialog_cancel">বাতিল</string>
+    <string name="tx_sheet_cost_auto">%1$s (প্রতি %3$s %2$s), স্বয়ংক্রিয়: স্থানান্তরের দিনের দাম</string>
+    <string name="tx_sheet_cost_user">%1$s (প্রতি %3$s %2$s), আপনার দেওয়া</string>
+    <string name="tx_sheet_edit_cost">ক্রয়মূল্য সম্পাদনা করুন</string>
+    <string name="tx_open_explorer">ব্লক এক্সপ্লোরারে খুলুন</string>
+    <string name="chart_performance">জমা ও উত্তোলন বাদে: %1$s</string>
+    <string name="chart_value_with_percent">%1$s (%2$s)</string>
+</resources>

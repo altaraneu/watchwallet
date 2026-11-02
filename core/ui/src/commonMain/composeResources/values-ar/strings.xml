@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="script_p2pkh">Legacy</string>
+    <string name="script_p2sh_p2wpkh">Nested SegWit</string>
+    <string name="script_p2wpkh">Native SegWit</string>
+    <string name="script_p2tr">Taproot</string>
+    <string name="script_p2sh">Script</string>
+    <string name="script_p2wsh">SegWit script</string>
+    <string name="family_utxo_bitcoin">Bitcoin</string>
+    <string name="family_evm">EVM</string>
+    <string name="target_xpub">xpub %1$s</string>
+    <string name="target_address">عنوان %1$s</string>
+    <string name="target_description">%1$s · %2$s</string>
+    <string name="chart_no_data">لا توجد بيانات كافية لهذه الفترة بعد</string>
+    <string name="chart_a11y_summary">رسم بياني لفترة %1$s: من %2$s إلى %3$s، التغير %4$s</string>
+    <string name="chart_a11y_hidden">رسم بياني لفترة %1$s، المبالغ مخفية</string>
+    <string name="target_cardano_wallet">المحفظة بأكملها (مفتاح Stake)</string>
+    <string name="chart_loading_prices">جارٍ تحميل سجل الأسعار… يكتمل الرسم البياني مع وصول الأسعار.</string>
+    <string name="chart_visible_range">في النطاق المعروض</string>
+    <string name="tx_received">مستلَمة</string>
+    <string name="tx_sent">مرسَلة</string>
+    <string name="tx_self">تحويل بين عناوينك</string>
+    <string name="tx_label_pending">%1$s · قيد الانتظار</string>
+    <string name="copy_action">نسخ</string>
+    <string name="copy_done">تم النسخ</string>
+    <string name="tx_cost_auto">التكلفة %1$s</string>
+    <string name="tx_cost_user">التكلفة %1$s (من إدخالك)</string>
+    <string name="tx_cost_unknown">تحديد التكلفة</string>
+    <string name="cost_dialog_title">أساس التكلفة</string>
+    <string name="cost_dialog_message">كم كلفتك هذه العملات بالدولار الأمريكي؟ تعتمد القيمة التلقائية على السعر في يوم التحويل. إذا كنت قد اشتريتها سابقًا (مثلًا من منصة تداول) ونقلتها إلى هنا الآن فقط، فأدخل المبلغ الذي دفعته.</string>
+    <string name="cost_dialog_label">إجمالي التكلفة بالدولار (USD)</string>
+    <string name="cost_dialog_total">الإجمالي</string>
+    <string name="cost_dialog_per_coin">لكل %1$s</string>
+    <string name="cost_dialog_label_per_coin">USD لكل %1$s</string>
+    <string name="cost_dialog_total_hint">الإجمالي %1$s</string>
+    <string name="cost_dialog_per_coin_hint">%1$s لكل %2$s</string>
+    <string name="cost_dialog_save">حفظ</string>
+    <string name="cost_dialog_reset">استخدام القيمة التلقائية</string>
+    <string name="cost_dialog_cancel">إلغاء</string>
+    <string name="tx_sheet_cost_auto">%1$s (%2$s لكل %3$s)، تلقائيًا: السعر في يوم التحويل</string>
+    <string name="tx_sheet_cost_user">%1$s (%2$s لكل %3$s)، من إدخالك</string>
+    <string name="tx_sheet_edit_cost">تعديل أساس التكلفة</string>
+    <string name="tx_open_explorer">فتح في مستكشف الكتل</string>
+    <string name="chart_performance">باستثناء الإيداعات والسحوبات: %1$s</string>
+    <string name="chart_value_with_percent">%1$s (%2$s)</string>
+</resources>

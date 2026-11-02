@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="portfolio_title">Портфель</string>
+    <string name="portfolio_total_value">Общая стоимость</string>
+    <string name="portfolio_discreet_on">Скрыть суммы</string>
+    <string name="portfolio_discreet_off">Показать суммы</string>
+    <string name="portfolio_empty_title">Пока нечего отслеживать</string>
+    <string name="portfolio_empty_message">Добавьте кошелёк, вставив публичный адрес или расширенный публичный ключ. WatchWallet никогда не запрашивает вашу сид-фразу или приватные ключи.</string>
+    <string name="portfolio_empty_action">Добавить кошелёк</string>
+    <string name="portfolio_assets">Активы</string>
+    <string name="portfolio_allocation">Распределение</string>
+    <string name="portfolio_other">Другое</string>
+    <string name="portfolio_change_24h">%1$s (%2$s) за 24 часа</string>
+    <plurals name="portfolio_hidden_assets">
+        <item quantity="one">Скрыт %1$d токен (спам, нет цены или скрыт вами)</item>
+        <item quantity="few">Скрыто %1$d токена (спам, нет цены или скрыты вами)</item>
+        <item quantity="many">Скрыто %1$d токенов (спам, нет цены или скрыты вами)</item>
+        <item quantity="other">Скрыто %1$d токена (спам, нет цены или скрыты вами)</item>
+    </plurals>
+    <string name="portfolio_all_wallets">Все</string>
+    <string name="portfolio_hide_asset">Скрыть этот токен</string>
+    <string name="portfolio_show_asset">Показать</string>
+    <string name="portfolio_hidden_reason_spam">%1$s · похоже на спам</string>
+    <string name="portfolio_hidden_reason_other">%1$s · нет цены или скрыт вами</string>
+    <string name="portfolio_add_wallet">Добавить кошелёк</string>
+    <string name="portfolio_hidden_expanded">Развёрнуто</string>
+    <string name="portfolio_hidden_collapsed">Свёрнуто</string>
+</resources>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_wallet_title">Ajouter un portefeuille</string>
+    <string name="add_wallet_back">Retour</string>
+    <string name="add_wallet_intro">Collez une adresse publique, une clé publique étendue (xpub, ypub, zpub) ou un descripteur de sortie. WatchWallet détecte la chaîne automatiquement.</string>
+    <string name="add_wallet_input_label">Adresse, xpub ou descripteur</string>
+    <string name="add_wallet_paste">Coller</string>
+    <string name="add_wallet_probing">Vérification de la blockchain…</string>
+    <string name="add_wallet_pick_type">Lequel est votre portefeuille ?</string>
+    <string name="add_wallet_name_label">Nom (facultatif)</string>
+    <string name="add_wallet_save">Ajouter le portefeuille</string>
+    <string name="add_wallet_open_existing">Ouvrir le portefeuille existant</string>
+    <string name="add_wallet_already_tracked">Déjà suivi</string>
+    <string name="add_wallet_probe_failed">Impossible de vérifier l’activité pour le moment. Vous pouvez quand même l’ajouter.</string>
+    <string name="add_wallet_no_activity">Aucune activité pour l’instant</string>
+    <string name="add_wallet_active_on">Actif sur %1$s</string>
+    <plurals name="add_wallet_used_addresses">
+        <item quantity="one">%1$d adresse utilisée</item>
+        <item quantity="many">%1$d d’adresses utilisées</item>
+        <item quantity="other">%1$d adresses utilisées</item>
+    </plurals>
+    <plurals name="add_wallet_transactions">
+        <item quantity="one">%1$d transaction</item>
+        <item quantity="many">%1$d de transactions</item>
+        <item quantity="other">%1$d transactions</item>
+    </plurals>
+    <string name="add_wallet_unsupported_title">%1$s n’est pas encore pris en charge</string>
+    <string name="add_wallet_unsupported_message">Cela ressemble à une adresse valide, mais ce réseau n’est pas encore pris en charge. Bitcoin et les réseaux compatibles Ethereum fonctionnent déjà ; d’autres chaînes arrivent bientôt.</string>
+    <string name="add_wallet_checksum_title">Vérifiez l’adresse</string>
+    <string name="add_wallet_checksum_message">La casse de cette adresse ne correspond pas à sa somme de contrôle. Elle contient peut-être une faute de frappe. Copiez-la à nouveau depuis la source d’origine.</string>
+    <string name="add_wallet_multiple_title">Plusieurs adresses</string>
+    <string name="add_wallet_multiple_message">Plusieurs adresses ont été collées. Utilisez l’importation par lot pour les vérifier et les ajouter toutes en une fois.</string>
+    <string name="add_wallet_unrecognized_title">Cela ne ressemble pas à une adresse prise en charge</string>
+    <string name="add_wallet_unrecognized_message">Vérifiez que vous avez copié l’adresse ou la clé en entier, sans caractères en trop.</string>
+    <string name="secret_title_mnemonic">Cela ressemble à une phrase de récupération (seed)</string>
+    <string name="secret_title_key">Cela ressemble à une clé privée</string>
+    <string name="secret_message">WatchWallet n’a jamais besoin de votre phrase de récupération ni de vos clés privées. La saisie a été effacée ; elle n’a été ni enregistrée ni envoyée où que ce soit. Utilisez plutôt une adresse publique ou une clé publique étendue (xpub).</string>
+    <string name="secret_scam_hint">Si quelqu’un vous a demandé de la saisir ici ou ailleurs, c’est une arnaque.</string>
+    <string name="default_name_bitcoin_wallet">Portefeuille Bitcoin</string>
+    <string name="default_name_bitcoin_address">Adresse Bitcoin</string>
+    <string name="default_name_evm">Portefeuille Ethereum</string>
+    <string name="add_wallet_open_batch">Ouvrir l’importation par lot</string>
+    <string name="add_wallet_scan">Scanner</string>
+    <string name="qr_hint">Pointez la caméra vers le code QR d’une adresse ou d’un xpub</string>
+    <string name="qr_close">Fermer le scanner</string>
+    <string name="qr_no_permission">L’accès à la caméra est nécessaire pour scanner les codes QR. Vous pouvez l’autoriser dans les paramètres de l’application.</string>
+    <string name="default_name_generic">Portefeuille %1$s</string>
+    <string name="confirm_chain_title">Choisissez le réseau</string>
+    <string name="confirm_chain_message">Cela ressemble à une adresse Sui ou Aptos, mais les clés privées de plusieurs chaînes ont exactement le même aspect. Rien n’a encore été vérifié ni envoyé. Choisissez le réseau de cette adresse. Si vous avez copié une clé privée par erreur, effacez-la.</string>
+    <string name="confirm_unused_title">Cette adresse n’a jamais été utilisée</string>
+    <string name="confirm_unused_message">Si vous avez copié une clé privée par erreur, effacez-la maintenant et ne la partagez jamais. N’ajoutez cet élément que s’il s’agit à coup sûr d’une adresse neuve et inutilisée.</string>
+    <string name="confirm_add_anyway">Ajouter quand même</string>
+    <string name="confirm_clear">Effacer</string>
+    <string name="add_wallet_group_label">Groupe (facultatif)</string>
+    <string name="add_wallet_group_hint">ex. : Conjoint, Épargne, Entreprise</string>
+</resources>

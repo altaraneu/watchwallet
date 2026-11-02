@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lock_title">WatchWallet est verrouillé</string>
+    <string name="lock_unlock">Déverrouiller</string>
+    <string name="lock_prompt_title">Déverrouiller WatchWallet</string>
+    <string name="widget_label">Valeur du portfolio</string>
+    <string name="widget_description">Valeur totale de vos portefeuilles suivis</string>
+    <string name="widget_title">Portfolio</string>
+    <string name="widget_change_24h">%1$s en 24 h</string>
+</resources>

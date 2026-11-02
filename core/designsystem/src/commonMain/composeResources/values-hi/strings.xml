@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="amount_hidden">राशि छिपी हुई है</string>
+    <string name="action_cancel">रद्द करें</string>
+    <string name="range_24h">24घं</string>
+    <string name="range_7d">7दि</string>
+    <string name="range_1m">1मा</string>
+    <string name="range_3m">3मा</string>
+    <string name="range_1y">1व</string>
+    <string name="range_ytd">इस साल</string>
+    <string name="range_all">सभी</string>
+    <string name="change_up">%1$s ऊपर</string>
+    <string name="change_down">%1$s नीचे</string>
+</resources>

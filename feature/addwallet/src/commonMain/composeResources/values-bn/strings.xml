@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_wallet_title">ওয়ালেট যোগ করুন</string>
+    <string name="add_wallet_back">পিছনে</string>
+    <string name="add_wallet_intro">একটি পাবলিক ঠিকানা, এক্সটেন্ডেড পাবলিক কী (xpub, ypub, zpub) বা আউটপুট ডেসক্রিপ্টর পেস্ট করুন। WatchWallet স্বয়ংক্রিয়ভাবে চেইন শনাক্ত করে।</string>
+    <string name="add_wallet_input_label">ঠিকানা, xpub বা ডেসক্রিপ্টর</string>
+    <string name="add_wallet_paste">পেস্ট করুন</string>
+    <string name="add_wallet_probing">ব্লকচেইন পরীক্ষা করা হচ্ছে…</string>
+    <string name="add_wallet_pick_type">এর মধ্যে আপনার ওয়ালেট কোনটি?</string>
+    <string name="add_wallet_name_label">নাম (ঐচ্ছিক)</string>
+    <string name="add_wallet_save">ওয়ালেট যোগ করুন</string>
+    <string name="add_wallet_open_existing">বিদ্যমান ওয়ালেট খুলুন</string>
+    <string name="add_wallet_already_tracked">ইতিমধ্যে ট্র্যাক করা হচ্ছে</string>
+    <string name="add_wallet_probe_failed">এখন কার্যকলাপ পরীক্ষা করা যায়নি। তবুও আপনি এটি যোগ করতে পারেন।</string>
+    <string name="add_wallet_no_activity">এখনো কোনো কার্যকলাপ নেই</string>
+    <string name="add_wallet_active_on">%1$s-এ সক্রিয়</string>
+    <plurals name="add_wallet_used_addresses">
+        <item quantity="one">%1$dটি ব্যবহৃত ঠিকানা</item>
+        <item quantity="other">%1$dটি ব্যবহৃত ঠিকানা</item>
+    </plurals>
+    <plurals name="add_wallet_transactions">
+        <item quantity="one">%1$dটি লেনদেন</item>
+        <item quantity="other">%1$dটি লেনদেন</item>
+    </plurals>
+    <string name="add_wallet_unsupported_title">%1$s এখনো সমর্থিত নয়</string>
+    <string name="add_wallet_unsupported_message">এটি একটি বৈধ ঠিকানা বলে মনে হচ্ছে, কিন্তু এই নেটওয়ার্ক এখনো সমর্থিত নয়। এখন Bitcoin ও Ethereum-সামঞ্জস্যপূর্ণ নেটওয়ার্ক কাজ করে; শীঘ্রই আরও চেইন আসছে।</string>
+    <string name="add_wallet_checksum_title">ঠিকানাটি যাচাই করুন</string>
+    <string name="add_wallet_checksum_message">এই ঠিকানার অক্ষরের ছোট-বড় হাতের রূপ এর চেকসামের সাথে মিলছে না। এতে টাইপের ভুল থাকতে পারে। মূল উৎস থেকে আবার কপি করুন।</string>
+    <string name="add_wallet_multiple_title">একাধিক ঠিকানা</string>
+    <string name="add_wallet_multiple_message">কয়েকটি ঠিকানা পেস্ট করা হয়েছে। সেগুলো পর্যালোচনা করে একসাথে যোগ করতে ব্যাচ ইমপোর্ট ব্যবহার করুন।</string>
+    <string name="add_wallet_unrecognized_title">এটি সমর্থিত ঠিকানা বলে মনে হচ্ছে না</string>
+    <string name="add_wallet_unrecognized_message">আপনি পুরো ঠিকানা বা কি অতিরিক্ত অক্ষর ছাড়া কপি করেছেন কি না দেখে নিন।</string>
+    <string name="secret_title_mnemonic">এটি একটি সিড ফ্রেজ বলে মনে হচ্ছে</string>
+    <string name="secret_title_key">এটি একটি প্রাইভেট কী বলে মনে হচ্ছে</string>
+    <string name="secret_message">WatchWallet-এর কখনোই আপনার সিড ফ্রেজ বা প্রাইভেট কী দরকার হয় না। আপনার ইনপুট মুছে ফেলা হয়েছে এবং তা সংরক্ষণ করা বা কোথাও পাঠানো হয়নি। এর পরিবর্তে একটি পাবলিক ঠিকানা বা এক্সটেন্ডেড পাবলিক কী (xpub) ব্যবহার করুন।</string>
+    <string name="secret_scam_hint">কেউ যদি আপনাকে এটি এখানে বা অন্য কোথাও দিতে বলে থাকে, তবে সেটি প্রতারণা।</string>
+    <string name="default_name_bitcoin_wallet">Bitcoin ওয়ালেট</string>
+    <string name="default_name_bitcoin_address">Bitcoin ঠিকানা</string>
+    <string name="default_name_evm">Ethereum ওয়ালেট</string>
+    <string name="add_wallet_open_batch">ব্যাচ ইমপোর্ট খুলুন</string>
+    <string name="add_wallet_scan">স্ক্যান করুন</string>
+    <string name="qr_hint">ঠিকানা বা xpub-এর QR কোডের দিকে ক্যামেরা ধরুন</string>
+    <string name="qr_close">স্ক্যানার বন্ধ করুন</string>
+    <string name="qr_no_permission">QR কোড স্ক্যান করতে ক্যামেরার অনুমতি দরকার। অ্যাপ সেটিংসে গিয়ে আপনি এটি দিতে পারেন।</string>
+    <string name="default_name_generic">%1$s ওয়ালেট</string>
+    <string name="confirm_chain_title">নেটওয়ার্ক বেছে নিন</string>
+    <string name="confirm_chain_message">এটি Sui বা Aptos ঠিকানা বলে মনে হচ্ছে, কিন্তু কয়েকটি চেইনের প্রাইভেট কী হুবহু একই রকম দেখতে। এখনো কিছু পরীক্ষা করা বা পাঠানো হয়নি। এই ঠিকানার নেটওয়ার্ক বেছে নিন। ভুল করে প্রাইভেট কী কপি করে থাকলে সেটি মুছে দিন।</string>
+    <string name="confirm_unused_title">এই ঠিকানা কখনো ব্যবহার করা হয়নি</string>
+    <string name="confirm_unused_message">ভুল করে প্রাইভেট কী কপি করে থাকলে এখনই সেটি মুছে দিন এবং কখনো কাউকে দেবেন না। এটি নতুন, অব্যবহৃত ঠিকানা বলে নিশ্চিত হলেই কেবল যোগ করুন।</string>
+    <string name="confirm_add_anyway">তবুও যোগ করুন</string>
+    <string name="confirm_clear">মুছুন</string>
+    <string name="add_wallet_group_label">গ্রুপ (ঐচ্ছিক)</string>
+    <string name="add_wallet_group_hint">যেমন সঙ্গী, সঞ্চয়, ব্যবসা</string>
+</resources>

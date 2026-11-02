@@ -242,6 +242,7 @@ internal class AssetDetailViewModel(
                 }.sortedByDescending { it.amount }
                 val relevantTxs = txs.filter { it.assetId in ids }
                 val manyChains = relevantTxs.map { it.chainId }.distinct().size > 1
+                val manyWallets = relevantTxs.map { it.walletId }.distinct().size > 1
                 val activity = relevantTxs.sortedByDescending { it.timestamp }.take(MAX_ACTIVITY).map { tx ->
                     val asset = assets[tx.assetId]
                     val chain = registry.chain(tx.chainId)
@@ -256,7 +257,7 @@ internal class AssetDetailViewModel(
                         amount = asset?.let { com.altaran.watchwallet.core.model.TokenAmount(tx.delta, it.decimals).toDouble() } ?: 0.0,
                         symbol = asset?.symbol ?: h.symbol,
                         chainName = chain?.name?.takeIf { manyChains },
-                        walletName = names[tx.walletId].takeIf { wallets.size > 1 },
+                        walletName = names[tx.walletId].takeIf { manyWallets },
                         costUsd = cost?.valueUsd,
                         costUserSet = cost?.userSet == true,
                         explorerUrl = chain?.explorerTxUrl?.replace("{tx}", tx.hash),

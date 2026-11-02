@@ -183,6 +183,7 @@ internal fun WalletDetailScreen(
                             )
                         }
                         ActiveChains(state, chain)
+                        wallet?.target?.let { WalletAddress(it, state.derivedAddresses) }
                         if (state.failed) {
                             Text(stringResource(Res.string.wallets_sync_failed), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
                         }

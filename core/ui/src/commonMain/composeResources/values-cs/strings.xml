@@ -24,10 +24,10 @@
     <string name="copy_action">Kopírovat</string>
     <string name="copy_done">Zkopírováno</string>
     <string name="tx_cost_auto">Pořizovací cena %1$s</string>
-    <string name="tx_cost_user">Pořizovací cena %1$s (vaše)</string>
+    <string name="tx_cost_user">Pořizovací cena %1$s (tvoje)</string>
     <string name="tx_cost_unknown">Zadat pořizovací cenu</string>
     <string name="cost_dialog_title">Pořizovací cena</string>
-    <string name="cost_dialog_message">Kolik vás tyto mince stály v amerických dolarech? Automatická hodnota používá cenu v den převodu. Pokud jste je koupili dřív (třeba na burze) a sem je jen převedli, zadejte, kolik jste zaplatili.</string>
+    <string name="cost_dialog_message">Kolik tě tyto mince stály v amerických dolarech? Automatická hodnota používá cenu v den převodu. Pokud jsi je koupil dřív (třeba na burze) a sem je jen převedl, zadej, kolik jsi zaplatil.</string>
     <string name="cost_dialog_label">Celková cena v USD</string>
     <string name="cost_dialog_total">Celkem</string>
     <string name="cost_dialog_per_coin">Za 1 %1$s</string>

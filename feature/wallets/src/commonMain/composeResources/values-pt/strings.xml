@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wallets_title">Carteiras</string>
+    <string name="wallets_add">Adicionar carteira</string>
+    <string name="wallets_empty_title">Ainda sem carteiras</string>
+    <string name="wallets_empty_message">Cole qualquer endereço público ou xpub e o WatchWallet reconhecerá a rede. Chaves, nunca.</string>
+    <string name="wallets_sync_failed">Não foi possível atualizar. Mostrando os últimos dados conhecidos.</string>
+    <string name="detail_back">Voltar</string>
+    <string name="detail_more">Mais opções</string>
+    <string name="detail_rename">Renomear</string>
+    <string name="detail_open_explorer">Abrir no explorador de blocos</string>
+    <string name="detail_delete">Excluir</string>
+    <string name="detail_delete_title">Excluir esta carteira?</string>
+    <string name="detail_delete_message">A carteira e o histórico em cache serão removidos deste dispositivo. Nada muda na blockchain; você pode adicioná-la novamente quando quiser.</string>
+    <string name="detail_cancel">Cancelar</string>
+    <string name="detail_save">Salvar</string>
+    <string name="detail_balance">Saldo</string>
+    <string name="detail_tab_assets">Ativos</string>
+    <string name="detail_tab_activity">Atividade</string>
+    <string name="detail_tab_addresses">Endereços</string>
+    <string name="detail_no_assets_title">Sem ativos</string>
+    <string name="detail_no_assets_message">Esta carteira está sem saldo no momento. Puxe para baixo para atualizar.</string>
+    <string name="detail_no_activity_title">Ainda sem transações</string>
+    <string name="detail_no_activity_message">As transações aparecerão aqui após a primeira atualização.</string>
+    <string name="address_used">Usado</string>
+    <string name="address_unused">Não usado</string>
+    <string name="address_next_receive">Próximo endereço de recebimento não usado</string>
+    <string name="address_copy">Copiar endereço</string>
+    <string name="detail_address">Endereço</string>
+    <string name="detail_show_qr">Mostrar QR code</string>
+    <string name="detail_qr_description">QR code deste endereço</string>
+    <string name="detail_address_evm_hint">O mesmo endereço funciona em todas as redes EVM. Verifique se o remetente está usando a rede correta.</string>
+    <string name="detail_address_cardano_hint">Um dos endereços desta carteira.</string>
+    <string name="detail_stake_key">Chave de staking</string>
+    <string name="detail_stake_key_hint">Uma chave de staking não pode receber pagamentos. Use um endereço de pagamento do seu app de carteira.</string>
+    <string name="wallets_ungrouped">Outras carteiras</string>
+    <string name="wallets_syncing">Sincronizando</string>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lock_title">WatchWallet terkunci</string>
+    <string name="lock_unlock">Buka kunci</string>
+    <string name="lock_prompt_title">Buka kunci WatchWallet</string>
+    <string name="widget_label">Nilai portofolio</string>
+    <string name="widget_description">Total nilai dompet yang Anda pantau</string>
+    <string name="widget_title">Portofolio</string>
+    <string name="widget_change_24h">%1$s dalam 24 jam</string>
+</resources>

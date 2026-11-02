@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="amount_hidden">金额已隐藏</string>
+    <string name="action_cancel">取消</string>
+    <string name="range_24h">24时</string>
+    <string name="range_7d">7天</string>
+    <string name="range_1m">1个月</string>
+    <string name="range_3m">3个月</string>
+    <string name="range_1y">1年</string>
+    <string name="range_ytd">今年</string>
+    <string name="range_all">全部</string>
+    <string name="change_up">上涨 %1$s</string>
+    <string name="change_down">下跌 %1$s</string>
+</resources>

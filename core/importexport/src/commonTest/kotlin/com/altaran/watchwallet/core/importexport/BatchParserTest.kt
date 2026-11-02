@@ -122,4 +122,41 @@ class BatchParserTest {
             assertEquals(SecretKind.MNEMONIC, result.kind)
         }
     }
+
+    @Test
+    fun backupWithCostBasisPassesTheGuardAndRoundTrips() {
+        // A bare 64-hex hash and an IBC denom both look like private keys to the guard.
+        val hash = "a".repeat(64)
+        val ibc = "cosmos:ibc/" + "27394FB092D2ECCD56123C74F36E4C1F926001CE".padEnd(64, 'B')
+        val solanaSignature = "5".repeat(88)
+        val export = WatchWalletExport(
+            exportedAt = "2026-11-02T00:00:00Z",
+            wallets = listOf(
+                ExportedWallet(
+                    name = "Savings",
+                    notes = "Cold storage",
+                    family = "UTXO_BITCOIN",
+                    chain = "bitcoin",
+                    kind = "ADDRESS",
+                    value = "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+                    scriptType = "P2WPKH",
+                    costs = listOf(ExportedCost.of(hash, ibc, 4447.91), ExportedCost.of(solanaSignature, "solana:native", 10.0)),
+                ),
+            ),
+        )
+        val entries = assertIs<BatchResult.Entries>(BatchParser.parse(ExportFormat.encode(export))).entries
+        val entry = entries.single()
+        assertEquals("Cold storage", entry.notes)
+        assertEquals(hash to ibc, entry.costs[0].decoded())
+        assertEquals(4447.91, entry.costs[0].valueUsd)
+        assertEquals(solanaSignature to "solana:native", entry.costs[1].decoded())
+    }
+
+    @Test
+    fun malformedCostEntriesAreIgnored() {
+        assertEquals(null, ExportedCost("cost-zz", 1.0).decoded())
+        assertEquals(null, ExportedCost("nope", 1.0).decoded())
+        assertEquals(null, ExportedCost.of("a".repeat(64), "bitcoin:native", -1.0).decoded())
+        assertEquals(null, ExportedCost.of("a".repeat(64), "bitcoin:native", Double.NaN).decoded())
+    }
 }

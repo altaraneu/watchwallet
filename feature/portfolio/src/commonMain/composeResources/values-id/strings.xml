@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="portfolio_title">Portofolio</string>
+    <string name="portfolio_total_value">Total nilai</string>
+    <string name="portfolio_discreet_on">Sembunyikan jumlah</string>
+    <string name="portfolio_discreet_off">Tampilkan jumlah</string>
+    <string name="portfolio_empty_title">Belum ada yang dipantau</string>
+    <string name="portfolio_empty_message">Tambahkan dompet dengan menempelkan alamat publik atau kunci publik yang diperluas. WatchWallet tidak pernah meminta frasa benih atau kunci privat Anda.</string>
+    <string name="portfolio_empty_action">Tambah dompet</string>
+    <string name="portfolio_assets">Aset</string>
+    <string name="portfolio_allocation">Alokasi</string>
+    <string name="portfolio_other">Lainnya</string>
+    <string name="portfolio_change_24h">%1$s (%2$s) dalam 24 jam</string>
+    <plurals name="portfolio_hidden_assets">
+        <item quantity="other">%1$d token disembunyikan (spam, tanpa harga, atau disembunyikan oleh Anda)</item>
+    </plurals>
+    <string name="portfolio_all_wallets">Semua</string>
+    <string name="portfolio_hide_asset">Sembunyikan token ini</string>
+    <string name="portfolio_show_asset">Tampilkan</string>
+    <string name="portfolio_hidden_reason_spam">%1$s · tampak seperti spam</string>
+    <string name="portfolio_hidden_reason_other">%1$s · tanpa harga atau disembunyikan oleh Anda</string>
+    <string name="portfolio_add_wallet">Tambah dompet</string>
+    <string name="portfolio_hidden_expanded">Diperluas</string>
+    <string name="portfolio_hidden_collapsed">Diciutkan</string>
+</resources>

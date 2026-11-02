@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ie_back">Atrás</string>
+    <string name="import_title">Importar billeteras</string>
+    <string name="import_intro">Pega direcciones o xpubs (una por línea, o separadas por comas, puntos y comas o espacios), un archivo CSV con fila de encabezado o una copia de seguridad de WatchWallet. Podrás revisarlo todo antes de importar.</string>
+    <string name="import_paste_label">Direcciones, CSV o copia de seguridad</string>
+    <string name="import_choose_file">Elegir archivo</string>
+    <string name="import_preview">Revisar</string>
+    <string name="import_group">Agregar a un grupo (opcional)</string>
+    <plurals name="import_action">
+        <item quantity="one">Importar %1$d billetera</item>
+        <item quantity="many">Importar %1$d de billeteras</item>
+        <item quantity="other">Importar %1$d billeteras</item>
+    </plurals>
+    <string name="import_row_target_group">%1$s · %2$s</string>
+    <string name="import_status_tracked">Ya en seguimiento, se omitirá</string>
+    <string name="import_status_duplicate">Duplicada en esta lista</string>
+    <string name="import_status_unsupported">%1$s aún no es compatible</string>
+    <string name="import_status_confirm">Dirección de Sui o Aptos: agrégala en la pantalla Agregar billetera, que pide confirmación</string>
+    <string name="import_status_invalid">Dirección no reconocida</string>
+    <string name="import_secret_title">Importación detenida: se encontró una clave privada o frase semilla</string>
+    <string name="import_secret_message">El contenido incluía algo que parece una clave privada o una frase semilla. No se importó, guardó ni envió nada a ningún lugar, y el contenido se borró. Elimina esa entrada e inténtalo de nuevo.</string>
+    <string name="import_encrypted">Esta copia de seguridad está cifrada. Introduce su contraseña.</string>
+    <string name="import_wrong_password">Contraseña incorrecta o archivo dañado</string>
+    <string name="import_decrypt">Descifrar</string>
+    <string name="import_done_title">Importación finalizada</string>
+    <string name="import_done_summary">Importadas: %1$d · omitidas: %2$d · con error: %3$d</string>
+    <string name="import_done_sync">Los saldos y el historial se están cargando en segundo plano.</string>
+    <string name="import_done_action">Ver billeteras</string>
+    <string name="export_title">Exportar billeteras</string>
+    <string name="export_notice">El archivo no contiene claves, pero revela todas tus direcciones seguidas y, por tanto, tus fondos. Guárdalo y compártelo con cuidado.</string>
+    <string name="export_scope">Billeteras</string>
+    <string name="export_all">Todas (%1$d)</string>
+    <string name="export_format">Formato</string>
+    <string name="export_format_json">Copia de seguridad (JSON)</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_text">Solo direcciones</string>
+    <string name="export_format_transactions">Historial de transacciones (CSV)</string>
+    <string name="export_transactions_hint">Todas las transacciones guardadas de las billeteras seleccionadas: fecha (UTC), activo, importe con signo, comisión y hash de la transacción. El historial más antiguo aparece después de cargarse.</string>
+    <string name="export_password">Contraseña</string>
+    <string name="export_password_hint">Opcional. Cifra la copia de seguridad (AES-256-GCM). Sin la contraseña no se podrá restaurar.</string>
+    <string name="export_include_values">Incluir valores actuales</string>
+    <string name="export_save">Guardar en archivo</string>
+    <string name="export_share">Compartir</string>
+    <string name="export_saved">Guardado</string>
+    <string name="export_save_failed">No se pudo guardar el archivo</string>
+</resources>

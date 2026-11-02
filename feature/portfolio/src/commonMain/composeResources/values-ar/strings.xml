@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="portfolio_title">المحفظة الاستثمارية</string>
+    <string name="portfolio_total_value">القيمة الإجمالية</string>
+    <string name="portfolio_discreet_on">إخفاء المبالغ</string>
+    <string name="portfolio_discreet_off">إظهار المبالغ</string>
+    <string name="portfolio_empty_title">لا يوجد ما تتابعه بعد</string>
+    <string name="portfolio_empty_message">أضف محفظة بلصق عنوان عام أو مفتاح عام موسّع. لا يطلب WatchWallet أبدًا عبارة الاسترداد أو مفاتيحك الخاصة.</string>
+    <string name="portfolio_empty_action">إضافة محفظة</string>
+    <string name="portfolio_assets">الأصول</string>
+    <string name="portfolio_allocation">التوزيع</string>
+    <string name="portfolio_other">أخرى</string>
+    <string name="portfolio_change_24h">%1$s (%2$s) خلال 24 ساعة</string>
+    <plurals name="portfolio_hidden_assets">
+        <item quantity="zero">%1$d توكن مخفي (سبام أو بلا سعر أو أخفيته أنت)</item>
+        <item quantity="one">%1$d توكن مخفي (سبام أو بلا سعر أو أخفيته أنت)</item>
+        <item quantity="two">%1$d توكنان مخفيان (سبام أو بلا سعر أو أخفيتهما أنت)</item>
+        <item quantity="few">%1$d توكنات مخفية (سبام أو بلا سعر أو أخفيتها أنت)</item>
+        <item quantity="many">%1$d توكنًا مخفيًا (سبام أو بلا سعر أو أخفيتها أنت)</item>
+        <item quantity="other">%1$d توكن مخفي (سبام أو بلا سعر أو أخفيتها أنت)</item>
+    </plurals>
+    <string name="portfolio_all_wallets">الكل</string>
+    <string name="portfolio_hide_asset">إخفاء هذا التوكن</string>
+    <string name="portfolio_show_asset">إظهار</string>
+    <string name="portfolio_hidden_reason_spam">%1$s · يبدو أنه سبام</string>
+    <string name="portfolio_hidden_reason_other">%1$s · بلا سعر أو أخفيته أنت</string>
+    <string name="portfolio_add_wallet">إضافة محفظة</string>
+    <string name="portfolio_hidden_expanded">موسّع</string>
+    <string name="portfolio_hidden_collapsed">مطوي</string>
+</resources>

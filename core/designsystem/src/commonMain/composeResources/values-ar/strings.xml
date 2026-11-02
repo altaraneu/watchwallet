@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="amount_hidden">المبلغ مخفي</string>
+    <string name="action_cancel">إلغاء</string>
+    <string name="range_24h">24س</string>
+    <string name="range_7d">7ي</string>
+    <string name="range_1m">1ش</string>
+    <string name="range_3m">3ش</string>
+    <string name="range_1y">سنة</string>
+    <string name="range_ytd">هذا العام</string>
+    <string name="range_all">الكل</string>
+    <string name="change_up">ارتفاع %1$s</string>
+    <string name="change_down">انخفاض %1$s</string>
+</resources>

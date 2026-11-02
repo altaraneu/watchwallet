@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lock_title">WatchWallet 已锁定</string>
+    <string name="lock_unlock">解锁</string>
+    <string name="lock_prompt_title">解锁 WatchWallet</string>
+    <string name="widget_label">投资组合价值</string>
+    <string name="widget_description">您所跟踪钱包的总价值</string>
+    <string name="widget_title">投资组合</string>
+    <string name="widget_change_24h">24 小时 %1$s</string>
+</resources>

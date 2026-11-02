@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="script_p2pkh">Legacy</string>
+    <string name="script_p2sh_p2wpkh">Nested SegWit</string>
+    <string name="script_p2wpkh">Native SegWit</string>
+    <string name="script_p2tr">Taproot</string>
+    <string name="script_p2sh">Script</string>
+    <string name="script_p2wsh">SegWit script</string>
+    <string name="family_utxo_bitcoin">Bitcoin</string>
+    <string name="family_evm">EVM</string>
+    <string name="target_xpub">%1$s xpub</string>
+    <string name="target_address">Адрес %1$s</string>
+    <string name="target_description">%1$s · %2$s</string>
+    <string name="chart_no_data">Для этого периода пока недостаточно данных</string>
+    <string name="chart_a11y_summary">График за %1$s: от %2$s до %3$s, изменение %4$s</string>
+    <string name="chart_a11y_hidden">График за %1$s, суммы скрыты</string>
+    <string name="target_cardano_wallet">весь кошелёк (ключ стейкинга)</string>
+    <string name="chart_loading_prices">Загрузка истории цен… график заполнится по мере получения цен.</string>
+    <string name="chart_visible_range">в видимом диапазоне</string>
+    <string name="tx_received">Получено</string>
+    <string name="tx_sent">Отправлено</string>
+    <string name="tx_self">Перевод между своими адресами</string>
+    <string name="tx_label_pending">%1$s · В ожидании</string>
+    <string name="copy_action">Копировать</string>
+    <string name="copy_done">Скопировано</string>
+    <string name="tx_cost_auto">Себестоимость %1$s</string>
+    <string name="tx_cost_user">Себестоимость %1$s (ваша)</string>
+    <string name="tx_cost_unknown">Указать себестоимость</string>
+    <string name="cost_dialog_title">Себестоимость</string>
+    <string name="cost_dialog_message">Сколько вы заплатили за эти монеты в долларах США? Автоматическое значение рассчитано по цене на день перевода. Если вы купили их раньше (например, на бирже) и только сейчас перевели сюда, укажите сумму, которую заплатили.</string>
+    <string name="cost_dialog_label">Общая стоимость в USD</string>
+    <string name="cost_dialog_total">Всего</string>
+    <string name="cost_dialog_per_coin">За %1$s</string>
+    <string name="cost_dialog_label_per_coin">USD за %1$s</string>
+    <string name="cost_dialog_total_hint">Всего %1$s</string>
+    <string name="cost_dialog_per_coin_hint">%1$s за %2$s</string>
+    <string name="cost_dialog_save">Сохранить</string>
+    <string name="cost_dialog_reset">Рассчитать автоматически</string>
+    <string name="cost_dialog_cancel">Отмена</string>
+    <string name="tx_sheet_cost_auto">%1$s (%2$s за %3$s), автоматически: цена на день перевода</string>
+    <string name="tx_sheet_cost_user">%1$s (%2$s за %3$s), указано вами</string>
+    <string name="tx_sheet_edit_cost">Изменить себестоимость</string>
+    <string name="tx_open_explorer">Открыть в обозревателе блоков</string>
+    <string name="chart_performance">Без учёта пополнений и выводов: %1$s</string>
+    <string name="chart_value_with_percent">%1$s (%2$s)</string>
+</resources>

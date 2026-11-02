@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wallets_title">Portefeuilles</string>
+    <string name="wallets_add">Ajouter un portefeuille</string>
+    <string name="wallets_empty_title">Pas encore de portefeuille</string>
+    <string name="wallets_empty_message">Collez n’importe quelle adresse publique ou xpub et WatchWallet reconnaîtra la chaîne. Jamais de clés.</string>
+    <string name="wallets_sync_failed">Actualisation impossible. Affichage des dernières données connues.</string>
+    <string name="detail_back">Retour</string>
+    <string name="detail_more">Plus d’options</string>
+    <string name="detail_rename">Renommer</string>
+    <string name="detail_open_explorer">Ouvrir dans l’explorateur de blocs</string>
+    <string name="detail_delete">Supprimer</string>
+    <string name="detail_delete_title">Supprimer ce portefeuille ?</string>
+    <string name="detail_delete_message">Le portefeuille et son historique en cache seront supprimés de cet appareil. Rien ne change sur la blockchain ; vous pouvez le rajouter à tout moment.</string>
+    <string name="detail_cancel">Annuler</string>
+    <string name="detail_save">Enregistrer</string>
+    <string name="detail_balance">Solde</string>
+    <string name="detail_tab_assets">Actifs</string>
+    <string name="detail_tab_activity">Activité</string>
+    <string name="detail_tab_addresses">Adresses</string>
+    <string name="detail_no_assets_title">Aucun actif</string>
+    <string name="detail_no_assets_message">Ce portefeuille n’a pas de solde pour le moment. Tirez vers le bas pour actualiser.</string>
+    <string name="detail_no_activity_title">Pas encore de transactions</string>
+    <string name="detail_no_activity_message">Les transactions apparaîtront ici après la première actualisation.</string>
+    <string name="address_used">Utilisée</string>
+    <string name="address_unused">Inutilisée</string>
+    <string name="address_next_receive">Prochaine adresse de réception inutilisée</string>
+    <string name="address_copy">Copier l’adresse</string>
+    <string name="detail_address">Adresse</string>
+    <string name="detail_show_qr">Afficher le code QR</string>
+    <string name="detail_qr_description">Code QR de cette adresse</string>
+    <string name="detail_address_evm_hint">La même adresse fonctionne sur tous les réseaux EVM. Vérifiez que l’expéditeur utilise le bon réseau.</string>
+    <string name="detail_address_cardano_hint">L’une des adresses de ce portefeuille.</string>
+    <string name="detail_stake_key">Clé de staking</string>
+    <string name="detail_stake_key_hint">Une clé de staking ne peut pas recevoir de paiements. Utilisez une adresse de paiement de votre application de portefeuille.</string>
+    <string name="wallets_ungrouped">Autres portefeuilles</string>
+    <string name="wallets_syncing">Synchronisation</string>
+</resources>

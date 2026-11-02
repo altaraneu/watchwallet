@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wallets_title">ওয়ালেট</string>
+    <string name="wallets_add">ওয়ালেট যোগ করুন</string>
+    <string name="wallets_empty_title">এখনো কোনো ওয়ালেট নেই</string>
+    <string name="wallets_empty_message">যেকোনো পাবলিক ঠিকানা বা xpub পেস্ট করুন, WatchWallet চেইন চিনে নেবে। কোনো কী কখনোই নয়।</string>
+    <string name="wallets_sync_failed">রিফ্রেশ করা যায়নি। সর্বশেষ জানা ডেটা দেখানো হচ্ছে।</string>
+    <string name="detail_back">পিছনে</string>
+    <string name="detail_more">আরও বিকল্প</string>
+    <string name="detail_rename">নাম বদলান</string>
+    <string name="detail_open_explorer">ব্লক এক্সপ্লোরারে খুলুন</string>
+    <string name="detail_delete">মুছুন</string>
+    <string name="detail_delete_title">এই ওয়ালেট মুছবেন?</string>
+    <string name="detail_delete_message">ওয়ালেট ও এর সংরক্ষিত ইতিহাস এই ডিভাইস থেকে সরানো হবে। ব্লকচেইনে কিছুই বদলাবে না; আপনি যেকোনো সময় এটি আবার যোগ করতে পারবেন।</string>
+    <string name="detail_cancel">বাতিল</string>
+    <string name="detail_save">সংরক্ষণ করুন</string>
+    <string name="detail_balance">ব্যালেন্স</string>
+    <string name="detail_tab_assets">সম্পদ</string>
+    <string name="detail_tab_activity">কার্যকলাপ</string>
+    <string name="detail_tab_addresses">ঠিকানা</string>
+    <string name="detail_no_assets_title">কোনো সম্পদ নেই</string>
+    <string name="detail_no_assets_message">এই ওয়ালেটে এখন কোনো ব্যালেন্স নেই। রিফ্রেশ করতে নিচে টানুন।</string>
+    <string name="detail_no_activity_title">এখনো কোনো লেনদেন নেই</string>
+    <string name="detail_no_activity_message">প্রথম রিফ্রেশের পরে লেনদেন এখানে দেখা যাবে।</string>
+    <string name="address_used">ব্যবহৃত</string>
+    <string name="address_unused">অব্যবহৃত</string>
+    <string name="address_next_receive">পরবর্তী অব্যবহৃত গ্রহণের ঠিকানা</string>
+    <string name="address_copy">ঠিকানা কপি করুন</string>
+    <string name="detail_address">ঠিকানা</string>
+    <string name="detail_show_qr">QR কোড দেখান</string>
+    <string name="detail_qr_description">এই ঠিকানার QR কোড</string>
+    <string name="detail_address_evm_hint">একই ঠিকানা প্রতিটি EVM নেটওয়ার্কে কাজ করে। প্রেরক সঠিক নেটওয়ার্ক ব্যবহার করছেন কি না দেখে নিন।</string>
+    <string name="detail_address_cardano_hint">এই ওয়ালেটের ঠিকানাগুলোর একটি।</string>
+    <string name="detail_stake_key">স্টেক কী</string>
+    <string name="detail_stake_key_hint">স্টেক কী দিয়ে পেমেন্ট গ্রহণ করা যায় না। আপনার ওয়ালেট অ্যাপ থেকে একটি পেমেন্ট ঠিকানা ব্যবহার করুন।</string>
+    <string name="wallets_ungrouped">অন্যান্য ওয়ালেট</string>
+    <string name="wallets_syncing">সিঙ্ক হচ্ছে</string>
+</resources>

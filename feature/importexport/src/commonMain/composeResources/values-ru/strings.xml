@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ie_back">Назад</string>
+    <string name="import_title">Импорт кошельков</string>
+    <string name="import_intro">Вставьте адреса или xpub (по одному в строке либо через запятую, точку с запятой или пробел), файл CSV со строкой заголовка или резервную копию WatchWallet. Перед импортом вы сможете всё проверить.</string>
+    <string name="import_paste_label">Адреса, CSV или резервная копия</string>
+    <string name="import_choose_file">Выбрать файл</string>
+    <string name="import_preview">Проверить</string>
+    <string name="import_group">Добавить в группу (необязательно)</string>
+    <plurals name="import_action">
+        <item quantity="one">Импортировать %1$d кошелёк</item>
+        <item quantity="few">Импортировать %1$d кошелька</item>
+        <item quantity="many">Импортировать %1$d кошельков</item>
+        <item quantity="other">Импортировать %1$d кошелька</item>
+    </plurals>
+    <string name="import_row_target_group">%1$s · %2$s</string>
+    <string name="import_status_tracked">Уже отслеживается, будет пропущен</string>
+    <string name="import_status_duplicate">Дубликат в этом списке</string>
+    <string name="import_status_unsupported">%1$s пока не поддерживается</string>
+    <string name="import_status_confirm">Адрес Sui или Aptos: добавьте его на экране «Добавить кошелёк», там потребуется подтверждение</string>
+    <string name="import_status_invalid">Адрес не распознан</string>
+    <string name="import_secret_title">Импорт остановлен: найден приватный ключ или сид-фраза</string>
+    <string name="import_secret_message">Введённые данные содержали что-то похожее на приватный ключ или сид-фразу. Ничего не импортировано, не сохранено и никуда не отправлено, а введённые данные удалены. Уберите эту запись и повторите попытку.</string>
+    <string name="import_encrypted">Эта резервная копия зашифрована. Введите пароль.</string>
+    <string name="import_wrong_password">Неверный пароль или повреждённый файл</string>
+    <string name="import_decrypt">Расшифровать</string>
+    <string name="import_done_title">Импорт завершён</string>
+    <string name="import_done_summary">Импортировано: %1$d · пропущено: %2$d · с ошибкой: %3$d</string>
+    <string name="import_done_sync">Балансы и история загружаются в фоновом режиме.</string>
+    <string name="import_done_action">Показать кошельки</string>
+    <string name="export_title">Экспорт кошельков</string>
+    <string name="export_notice">Файл не содержит ключей, но раскрывает все отслеживаемые адреса, а значит, и ваши активы. Храните его и делитесь им с осторожностью.</string>
+    <string name="export_scope">Кошельки</string>
+    <string name="export_all">Все (%1$d)</string>
+    <string name="export_format">Формат</string>
+    <string name="export_format_json">Резервная копия (JSON)</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_text">Только адреса</string>
+    <string name="export_format_transactions">История транзакций (CSV)</string>
+    <string name="export_transactions_hint">Все сохранённые транзакции выбранных кошельков: дата (UTC), актив, сумма со знаком, комиссия и хеш транзакции. Более ранняя история появится после загрузки.</string>
+    <string name="export_password">Пароль</string>
+    <string name="export_password_hint">Необязательно. Шифрует резервную копию (AES-256-GCM). Без пароля восстановить её будет невозможно.</string>
+    <string name="export_include_values">Включить текущую стоимость</string>
+    <string name="export_save">Сохранить в файл</string>
+    <string name="export_share">Поделиться</string>
+    <string name="export_saved">Сохранено</string>
+    <string name="export_save_failed">Не удалось сохранить файл</string>
+</resources>

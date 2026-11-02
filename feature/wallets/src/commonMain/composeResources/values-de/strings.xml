@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wallets_title">Wallets</string>
+    <string name="wallets_add">Wallet hinzufügen</string>
+    <string name="wallets_empty_title">Noch keine Wallets</string>
+    <string name="wallets_empty_message">Füge eine beliebige öffentliche Adresse oder xpub ein und WatchWallet erkennt die Chain. Niemals Schlüssel.</string>
+    <string name="wallets_sync_failed">Aktualisierung fehlgeschlagen. Die zuletzt bekannten Daten werden angezeigt.</string>
+    <string name="detail_back">Zurück</string>
+    <string name="detail_more">Weitere Optionen</string>
+    <string name="detail_rename">Umbenennen</string>
+    <string name="detail_open_explorer">Im Block-Explorer öffnen</string>
+    <string name="detail_delete">Löschen</string>
+    <string name="detail_delete_title">Diese Wallet löschen?</string>
+    <string name="detail_delete_message">Die Wallet und ihr zwischengespeicherter Verlauf werden von diesem Gerät entfernt. Auf der Blockchain ändert sich nichts; du kannst sie jederzeit wieder hinzufügen.</string>
+    <string name="detail_cancel">Abbrechen</string>
+    <string name="detail_save">Speichern</string>
+    <string name="detail_balance">Guthaben</string>
+    <string name="detail_tab_assets">Assets</string>
+    <string name="detail_tab_activity">Aktivität</string>
+    <string name="detail_tab_addresses">Adressen</string>
+    <string name="detail_no_assets_title">Keine Assets</string>
+    <string name="detail_no_assets_message">Diese Wallet hat derzeit kein Guthaben. Zum Aktualisieren nach unten ziehen.</string>
+    <string name="detail_no_activity_title">Noch keine Transaktionen</string>
+    <string name="detail_no_activity_message">Transaktionen erscheinen hier nach der ersten Aktualisierung.</string>
+    <string name="address_used">Verwendet</string>
+    <string name="address_unused">Unbenutzt</string>
+    <string name="address_next_receive">Nächste unbenutzte Empfangsadresse</string>
+    <string name="address_copy">Adresse kopieren</string>
+    <string name="detail_address">Adresse</string>
+    <string name="detail_show_qr">QR-Code anzeigen</string>
+    <string name="detail_qr_description">QR-Code dieser Adresse</string>
+    <string name="detail_address_evm_hint">Dieselbe Adresse funktioniert in jedem EVM-Netzwerk. Achte darauf, dass der Absender das richtige Netzwerk verwendet.</string>
+    <string name="detail_address_cardano_hint">Eine der Adressen dieser Wallet.</string>
+    <string name="detail_stake_key">Stake-Key</string>
+    <string name="detail_stake_key_hint">Ein Stake-Key kann keine Zahlungen empfangen. Verwende eine Zahlungsadresse aus deiner Wallet-App.</string>
+    <string name="wallets_ungrouped">Weitere Wallets</string>
+    <string name="wallets_syncing">Wird synchronisiert</string>
+</resources>

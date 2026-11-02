@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="donate_title">支持本项目</string>
+    <string name="donate_navigate_up">返回</string>
+    <string name="donate_intro">WatchWallet 免费且开源,没有广告、没有跟踪,也无需账户。如果您觉得它有用,可以向下方任一地址发送 BTC 或 ETH 来支持开发。</string>
+    <string name="donate_btc_label">Bitcoin (BTC)</string>
+    <string name="donate_eth_label">Ethereum (ETH)</string>
+    <string name="donate_copy_description">复制 %1$s 地址</string>
+    <string name="donate_verify">发送前,请核实这些地址与项目仓库 README 中公布的地址一致。</string>
+</resources>

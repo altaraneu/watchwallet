@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wallets_title">ウォレット</string>
+    <string name="wallets_add">ウォレットを追加</string>
+    <string name="wallets_empty_title">ウォレットはまだありません</string>
+    <string name="wallets_empty_message">公開アドレスや xpub を貼り付けるだけで、WatchWallet がチェーンを認識します。鍵は一切不要です。</string>
+    <string name="wallets_sync_failed">更新できませんでした。最後に取得したデータを表示しています。</string>
+    <string name="detail_back">戻る</string>
+    <string name="detail_more">その他のオプション</string>
+    <string name="detail_rename">名前を変更</string>
+    <string name="detail_open_explorer">ブロックエクスプローラーで開く</string>
+    <string name="detail_delete">削除</string>
+    <string name="detail_delete_title">このウォレットを削除しますか?</string>
+    <string name="detail_delete_message">ウォレットとそのキャッシュされた履歴がこのデバイスから削除されます。ブロックチェーン上では何も変わらず、いつでも再度追加できます。</string>
+    <string name="detail_cancel">キャンセル</string>
+    <string name="detail_save">保存</string>
+    <string name="detail_balance">残高</string>
+    <string name="detail_tab_assets">資産</string>
+    <string name="detail_tab_activity">アクティビティ</string>
+    <string name="detail_tab_addresses">アドレス</string>
+    <string name="detail_no_assets_title">資産なし</string>
+    <string name="detail_no_assets_message">このウォレットには現在残高がありません。下に引いて更新してください。</string>
+    <string name="detail_no_activity_title">トランザクションはまだありません</string>
+    <string name="detail_no_activity_message">最初の更新後にトランザクションがここに表示されます。</string>
+    <string name="address_used">使用済み</string>
+    <string name="address_unused">未使用</string>
+    <string name="address_next_receive">次の未使用受取アドレス</string>
+    <string name="address_copy">アドレスをコピー</string>
+    <string name="detail_address">アドレス</string>
+    <string name="detail_show_qr">QR コードを表示</string>
+    <string name="detail_qr_description">このアドレスの QR コード</string>
+    <string name="detail_address_evm_hint">同じアドレスがすべての EVM ネットワークで使えます。送金元が正しいネットワークを使っていることを確認してください。</string>
+    <string name="detail_address_cardano_hint">このウォレットのアドレスの 1 つです。</string>
+    <string name="detail_stake_key">ステークキー</string>
+    <string name="detail_stake_key_hint">ステークキーでは支払いを受け取れません。ウォレットアプリの支払いアドレスを使用してください。</string>
+    <string name="wallets_ungrouped">その他のウォレット</string>
+    <string name="wallets_syncing">同期中</string>
+</resources>

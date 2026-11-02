@@ -4,8 +4,8 @@
     <string name="nav_wallets">Peněženky</string>
     <string name="nav_markets">Trhy</string>
     <string name="nav_settings">Nastavení</string>
-    <string name="donate_reminder_title">Líbí se vám WatchWallet?</string>
-    <string name="donate_reminder_message">WatchWallet je zdarma, open source a bez reklam a sledování. Pokud vám pomáhá, malý příspěvek pomůže, aby to tak zůstalo.</string>
+    <string name="donate_reminder_title">Líbí se ti WatchWallet?</string>
+    <string name="donate_reminder_message">WatchWallet je zdarma, open source a bez reklam a sledování. Pokud ti pomáhá, malý příspěvek pomůže, aby to tak zůstalo.</string>
     <string name="donate_reminder_support">Podpořit</string>
     <string name="donate_reminder_later">Teď ne</string>
     <string name="donate_reminder_never">Už nepřipomínat</string>

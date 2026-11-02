@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_wallet_title">वॉलेट जोड़ें</string>
+    <string name="add_wallet_back">वापस</string>
+    <string name="add_wallet_intro">कोई सार्वजनिक पता, एक्सटेंडेड सार्वजनिक कुंजी (xpub, ypub, zpub) या आउटपुट डिस्क्रिप्टर पेस्ट करें। WatchWallet चेन को अपने आप पहचान लेता है।</string>
+    <string name="add_wallet_input_label">पता, xpub या डिस्क्रिप्टर</string>
+    <string name="add_wallet_paste">पेस्ट करें</string>
+    <string name="add_wallet_probing">ब्लॉकचेन की जाँच हो रही है…</string>
+    <string name="add_wallet_pick_type">इनमें से आपका वॉलेट कौन सा है?</string>
+    <string name="add_wallet_name_label">नाम (वैकल्पिक)</string>
+    <string name="add_wallet_save">वॉलेट जोड़ें</string>
+    <string name="add_wallet_open_existing">मौजूदा वॉलेट खोलें</string>
+    <string name="add_wallet_already_tracked">पहले से ट्रैक हो रहा है</string>
+    <string name="add_wallet_probe_failed">अभी गतिविधि की जाँच नहीं हो सकी। आप इसे फिर भी जोड़ सकते हैं।</string>
+    <string name="add_wallet_no_activity">अभी कोई गतिविधि नहीं</string>
+    <string name="add_wallet_active_on">%1$s पर सक्रिय</string>
+    <plurals name="add_wallet_used_addresses">
+        <item quantity="one">%1$d इस्तेमाल किया गया पता</item>
+        <item quantity="other">%1$d इस्तेमाल किए गए पते</item>
+    </plurals>
+    <plurals name="add_wallet_transactions">
+        <item quantity="one">%1$d लेन-देन</item>
+        <item quantity="other">%1$d लेन-देन</item>
+    </plurals>
+    <string name="add_wallet_unsupported_title">%1$s अभी समर्थित नहीं है</string>
+    <string name="add_wallet_unsupported_message">यह एक मान्य पता लगता है, लेकिन यह नेटवर्क अभी समर्थित नहीं है। फ़िलहाल Bitcoin और Ethereum-संगत नेटवर्क काम करते हैं; और चेन जल्द ही आएँगी।</string>
+    <string name="add_wallet_checksum_title">पता जाँचें</string>
+    <string name="add_wallet_checksum_message">इस पते के अक्षरों का केस उसके चेकसम से मेल नहीं खाता। इसमें टाइपिंग की गलती हो सकती है। इसे मूल स्रोत से दोबारा कॉपी करें।</string>
+    <string name="add_wallet_multiple_title">एक से ज़्यादा पते</string>
+    <string name="add_wallet_multiple_message">कई पते पेस्ट किए गए हैं। उन सभी की समीक्षा करके एक साथ जोड़ने के लिए बैच इंपोर्ट का उपयोग करें।</string>
+    <string name="add_wallet_unrecognized_title">यह कोई समर्थित पता नहीं लगता</string>
+    <string name="add_wallet_unrecognized_message">जाँच लें कि आपने पूरा पता या की कॉपी की है और उसमें कोई अतिरिक्त अक्षर नहीं है।</string>
+    <string name="secret_title_mnemonic">यह सीड फ़्रेज़ जैसा लगता है</string>
+    <string name="secret_title_key">यह निजी कुंजी जैसी लगती है</string>
+    <string name="secret_message">WatchWallet को आपके सीड फ़्रेज़ या निजी कुंजी की कभी ज़रूरत नहीं होती। आपका इनपुट मिटा दिया गया है और इसे न तो सहेजा गया है, न ही कहीं भेजा गया है। इसके बजाय सार्वजनिक पते या एक्सटेंडेड सार्वजनिक कुंजी (xpub) का उपयोग करें।</string>
+    <string name="secret_scam_hint">अगर किसी ने आपसे इसे यहाँ या कहीं और दर्ज करने को कहा है, तो यह धोखाधड़ी है।</string>
+    <string name="default_name_bitcoin_wallet">Bitcoin वॉलेट</string>
+    <string name="default_name_bitcoin_address">Bitcoin पता</string>
+    <string name="default_name_evm">Ethereum वॉलेट</string>
+    <string name="add_wallet_open_batch">बैच इंपोर्ट खोलें</string>
+    <string name="add_wallet_scan">स्कैन करें</string>
+    <string name="qr_hint">कैमरे को पते या xpub के QR कोड की ओर रखें</string>
+    <string name="qr_close">स्कैनर बंद करें</string>
+    <string name="qr_no_permission">QR कोड स्कैन करने के लिए कैमरे की अनुमति चाहिए। आप इसे ऐप सेटिंग्स में दे सकते हैं।</string>
+    <string name="default_name_generic">%1$s वॉलेट</string>
+    <string name="confirm_chain_title">नेटवर्क चुनें</string>
+    <string name="confirm_chain_message">यह Sui या Aptos पता लगता है, लेकिन कई चेन की निजी कुंजी बिल्कुल ऐसी ही दिखती हैं। अभी तक न कुछ जाँचा गया है, न भेजा गया है। इस पते का नेटवर्क चुनें। अगर आपने गलती से निजी कुंजी कॉपी कर ली है, तो उसे मिटा दें।</string>
+    <string name="confirm_unused_title">यह पता कभी इस्तेमाल नहीं हुआ</string>
+    <string name="confirm_unused_message">अगर आपने गलती से निजी कुंजी कॉपी कर ली है, तो उसे अभी मिटा दें और कभी किसी से साझा न करें। इसे तभी जोड़ें जब आपको पक्का पता हो कि यह नया, अप्रयुक्त पता है।</string>
+    <string name="confirm_add_anyway">फिर भी जोड़ें</string>
+    <string name="confirm_clear">मिटाएँ</string>
+    <string name="add_wallet_group_label">समूह (वैकल्पिक)</string>
+    <string name="add_wallet_group_hint">जैसे जीवनसाथी, बचत, व्यवसाय</string>
+</resources>

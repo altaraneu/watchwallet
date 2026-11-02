@@ -77,6 +77,17 @@ class CostBasisRepository(
         }
     }
 
+    /** Values the user entered, for backups. */
+    suspend fun userValues(): Map<CostKey, Double> = walletDao.costBasis().filter { it.userSet }
+        .associate { CostKey(it.walletId, it.hash, it.assetId) to it.valueUsd }
+
+    /** Restores values from a backup; the automatic fill never overwrites them. */
+    suspend fun restoreUserValues(values: Map<CostKey, Double>) {
+        if (values.isEmpty()) return
+        val now = Clock.System.now().toEpochMilliseconds()
+        walletDao.upsertCostBasis(values.map { (key, value) -> TxCostBasisEntity(key.walletId, key.hash, key.assetId, value, userSet = true, now) })
+    }
+
     companion object {
         /** Prices older than this before the transfer are not used for its value. */
         private val MAX_PRICE_AGE = 3.days

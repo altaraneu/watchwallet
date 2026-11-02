@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ie_back">戻る</string>
+    <string name="import_title">ウォレットをインポート</string>
+    <string name="import_intro">アドレスまたは xpub(1 行に 1 件、またはカンマ、セミコロン、スペースで区切る)、ヘッダー行付きの CSV ファイル、または WatchWallet のバックアップを貼り付けてください。インポート前にすべて確認できます。</string>
+    <string name="import_paste_label">アドレス、CSV またはバックアップ</string>
+    <string name="import_choose_file">ファイルを選択</string>
+    <string name="import_preview">確認</string>
+    <string name="import_group">グループに追加(任意)</string>
+    <plurals name="import_action">
+        <item quantity="other">%1$d 件のウォレットをインポート</item>
+    </plurals>
+    <string name="import_row_target_group">%1$s · %2$s</string>
+    <string name="import_status_tracked">追跡中のためスキップします</string>
+    <string name="import_status_duplicate">このリスト内で重複しています</string>
+    <string name="import_status_unsupported">%1$s にはまだ対応していません</string>
+    <string name="import_status_confirm">Sui または Aptos のアドレス:確認が必要なため「ウォレットを追加」画面で追加してください</string>
+    <string name="import_status_invalid">認識できないアドレスです</string>
+    <string name="import_secret_title">インポートを中止しました:秘密鍵またはシードフレーズが見つかりました</string>
+    <string name="import_secret_message">入力内容に秘密鍵またはシードフレーズと思われるものが含まれていました。何もインポート、保存、送信されておらず、入力内容は消去されました。該当する項目を削除してもう一度お試しください。</string>
+    <string name="import_encrypted">このバックアップは暗号化されています。パスワードを入力してください。</string>
+    <string name="import_wrong_password">パスワードが間違っているか、ファイルが破損しています</string>
+    <string name="import_decrypt">復号</string>
+    <string name="import_done_title">インポート完了</string>
+    <string name="import_done_summary">インポート:%1$d · スキップ:%2$d · 失敗:%3$d</string>
+    <string name="import_done_sync">残高と履歴をバックグラウンドで読み込んでいます。</string>
+    <string name="import_done_action">ウォレットを表示</string>
+    <string name="export_title">ウォレットをエクスポート</string>
+    <string name="export_notice">このファイルに鍵は含まれませんが、追跡中のすべてのアドレス、つまりあなたの保有資産が分かります。保管と共有には注意してください。</string>
+    <string name="export_scope">ウォレット</string>
+    <string name="export_all">すべて (%1$d)</string>
+    <string name="export_format">形式</string>
+    <string name="export_format_json">バックアップ (JSON)</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_text">アドレスのみ</string>
+    <string name="export_format_transactions">トランザクション履歴 (CSV)</string>
+    <string name="export_transactions_hint">選択したウォレットの保存済みトランザクションすべて:日付 (UTC)、資産、符号付き数量、手数料、トランザクションハッシュ。古い履歴は読み込み後に含まれます。</string>
+    <string name="export_password">パスワード</string>
+    <string name="export_password_hint">任意。バックアップを暗号化します (AES-256-GCM)。パスワードがないと復元できません。</string>
+    <string name="export_include_values">現在の評価額を含める</string>
+    <string name="export_save">ファイルに保存</string>
+    <string name="export_share">共有</string>
+    <string name="export_saved">保存しました</string>
+    <string name="export_save_failed">ファイルを保存できませんでした</string>
+</resources>

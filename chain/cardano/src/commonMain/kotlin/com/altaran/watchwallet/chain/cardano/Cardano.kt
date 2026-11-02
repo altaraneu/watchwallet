@@ -26,6 +26,7 @@ import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
+import com.altaran.watchwallet.core.model.DerivedAddress
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.network.Throttle
 import com.ionspin.kotlin.bignum.integer.BigInteger
@@ -38,6 +39,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -187,8 +189,28 @@ class CardanoAdapter(
             }
             post("tx_info", body, page = null).asList.flatMap { parseCardanoTransaction(it, address, stake, assets) }
         }
-        SyncResult(state.balances, transactions, activeChains = listOf(CardanoChain.ID), historyTruncated = truncated)
+        SyncResult(
+            state.balances,
+            transactions,
+            derivedAddresses = if (stake) paymentAddress(address) else emptyList(),
+            activeChains = listOf(CardanoChain.ID),
+            historyTruncated = truncated,
+        )
     }
+
+    /**
+     * A stake key cannot receive payments, so a stake wallet reports one of its payment addresses.
+     * Only a convenience: failing to get it must not fail the balance sync.
+     */
+    private suspend fun paymentAddress(stake: String): List<DerivedAddress> = runCatching {
+        val body = buildJsonObject {
+            put("_stake_addresses", JsonArray(listOf(JsonPrimitive(stake))))
+            put("_first_only", true)
+        }
+        val row = post("account_addresses", body, null).asList.firstOrNull() as? JsonObject
+        val first = (row?.get("addresses") as? JsonArray)?.firstOrNull() as? JsonPrimitive
+        listOfNotNull(first?.content?.let { DerivedAddress(it, false, 0, true) })
+    }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrDefault(emptyList())
 
     private class State(val balances: List<AssetAmount>)
 

@@ -21,6 +21,8 @@ data class BatchEntry(
     /** Possible targets; one for READY, several for AMBIGUOUS (bare xpub script types). */
     val candidates: List<WatchTarget>,
     val unsupportedFamily: ChainFamily? = null,
+    /** Cost basis entered by the user (JSON backups only). */
+    val costs: List<ExportedCost> = emptyList(),
 )
 
 sealed interface BatchResult {
@@ -94,7 +96,7 @@ object BatchParser {
         // Every field on its own, before any entry is built.
         export.wallets.forEachIndexed { i, wallet ->
             val fields = listOf(wallet.value, wallet.name, wallet.group, wallet.notes, wallet.family, wallet.chain, wallet.kind, wallet.scriptType) +
-                wallet.tags
+                wallet.tags + wallet.costs.map { it.ref }
             secretIn(fields)?.let { return BatchResult.SecretDetected(it, i + 1) }
         }
         return fromCheckedExport(export)
@@ -112,6 +114,7 @@ object BatchParser {
                     notes = wallet.notes,
                     status = if (target != null) EntryStatus.READY else EntryStatus.INVALID,
                     candidates = listOfNotNull(target),
+                    costs = wallet.costs,
                 )
             },
         ),

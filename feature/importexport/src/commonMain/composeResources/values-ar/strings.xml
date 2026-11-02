@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ie_back">رجوع</string>
+    <string name="import_title">استيراد المحافظ</string>
+    <string name="import_intro">الصق عناوين أو xpub (واحدًا في كل سطر، أو مفصولة بفواصل أو فواصل منقوطة أو مسافات)، أو ملف CSV بصف عناوين، أو نسخة احتياطية من WatchWallet. يمكنك مراجعة كل شيء قبل الاستيراد.</string>
+    <string name="import_paste_label">عناوين أو CSV أو نسخة احتياطية</string>
+    <string name="import_choose_file">اختيار ملف</string>
+    <string name="import_preview">مراجعة</string>
+    <string name="import_group">إضافة إلى مجموعة (اختياري)</string>
+    <plurals name="import_action">
+        <item quantity="zero">استيراد %1$d محفظة</item>
+        <item quantity="one">استيراد %1$d محفظة</item>
+        <item quantity="two">استيراد %1$d محفظتين</item>
+        <item quantity="few">استيراد %1$d محافظ</item>
+        <item quantity="many">استيراد %1$d محفظة</item>
+        <item quantity="other">استيراد %1$d محفظة</item>
+    </plurals>
+    <string name="import_row_target_group">%1$s · %2$s</string>
+    <string name="import_status_tracked">تتم متابعتها بالفعل، وسيتم تخطيها</string>
+    <string name="import_status_duplicate">مكرر في هذه القائمة</string>
+    <string name="import_status_unsupported">%1$s غير مدعومة بعد</string>
+    <string name="import_status_confirm">عنوان Sui أو Aptos: أضفه من شاشة إضافة محفظة، حيث يُطلب التأكيد</string>
+    <string name="import_status_invalid">ليس عنوانًا معروفًا</string>
+    <string name="import_secret_title">تم إيقاف الاستيراد: عُثر على مفتاح خاص أو عبارة استرداد</string>
+    <string name="import_secret_message">احتوى ما أدخلته على شيء يشبه مفتاحًا خاصًا أو عبارة استرداد. لم يُستورد أو يُحفظ أو يُرسل أي شيء إلى أي مكان، وتم مسح ما أدخلته. أزل هذا الإدخال وحاول مرة أخرى.</string>
+    <string name="import_encrypted">هذه النسخة الاحتياطية مشفرة. أدخل كلمة مرورها.</string>
+    <string name="import_wrong_password">كلمة مرور خاطئة أو ملف تالف</string>
+    <string name="import_decrypt">فك التشفير</string>
+    <string name="import_done_title">اكتمل الاستيراد</string>
+    <string name="import_done_summary">تم الاستيراد: %1$d · تم التخطي: %2$d · فشل: %3$d</string>
+    <string name="import_done_sync">يجري تحميل الأرصدة والسجل في الخلفية.</string>
+    <string name="import_done_action">عرض المحافظ</string>
+    <string name="export_title">تصدير المحافظ</string>
+    <string name="export_notice">لا يحتوي الملف على مفاتيح، لكنه يكشف جميع العناوين التي تتابعها وبالتالي ممتلكاتك. احفظه وشاركه بحذر.</string>
+    <string name="export_scope">المحافظ</string>
+    <string name="export_all">الكل (%1$d)</string>
+    <string name="export_format">التنسيق</string>
+    <string name="export_format_json">نسخة احتياطية (JSON)</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_text">العناوين فقط</string>
+    <string name="export_format_transactions">سجل المعاملات (CSV)</string>
+    <string name="export_transactions_hint">جميع المعاملات المخزنة للمحافظ المحددة: التاريخ (UTC) والأصل والمبلغ بإشارته والرسوم وتجزئة المعاملة. يظهر السجل الأقدم بعد تحميله.</string>
+    <string name="export_password">كلمة المرور</string>
+    <string name="export_password_hint">اختياري. يشفّر النسخة الاحتياطية (AES-256-GCM). لا يمكن استعادتها بدون كلمة المرور.</string>
+    <string name="export_include_values">تضمين القيم الحالية</string>
+    <string name="export_save">حفظ في ملف</string>
+    <string name="export_share">مشاركة</string>
+    <string name="export_saved">تم الحفظ</string>
+    <string name="export_save_failed">تعذر حفظ الملف</string>
+</resources>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="portfolio_title">Portfolio</string>
+    <string name="portfolio_total_value">Valeur totale</string>
+    <string name="portfolio_discreet_on">Masquer les montants</string>
+    <string name="portfolio_discreet_off">Afficher les montants</string>
+    <string name="portfolio_empty_title">Rien à suivre pour l’instant</string>
+    <string name="portfolio_empty_message">Ajoutez un portefeuille en collant une adresse publique ou une clé publique étendue. WatchWallet ne demande jamais votre phrase de récupération ni vos clés privées.</string>
+    <string name="portfolio_empty_action">Ajouter un portefeuille</string>
+    <string name="portfolio_assets">Actifs</string>
+    <string name="portfolio_allocation">Répartition</string>
+    <string name="portfolio_other">Autres</string>
+    <string name="portfolio_change_24h">%1$s (%2$s) en 24 heures</string>
+    <plurals name="portfolio_hidden_assets">
+        <item quantity="one">%1$d jeton masqué (spam, sans prix ou masqué par vous)</item>
+        <item quantity="many">%1$d de jetons masqués (spam, sans prix ou masqués par vous)</item>
+        <item quantity="other">%1$d jetons masqués (spam, sans prix ou masqués par vous)</item>
+    </plurals>
+    <string name="portfolio_all_wallets">Tous</string>
+    <string name="portfolio_hide_asset">Masquer ce jeton</string>
+    <string name="portfolio_show_asset">Afficher</string>
+    <string name="portfolio_hidden_reason_spam">%1$s · ressemble à du spam</string>
+    <string name="portfolio_hidden_reason_other">%1$s · sans prix ou masqué par vous</string>
+    <string name="portfolio_add_wallet">Ajouter un portefeuille</string>
+    <string name="portfolio_hidden_expanded">Développé</string>
+    <string name="portfolio_hidden_collapsed">Réduit</string>
+</resources>

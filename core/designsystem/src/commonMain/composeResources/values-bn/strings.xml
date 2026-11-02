@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="amount_hidden">পরিমাণ লুকানো আছে</string>
+    <string name="action_cancel">বাতিল</string>
+    <string name="range_24h">24ঘ</string>
+    <string name="range_7d">7দি</string>
+    <string name="range_1m">1মা</string>
+    <string name="range_3m">3মা</string>
+    <string name="range_1y">1ব</string>
+    <string name="range_ytd">এই বছর</string>
+    <string name="range_all">সব</string>
+    <string name="change_up">%1$s বেড়েছে</string>
+    <string name="change_down">%1$s কমেছে</string>
+</resources>

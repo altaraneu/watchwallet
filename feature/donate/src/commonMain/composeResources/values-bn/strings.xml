@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="donate_title">প্রকল্পকে সমর্থন করুন</string>
+    <string name="donate_navigate_up">পিছনে</string>
+    <string name="donate_intro">WatchWallet বিনামূল্যের ও ওপেন সোর্স, এতে কোনো বিজ্ঞাপন, ট্র্যাকিং বা অ্যাকাউন্ট নেই। এটি আপনার কাজে লাগলে নিচের কোনো ঠিকানায় BTC বা ETH পাঠিয়ে এর উন্নয়নে সহায়তা করতে পারেন।</string>
+    <string name="donate_btc_label">Bitcoin (BTC)</string>
+    <string name="donate_eth_label">Ethereum (ETH)</string>
+    <string name="donate_copy_description">%1$s ঠিকানা কপি করুন</string>
+    <string name="donate_verify">পাঠানোর আগে যাচাই করুন যে এই ঠিকানাগুলো প্রকল্পের রিপোজিটরির README-তে প্রকাশিত ঠিকানার সাথে মিলছে।</string>
+</resources>

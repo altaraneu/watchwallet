@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_portfolio">投资组合</string>
+    <string name="nav_wallets">钱包</string>
+    <string name="nav_markets">行情</string>
+    <string name="nav_settings">设置</string>
+    <string name="donate_reminder_title">喜欢 WatchWallet 吗?</string>
+    <string name="donate_reminder_message">WatchWallet 免费、开源,没有广告,也没有跟踪。如果它对您有用,一笔小额捐赠有助于保持现状。</string>
+    <string name="donate_reminder_support">支持</string>
+    <string name="donate_reminder_later">以后再说</string>
+    <string name="donate_reminder_never">不再询问</string>
+</resources>

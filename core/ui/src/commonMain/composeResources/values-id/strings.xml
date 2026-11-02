@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="script_p2pkh">Legacy</string>
+    <string name="script_p2sh_p2wpkh">Nested SegWit</string>
+    <string name="script_p2wpkh">Native SegWit</string>
+    <string name="script_p2tr">Taproot</string>
+    <string name="script_p2sh">Skrip</string>
+    <string name="script_p2wsh">Skrip SegWit</string>
+    <string name="family_utxo_bitcoin">Bitcoin</string>
+    <string name="family_evm">EVM</string>
+    <string name="target_xpub">xpub %1$s</string>
+    <string name="target_address">Alamat %1$s</string>
+    <string name="target_description">%1$s · %2$s</string>
+    <string name="chart_no_data">Belum ada cukup data untuk rentang ini</string>
+    <string name="chart_a11y_summary">Grafik untuk %1$s: dari %2$s ke %3$s, perubahan %4$s</string>
+    <string name="chart_a11y_hidden">Grafik untuk %1$s, jumlah disembunyikan</string>
+    <string name="target_cardano_wallet">seluruh dompet (kunci stake)</string>
+    <string name="chart_loading_prices">Memuat riwayat harga… grafik akan terisi saat harga tiba.</string>
+    <string name="chart_visible_range">dalam rentang terlihat</string>
+    <string name="tx_received">Diterima</string>
+    <string name="tx_sent">Dikirim</string>
+    <string name="tx_self">Transfer antar alamat sendiri</string>
+    <string name="tx_label_pending">%1$s · Tertunda</string>
+    <string name="copy_action">Salin</string>
+    <string name="copy_done">Disalin</string>
+    <string name="tx_cost_auto">Biaya %1$s</string>
+    <string name="tx_cost_user">Biaya %1$s (input Anda)</string>
+    <string name="tx_cost_unknown">Atur biaya</string>
+    <string name="cost_dialog_title">Biaya perolehan</string>
+    <string name="cost_dialog_message">Berapa harga koin ini bagi Anda, dalam dolar AS? Nilai otomatis menggunakan harga pada hari transfer. Jika Anda membelinya lebih awal (misalnya di bursa) dan baru memindahkannya ke sini sekarang, masukkan jumlah yang Anda bayar.</string>
+    <string name="cost_dialog_label">Total biaya dalam USD</string>
+    <string name="cost_dialog_total">Total</string>
+    <string name="cost_dialog_per_coin">Per %1$s</string>
+    <string name="cost_dialog_label_per_coin">USD per %1$s</string>
+    <string name="cost_dialog_total_hint">Total %1$s</string>
+    <string name="cost_dialog_per_coin_hint">%1$s per %2$s</string>
+    <string name="cost_dialog_save">Simpan</string>
+    <string name="cost_dialog_reset">Gunakan otomatis</string>
+    <string name="cost_dialog_cancel">Batal</string>
+    <string name="tx_sheet_cost_auto">%1$s (%2$s per %3$s), otomatis: harga pada hari transfer</string>
+    <string name="tx_sheet_cost_user">%1$s (%2$s per %3$s), dimasukkan oleh Anda</string>
+    <string name="tx_sheet_edit_cost">Edit biaya perolehan</string>
+    <string name="tx_open_explorer">Buka di block explorer</string>
+    <string name="chart_performance">Tanpa setoran dan penarikan: %1$s</string>
+    <string name="chart_value_with_percent">%1$s (%2$s)</string>
+</resources>

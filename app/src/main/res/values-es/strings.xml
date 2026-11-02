@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lock_title">WatchWallet está bloqueada</string>
+    <string name="lock_unlock">Desbloquear</string>
+    <string name="lock_prompt_title">Desbloquear WatchWallet</string>
+    <string name="widget_label">Valor del portafolio</string>
+    <string name="widget_description">Valor total de tus billeteras seguidas</string>
+    <string name="widget_title">Portafolio</string>
+    <string name="widget_change_24h">%1$s en 24 h</string>
+</resources>

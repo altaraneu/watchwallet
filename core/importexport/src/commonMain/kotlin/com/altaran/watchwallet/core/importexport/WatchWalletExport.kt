@@ -25,6 +25,40 @@ data class WatchWalletExport(
 @Serializable
 data class ExportedGroup(val name: String)
 
+/**
+ * A cost basis the user entered for one transaction. [ref] encodes the transaction hash and asset
+ * id as prefixed hex: a bare transaction hash looks exactly like a private key to the secret
+ * guard, which must keep rejecting those everywhere else in the file.
+ */
+@Serializable
+data class ExportedCost(val ref: String, val valueUsd: Double) {
+    /** Transaction hash and asset id, or `null` when this entry is malformed. */
+    fun decoded(): Pair<String, String>? {
+        if (!ref.startsWith(REF_PREFIX) || !valueUsd.isFinite() || valueUsd < 0) return null
+        val hex = ref.removePrefix(REF_PREFIX)
+        if (hex.length % 2 != 0) return null
+        val bytes = hex.chunked(2).map { (it.toIntOrNull(HEX_RADIX) ?: return null).toByte() }.toByteArray()
+        val text = bytes.decodeToString()
+        val separator = text.indexOf(SEPARATOR)
+        if (separator <= 0 || separator == text.lastIndex) return null
+        val hash = text.substring(0, separator)
+        return if (TX_HASH.matches(hash)) hash to text.substring(separator + 1) else null
+    }
+
+    companion object {
+        private const val REF_PREFIX = "cost-"
+        private const val SEPARATOR = '|'
+        private const val HEX_RADIX = 16
+        private val TX_HASH = Regex("""^[A-Za-z0-9_=+/-]{8,128}$""")
+
+        fun of(hash: String, assetId: String, valueUsd: Double): ExportedCost {
+            val hex = "$hash$SEPARATOR$assetId".encodeToByteArray()
+                .joinToString("") { (it.toInt() and 0xFF).toString(HEX_RADIX).padStart(2, '0') }
+            return ExportedCost(REF_PREFIX + hex, valueUsd)
+        }
+    }
+}
+
 @Serializable
 data class ExportedWallet(
     val name: String,
@@ -38,6 +72,8 @@ data class ExportedWallet(
     val value: String,
     val scriptType: String? = null,
     val gapLimit: Int? = null,
+    /** Cost basis entered by the user (automatic values are simply recalculated). */
+    val costs: List<ExportedCost> = emptyList(),
 ) {
     fun toTarget(): WatchTarget? {
         val family = ChainFamily.entries.firstOrNull { it.name == family } ?: return null

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="portfolio_title">Portfólio</string>
+    <string name="portfolio_total_value">Valor total</string>
+    <string name="portfolio_discreet_on">Ocultar valores</string>
+    <string name="portfolio_discreet_off">Mostrar valores</string>
+    <string name="portfolio_empty_title">Nada para acompanhar ainda</string>
+    <string name="portfolio_empty_message">Adicione uma carteira colando um endereço público ou uma chave pública estendida. O WatchWallet nunca pede sua frase-semente nem suas chaves privadas.</string>
+    <string name="portfolio_empty_action">Adicionar carteira</string>
+    <string name="portfolio_assets">Ativos</string>
+    <string name="portfolio_allocation">Alocação</string>
+    <string name="portfolio_other">Outros</string>
+    <string name="portfolio_change_24h">%1$s (%2$s) em 24 horas</string>
+    <plurals name="portfolio_hidden_assets">
+        <item quantity="one">%1$d token oculto (spam, sem preço ou oculto por você)</item>
+        <item quantity="many">%1$d de tokens ocultos (spam, sem preço ou ocultos por você)</item>
+        <item quantity="other">%1$d tokens ocultos (spam, sem preço ou ocultos por você)</item>
+    </plurals>
+    <string name="portfolio_all_wallets">Todas</string>
+    <string name="portfolio_hide_asset">Ocultar este token</string>
+    <string name="portfolio_show_asset">Mostrar</string>
+    <string name="portfolio_hidden_reason_spam">%1$s · parece spam</string>
+    <string name="portfolio_hidden_reason_other">%1$s · sem preço ou oculto por você</string>
+    <string name="portfolio_add_wallet">Adicionar carteira</string>
+    <string name="portfolio_hidden_expanded">Expandido</string>
+    <string name="portfolio_hidden_collapsed">Recolhido</string>
+</resources>

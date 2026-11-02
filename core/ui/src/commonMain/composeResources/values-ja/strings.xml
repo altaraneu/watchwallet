@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="script_p2pkh">Legacy</string>
+    <string name="script_p2sh_p2wpkh">Nested SegWit</string>
+    <string name="script_p2wpkh">Native SegWit</string>
+    <string name="script_p2tr">Taproot</string>
+    <string name="script_p2sh">スクリプト</string>
+    <string name="script_p2wsh">SegWit スクリプト</string>
+    <string name="family_utxo_bitcoin">Bitcoin</string>
+    <string name="family_evm">EVM</string>
+    <string name="target_xpub">%1$s xpub</string>
+    <string name="target_address">%1$s アドレス</string>
+    <string name="target_description">%1$s · %2$s</string>
+    <string name="chart_no_data">この期間のデータはまだ十分ではありません</string>
+    <string name="chart_a11y_summary">%1$s のチャート:%2$s から %3$s、変動 %4$s</string>
+    <string name="chart_a11y_hidden">%1$s のチャート、金額は非表示</string>
+    <string name="target_cardano_wallet">ウォレット全体(ステークキー)</string>
+    <string name="chart_loading_prices">価格履歴を読み込み中…価格の取得に応じてチャートが表示されます。</string>
+    <string name="chart_visible_range">表示範囲内</string>
+    <string name="tx_received">受取</string>
+    <string name="tx_sent">送金</string>
+    <string name="tx_self">自分のアドレス間の送金</string>
+    <string name="tx_label_pending">%1$s · 保留中</string>
+    <string name="copy_action">コピー</string>
+    <string name="copy_done">コピー済み</string>
+    <string name="tx_cost_auto">取得原価 %1$s</string>
+    <string name="tx_cost_user">取得原価 %1$s(入力値)</string>
+    <string name="tx_cost_unknown">取得原価を設定</string>
+    <string name="cost_dialog_title">取得原価</string>
+    <string name="cost_dialog_message">このコインの取得にいくらかかりましたか(米ドル)?自動の値は送金当日の価格を使用します。以前に(取引所などで)購入し、今回ここに移しただけの場合は、実際に支払った金額を入力してください。</string>
+    <string name="cost_dialog_label">取得原価の合計(USD)</string>
+    <string name="cost_dialog_total">合計</string>
+    <string name="cost_dialog_per_coin">%1$s あたり</string>
+    <string name="cost_dialog_label_per_coin">%1$s あたりの USD</string>
+    <string name="cost_dialog_total_hint">合計 %1$s</string>
+    <string name="cost_dialog_per_coin_hint">%2$s あたり %1$s</string>
+    <string name="cost_dialog_save">保存</string>
+    <string name="cost_dialog_reset">自動の値を使用</string>
+    <string name="cost_dialog_cancel">キャンセル</string>
+    <string name="tx_sheet_cost_auto">%1$s(%3$s あたり %2$s)、自動:送金当日の価格</string>
+    <string name="tx_sheet_cost_user">%1$s(%3$s あたり %2$s)、入力値</string>
+    <string name="tx_sheet_edit_cost">取得原価を編集</string>
+    <string name="tx_open_explorer">ブロックエクスプローラーで開く</string>
+    <string name="chart_performance">入出金を除く:%1$s</string>
+    <string name="chart_value_with_percent">%1$s (%2$s)</string>
+</resources>

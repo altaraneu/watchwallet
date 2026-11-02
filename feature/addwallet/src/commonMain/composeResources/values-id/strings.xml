@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_wallet_title">Tambah dompet</string>
+    <string name="add_wallet_back">Kembali</string>
+    <string name="add_wallet_intro">Tempel alamat publik, kunci publik yang diperluas (xpub, ypub, zpub), atau output descriptor. WatchWallet mendeteksi jaringannya secara otomatis.</string>
+    <string name="add_wallet_input_label">Alamat, xpub, atau descriptor</string>
+    <string name="add_wallet_paste">Tempel</string>
+    <string name="add_wallet_probing">Memeriksa blockchain…</string>
+    <string name="add_wallet_pick_type">Mana dompet Anda?</string>
+    <string name="add_wallet_name_label">Nama (opsional)</string>
+    <string name="add_wallet_save">Tambah dompet</string>
+    <string name="add_wallet_open_existing">Buka dompet yang ada</string>
+    <string name="add_wallet_already_tracked">Sudah dipantau</string>
+    <string name="add_wallet_probe_failed">Tidak dapat memeriksa aktivitas saat ini. Anda tetap dapat menambahkannya.</string>
+    <string name="add_wallet_no_activity">Belum ada aktivitas</string>
+    <string name="add_wallet_active_on">Aktif di %1$s</string>
+    <plurals name="add_wallet_used_addresses">
+        <item quantity="other">%1$d alamat terpakai</item>
+    </plurals>
+    <plurals name="add_wallet_transactions">
+        <item quantity="other">%1$d transaksi</item>
+    </plurals>
+    <string name="add_wallet_unsupported_title">%1$s belum didukung</string>
+    <string name="add_wallet_unsupported_message">Ini tampak seperti alamat yang valid, tetapi jaringan ini belum didukung. Bitcoin dan jaringan yang kompatibel dengan Ethereum sudah berfungsi; jaringan lain segera hadir.</string>
+    <string name="add_wallet_checksum_title">Periksa alamat</string>
+    <string name="add_wallet_checksum_message">Huruf besar-kecil pada alamat ini tidak cocok dengan checksum-nya. Mungkin ada salah ketik. Salin lagi dari sumber aslinya.</string>
+    <string name="add_wallet_multiple_title">Lebih dari satu alamat</string>
+    <string name="add_wallet_multiple_message">Beberapa alamat ditempel. Gunakan impor massal untuk meninjau dan menambahkan semuanya sekaligus.</string>
+    <string name="add_wallet_unrecognized_title">Ini tampaknya bukan alamat yang didukung</string>
+    <string name="add_wallet_unrecognized_message">Pastikan Anda menyalin seluruh alamat atau kunci, tanpa karakter tambahan.</string>
+    <string name="secret_title_mnemonic">Ini tampak seperti frasa benih</string>
+    <string name="secret_title_key">Ini tampak seperti kunci privat</string>
+    <string name="secret_message">WatchWallet tidak pernah memerlukan frasa benih atau kunci privat Anda. Input telah dihapus dan tidak disimpan atau dikirim ke mana pun. Gunakan alamat publik atau kunci publik yang diperluas (xpub) sebagai gantinya.</string>
+    <string name="secret_scam_hint">Jika seseorang meminta Anda memasukkannya di sini atau di tempat lain, itu adalah penipuan.</string>
+    <string name="default_name_bitcoin_wallet">Dompet Bitcoin</string>
+    <string name="default_name_bitcoin_address">Alamat Bitcoin</string>
+    <string name="default_name_evm">Dompet Ethereum</string>
+    <string name="add_wallet_open_batch">Buka impor massal</string>
+    <string name="add_wallet_scan">Pindai</string>
+    <string name="qr_hint">Arahkan kamera ke kode QR alamat atau xpub</string>
+    <string name="qr_close">Tutup pemindai</string>
+    <string name="qr_no_permission">Akses kamera diperlukan untuk memindai kode QR. Anda dapat mengizinkannya di pengaturan aplikasi.</string>
+    <string name="default_name_generic">Dompet %1$s</string>
+    <string name="confirm_chain_title">Pilih jaringan</string>
+    <string name="confirm_chain_message">Ini tampak seperti alamat Sui atau Aptos, tetapi kunci privat beberapa jaringan terlihat persis sama. Belum ada yang diperiksa atau dikirim. Pilih jaringan alamat ini. Jika Anda tidak sengaja menyalin kunci privat, hapus.</string>
+    <string name="confirm_unused_title">Alamat ini belum pernah digunakan</string>
+    <string name="confirm_unused_message">Jika Anda tidak sengaja menyalin kunci privat, hapus sekarang dan jangan pernah membagikannya. Tambahkan hanya jika Anda yakin ini adalah alamat baru yang belum digunakan.</string>
+    <string name="confirm_add_anyway">Tetap tambahkan</string>
+    <string name="confirm_clear">Hapus</string>
+    <string name="add_wallet_group_label">Grup (opsional)</string>
+    <string name="add_wallet_group_hint">mis. Pasangan, Tabungan, Bisnis</string>
+</resources>

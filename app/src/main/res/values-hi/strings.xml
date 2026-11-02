@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lock_title">WatchWallet लॉक है</string>
+    <string name="lock_unlock">अनलॉक करें</string>
+    <string name="lock_prompt_title">WatchWallet अनलॉक करें</string>
+    <string name="widget_label">पोर्टफोलियो मूल्य</string>
+    <string name="widget_description">आपके ट्रैक किए गए वॉलेट का कुल मूल्य</string>
+    <string name="widget_title">पोर्टफोलियो</string>
+    <string name="widget_change_24h">24 घंटे में %1$s</string>
+</resources>

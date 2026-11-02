@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="script_p2pkh">Legacy</string>
+    <string name="script_p2sh_p2wpkh">Nested SegWit</string>
+    <string name="script_p2wpkh">Native SegWit</string>
+    <string name="script_p2tr">Taproot</string>
+    <string name="script_p2sh">Script</string>
+    <string name="script_p2wsh">SegWit script</string>
+    <string name="family_utxo_bitcoin">Bitcoin</string>
+    <string name="family_evm">EVM</string>
+    <string name="target_xpub">%1$s xpub</string>
+    <string name="target_address">%1$s पता</string>
+    <string name="target_description">%1$s · %2$s</string>
+    <string name="chart_no_data">इस अवधि के लिए अभी पर्याप्त डेटा नहीं है</string>
+    <string name="chart_a11y_summary">%1$s का चार्ट: %2$s से %3$s तक, बदलाव %4$s</string>
+    <string name="chart_a11y_hidden">%1$s का चार्ट, राशियाँ छिपी हुई हैं</string>
+    <string name="target_cardano_wallet">पूरा वॉलेट (स्टेक कुंजी)</string>
+    <string name="chart_loading_prices">कीमतों का इतिहास लोड हो रहा है… कीमतें मिलने पर चार्ट भरता जाएगा।</string>
+    <string name="chart_visible_range">दिखाई दे रही अवधि में</string>
+    <string name="tx_received">प्राप्त</string>
+    <string name="tx_sent">भेजा गया</string>
+    <string name="tx_self">अपने ही पतों के बीच ट्रांसफ़र</string>
+    <string name="tx_label_pending">%1$s · लंबित</string>
+    <string name="copy_action">कॉपी करें</string>
+    <string name="copy_done">कॉपी हो गया</string>
+    <string name="tx_cost_auto">लागत %1$s</string>
+    <string name="tx_cost_user">लागत %1$s (आपकी)</string>
+    <string name="tx_cost_unknown">लागत दर्ज करें</string>
+    <string name="cost_dialog_title">लागत आधार</string>
+    <string name="cost_dialog_message">इन कॉइन की लागत आपको अमेरिकी डॉलर में कितनी पड़ी? स्वचालित मान ट्रांसफ़र के दिन की कीमत पर आधारित है। अगर आपने इन्हें पहले खरीदा था (जैसे किसी एक्सचेंज पर) और अभी यहाँ भेजा है, तो जो राशि चुकाई थी वह दर्ज करें।</string>
+    <string name="cost_dialog_label">USD में कुल लागत</string>
+    <string name="cost_dialog_total">कुल</string>
+    <string name="cost_dialog_per_coin">प्रति %1$s</string>
+    <string name="cost_dialog_label_per_coin">प्रति %1$s USD</string>
+    <string name="cost_dialog_total_hint">कुल %1$s</string>
+    <string name="cost_dialog_per_coin_hint">%1$s प्रति %2$s</string>
+    <string name="cost_dialog_save">सहेजें</string>
+    <string name="cost_dialog_reset">स्वचालित मान लें</string>
+    <string name="cost_dialog_cancel">रद्द करें</string>
+    <string name="tx_sheet_cost_auto">%1$s (%2$s प्रति %3$s), स्वचालित: ट्रांसफ़र के दिन की कीमत</string>
+    <string name="tx_sheet_cost_user">%1$s (%2$s प्रति %3$s), आपके द्वारा दर्ज</string>
+    <string name="tx_sheet_edit_cost">लागत आधार बदलें</string>
+    <string name="tx_open_explorer">ब्लॉक एक्सप्लोरर में खोलें</string>
+    <string name="chart_performance">जमा और निकासी को छोड़कर: %1$s</string>
+    <string name="chart_value_with_percent">%1$s (%2$s)</string>
+</resources>

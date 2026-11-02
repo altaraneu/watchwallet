@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lock_title">WatchWallet مقفل</string>
+    <string name="lock_unlock">فتح القفل</string>
+    <string name="lock_prompt_title">فتح قفل WatchWallet</string>
+    <string name="widget_label">قيمة المحفظة الاستثمارية</string>
+    <string name="widget_description">إجمالي قيمة المحافظ التي تتابعها</string>
+    <string name="widget_title">المحفظة الاستثمارية</string>
+    <string name="widget_change_24h">%1$s خلال 24 ساعة</string>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_portfolio">Portofolio</string>
+    <string name="nav_wallets">Dompet</string>
+    <string name="nav_markets">Pasar</string>
+    <string name="nav_settings">Pengaturan</string>
+    <string name="donate_reminder_title">Suka WatchWallet?</string>
+    <string name="donate_reminder_message">WatchWallet gratis, bersumber terbuka, dan tanpa iklan atau pelacakan. Jika bermanfaat bagi Anda, donasi kecil membantu menjaganya tetap seperti itu.</string>
+    <string name="donate_reminder_support">Dukung</string>
+    <string name="donate_reminder_later">Jangan sekarang</string>
+    <string name="donate_reminder_never">Jangan tanya lagi</string>
+</resources>

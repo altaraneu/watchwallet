@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="amount_hidden">Betrag ausgeblendet</string>
+    <string name="action_cancel">Abbrechen</string>
+    <string name="range_24h">24H</string>
+    <string name="range_7d">7T</string>
+    <string name="range_1m">1M</string>
+    <string name="range_3m">3M</string>
+    <string name="range_1y">1J</string>
+    <string name="range_ytd">YTD</string>
+    <string name="range_all">Alle</string>
+    <string name="change_up">Gestiegen um %1$s</string>
+    <string name="change_down">Gefallen um %1$s</string>
+</resources>

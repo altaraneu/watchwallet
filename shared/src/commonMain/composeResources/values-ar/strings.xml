@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_portfolio">المحفظة الاستثمارية</string>
+    <string name="nav_wallets">المحافظ</string>
+    <string name="nav_markets">الأسواق</string>
+    <string name="nav_settings">الإعدادات</string>
+    <string name="donate_reminder_title">هل يعجبك WatchWallet؟</string>
+    <string name="donate_reminder_message">WatchWallet مجاني ومفتوح المصدر وبلا إعلانات أو تتبع. إذا كان مفيدًا لك، فإن تبرعًا صغيرًا يساعد على إبقائه كذلك.</string>
+    <string name="donate_reminder_support">ادعم</string>
+    <string name="donate_reminder_later">ليس الآن</string>
+    <string name="donate_reminder_never">عدم السؤال مرة أخرى</string>
+</resources>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_wallet_title">إضافة محفظة</string>
+    <string name="add_wallet_back">رجوع</string>
+    <string name="add_wallet_intro">الصق عنوانًا عامًا أو مفتاحًا عامًا موسّعًا (xpub أو ypub أو zpub) أو واصف مخرجات (descriptor). يتعرف WatchWallet على الشبكة تلقائيًا.</string>
+    <string name="add_wallet_input_label">عنوان أو xpub أو واصف</string>
+    <string name="add_wallet_paste">لصق</string>
+    <string name="add_wallet_probing">جارٍ فحص سلسلة الكتل…</string>
+    <string name="add_wallet_pick_type">أي منها محفظتك؟</string>
+    <string name="add_wallet_name_label">الاسم (اختياري)</string>
+    <string name="add_wallet_save">إضافة محفظة</string>
+    <string name="add_wallet_open_existing">فتح المحفظة الموجودة</string>
+    <string name="add_wallet_already_tracked">تتم متابعتها بالفعل</string>
+    <string name="add_wallet_probe_failed">تعذر التحقق من النشاط الآن. يمكنك إضافتها مع ذلك.</string>
+    <string name="add_wallet_no_activity">لا يوجد نشاط بعد</string>
+    <string name="add_wallet_active_on">نشطة على %1$s</string>
+    <plurals name="add_wallet_used_addresses">
+        <item quantity="zero">%1$d عنوان مستخدم</item>
+        <item quantity="one">%1$d عنوان مستخدم</item>
+        <item quantity="two">%1$d عنوانان مستخدمان</item>
+        <item quantity="few">%1$d عناوين مستخدمة</item>
+        <item quantity="many">%1$d عنوانًا مستخدمًا</item>
+        <item quantity="other">%1$d عنوان مستخدم</item>
+    </plurals>
+    <plurals name="add_wallet_transactions">
+        <item quantity="zero">%1$d معاملة</item>
+        <item quantity="one">%1$d معاملة</item>
+        <item quantity="two">%1$d معاملتان</item>
+        <item quantity="few">%1$d معاملات</item>
+        <item quantity="many">%1$d معاملة</item>
+        <item quantity="other">%1$d معاملة</item>
+    </plurals>
+    <string name="add_wallet_unsupported_title">%1$s غير مدعومة بعد</string>
+    <string name="add_wallet_unsupported_message">يبدو أن هذا عنوان صالح، لكن هذه الشبكة غير مدعومة بعد. تعمل حاليًا شبكة Bitcoin والشبكات المتوافقة مع Ethereum، وستتوفر شبكات أخرى قريبًا.</string>
+    <string name="add_wallet_checksum_title">تحقق من العنوان</string>
+    <string name="add_wallet_checksum_message">حالة الأحرف الكبيرة والصغيرة في هذا العنوان لا تطابق المجموع الاختباري. قد يحتوي على خطأ مطبعي. انسخه مرة أخرى من مصدره الأصلي.</string>
+    <string name="add_wallet_multiple_title">أكثر من عنوان</string>
+    <string name="add_wallet_multiple_message">تم لصق عدة عناوين. استخدم الاستيراد الجماعي لمراجعتها وإضافتها كلها دفعة واحدة.</string>
+    <string name="add_wallet_unrecognized_title">لا يبدو هذا عنوانًا مدعومًا</string>
+    <string name="add_wallet_unrecognized_message">تأكد من نسخ العنوان أو المفتاح كاملًا، دون أحرف زائدة.</string>
+    <string name="secret_title_mnemonic">يبدو أن هذه عبارة استرداد (seed phrase)</string>
+    <string name="secret_title_key">يبدو أن هذا مفتاح خاص</string>
+    <string name="secret_message">لا يحتاج WatchWallet أبدًا إلى عبارة الاسترداد أو مفاتيحك الخاصة. تم مسح ما أدخلته، ولم يُحفظ ولم يُرسل إلى أي مكان. استخدم بدلًا من ذلك عنوانًا عامًا أو مفتاحًا عامًا موسّعًا (xpub).</string>
+    <string name="secret_scam_hint">إذا طلب منك أحد إدخالها هنا أو في أي مكان آخر، فهذه عملية احتيال.</string>
+    <string name="default_name_bitcoin_wallet">محفظة Bitcoin</string>
+    <string name="default_name_bitcoin_address">عنوان Bitcoin</string>
+    <string name="default_name_evm">محفظة Ethereum</string>
+    <string name="add_wallet_open_batch">فتح الاستيراد الجماعي</string>
+    <string name="add_wallet_scan">مسح</string>
+    <string name="qr_hint">وجّه الكاميرا نحو رمز QR لعنوان أو xpub</string>
+    <string name="qr_close">إغلاق الماسح</string>
+    <string name="qr_no_permission">يلزم الوصول إلى الكاميرا لمسح رموز QR. يمكنك السماح بذلك من إعدادات التطبيق.</string>
+    <string name="default_name_generic">محفظة %1$s</string>
+    <string name="confirm_chain_title">اختر الشبكة</string>
+    <string name="confirm_chain_message">يبدو أن هذا عنوان Sui أو Aptos، لكن المفاتيح الخاصة لعدة شبكات تبدو مطابقة له تمامًا. لم يُفحص أو يُرسل أي شيء بعد. اختر شبكة هذا العنوان. وإذا نسخت مفتاحًا خاصًا عن طريق الخطأ، فامسحه.</string>
+    <string name="confirm_unused_title">لم يُستخدم هذا العنوان من قبل</string>
+    <string name="confirm_unused_message">إذا نسخت مفتاحًا خاصًا عن طريق الخطأ، فامسحه الآن ولا تشاركه مع أي أحد أبدًا. لا تضفه إلا إذا كنت متأكدًا من أنه عنوان جديد غير مستخدم.</string>
+    <string name="confirm_add_anyway">إضافة على أي حال</string>
+    <string name="confirm_clear">مسح</string>
+    <string name="add_wallet_group_label">المجموعة (اختياري)</string>
+    <string name="add_wallet_group_hint">مثل: الشريك، المدخرات، العمل</string>
+</resources>

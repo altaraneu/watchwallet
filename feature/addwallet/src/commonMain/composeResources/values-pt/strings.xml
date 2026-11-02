@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_wallet_title">Adicionar carteira</string>
+    <string name="add_wallet_back">Voltar</string>
+    <string name="add_wallet_intro">Cole um endereço público, uma chave pública estendida (xpub, ypub, zpub) ou um descritor de saída. O WatchWallet detecta a rede automaticamente.</string>
+    <string name="add_wallet_input_label">Endereço, xpub ou descritor</string>
+    <string name="add_wallet_paste">Colar</string>
+    <string name="add_wallet_probing">Verificando a blockchain…</string>
+    <string name="add_wallet_pick_type">Qual é a sua carteira?</string>
+    <string name="add_wallet_name_label">Nome (opcional)</string>
+    <string name="add_wallet_save">Adicionar carteira</string>
+    <string name="add_wallet_open_existing">Abrir carteira existente</string>
+    <string name="add_wallet_already_tracked">Já acompanhada</string>
+    <string name="add_wallet_probe_failed">Não foi possível verificar a atividade agora. Você ainda pode adicioná-la.</string>
+    <string name="add_wallet_no_activity">Ainda sem atividade</string>
+    <string name="add_wallet_active_on">Ativa em %1$s</string>
+    <plurals name="add_wallet_used_addresses">
+        <item quantity="one">%1$d endereço usado</item>
+        <item quantity="many">%1$d de endereços usados</item>
+        <item quantity="other">%1$d endereços usados</item>
+    </plurals>
+    <plurals name="add_wallet_transactions">
+        <item quantity="one">%1$d transação</item>
+        <item quantity="many">%1$d de transações</item>
+        <item quantity="other">%1$d transações</item>
+    </plurals>
+    <string name="add_wallet_unsupported_title">%1$s ainda não é compatível</string>
+    <string name="add_wallet_unsupported_message">Parece um endereço válido, mas esta rede ainda não é compatível. Bitcoin e as redes compatíveis com Ethereum já funcionam; mais redes em breve.</string>
+    <string name="add_wallet_checksum_title">Verifique o endereço</string>
+    <string name="add_wallet_checksum_message">As maiúsculas e minúsculas deste endereço não correspondem ao checksum. Ele pode conter um erro de digitação. Copie-o novamente da fonte original.</string>
+    <string name="add_wallet_multiple_title">Mais de um endereço</string>
+    <string name="add_wallet_multiple_message">Vários endereços foram colados. Use a importação em lote para revisar e adicionar todos de uma vez.</string>
+    <string name="add_wallet_unrecognized_title">Isso não parece um endereço compatível</string>
+    <string name="add_wallet_unrecognized_message">Verifique se você copiou o endereço ou a chave por inteiro, sem caracteres a mais.</string>
+    <string name="secret_title_mnemonic">Isso parece uma frase-semente</string>
+    <string name="secret_title_key">Isso parece uma chave privada</string>
+    <string name="secret_message">O WatchWallet nunca precisa da sua frase-semente nem das suas chaves privadas. O que você digitou foi apagado e não foi salvo nem enviado a lugar nenhum. Use um endereço público ou uma chave pública estendida (xpub).</string>
+    <string name="secret_scam_hint">Se alguém pediu para você inserir isso aqui ou em qualquer outro lugar, é um golpe.</string>
+    <string name="default_name_bitcoin_wallet">Carteira Bitcoin</string>
+    <string name="default_name_bitcoin_address">Endereço Bitcoin</string>
+    <string name="default_name_evm">Carteira Ethereum</string>
+    <string name="add_wallet_open_batch">Abrir importação em lote</string>
+    <string name="add_wallet_scan">Escanear</string>
+    <string name="qr_hint">Aponte a câmera para o QR code de um endereço ou xpub</string>
+    <string name="qr_close">Fechar leitor</string>
+    <string name="qr_no_permission">É necessário acesso à câmera para escanear QR codes. Você pode permitir isso nas configurações do app.</string>
+    <string name="default_name_generic">Carteira %1$s</string>
+    <string name="confirm_chain_title">Escolha a rede</string>
+    <string name="confirm_chain_message">Parece um endereço Sui ou Aptos, mas as chaves privadas de várias redes têm exatamente a mesma aparência. Nada foi verificado nem enviado ainda. Escolha a rede deste endereço. Se você copiou uma chave privada por engano, apague-a.</string>
+    <string name="confirm_unused_title">Este endereço nunca foi usado</string>
+    <string name="confirm_unused_message">Se você copiou uma chave privada por engano, apague-a agora e nunca a compartilhe. Adicione somente se tiver certeza de que é um endereço novo e não usado.</string>
+    <string name="confirm_add_anyway">Adicionar mesmo assim</string>
+    <string name="confirm_clear">Apagar</string>
+    <string name="add_wallet_group_label">Grupo (opcional)</string>
+    <string name="add_wallet_group_hint">ex.: Parceiro, Poupança, Empresa</string>
+</resources>

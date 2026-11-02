@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="donate_title">Apoie o projeto</string>
+    <string name="donate_navigate_up">Voltar</string>
+    <string name="donate_intro">O WatchWallet é gratuito e de código aberto, sem anúncios, sem rastreamento e sem contas. Se ele for útil para você, você pode apoiar o desenvolvimento enviando BTC ou ETH para um dos endereços abaixo.</string>
+    <string name="donate_btc_label">Bitcoin (BTC)</string>
+    <string name="donate_eth_label">Ethereum (ETH)</string>
+    <string name="donate_copy_description">Copiar endereço de %1$s</string>
+    <string name="donate_verify">Antes de enviar, verifique se estes endereços são iguais aos publicados no README do repositório do projeto.</string>
+</resources>

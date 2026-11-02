@@ -2,6 +2,8 @@ package com.altaran.watchwallet.feature.importexport
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.altaran.watchwallet.core.data.repository.CostBasisRepository
+import com.altaran.watchwallet.core.data.repository.CostKey
 import com.altaran.watchwallet.core.data.repository.PortfolioRepository
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.repository.WalletRepository
@@ -11,6 +13,7 @@ import com.altaran.watchwallet.core.importexport.BatchParser
 import com.altaran.watchwallet.core.importexport.BatchResult
 import com.altaran.watchwallet.core.importexport.EntryStatus
 import com.altaran.watchwallet.core.importexport.ExportFormat
+import com.altaran.watchwallet.core.importexport.ExportedCost
 import com.altaran.watchwallet.core.importexport.ExportedGroup
 import com.altaran.watchwallet.core.importexport.ExportedWallet
 import com.altaran.watchwallet.core.importexport.TransactionRow
@@ -67,6 +70,7 @@ internal class ImportViewModel(
     private val syncEngine: SyncEngine,
     private val addWalletService: com.altaran.watchwallet.core.data.AddWalletService,
     pendingImport: PendingImport,
+    private val costBasis: CostBasisRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ImportUiState())
     val state: StateFlow<ImportUiState> = _state.asStateFlow()
@@ -156,7 +160,18 @@ internal class ImportViewModel(
                     walletRepository.findExisting(target) != null -> skipped++
 
                     else -> runCatching {
-                        walletRepository.addWallet(target, row.entry.label ?: defaultName(target), emptyList(), groupId(row.entry.group ?: commonGroup))
+                        val walletId = walletRepository.addWallet(
+                            target,
+                            row.entry.label ?: defaultName(target),
+                            emptyList(),
+                            groupId(row.entry.group ?: commonGroup),
+                            row.entry.notes,
+                        )
+                        costBasis.restoreUserValues(
+                            row.entry.costs.mapNotNull { cost ->
+                                cost.decoded()?.let { (hash, assetId) -> CostKey(walletId, hash, assetId) to cost.valueUsd }
+                            }.toMap(),
+                        )
                     }.onSuccess { imported++ }.onFailure { failed++ }
                 }
             }
@@ -207,6 +222,7 @@ internal class ExportViewModel(
     private val walletRepository: WalletRepository,
     private val portfolioRepository: PortfolioRepository,
     private val settingsRepository: SettingsRepository,
+    private val costBasis: CostBasisRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ExportUiState())
     val state: StateFlow<ExportUiState> = _state.asStateFlow()
@@ -262,10 +278,15 @@ internal class ExportViewModel(
         val state = _state.value
         val groups = walletRepository.groups.first()
         val groupNames = groups.associate { it.id to it.name }
+        val userCosts = costBasis.userValues()
         val wallets = walletRepository.activeWallets.first()
             .filter { state.groupId == null || it.groupId == state.groupId }
             .mapNotNull { wallet ->
-                wallet.target?.let { ExportedWallet.from(it, wallet.name, wallet.groupId?.let(groupNames::get), wallet.notes) }
+                wallet.target?.let { target ->
+                    ExportedWallet.from(target, wallet.name, wallet.groupId?.let(groupNames::get), wallet.notes).copy(
+                        costs = userCosts.filterKeys { it.walletId == wallet.id }.map { (key, value) -> ExportedCost.of(key.hash, key.assetId, value) },
+                    )
+                }
             }
         val stamp = Clock.System.now().toString().take(10)
         return when (state.format) {

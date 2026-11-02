@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="portfolio_title">ポートフォリオ</string>
+    <string name="portfolio_total_value">合計評価額</string>
+    <string name="portfolio_discreet_on">金額を隠す</string>
+    <string name="portfolio_discreet_off">金額を表示</string>
+    <string name="portfolio_empty_title">まだ何もありません</string>
+    <string name="portfolio_empty_message">公開アドレスまたは拡張公開鍵を貼り付けてウォレットを追加してください。WatchWallet がシードフレーズや秘密鍵を求めることは決してありません。</string>
+    <string name="portfolio_empty_action">ウォレットを追加</string>
+    <string name="portfolio_assets">資産</string>
+    <string name="portfolio_allocation">資産配分</string>
+    <string name="portfolio_other">その他</string>
+    <string name="portfolio_change_24h">24時間で %1$s (%2$s)</string>
+    <plurals name="portfolio_hidden_assets">
+        <item quantity="other">%1$d 件のトークンを非表示(スパム、価格なし、またはユーザーが非表示)</item>
+    </plurals>
+    <string name="portfolio_all_wallets">すべて</string>
+    <string name="portfolio_hide_asset">このトークンを非表示</string>
+    <string name="portfolio_show_asset">表示</string>
+    <string name="portfolio_hidden_reason_spam">%1$s · スパムの可能性</string>
+    <string name="portfolio_hidden_reason_other">%1$s · 価格なし、またはユーザーが非表示</string>
+    <string name="portfolio_add_wallet">ウォレットを追加</string>
+    <string name="portfolio_hidden_expanded">展開中</string>
+    <string name="portfolio_hidden_collapsed">折りたたみ中</string>
+</resources>

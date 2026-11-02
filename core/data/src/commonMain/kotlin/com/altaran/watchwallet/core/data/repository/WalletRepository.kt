@@ -39,7 +39,7 @@ interface WalletRepository {
     /** Returns the id of the existing wallet when the same target is already tracked. */
     suspend fun findExisting(target: WatchTarget): Long?
 
-    suspend fun addWallet(target: WatchTarget, name: String, activeChains: List<ChainId>, groupId: Long? = null): Long
+    suspend fun addWallet(target: WatchTarget, name: String, activeChains: List<ChainId>, groupId: Long? = null, notes: String? = null): Long
 
     val groups: Flow<List<com.altaran.watchwallet.core.model.WalletGroup>>
     suspend fun createGroup(name: String): Long
@@ -109,7 +109,8 @@ internal class DefaultWalletRepository(
 
     override suspend fun findGroup(name: String): Long? = walletDao.findGroup(name.trim())
 
-    override suspend fun addWallet(target: WatchTarget, name: String, activeChains: List<ChainId>, groupId: Long?): Long {
+    override suspend fun addWallet(target: WatchTarget, name: String, activeChains: List<ChainId>, groupId: Long?, notes: String?): Long {
+        notes?.let { requireNoSecret(it) }
         // Defense in depth: never persist anything that looks like key material.
         requireNoSecret(target.storedValue())
         requireNoSecret(name)
@@ -118,7 +119,7 @@ internal class DefaultWalletRepository(
             name = name.trim(),
             emoji = null,
             groupId = groupId,
-            notes = null,
+            notes = notes,
             sortOrder = walletDao.nextSortOrder(),
             archived = false,
             createdAtEpochMs = Clock.System.now().toEpochMilliseconds(),

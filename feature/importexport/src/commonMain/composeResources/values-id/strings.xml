@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ie_back">Kembali</string>
+    <string name="import_title">Impor dompet</string>
+    <string name="import_intro">Tempel alamat atau xpub (satu per baris, atau dipisahkan dengan koma, titik koma, atau spasi), file CSV dengan baris header, atau cadangan WatchWallet. Anda dapat meninjau semuanya sebelum mengimpor.</string>
+    <string name="import_paste_label">Alamat, CSV, atau cadangan</string>
+    <string name="import_choose_file">Pilih file</string>
+    <string name="import_preview">Tinjau</string>
+    <string name="import_group">Tambahkan ke grup (opsional)</string>
+    <plurals name="import_action">
+        <item quantity="other">Impor %1$d dompet</item>
+    </plurals>
+    <string name="import_row_target_group">%1$s · %2$s</string>
+    <string name="import_status_tracked">Sudah dipantau, akan dilewati</string>
+    <string name="import_status_duplicate">Duplikat dalam daftar ini</string>
+    <string name="import_status_unsupported">%1$s belum didukung</string>
+    <string name="import_status_confirm">Alamat Sui atau Aptos: tambahkan di layar Tambah dompet, yang akan meminta konfirmasi</string>
+    <string name="import_status_invalid">Bukan alamat yang dikenali</string>
+    <string name="import_secret_title">Impor dihentikan: kunci privat atau frasa benih ditemukan</string>
+    <string name="import_secret_message">Input berisi sesuatu yang tampak seperti kunci privat atau frasa benih. Tidak ada yang diimpor, disimpan, atau dikirim ke mana pun, dan input telah dihapus. Hapus entri tersebut lalu coba lagi.</string>
+    <string name="import_encrypted">Cadangan ini terenkripsi. Masukkan kata sandinya.</string>
+    <string name="import_wrong_password">Kata sandi salah atau file rusak</string>
+    <string name="import_decrypt">Dekripsi</string>
+    <string name="import_done_title">Impor selesai</string>
+    <string name="import_done_summary">Diimpor: %1$d · dilewati: %2$d · gagal: %3$d</string>
+    <string name="import_done_sync">Saldo dan riwayat sedang dimuat di latar belakang.</string>
+    <string name="import_done_action">Tampilkan dompet</string>
+    <string name="export_title">Ekspor dompet</string>
+    <string name="export_notice">File ini tidak berisi kunci, tetapi mengungkap semua alamat yang Anda pantau dan dengan demikian aset Anda. Simpan dan bagikan dengan hati-hati.</string>
+    <string name="export_scope">Dompet</string>
+    <string name="export_all">Semua (%1$d)</string>
+    <string name="export_format">Format</string>
+    <string name="export_format_json">Cadangan (JSON)</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_text">Hanya alamat</string>
+    <string name="export_format_transactions">Riwayat transaksi (CSV)</string>
+    <string name="export_transactions_hint">Semua transaksi tersimpan dari dompet yang dipilih: tanggal (UTC), aset, jumlah bertanda, biaya, dan hash transaksi. Riwayat lama muncul setelah dimuat.</string>
+    <string name="export_password">Kata sandi</string>
+    <string name="export_password_hint">Opsional. Mengenkripsi cadangan (AES-256-GCM). Tanpa kata sandi, cadangan tidak dapat dipulihkan.</string>
+    <string name="export_include_values">Sertakan nilai saat ini</string>
+    <string name="export_save">Simpan ke file</string>
+    <string name="export_share">Bagikan</string>
+    <string name="export_saved">Tersimpan</string>
+    <string name="export_save_failed">Tidak dapat menyimpan file</string>
+</resources>

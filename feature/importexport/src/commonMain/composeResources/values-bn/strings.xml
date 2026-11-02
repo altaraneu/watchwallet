@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ie_back">পিছনে</string>
+    <string name="import_title">ওয়ালেট ইমপোর্ট করুন</string>
+    <string name="import_intro">ঠিকানা বা xpub পেস্ট করুন (প্রতি লাইনে একটি, অথবা কমা, সেমিকোলন বা স্পেস দিয়ে আলাদা করা), হেডার সারিসহ CSV ফাইল, বা WatchWallet ব্যাকআপ। ইমপোর্টের আগে আপনি সবকিছু পর্যালোচনা করতে পারবেন।</string>
+    <string name="import_paste_label">ঠিকানা, CSV বা ব্যাকআপ</string>
+    <string name="import_choose_file">ফাইল বেছে নিন</string>
+    <string name="import_preview">পর্যালোচনা</string>
+    <string name="import_group">গ্রুপে যোগ করুন (ঐচ্ছিক)</string>
+    <plurals name="import_action">
+        <item quantity="one">%1$dটি ওয়ালেট ইমপোর্ট করুন</item>
+        <item quantity="other">%1$dটি ওয়ালেট ইমপোর্ট করুন</item>
+    </plurals>
+    <string name="import_row_target_group">%1$s · %2$s</string>
+    <string name="import_status_tracked">ইতিমধ্যে ট্র্যাক করা হচ্ছে, বাদ দেওয়া হবে</string>
+    <string name="import_status_duplicate">এই তালিকায় সদৃশ</string>
+    <string name="import_status_unsupported">%1$s এখনো সমর্থিত নয়</string>
+    <string name="import_status_confirm">Sui বা Aptos ঠিকানা: ওয়ালেট যোগ করুন স্ক্রিনে এটি যোগ করুন, সেখানে নিশ্চিতকরণ চাওয়া হয়</string>
+    <string name="import_status_invalid">শনাক্তযোগ্য ঠিকানা নয়</string>
+    <string name="import_secret_title">ইমপোর্ট বন্ধ করা হয়েছে: প্রাইভেট কী বা সিড ফ্রেজ পাওয়া গেছে</string>
+    <string name="import_secret_message">ইনপুটে প্রাইভেট কী বা সিড ফ্রেজের মতো দেখতে কিছু ছিল। কিছুই ইমপোর্ট, সংরক্ষণ বা কোথাও পাঠানো হয়নি, এবং ইনপুট মুছে ফেলা হয়েছে। ওই এন্ট্রিটি সরিয়ে আবার চেষ্টা করুন।</string>
+    <string name="import_encrypted">এই ব্যাকআপ এনক্রিপ্ট করা। এর পাসওয়ার্ড দিন।</string>
+    <string name="import_wrong_password">ভুল পাসওয়ার্ড বা ক্ষতিগ্রস্ত ফাইল</string>
+    <string name="import_decrypt">ডিক্রিপ্ট করুন</string>
+    <string name="import_done_title">ইমপোর্ট সম্পন্ন</string>
+    <string name="import_done_summary">ইমপোর্ট হয়েছে: %1$d · বাদ গেছে: %2$d · ব্যর্থ: %3$d</string>
+    <string name="import_done_sync">ব্যালেন্স ও ইতিহাস ব্যাকগ্রাউন্ডে লোড হচ্ছে।</string>
+    <string name="import_done_action">ওয়ালেট দেখুন</string>
+    <string name="export_title">ওয়ালেট এক্সপোর্ট করুন</string>
+    <string name="export_notice">ফাইলটিতে কোনো কী নেই, কিন্তু এতে আপনার ট্র্যাক করা সব ঠিকানা এবং সেই সূত্রে আপনার সম্পদ প্রকাশ পায়। এটি সাবধানে রাখুন ও শেয়ার করুন।</string>
+    <string name="export_scope">ওয়ালেট</string>
+    <string name="export_all">সব (%1$d)</string>
+    <string name="export_format">ফরম্যাট</string>
+    <string name="export_format_json">ব্যাকআপ (JSON)</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_text">শুধু ঠিকানা</string>
+    <string name="export_format_transactions">লেনদেনের ইতিহাস (CSV)</string>
+    <string name="export_transactions_hint">নির্বাচিত ওয়ালেটগুলোর সব সংরক্ষিত লেনদেন: তারিখ (UTC), সম্পদ, চিহ্নসহ পরিমাণ, ফি ও ট্রানজ্যাকশন হ্যাশ। পুরোনো ইতিহাস লোড হওয়ার পরে দেখা যায়।</string>
+    <string name="export_password">পাসওয়ার্ড</string>
+    <string name="export_password_hint">ঐচ্ছিক। ব্যাকআপ এনক্রিপ্ট করে (AES-256-GCM)। পাসওয়ার্ড ছাড়া এটি পুনরুদ্ধার করা যাবে না।</string>
+    <string name="export_include_values">বর্তমান মূল্য অন্তর্ভুক্ত করুন</string>
+    <string name="export_save">ফাইলে সংরক্ষণ করুন</string>
+    <string name="export_share">শেয়ার করুন</string>
+    <string name="export_saved">সংরক্ষিত</string>
+    <string name="export_save_failed">ফাইল সংরক্ষণ করা যায়নি</string>
+</resources>

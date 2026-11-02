@@ -44,6 +44,10 @@ All notable changes to this project are documented here. The format follows
 - Binance prices and candles first, CoinGecko and Kraken as fallbacks.
 - Staking: Solana stake accounts, delegated POL, Cosmos rewards.
 - Group field when adding a wallet; Add wallet in the Portfolio top bar.
+- Wallet detail shows the address with copy and QR code, for example to receive a payment.
+- JSON backups include notes and the cost basis entered by the user.
+- Languages: Arabic, Bengali, Chinese (Simplified), Czech, English, French, German, Hindi,
+  Indonesian, Japanese, Portuguese, Russian and Spanish.
 
 ### Fixed
 - Charts were invisible (zero-height WebView viewport).

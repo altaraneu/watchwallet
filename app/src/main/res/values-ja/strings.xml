@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lock_title">WatchWallet はロックされています</string>
+    <string name="lock_unlock">ロック解除</string>
+    <string name="lock_prompt_title">WatchWallet のロックを解除</string>
+    <string name="widget_label">ポートフォリオの評価額</string>
+    <string name="widget_description">追跡中のウォレットの合計評価額</string>
+    <string name="widget_title">ポートフォリオ</string>
+    <string name="widget_change_24h">24時間で %1$s</string>
+</resources>

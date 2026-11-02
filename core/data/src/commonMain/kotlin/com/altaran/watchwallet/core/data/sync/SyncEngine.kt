@@ -156,7 +156,7 @@ class SyncEngine(
                     WalletBalanceEntity(wallet.id, it.asset.id.value, it.amount.raw.toString(), now)
                 },
                 transactions = result.transactions.map { it.toEntity(wallet.id) },
-                derived = if (target is WatchTarget.ExtendedPublicKey) {
+                derived = if (target is WatchTarget.ExtendedPublicKey || result.derivedAddresses.isNotEmpty()) {
                     result.derivedAddresses.map { DerivedAddressEntity(wallet.id, it.address, it.change, it.index, it.used) }
                 } else {
                     null

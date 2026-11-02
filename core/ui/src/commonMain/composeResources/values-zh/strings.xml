@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="script_p2pkh">Legacy</string>
+    <string name="script_p2sh_p2wpkh">Nested SegWit</string>
+    <string name="script_p2wpkh">Native SegWit</string>
+    <string name="script_p2tr">Taproot</string>
+    <string name="script_p2sh">脚本</string>
+    <string name="script_p2wsh">SegWit 脚本</string>
+    <string name="family_utxo_bitcoin">Bitcoin</string>
+    <string name="family_evm">EVM</string>
+    <string name="target_xpub">%1$s xpub</string>
+    <string name="target_address">%1$s 地址</string>
+    <string name="target_description">%1$s · %2$s</string>
+    <string name="chart_no_data">此时间范围的数据尚不足</string>
+    <string name="chart_a11y_summary">%1$s 图表:从 %2$s 到 %3$s,变化 %4$s</string>
+    <string name="chart_a11y_hidden">%1$s 图表,金额已隐藏</string>
+    <string name="target_cardano_wallet">整个钱包(质押密钥)</string>
+    <string name="chart_loading_prices">正在加载历史价格…图表将随价格到达逐步显示。</string>
+    <string name="chart_visible_range">可见范围内</string>
+    <string name="tx_received">已接收</string>
+    <string name="tx_sent">已发送</string>
+    <string name="tx_self">自有地址间转账</string>
+    <string name="tx_label_pending">%1$s · 待确认</string>
+    <string name="copy_action">复制</string>
+    <string name="copy_done">已复制</string>
+    <string name="tx_cost_auto">成本 %1$s</string>
+    <string name="tx_cost_user">成本 %1$s(您填写)</string>
+    <string name="tx_cost_unknown">设置成本</string>
+    <string name="cost_dialog_title">成本基础</string>
+    <string name="cost_dialog_message">这些币花了您多少美元?自动计算的数值采用转账当天的价格。如果您是早前买入(例如在交易所),现在才转到这里,请输入您实际支付的金额。</string>
+    <string name="cost_dialog_label">总成本(USD)</string>
+    <string name="cost_dialog_total">总计</string>
+    <string name="cost_dialog_per_coin">每 %1$s</string>
+    <string name="cost_dialog_label_per_coin">每 %1$s 的 USD 价格</string>
+    <string name="cost_dialog_total_hint">总计 %1$s</string>
+    <string name="cost_dialog_per_coin_hint">每 %2$s %1$s</string>
+    <string name="cost_dialog_save">保存</string>
+    <string name="cost_dialog_reset">使用自动值</string>
+    <string name="cost_dialog_cancel">取消</string>
+    <string name="tx_sheet_cost_auto">%1$s(每 %3$s %2$s),自动:转账当天的价格</string>
+    <string name="tx_sheet_cost_user">%1$s(每 %3$s %2$s),由您填写</string>
+    <string name="tx_sheet_edit_cost">编辑成本基础</string>
+    <string name="tx_open_explorer">在区块浏览器中打开</string>
+    <string name="chart_performance">不计充值和提现:%1$s</string>
+    <string name="chart_value_with_percent">%1$s (%2$s)</string>
+</resources>

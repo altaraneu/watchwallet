@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="amount_hidden">金額は非表示です</string>
+    <string name="action_cancel">キャンセル</string>
+    <string name="range_24h">24時間</string>
+    <string name="range_7d">7日</string>
+    <string name="range_1m">1か月</string>
+    <string name="range_3m">3か月</string>
+    <string name="range_1y">1年</string>
+    <string name="range_ytd">年初来</string>
+    <string name="range_all">全期間</string>
+    <string name="change_up">%1$s 上昇</string>
+    <string name="change_down">%1$s 下落</string>
+</resources>

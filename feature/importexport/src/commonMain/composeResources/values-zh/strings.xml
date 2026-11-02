@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ie_back">返回</string>
+    <string name="import_title">导入钱包</string>
+    <string name="import_intro">粘贴地址或 xpub(每行一个,或用逗号、分号、空格分隔)、带标题行的 CSV 文件,或 WatchWallet 备份。导入前可以查看所有内容。</string>
+    <string name="import_paste_label">地址、CSV 或备份</string>
+    <string name="import_choose_file">选择文件</string>
+    <string name="import_preview">查看</string>
+    <string name="import_group">添加到分组(可选)</string>
+    <plurals name="import_action">
+        <item quantity="other">导入 %1$d 个钱包</item>
+    </plurals>
+    <string name="import_row_target_group">%1$s · %2$s</string>
+    <string name="import_status_tracked">已在跟踪,将跳过</string>
+    <string name="import_status_duplicate">列表中有重复</string>
+    <string name="import_status_unsupported">暂不支持 %1$s</string>
+    <string name="import_status_confirm">Sui 或 Aptos 地址:请在“添加钱包”页面添加,该页面会要求确认</string>
+    <string name="import_status_invalid">无法识别的地址</string>
+    <string name="import_secret_title">导入已停止:发现私钥或助记词</string>
+    <string name="import_secret_message">输入内容中有看起来像私钥或助记词的内容。未导入、未保存,也未发送到任何地方,输入内容已被清除。请移除该条目后重试。</string>
+    <string name="import_encrypted">此备份已加密。请输入密码。</string>
+    <string name="import_wrong_password">密码错误或文件已损坏</string>
+    <string name="import_decrypt">解密</string>
+    <string name="import_done_title">导入完成</string>
+    <string name="import_done_summary">已导入:%1$d · 已跳过:%2$d · 失败:%3$d</string>
+    <string name="import_done_sync">余额和历史记录正在后台加载。</string>
+    <string name="import_done_action">查看钱包</string>
+    <string name="export_title">导出钱包</string>
+    <string name="export_notice">该文件不含密钥,但会暴露您跟踪的所有地址,从而暴露您的持仓。请谨慎保存和分享。</string>
+    <string name="export_scope">钱包</string>
+    <string name="export_all">全部 (%1$d)</string>
+    <string name="export_format">格式</string>
+    <string name="export_format_json">备份 (JSON)</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_text">仅地址</string>
+    <string name="export_format_transactions">交易历史 (CSV)</string>
+    <string name="export_transactions_hint">所选钱包的全部已存储交易:日期 (UTC)、资产、带符号金额、手续费和交易哈希。更早的历史记录加载后才会出现。</string>
+    <string name="export_password">密码</string>
+    <string name="export_password_hint">可选。用于加密备份 (AES-256-GCM)。没有密码将无法恢复。</string>
+    <string name="export_include_values">包含当前价值</string>
+    <string name="export_save">保存到文件</string>
+    <string name="export_share">分享</string>
+    <string name="export_saved">已保存</string>
+    <string name="export_save_failed">无法保存文件</string>
+</resources>

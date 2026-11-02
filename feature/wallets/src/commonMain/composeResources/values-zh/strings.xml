@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wallets_title">钱包</string>
+    <string name="wallets_add">添加钱包</string>
+    <string name="wallets_empty_title">暂无钱包</string>
+    <string name="wallets_empty_message">粘贴任意公开地址或 xpub,WatchWallet 会识别所属区块链。绝不需要密钥。</string>
+    <string name="wallets_sync_failed">无法刷新。正在显示上次已知的数据。</string>
+    <string name="detail_back">返回</string>
+    <string name="detail_more">更多选项</string>
+    <string name="detail_rename">重命名</string>
+    <string name="detail_open_explorer">在区块浏览器中打开</string>
+    <string name="detail_delete">删除</string>
+    <string name="detail_delete_title">删除此钱包?</string>
+    <string name="detail_delete_message">该钱包及其缓存的历史记录将从此设备中移除。区块链上不会发生任何变化,您可以随时重新添加。</string>
+    <string name="detail_cancel">取消</string>
+    <string name="detail_save">保存</string>
+    <string name="detail_balance">余额</string>
+    <string name="detail_tab_assets">资产</string>
+    <string name="detail_tab_activity">活动</string>
+    <string name="detail_tab_addresses">地址</string>
+    <string name="detail_no_assets_title">暂无资产</string>
+    <string name="detail_no_assets_message">此钱包当前没有余额。下拉刷新。</string>
+    <string name="detail_no_activity_title">暂无交易</string>
+    <string name="detail_no_activity_message">首次刷新后,交易将显示在这里。</string>
+    <string name="address_used">已使用</string>
+    <string name="address_unused">未使用</string>
+    <string name="address_next_receive">下一个未使用的收款地址</string>
+    <string name="address_copy">复制地址</string>
+    <string name="detail_address">地址</string>
+    <string name="detail_show_qr">显示 QR 码</string>
+    <string name="detail_qr_description">此地址的 QR 码</string>
+    <string name="detail_address_evm_hint">同一地址适用于所有 EVM 网络。请确认发送方使用了正确的网络。</string>
+    <string name="detail_address_cardano_hint">此钱包的地址之一。</string>
+    <string name="detail_stake_key">质押密钥</string>
+    <string name="detail_stake_key_hint">质押密钥无法接收付款。请使用钱包应用中的收款地址。</string>
+    <string name="wallets_ungrouped">其他钱包</string>
+    <string name="wallets_syncing">正在同步</string>
+</resources>

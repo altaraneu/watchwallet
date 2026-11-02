@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_portfolio">ポートフォリオ</string>
+    <string name="nav_wallets">ウォレット</string>
+    <string name="nav_markets">マーケット</string>
+    <string name="nav_settings">設定</string>
+    <string name="donate_reminder_title">WatchWallet をお楽しみいただけていますか?</string>
+    <string name="donate_reminder_message">WatchWallet は無料のオープンソースで、広告もトラッキングもありません。お役に立っているなら、少額の寄付がこの状態の維持に役立ちます。</string>
+    <string name="donate_reminder_support">支援する</string>
+    <string name="donate_reminder_later">今はしない</string>
+    <string name="donate_reminder_never">今後表示しない</string>
+</resources>

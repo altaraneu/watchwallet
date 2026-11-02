@@ -26,6 +26,13 @@
     <string name="address_unused">Nepoužitá</string>
     <string name="address_next_receive">Další nepoužitá adresa pro příjem</string>
     <string name="address_copy">Kopírovat adresu</string>
+    <string name="detail_address">Adresa</string>
+    <string name="detail_show_qr">Zobrazit QR kód</string>
+    <string name="detail_qr_description">QR kód této adresy</string>
+    <string name="detail_address_evm_hint">Stejná adresa funguje na všech sítích EVM. Ověř, že odesílatel používá správnou síť.</string>
+    <string name="detail_address_cardano_hint">Jedna z adres této peněženky.</string>
+    <string name="detail_stake_key">Stake klíč</string>
+    <string name="detail_stake_key_hint">Na stake klíč nejde přijímat platby. Použij platební adresu ze své peněženky.</string>
     <string name="wallets_ungrouped">Ostatní peněženky</string>
     <string name="wallets_syncing">Synchronizuji</string>
 </resources>

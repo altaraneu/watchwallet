@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="portfolio_title">投资组合</string>
+    <string name="portfolio_total_value">总价值</string>
+    <string name="portfolio_discreet_on">隐藏金额</string>
+    <string name="portfolio_discreet_off">显示金额</string>
+    <string name="portfolio_empty_title">暂无可查看的内容</string>
+    <string name="portfolio_empty_message">粘贴公开地址或扩展公钥即可添加钱包。WatchWallet 绝不会索要您的助记词或私钥。</string>
+    <string name="portfolio_empty_action">添加钱包</string>
+    <string name="portfolio_assets">资产</string>
+    <string name="portfolio_allocation">资产配置</string>
+    <string name="portfolio_other">其他</string>
+    <string name="portfolio_change_24h">24 小时内 %1$s (%2$s)</string>
+    <plurals name="portfolio_hidden_assets">
+        <item quantity="other">已隐藏 %1$d 个代币(垃圾代币、无价格或由您隐藏)</item>
+    </plurals>
+    <string name="portfolio_all_wallets">全部</string>
+    <string name="portfolio_hide_asset">隐藏此代币</string>
+    <string name="portfolio_show_asset">显示</string>
+    <string name="portfolio_hidden_reason_spam">%1$s · 疑似垃圾代币</string>
+    <string name="portfolio_hidden_reason_other">%1$s · 无价格或由您隐藏</string>
+    <string name="portfolio_add_wallet">添加钱包</string>
+    <string name="portfolio_hidden_expanded">已展开</string>
+    <string name="portfolio_hidden_collapsed">已收起</string>
+</resources>

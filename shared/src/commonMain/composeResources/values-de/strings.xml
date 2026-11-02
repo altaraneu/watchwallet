@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_portfolio">Portfolio</string>
+    <string name="nav_wallets">Wallets</string>
+    <string name="nav_markets">Märkte</string>
+    <string name="nav_settings">Einstellungen</string>
+    <string name="donate_reminder_title">Gefällt dir WatchWallet?</string>
+    <string name="donate_reminder_message">WatchWallet ist kostenlos, Open Source und hat weder Werbung noch Tracking. Wenn es dir nützt, hilft eine kleine Spende, dass das so bleibt.</string>
+    <string name="donate_reminder_support">Unterstützen</string>
+    <string name="donate_reminder_later">Nicht jetzt</string>
+    <string name="donate_reminder_never">Nicht mehr fragen</string>
+</resources>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ie_back">Retour</string>
+    <string name="import_title">Importer des portefeuilles</string>
+    <string name="import_intro">Collez des adresses ou des xpub (un par ligne, ou séparés par des virgules, des points-virgules ou des espaces), un fichier CSV avec une ligne d’en-tête ou une sauvegarde WatchWallet. Vous pourrez tout vérifier avant l’importation.</string>
+    <string name="import_paste_label">Adresses, CSV ou sauvegarde</string>
+    <string name="import_choose_file">Choisir un fichier</string>
+    <string name="import_preview">Vérifier</string>
+    <string name="import_group">Ajouter au groupe (facultatif)</string>
+    <plurals name="import_action">
+        <item quantity="one">Importer %1$d portefeuille</item>
+        <item quantity="many">Importer %1$d de portefeuilles</item>
+        <item quantity="other">Importer %1$d portefeuilles</item>
+    </plurals>
+    <string name="import_row_target_group">%1$s · %2$s</string>
+    <string name="import_status_tracked">Déjà suivi, sera ignoré</string>
+    <string name="import_status_duplicate">Doublon dans cette liste</string>
+    <string name="import_status_unsupported">%1$s n’est pas encore pris en charge</string>
+    <string name="import_status_confirm">Adresse Sui ou Aptos : ajoutez-la depuis l’écran Ajouter un portefeuille, qui demande une confirmation</string>
+    <string name="import_status_invalid">Adresse non reconnue</string>
+    <string name="import_secret_title">Importation interrompue : clé privée ou phrase de récupération détectée</string>
+    <string name="import_secret_message">La saisie contenait un élément qui ressemble à une clé privée ou à une phrase de récupération. Rien n’a été importé, enregistré ni envoyé où que ce soit, et la saisie a été effacée. Retirez cet élément et réessayez.</string>
+    <string name="import_encrypted">Cette sauvegarde est chiffrée. Saisissez son mot de passe.</string>
+    <string name="import_wrong_password">Mot de passe incorrect ou fichier endommagé</string>
+    <string name="import_decrypt">Déchiffrer</string>
+    <string name="import_done_title">Importation terminée</string>
+    <string name="import_done_summary">Importés : %1$d · ignorés : %2$d · échecs : %3$d</string>
+    <string name="import_done_sync">Les soldes et l’historique se chargent en arrière-plan.</string>
+    <string name="import_done_action">Voir les portefeuilles</string>
+    <string name="export_title">Exporter les portefeuilles</string>
+    <string name="export_notice">Le fichier ne contient aucune clé, mais il révèle toutes vos adresses suivies et donc vos avoirs. Conservez-le et partagez-le avec précaution.</string>
+    <string name="export_scope">Portefeuilles</string>
+    <string name="export_all">Tous (%1$d)</string>
+    <string name="export_format">Format</string>
+    <string name="export_format_json">Sauvegarde (JSON)</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_text">Adresses uniquement</string>
+    <string name="export_format_transactions">Historique des transactions (CSV)</string>
+    <string name="export_transactions_hint">Toutes les transactions enregistrées des portefeuilles sélectionnés : date (UTC), actif, montant signé, frais et hash de la transaction. L’historique plus ancien apparaît une fois chargé.</string>
+    <string name="export_password">Mot de passe</string>
+    <string name="export_password_hint">Facultatif. Chiffre la sauvegarde (AES-256-GCM). Sans le mot de passe, elle ne pourra pas être restaurée.</string>
+    <string name="export_include_values">Inclure les valeurs actuelles</string>
+    <string name="export_save">Enregistrer dans un fichier</string>
+    <string name="export_share">Partager</string>
+    <string name="export_saved">Enregistré</string>
+    <string name="export_save_failed">Impossible d’enregistrer le fichier</string>
+</resources>

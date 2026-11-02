@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_wallet_title">ウォレットを追加</string>
+    <string name="add_wallet_back">戻る</string>
+    <string name="add_wallet_intro">公開アドレス、拡張公開鍵(xpub、ypub、zpub)、またはアウトプットディスクリプタを貼り付けてください。WatchWallet がチェーンを自動で検出します。</string>
+    <string name="add_wallet_input_label">アドレス、xpub またはディスクリプタ</string>
+    <string name="add_wallet_paste">貼り付け</string>
+    <string name="add_wallet_probing">ブロックチェーンを確認中…</string>
+    <string name="add_wallet_pick_type">どれがあなたのウォレットですか?</string>
+    <string name="add_wallet_name_label">名前(任意)</string>
+    <string name="add_wallet_save">ウォレットを追加</string>
+    <string name="add_wallet_open_existing">既存のウォレットを開く</string>
+    <string name="add_wallet_already_tracked">追跡中</string>
+    <string name="add_wallet_probe_failed">現在アクティビティを確認できません。このまま追加することはできます。</string>
+    <string name="add_wallet_no_activity">アクティビティなし</string>
+    <string name="add_wallet_active_on">%1$s でアクティブ</string>
+    <plurals name="add_wallet_used_addresses">
+        <item quantity="other">使用済みアドレス %1$d 件</item>
+    </plurals>
+    <plurals name="add_wallet_transactions">
+        <item quantity="other">%1$d 件のトランザクション</item>
+    </plurals>
+    <string name="add_wallet_unsupported_title">%1$s にはまだ対応していません</string>
+    <string name="add_wallet_unsupported_message">有効なアドレスのようですが、このネットワークにはまだ対応していません。現在はビットコインとイーサリアム互換ネットワークに対応しており、他のチェーンにも順次対応予定です。</string>
+    <string name="add_wallet_checksum_title">アドレスを確認してください</string>
+    <string name="add_wallet_checksum_message">このアドレスの大文字と小文字がチェックサムと一致しません。入力ミスの可能性があります。元の場所からもう一度コピーしてください。</string>
+    <string name="add_wallet_multiple_title">複数のアドレス</string>
+    <string name="add_wallet_multiple_message">複数のアドレスが貼り付けられました。一括インポートを使うと、まとめて確認して追加できます。</string>
+    <string name="add_wallet_unrecognized_title">対応しているアドレスではないようです</string>
+    <string name="add_wallet_unrecognized_message">アドレスまたはキー全体を、余分な文字なしでコピーしたか確認してください。</string>
+    <string name="secret_title_mnemonic">シードフレーズのようです</string>
+    <string name="secret_title_key">秘密鍵のようです</string>
+    <string name="secret_message">WatchWallet にシードフレーズや秘密鍵は一切必要ありません。入力内容は消去され、保存も送信もされていません。代わりに公開アドレスまたは拡張公開鍵(xpub)を使用してください。</string>
+    <string name="secret_scam_hint">ここや他の場所に入力するよう誰かに求められた場合、それは詐欺です。</string>
+    <string name="default_name_bitcoin_wallet">Bitcoin ウォレット</string>
+    <string name="default_name_bitcoin_address">Bitcoin アドレス</string>
+    <string name="default_name_evm">Ethereum ウォレット</string>
+    <string name="add_wallet_open_batch">一括インポートを開く</string>
+    <string name="add_wallet_scan">スキャン</string>
+    <string name="qr_hint">アドレスまたは xpub の QR コードにカメラを向けてください</string>
+    <string name="qr_close">スキャナーを閉じる</string>
+    <string name="qr_no_permission">QR コードのスキャンにはカメラへのアクセスが必要です。アプリの設定で許可できます。</string>
+    <string name="default_name_generic">%1$s ウォレット</string>
+    <string name="confirm_chain_title">ネットワークを選択</string>
+    <string name="confirm_chain_message">Sui または Aptos のアドレスのようですが、複数のチェーンの秘密鍵もまったく同じ形式です。まだ何も確認も送信もされていません。このアドレスのネットワークを選択してください。誤って秘密鍵をコピーした場合は消去してください。</string>
+    <string name="confirm_unused_title">このアドレスは一度も使用されていません</string>
+    <string name="confirm_unused_message">誤って秘密鍵をコピーした場合は、今すぐ消去し、絶対に誰にも教えないでください。新しい未使用のアドレスであると確信できる場合にのみ追加してください。</string>
+    <string name="confirm_add_anyway">このまま追加</string>
+    <string name="confirm_clear">消去</string>
+    <string name="add_wallet_group_label">グループ(任意)</string>
+    <string name="add_wallet_group_hint">例:パートナー、貯蓄、事業</string>
+</resources>

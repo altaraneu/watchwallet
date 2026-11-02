@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ie_back">Voltar</string>
+    <string name="import_title">Importar carteiras</string>
+    <string name="import_intro">Cole endereços ou xpubs (um por linha, ou separados por vírgulas, ponto e vírgula ou espaços), um arquivo CSV com linha de cabeçalho ou um backup do WatchWallet. Você poderá revisar tudo antes de importar.</string>
+    <string name="import_paste_label">Endereços, CSV ou backup</string>
+    <string name="import_choose_file">Escolher arquivo</string>
+    <string name="import_preview">Revisar</string>
+    <string name="import_group">Adicionar ao grupo (opcional)</string>
+    <plurals name="import_action">
+        <item quantity="one">Importar %1$d carteira</item>
+        <item quantity="many">Importar %1$d de carteiras</item>
+        <item quantity="other">Importar %1$d carteiras</item>
+    </plurals>
+    <string name="import_row_target_group">%1$s · %2$s</string>
+    <string name="import_status_tracked">Já acompanhada, será ignorada</string>
+    <string name="import_status_duplicate">Duplicada nesta lista</string>
+    <string name="import_status_unsupported">%1$s ainda não é compatível</string>
+    <string name="import_status_confirm">Endereço Sui ou Aptos: adicione-o na tela Adicionar carteira, que pede confirmação</string>
+    <string name="import_status_invalid">Endereço não reconhecido</string>
+    <string name="import_secret_title">Importação interrompida: chave privada ou frase-semente encontrada</string>
+    <string name="import_secret_message">O conteúdo tinha algo que parece uma chave privada ou frase-semente. Nada foi importado, salvo ou enviado a lugar nenhum, e o conteúdo foi apagado. Remova esse item e tente novamente.</string>
+    <string name="import_encrypted">Este backup está criptografado. Digite a senha dele.</string>
+    <string name="import_wrong_password">Senha incorreta ou arquivo danificado</string>
+    <string name="import_decrypt">Descriptografar</string>
+    <string name="import_done_title">Importação concluída</string>
+    <string name="import_done_summary">Importadas: %1$d · ignoradas: %2$d · com falha: %3$d</string>
+    <string name="import_done_sync">Saldos e histórico estão sendo carregados em segundo plano.</string>
+    <string name="import_done_action">Ver carteiras</string>
+    <string name="export_title">Exportar carteiras</string>
+    <string name="export_notice">O arquivo não contém chaves, mas revela todos os seus endereços acompanhados e, portanto, seus ativos. Guarde e compartilhe com cuidado.</string>
+    <string name="export_scope">Carteiras</string>
+    <string name="export_all">Todas (%1$d)</string>
+    <string name="export_format">Formato</string>
+    <string name="export_format_json">Backup (JSON)</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_text">Somente endereços</string>
+    <string name="export_format_transactions">Histórico de transações (CSV)</string>
+    <string name="export_transactions_hint">Todas as transações salvas das carteiras selecionadas: data (UTC), ativo, valor com sinal, taxa e hash da transação. O histórico mais antigo aparece depois de carregado.</string>
+    <string name="export_password">Senha</string>
+    <string name="export_password_hint">Opcional. Criptografa o backup (AES-256-GCM). Sem a senha, ele não poderá ser restaurado.</string>
+    <string name="export_include_values">Incluir valores atuais</string>
+    <string name="export_save">Salvar em arquivo</string>
+    <string name="export_share">Compartilhar</string>
+    <string name="export_saved">Salvo</string>
+    <string name="export_save_failed">Não foi possível salvar o arquivo</string>
+</resources>

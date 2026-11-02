@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="amount_hidden">Сумма скрыта</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="range_24h">24Ч</string>
+    <string name="range_7d">7Д</string>
+    <string name="range_1m">1М</string>
+    <string name="range_3m">3М</string>
+    <string name="range_1y">1Г</string>
+    <string name="range_ytd">С нач. года</string>
+    <string name="range_all">Все</string>
+    <string name="change_up">Рост: %1$s</string>
+    <string name="change_down">Падение: %1$s</string>
+</resources>

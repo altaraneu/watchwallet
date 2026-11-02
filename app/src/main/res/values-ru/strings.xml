@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lock_title">WatchWallet заблокирован</string>
+    <string name="lock_unlock">Разблокировать</string>
+    <string name="lock_prompt_title">Разблокировать WatchWallet</string>
+    <string name="widget_label">Стоимость портфеля</string>
+    <string name="widget_description">Общая стоимость отслеживаемых кошельков</string>
+    <string name="widget_title">Портфель</string>
+    <string name="widget_change_24h">%1$s за 24 ч</string>
+</resources>
