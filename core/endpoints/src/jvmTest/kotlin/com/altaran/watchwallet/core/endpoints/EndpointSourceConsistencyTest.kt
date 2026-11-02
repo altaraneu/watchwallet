@@ -5,10 +5,13 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+
+private const val SECONDS_PER_DAY = 86_400L
 
 /** The published list starts from the bundled one; drift would go unnoticed otherwise. */
 class EndpointSourceConsistencyTest {
@@ -41,6 +44,18 @@ class EndpointSourceConsistencyTest {
         val tool = File(root, "scripts/sign_endpoints.py").readText()
         assertTrue("PINNED_PUBLIC_KEY = \"${EndpointFileVerifier.PINNED_PUBLIC_KEY}\"" in tool)
         assertTrue("MAX_ENVELOPE_BYTES = 256 * 1024" in tool)
+        assertTrue("MAX_VALIDITY_DAYS = ${EndpointFile.MAX_VALIDITY_SECONDS / SECONDS_PER_DAY}" in tool)
+        EndpointConfigUpdater.DEFAULT_URLS.forEach { url -> assertTrue("\"$url\"" in tool, url) }
+    }
+
+    @Test
+    fun bundledVersionMatchesTheSource() {
+        assertEquals(BundledEndpoints.VERSION, source.getValue("version").jsonPrimitive.long)
+    }
+
+    @Test
+    fun theSourceExpiresWithinTheLimit() {
+        assertTrue(source.getValue("expires_in_days").jsonPrimitive.int * SECONDS_PER_DAY <= EndpointFile.MAX_VALIDITY_SECONDS)
     }
 
     /** Every default must pass the checks a remote file has to pass, and every host be disclosed. */

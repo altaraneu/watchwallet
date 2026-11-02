@@ -77,4 +77,11 @@
     <string name="settings_remote_icons">कॉइन आइकन डाउनलोड करें</string>
     <string name="settings_remote_icons_summary">GitHub पर Trust Wallet एसेट रिपॉज़िटरी से कॉइन और टोकन के लोगो, जो डिवाइस पर कैश होते हैं। इससे सिर्फ़ यह पता चलता है कि कौन से कॉइन दिखाए जा रहे हैं, आपके पते कभी नहीं।</string>
     <string name="settings_privacy_policy">निजता नीति</string>
+    <string name="settings_endpoints_list">सर्वर सूची</string>
+    <string name="settings_endpoints_bundled">ऐप में शामिल, संस्करण %1$s</string>
+    <string name="settings_endpoints_remote">हस्ताक्षरित सूची, संस्करण %1$s, हस्ताक्षर %2$s, %3$s तक मान्य</string>
+    <string name="settings_endpoints_remote_undated">हस्ताक्षरित सूची, संस्करण %1$s, %2$s तक मान्य</string>
+    <string name="settings_endpoints_hosts_title">उपयोग में ब्लॉकचेन सर्वर</string>
+    <string name="settings_endpoints_hosts_hint">ये सर्वर आपके ट्रैक किए गए पते प्राप्त करते हैं, और आपको वही दिखता है जो वे बताते हैं। नई सूची ऐप के अगले शुरू होने पर लागू होती है।</string>
+    <string name="settings_endpoints_hosts_close">बंद करें</string>
 </resources>

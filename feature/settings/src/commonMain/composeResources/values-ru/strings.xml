@@ -81,4 +81,11 @@
     <string name="settings_remote_icons">Загружать значки монет</string>
     <string name="settings_remote_icons_summary">Логотипы монет и токенов из репозитория ресурсов Trust Wallet на GitHub, сохраняются на устройстве. Раскрывает только то, какие монеты показываются, но никогда — ваши адреса.</string>
     <string name="settings_privacy_policy">Политика конфиденциальности</string>
+    <string name="settings_endpoints_list">Список серверов</string>
+    <string name="settings_endpoints_bundled">Встроен в приложение, версия %1$s</string>
+    <string name="settings_endpoints_remote">Подписанный список, версия %1$s, подписан %2$s, действует до %3$s</string>
+    <string name="settings_endpoints_remote_undated">Подписанный список, версия %1$s, действует до %2$s</string>
+    <string name="settings_endpoints_hosts_title">Используемые серверы блокчейна</string>
+    <string name="settings_endpoints_hosts_hint">Эти серверы получают отслеживаемые вами адреса, а вы видите то, что они сообщают. Новый список вступает в силу при следующем запуске приложения.</string>
+    <string name="settings_endpoints_hosts_close">Закрыть</string>
 </resources>

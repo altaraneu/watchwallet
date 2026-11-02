@@ -75,4 +75,11 @@
     <string name="settings_remote_icons">コインのアイコンをダウンロード</string>
     <string name="settings_remote_icons_summary">コインとトークンのロゴを GitHub の Trust Wallet アセットリポジトリから取得し、デバイスにキャッシュします。分かるのは表示されるコインのみで、アドレスが知られることはありません。</string>
     <string name="settings_privacy_policy">プライバシーポリシー</string>
+    <string name="settings_endpoints_list">サーバーリスト</string>
+    <string name="settings_endpoints_bundled">アプリに内蔵、バージョン %1$s</string>
+    <string name="settings_endpoints_remote">署名済みリスト、バージョン %1$s、署名日 %2$s、有効期限 %3$s</string>
+    <string name="settings_endpoints_remote_undated">署名済みリスト、バージョン %1$s、有効期限 %2$s</string>
+    <string name="settings_endpoints_hosts_title">使用中のブロックチェーンサーバー</string>
+    <string name="settings_endpoints_hosts_hint">これらのサーバーは追跡中のアドレスを受け取り、表示される内容はサーバーの報告に基づきます。新しいリストは次回のアプリ起動時に適用されます。</string>
+    <string name="settings_endpoints_hosts_close">閉じる</string>
 </resources>

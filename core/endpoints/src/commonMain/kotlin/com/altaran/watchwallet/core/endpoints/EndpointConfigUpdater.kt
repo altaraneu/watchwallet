@@ -62,7 +62,7 @@ class EndpointConfigUpdater(
         store.saveLastCheckSeconds(now)
 
         // An expired stored file still counts here, or an old signed file could be replayed after it.
-        val current = store.storedEnvelope()?.let { verifier.open(it) as? EndpointFileResult.Valid }?.file?.version ?: 0
+        val current = store.storedEnvelope()?.let { verifier.open(it) as? EndpointFileResult.Valid }?.file
         for (url in urls) {
             val envelope = download(url) ?: continue
             when (val result = check(envelope, current, now)) {
@@ -71,7 +71,7 @@ class EndpointConfigUpdater(
                 }
 
                 is EndpointFileResult.Valid -> {
-                    if (result.file.version == current) return EndpointUpdateResult.UNCHANGED
+                    if (result.file.sameRankAs(current) && result.file.version == current?.version) return EndpointUpdateResult.UNCHANGED
                     store.saveEnvelope(envelope)
                     return EndpointUpdateResult.UPDATED
                 }
@@ -80,16 +80,25 @@ class EndpointConfigUpdater(
         return EndpointUpdateResult.FAILED
     }
 
-    /** A lower version is a replay. The same version is valid but there is nothing to do. */
-    private fun check(envelope: String, currentVersion: Long, now: Long): EndpointFileResult {
+    /**
+     * A lower version is a replay. The same version is valid but there is nothing to do. The
+     * recovery key outranks the normal one, whose stolen copy may have used a huge version.
+     */
+    private fun check(envelope: String, current: EndpointFile?, now: Long): EndpointFileResult {
         val result = verifier.open(envelope)
         if (result !is EndpointFileResult.Valid) return result
+        val file = result.file
         return when {
-            result.file.isExpired(now) -> EndpointFileResult.Rejected(EndpointRejection.EXPIRED)
-            result.file.version < currentVersion -> EndpointFileResult.Rejected(EndpointRejection.STALE_VERSION)
+            file.isExpired(now) -> EndpointFileResult.Rejected(EndpointRejection.EXPIRED)
+            file.expiresTooLate(now) -> EndpointFileResult.Rejected(EndpointRejection.EXPIRES_TOO_LATE)
+            current == null || (file.signedByRecoveryKey && !current.signedByRecoveryKey) -> result
+            current.signedByRecoveryKey && !file.signedByRecoveryKey -> EndpointFileResult.Rejected(EndpointRejection.STALE_VERSION)
+            file.version < current.version -> EndpointFileResult.Rejected(EndpointRejection.STALE_VERSION)
             else -> result
         }
     }
+
+    private fun EndpointFile.sameRankAs(other: EndpointFile?) = signedByRecoveryKey == other?.signedByRecoveryKey
 
     /** Reads at most one byte over the limit, so an oversized answer never fills the memory. */
     @Suppress("TooGenericExceptionCaught") // Any failure of a mirror just means trying the next one.

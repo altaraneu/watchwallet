@@ -75,4 +75,11 @@
     <string name="settings_remote_icons">下载币种图标</string>
     <string name="settings_remote_icons_summary">币种和代币的徽标来自 GitHub 上的 Trust Wallet 资产仓库,并缓存在设备上。只会透露显示了哪些币种,绝不会透露您的地址。</string>
     <string name="settings_privacy_policy">隐私政策</string>
+    <string name="settings_endpoints_list">服务器列表</string>
+    <string name="settings_endpoints_bundled">内置于应用，版本 %1$s</string>
+    <string name="settings_endpoints_remote">已签名列表，版本 %1$s，签名于 %2$s，有效期至 %3$s</string>
+    <string name="settings_endpoints_remote_undated">已签名列表，版本 %1$s，有效期至 %2$s</string>
+    <string name="settings_endpoints_hosts_title">正在使用的区块链服务器</string>
+    <string name="settings_endpoints_hosts_hint">这些服务器会收到你跟踪的地址，你看到的内容也来自它们的报告。新列表在下次启动应用时生效。</string>
+    <string name="settings_endpoints_hosts_close">关闭</string>
 </resources>

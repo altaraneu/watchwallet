@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.altaran.watchwallet.core.data.platform.AppInfo
 import com.altaran.watchwallet.core.data.platform.AppLanguageController
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
+import com.altaran.watchwallet.core.endpoints.EndpointCatalog
+import com.altaran.watchwallet.core.endpoints.EndpointListInfo
 import com.altaran.watchwallet.core.model.QuoteCurrency
 import com.altaran.watchwallet.core.model.ThemeMode
 import com.altaran.watchwallet.core.model.UserSettings
@@ -25,6 +27,8 @@ sealed interface SettingsUiState {
         val appInfo: AppInfo,
         /** Network settings changed since start: a restart is needed to apply them. */
         val restartRequired: Boolean = false,
+        /** The server list in force in this run of the app. */
+        val serverList: EndpointListInfo? = null,
     ) : SettingsUiState
 }
 
@@ -37,6 +41,7 @@ internal class SettingsViewModel(
     private val activeNetwork: com.altaran.watchwallet.core.model.NetworkSettings,
     private val restarter: com.altaran.watchwallet.core.data.platform.AppRestarter,
     private val walletRepository: com.altaran.watchwallet.core.data.repository.WalletRepository,
+    private val endpoints: EndpointCatalog,
 ) : ViewModel() {
     /** Number of tracked wallets, for the "delete all" row. */
     val walletCount: StateFlow<Int> = walletRepository.activeWalletCount
@@ -56,6 +61,7 @@ internal class SettingsViewModel(
             supportedLanguageTags = languageController.supportedLanguageTags,
             appInfo = appInfo,
             restartRequired = settings.network != activeNetwork,
+            serverList = endpoints.info,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState.Loading)
 

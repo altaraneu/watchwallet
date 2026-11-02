@@ -3,9 +3,13 @@ package com.altaran.watchwallet.feature.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,18 +26,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.altaran.watchwallet.core.designsystem.component.SectionHeader
 import com.altaran.watchwallet.core.designsystem.component.SettingsItem
 import com.altaran.watchwallet.core.designsystem.component.SettingsSwitchItem
 import com.altaran.watchwallet.core.designsystem.component.SingleChoiceDialog
+import com.altaran.watchwallet.core.endpoints.EndpointListInfo
 import com.altaran.watchwallet.core.model.NetworkSettings
 import com.altaran.watchwallet.core.network.proxySupported
+import com.altaran.watchwallet.core.ui.format.DateFormatter
 import com.altaran.watchwallet.feature.settings.generated.resources.*
 import com.altaran.watchwallet.feature.settings.generated.resources.Res
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Instant
 
 private val REFRESH_OPTIONS = listOf(0, 1, 6, 12, 24)
 
@@ -52,6 +60,7 @@ internal fun AdvancedSettingsSections(
     val settings = state.settings
     var refreshPicker by rememberSaveable { mutableStateOf(false) }
     var dialog by rememberSaveable { mutableStateOf<NetworkDialog?>(null) }
+    var serverHosts by rememberSaveable { mutableStateOf(false) }
 
     if (state.appInfo.isAppLockAvailable) {
         SettingsSwitchItem(
@@ -111,6 +120,14 @@ internal fun AdvancedSettingsSections(
         checked = network.autoUpdateEndpoints,
         onCheckedChange = { enabled -> onNetworkChange(network.copy(autoUpdateEndpoints = enabled)) },
     )
+    state.serverList?.let { list ->
+        SettingsItem(
+            title = stringResource(Res.string.settings_endpoints_list),
+            summary = serverListSummary(list),
+            onClick = { serverHosts = true },
+        )
+        if (serverHosts) ServerHostsDialog(list.hosts, onDismiss = { serverHosts = false })
+    }
     SettingsItem(
         title = stringResource(Res.string.settings_coingecko_key),
         summary = if (network.coinGeckoApiKey.isNullOrBlank()) stringResource(Res.string.settings_not_set) else "••••••",
@@ -174,6 +191,36 @@ internal fun AdvancedSettingsSections(
 @Composable
 private fun refreshLabel(hours: Int): String =
     if (hours == 0) stringResource(Res.string.settings_refresh_off) else pluralStringResource(Res.plurals.settings_refresh_every_hours, hours, hours)
+
+@Composable
+private fun serverListSummary(list: EndpointListInfo): String {
+    val version = list.version.toString()
+    val expires = list.expiresAtSeconds
+    val signed = list.signedAtSeconds
+    return when {
+        !list.remote || expires == null -> stringResource(Res.string.settings_endpoints_bundled, version)
+        signed == null -> stringResource(Res.string.settings_endpoints_remote_undated, version, dayOf(expires))
+        else -> stringResource(Res.string.settings_endpoints_remote, version, dayOf(signed), dayOf(expires))
+    }
+}
+
+private fun dayOf(seconds: Long): String = DateFormatter.date(Instant.fromEpochSeconds(seconds))
+
+@Composable
+private fun ServerHostsDialog(hosts: List<String>, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.settings_endpoints_hosts_title)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(Res.string.settings_endpoints_hosts_hint), style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(8.dp))
+                hosts.forEach { Text(it, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace) }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.settings_endpoints_hosts_close)) } },
+    )
+}
 
 @Composable
 private fun ProxyDialog(network: NetworkSettings, onDismiss: () -> Unit, onConfirm: (String, Int) -> Unit) {

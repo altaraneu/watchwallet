@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.map
  * @param defaultQuoteCurrency used until the user picks a currency; normally derived from the
  * device region.
  */
+@Suppress("TooManyFunctions") // One small accessor per stored value; splitting them would not help.
 class SettingsDataSource(
     private val dataStore: DataStore<Preferences>,
     private val defaultQuoteCurrency: () -> QuoteCurrency,
@@ -101,6 +102,11 @@ class SettingsDataSource(
 
     suspend fun setEndpointConfigLastCheck(seconds: Long) = edit { it[Keys.ENDPOINTS_LAST_CHECK] = seconds }
 
+    /** Hosts of the server list the user was last told about; `null` before the first start. */
+    val endpointHostsSeen: Flow<Set<String>?> = dataStore.data.map { it[Keys.ENDPOINTS_HOSTS_SEEN] }
+
+    suspend fun setEndpointHostsSeen(hosts: Set<String>) = edit { it[Keys.ENDPOINTS_HOSTS_SEEN] = hosts }
+
     /** Which stored prices came from which source, as marks of `:core:pricing`; stays on the device. */
     val priceSourceMarks: Flow<Set<String>> = dataStore.data.map { it[Keys.PRICE_SOURCE_MARKS].orEmpty() }
 
@@ -170,6 +176,7 @@ class SettingsDataSource(
         val ENDPOINTS_AUTO_UPDATE = booleanPreferencesKey("endpoints_auto_update")
         val ENDPOINTS_CONFIG = stringPreferencesKey("endpoints_config")
         val ENDPOINTS_LAST_CHECK = longPreferencesKey("endpoints_last_check")
+        val ENDPOINTS_HOSTS_SEEN = stringSetPreferencesKey("endpoints_hosts_seen")
         val PRICE_SOURCE_MARKS = stringSetPreferencesKey("price_source_marks")
         val LAUNCH_COUNT = intPreferencesKey("launch_count")
         val RATE_PROMPT_OFF = booleanPreferencesKey("rate_prompt_off")

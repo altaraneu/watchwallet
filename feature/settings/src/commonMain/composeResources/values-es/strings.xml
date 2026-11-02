@@ -79,4 +79,11 @@
     <string name="settings_remote_icons">Descargar iconos de monedas</string>
     <string name="settings_remote_icons_summary">Logotipos de monedas y tokens del repositorio de activos de Trust Wallet en GitHub, guardados en caché en el dispositivo. Solo revela qué monedas se muestran, nunca tus direcciones.</string>
     <string name="settings_privacy_policy">Política de privacidad</string>
+    <string name="settings_endpoints_list">Lista de servidores</string>
+    <string name="settings_endpoints_bundled">Incluida en la app, versión %1$s</string>
+    <string name="settings_endpoints_remote">Lista firmada, versión %1$s, firmada el %2$s, válida hasta el %3$s</string>
+    <string name="settings_endpoints_remote_undated">Lista firmada, versión %1$s, válida hasta el %2$s</string>
+    <string name="settings_endpoints_hosts_title">Servidores de blockchain en uso</string>
+    <string name="settings_endpoints_hosts_hint">Estos servidores reciben las direcciones que sigues y lo que ves es lo que ellos informan. Una lista nueva se aplica al siguiente inicio de la app.</string>
+    <string name="settings_endpoints_hosts_close">Cerrar</string>
 </resources>

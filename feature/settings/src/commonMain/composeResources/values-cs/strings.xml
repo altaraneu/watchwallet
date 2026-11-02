@@ -84,4 +84,11 @@
     <string name="settings_remote_icons">Stahovat ikony mincí</string>
     <string name="settings_remote_icons_summary">Loga mincí a tokenů z repozitáře Trust Wallet na GitHubu, uložená v zařízení. Prozradí jen to, které mince se zobrazují, nikdy tvoje adresy.</string>
     <string name="settings_privacy_policy">Zásady ochrany soukromí</string>
+    <string name="settings_endpoints_list">Seznam serverů</string>
+    <string name="settings_endpoints_bundled">Vestavěný v aplikaci, verze %1$s</string>
+    <string name="settings_endpoints_remote">Podepsaný seznam, verze %1$s, podepsán %2$s, platný do %3$s</string>
+    <string name="settings_endpoints_remote_undated">Podepsaný seznam, verze %1$s, platný do %2$s</string>
+    <string name="settings_endpoints_hosts_title">Používané blockchainové servery</string>
+    <string name="settings_endpoints_hosts_hint">Tyto servery dostávají adresy, které sleduješ, a zobrazuje se ti to, co nahlásí. Nový seznam začne platit při dalším spuštění aplikace.</string>
+    <string name="settings_endpoints_hosts_close">Zavřít</string>
 </resources>

@@ -3,6 +3,9 @@ package com.altaran.watchwallet.core.endpoints
 import com.altaran.watchwallet.core.model.ChainId
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class EndpointCatalogTest {
     private val bitcoin = ChainId.BITCOIN
@@ -44,6 +47,51 @@ class EndpointCatalogTest {
         assertEquals(remote, resolve(signed(expires = NOW + 1)).esplora())
         assertEquals(bundled, resolve(signed(expires = NOW)).esplora())
         assertEquals(bundled, resolve(signed(expires = NOW - 1)).esplora())
+    }
+
+    /** An expiry far ahead would keep a list in force for years, which is what expiry is there to prevent. */
+    @Test
+    fun fileExpiringTooFarAheadUsesBundled() {
+        val limit = EndpointFile.MAX_VALIDITY_SECONDS
+        assertEquals(remote, resolve(signed(expires = NOW + limit)).esplora())
+        assertEquals(bundled, resolve(signed(expires = NOW + limit + 1)).esplora())
+    }
+
+    @Test
+    fun infoDescribesTheBundledList() {
+        val info = resolve(null).info
+        assertEquals(BundledEndpoints.VERSION, info.version)
+        assertFalse(info.remote)
+        assertNull(info.expiresAtSeconds)
+        assertTrue("mempool.space" in info.hosts)
+        assertTrue("s1.ripple.com" in info.hosts, "without the port")
+        assertEquals(info.hosts.sorted().distinct(), info.hosts)
+    }
+
+    @Test
+    fun infoDescribesAnAppliedFile() {
+        val info = resolve(signed(version = 9)).info
+        assertEquals(9, info.version)
+        assertTrue(info.remote)
+        assertEquals(LATER, info.expiresAtSeconds)
+        assertTrue("new.test" in info.hosts)
+        assertFalse("mempool.space" in info.hosts)
+    }
+
+    @Test
+    fun infoIgnoresAFileThatIsNotApplied() {
+        assertFalse(resolve(signed(expires = NOW)).info.remote)
+        assertFalse(resolve(signed(), autoUpdate = false).info.remote)
+        assertFalse(resolve(signed(expires = NOW + EndpointFile.MAX_VALIDITY_SECONDS + 1)).info.remote)
+    }
+
+    @Test
+    fun theUsersOwnServerIsInUseButNotPartOfTheList() {
+        val catalog = resolve(null, custom = "http://umbrel.local:3006/api")
+        assertTrue("umbrel.local" in catalog.info.hosts)
+        assertFalse("mempool.space" in catalog.info.hosts)
+        assertFalse("umbrel.local" in catalog.listHosts)
+        assertTrue("mempool.space" in catalog.listHosts)
     }
 
     @Test

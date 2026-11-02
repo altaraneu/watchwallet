@@ -13,12 +13,17 @@ internal object TestKeys {
     val SECRET = "0000000000000000000000000000000000000000000000000000000000000003".hexToByteArray()
     const val PUBLIC = "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9"
     val OTHER_SECRET = "b7e151628aed2a6abf7158809cf4f3c762e7160f38b4da56a784d9045190cfef".hexToByteArray()
+
+    /** Public key of [OTHER_SECRET], standing in for an offline recovery key. */
+    const val OTHER_PUBLIC = "dff1d77f2a671c5f36183726db2341be58feae1da2deced843240f7b502ba659"
 }
 
 internal const val NOW = 1_800_000_000L
 internal const val LATER = NOW + 86_400L
 
-internal val verifier = EndpointFileVerifier(TestKeys.PUBLIC)
+internal val verifier = EndpointFileVerifier(TestKeys.PUBLIC, recoveryKeyHex = null)
+
+internal val recoverableVerifier = EndpointFileVerifier(TestKeys.PUBLIC, recoveryKeyHex = TestKeys.OTHER_PUBLIC)
 
 internal fun entry(chain: String = "bitcoin", protocol: String = "esplora", vararg urls: String = arrayOf("https://new.test/api")) =
     EndpointEntry(chain, protocol, urls.toList())
@@ -54,3 +59,8 @@ internal fun envelope(payload: String, signature: String = signature(payload)): 
 
 internal fun signed(version: Long = 5, expires: Long = LATER, entries: List<EndpointEntry> = listOf(entry())): String =
     envelope(payload(version, expires, entries = entries))
+
+internal fun signedByRecovery(version: Long = 5, expires: Long = LATER, entries: List<EndpointEntry> = listOf(entry())): String {
+    val text = payload(version, expires, entries = entries)
+    return envelope(text, signature(text, TestKeys.OTHER_SECRET))
+}
