@@ -79,4 +79,5 @@
     <string name="settings_remote_icons">Descargar iconos de monedas</string>
     <string name="settings_remote_icons_summary">Logotipos de monedas y tokens del repositorio de activos de Trust Wallet en GitHub, guardados en caché en el dispositivo. Solo revela qué monedas se muestran, nunca tus direcciones.</string>
     <string name="settings_privacy_policy">Política de privacidad</string>
+    <string name="settings_esplora_invalid">Introduce una dirección https:// completa. El http:// simple solo funciona con direcciones .onion, localhost y direcciones de tu propia red.</string>
 </resources>

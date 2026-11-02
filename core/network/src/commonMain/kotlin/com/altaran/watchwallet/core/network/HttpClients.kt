@@ -1,5 +1,6 @@
 package com.altaran.watchwallet.core.network
 
+import com.altaran.watchwallet.core.common.CustomServerUrl
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
@@ -8,6 +9,7 @@ import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.ContentType
@@ -34,6 +36,20 @@ expect fun createPlatformEngine(proxy: ProxyConfig?): HttpClientEngine
  * proxy option, so nobody believes their traffic is routed through Tor when it is not.
  */
 expect val proxySupported: Boolean
+
+/** A request without TLS to a host outside the device or the local network. Never sent. */
+class CleartextRefusedException : IllegalStateException("Refusing a request without TLS to a public host")
+
+/**
+ * Plain http is possible only for a custom server on `.onion`, localhost or the local network. The
+ * platform cannot express private address ranges, so this check is what enforces it for every call.
+ */
+internal val CleartextGuard = createClientPlugin("CleartextGuard") {
+    onRequest { request, _ ->
+        val scheme = request.url.protocol.name
+        if ((scheme == "http" || scheme == "ws") && !CustomServerUrl.isCleartextAllowedHost(request.url.host)) throw CleartextRefusedException()
+    }
+}
 
 private const val CONNECT_TIMEOUT_MS = 8_000L
 
@@ -92,6 +108,7 @@ fun createHttpClient(
 ): HttpClient = HttpClient(engine) {
     expectSuccess = true
     followRedirects = false
+    install(CleartextGuard)
     install(ContentNegotiation) {
         json(NetworkJson)
         // Some public APIs answer JSON with a text/plain content type.

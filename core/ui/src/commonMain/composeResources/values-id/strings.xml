@@ -44,4 +44,5 @@
     <string name="chart_performance">Tanpa setoran dan penarikan: %1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
     <string name="chart_current_value">Sekarang: %1$s</string>
+    <string name="secret_field_warning">Ini terlihat seperti frasa pemulihan atau kunci pribadi. WatchWallet tidak pernah membutuhkannya. Kolom telah dikosongkan dan tidak ada yang disimpan atau dikirim.</string>
 </resources>

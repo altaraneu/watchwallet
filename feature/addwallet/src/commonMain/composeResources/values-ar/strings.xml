@@ -51,8 +51,6 @@
     <string name="qr_close">إغلاق الماسح</string>
     <string name="qr_no_permission">يلزم الوصول إلى الكاميرا لمسح رموز QR. يمكنك السماح بذلك من إعدادات التطبيق.</string>
     <string name="default_name_generic">محفظة %1$s</string>
-    <string name="confirm_chain_title">اختر الشبكة</string>
-    <string name="confirm_chain_message">يبدو أن هذا عنوان Sui أو Aptos، لكن المفاتيح الخاصة لعدة شبكات تبدو مطابقة له تمامًا. لم يُفحص أو يُرسل أي شيء بعد. اختر شبكة هذا العنوان. وإذا نسخت مفتاحًا خاصًا عن طريق الخطأ، فامسحه.</string>
     <string name="confirm_unused_title">لم يُستخدم هذا العنوان من قبل</string>
     <string name="confirm_unused_message">إذا نسخت مفتاحًا خاصًا عن طريق الخطأ، فامسحه الآن ولا تشاركه مع أي أحد أبدًا. لا تضفه إلا إذا كنت متأكدًا من أنه عنوان جديد غير مستخدم.</string>
     <string name="confirm_add_anyway">إضافة على أي حال</string>
@@ -63,4 +61,14 @@
     <string name="overlap_message">ستتم إضافته كمحفظة مستقلة. إذا طرحته من %1$s فلن يُحتسب رصيده مرتين ويمكنك متابعة المحفظتين كلٍّ على حدة.</string>
     <string name="overlap_subtract">إضافة وطرح</string>
     <string name="overlap_keep_both">إضافة واحتساب كليهما</string>
+    <string name="add_sui_aptos_action">إضافة عنوان Sui أو Aptos</string>
+    <string name="deliberate_pick_title">على أي شبكة يوجد العنوان؟</string>
+    <string name="deliberate_pick_message">تحتاج هذه العناوين إلى مسار خاص لأنها تبدو تمامًا مثل المفتاح الخاص. لم يتم فحص أو إرسال أي شيء بعد.</string>
+    <string name="deliberate_warning_title">هذا التنسيق مطابق للمفتاح الخاص</string>
+    <string name="deliberate_warning_message">لا يستطيع التطبيق التمييز بين العنوان والمفتاح الخاص لـ Ethereum أو سلسلة أخرى: كلاهما 0x و64 محرفًا سداسيًا عشريًا. ما تدخله هنا يُرسل إلى خادم %1$s العام. تابع فقط بعنوان عام منسوخ من شاشة الاستلام في محفظتك. لا تدخل مفتاحًا خاصًا أبدًا.</string>
+    <string name="deliberate_accept">أفهم ذلك، هذا عنوان عام</string>
+    <string name="deliberate_entry_title">أدخل عنوان %1$s أعلاه</string>
+    <string name="deliberate_entry_message">هنا فقط تُقبل قيمة بهذا التنسيق. تُرسل إلى الخادم العام لتلك الشبكة عند إضافتها.</string>
+    <string name="deliberate_entry_invalid">هذا ليس عنوانًا صالحًا على تلك الشبكة.</string>
+    <string name="secret_hex_hint">إذا كان هذا عنوان Sui أو Aptos، فاستخدم «إضافة عنوان Sui أو Aptos» أدناه.</string>
 </resources>

@@ -34,11 +34,13 @@ class DemoWallets(
 
     internal companion object {
         /** The watch target of [entry], resolved the same way user input is. */
-        fun resolve(entry: Entry): WatchTarget? = when (val result = AddressClassifier.classify(entry.input)) {
-            is Classification.Candidates -> result.candidates.firstOrNull()?.target
-            is Classification.ConfirmationRequired -> entry.confirmedFamily?.let { ChainParsers.parseConfirmed(entry.input, it) }
-            is Classification.Unsupported, Classification.Unrecognized -> ChainParsers.parse(entry.input).firstOrNull()
-            else -> null
+        fun resolve(entry: Entry): WatchTarget? {
+            entry.confirmedFamily?.let { return ChainParsers.parseConfirmed(entry.input, it) }
+            return when (val result = AddressClassifier.classify(entry.input)) {
+                is Classification.Candidates -> result.candidates.firstOrNull()?.target
+                is Classification.Unsupported, Classification.Unrecognized -> ChainParsers.parse(entry.input).firstOrNull()
+                else -> null
+            }
         }
 
         val ENTRIES = listOf(

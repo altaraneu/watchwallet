@@ -41,8 +41,6 @@
     <string name="qr_close">关闭扫描器</string>
     <string name="qr_no_permission">扫描 QR 码需要相机权限。您可以在应用设置中授予。</string>
     <string name="default_name_generic">%1$s 钱包</string>
-    <string name="confirm_chain_title">选择网络</string>
-    <string name="confirm_chain_message">这看起来是 Sui 或 Aptos 地址,但多条区块链的私钥与其外观完全相同。目前尚未进行任何检查或发送。请选择此地址所属的网络。如果您误复制了私钥,请将其清除。</string>
     <string name="confirm_unused_title">此地址从未使用过</string>
     <string name="confirm_unused_message">如果您误复制了私钥,请立即清除,并且绝不要与任何人分享。只有在确定这是新的未使用地址时才添加。</string>
     <string name="confirm_add_anyway">仍然添加</string>
@@ -53,4 +51,14 @@
     <string name="overlap_message">它将作为独立钱包添加。如果从 %1$s 中扣除，其余额不会被重复计算，你也可以分别查看两个钱包。</string>
     <string name="overlap_subtract">添加并扣除</string>
     <string name="overlap_keep_both">添加并都计入</string>
+    <string name="add_sui_aptos_action">添加 Sui 或 Aptos 地址</string>
+    <string name="deliberate_pick_title">该地址在哪个网络上?</string>
+    <string name="deliberate_pick_message">这些地址需要单独的流程,因为它们看起来与私钥完全相同。目前尚未检查或发送任何内容。</string>
+    <string name="deliberate_warning_title">此格式与私钥完全相同</string>
+    <string name="deliberate_warning_message">应用无法区分地址与以太坊或其他链的私钥:两者都是 0x 加 64 个十六进制字符。您在此输入的内容会发送到 %1$s 的公共服务器。只有当它是从钱包收款页面复制的公开地址时才继续。切勿输入私钥。</string>
+    <string name="deliberate_accept">我明白,这是公开地址</string>
+    <string name="deliberate_entry_title">在上方输入 %1$s 地址</string>
+    <string name="deliberate_entry_message">只有此处接受这种形式的值。添加时会发送到该网络的公共服务器。</string>
+    <string name="deliberate_entry_invalid">这不是该网络上的有效地址。</string>
+    <string name="secret_hex_hint">如果这是 Sui 或 Aptos 地址,请使用下方的“添加 Sui 或 Aptos 地址”。</string>
 </resources>

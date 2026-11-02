@@ -22,7 +22,9 @@ import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.TokenAmount
 import com.altaran.watchwallet.core.model.WalletGroup
 import com.altaran.watchwallet.core.model.WatchTarget
+import com.altaran.watchwallet.core.security.SecretGuard
 import com.altaran.watchwallet.core.security.SecretKind
+import com.altaran.watchwallet.core.security.SecretRejectedException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,7 +43,30 @@ data class ImportRow(
     val selected: Boolean,
     val chosen: Int = 0,
     val alreadyTracked: Boolean = false,
-)
+    /** The user accepted the warning for this one entry (Sui or Aptos address from a backup). */
+    val confirmed: Boolean = false,
+) {
+    val needsConfirmation: Boolean get() = entry.status == EntryStatus.NEEDS_CONFIRMATION && !confirmed
+
+    /** Whether the import may save it and start requests for it. */
+    val mayImport: Boolean get() = selected && !needsConfirmation
+}
+
+/** The preview's rules for selecting rows, separate from the view model so they can be tested. */
+internal object ImportRows {
+    private val SELECTABLE = setOf(EntryStatus.READY, EntryStatus.AMBIGUOUS)
+
+    fun initial(entry: BatchEntry, tracked: Boolean) =
+        ImportRow(entry, selected = entry.status in SELECTABLE && !tracked, alreadyTracked = tracked)
+
+    fun canToggle(row: ImportRow): Boolean = row.entry.status in SELECTABLE || (row.entry.status == EntryStatus.NEEDS_CONFIRMATION && row.confirmed)
+
+    /** An unconfirmed entry cannot be selected: the only way there is [confirm]. */
+    fun toggle(row: ImportRow): ImportRow = if (canToggle(row)) row.copy(selected = !row.selected) else row
+
+    fun confirm(row: ImportRow): ImportRow =
+        if (row.entry.status == EntryStatus.NEEDS_CONFIRMATION && !row.alreadyTracked) row.copy(confirmed = true, selected = true) else row
+}
 
 data class ImportSummary(val imported: Int, val skipped: Int, val failed: Int)
 
@@ -63,6 +88,8 @@ data class ImportUiState(
     val phase: ImportPhase = ImportPhase.Input,
     /** Optional group for all imported wallets (rows with their own group keep it). */
     val groupName: String = "",
+    /** The group name was refused as key material and cleared. */
+    val groupRejected: Boolean = false,
 )
 
 internal class ImportViewModel(
@@ -82,9 +109,27 @@ internal class ImportViewModel(
         pendingImport.consume()?.takeIf { it.isNotBlank() }?.let(::parse)
     }
 
-    fun onTextChange(value: String) = _state.update { it.copy(text = value, phase = ImportPhase.Input) }
+    /**
+     * Runs on every change of the field, however the text got there. Returns `true` when it was
+     * rejected: the text is then gone from the state and the screen clears the clipboard too. An
+     * encrypted backup cannot be read before the password, so it is checked after decryption.
+     */
+    fun onTextChange(value: String): Boolean {
+        val secret = if (ExportCrypto.isEncrypted(value)) null else BatchParser.findSecret(value)
+        if (secret != null) {
+            _state.value = ImportUiState(phase = ImportPhase.SecretRejected(secret.kind, secret.line))
+            return true
+        }
+        _state.update { it.copy(text = value, phase = ImportPhase.Input) }
+        return false
+    }
 
-    fun onGroupNameChange(value: String) = _state.update { it.copy(groupName = value) }
+    /** Returns `true` when the value was refused, so the screen can clear the clipboard as well. */
+    fun onGroupNameChange(value: String): Boolean {
+        val secret = SecretGuard.isSecret(value)
+        _state.update { it.copy(groupName = if (secret) "" else value, groupRejected = secret) }
+        return secret
+    }
 
     /** Parses pasted or loaded text. Secrets abort the import and the input is discarded. */
     fun parse(text: String = _state.value.text) {
@@ -93,7 +138,7 @@ internal class ImportViewModel(
             _state.update { it.copy(text = "", phase = ImportPhase.NeedsPassword) }
             return
         }
-        when (val result = BatchParser.parse(text, addWalletService::parseOtherChains)) {
+        when (val result = BatchParser.parse(text, addWalletService::parseOtherChains, addWalletService::validatedImport)) {
             is BatchResult.SecretDetected -> _state.value = ImportUiState(phase = ImportPhase.SecretRejected(result.kind, result.line))
 
             BatchResult.Empty -> _state.update { it.copy(text = text, phase = ImportPhase.Input) }
@@ -101,7 +146,7 @@ internal class ImportViewModel(
             is BatchResult.Entries -> viewModelScope.launch {
                 val rows = result.entries.map { entry ->
                     val tracked = entry.candidates.firstOrNull()?.let { walletRepository.findExisting(it) } != null
-                    ImportRow(entry, selected = entry.status in IMPORTABLE && !tracked, alreadyTracked = tracked)
+                    ImportRows.initial(entry, tracked)
                 }
                 _state.update { it.copy(text = text, phase = ImportPhase.Preview(rows)) }
             }
@@ -124,7 +169,10 @@ internal class ImportViewModel(
         }
     }
 
-    fun toggle(index: Int) = updateRows { rows -> rows.mapIndexed { i, r -> if (i == index) r.copy(selected = !r.selected) else r } }
+    fun toggle(index: Int) = updateRows { rows -> rows.mapIndexed { i, r -> if (i == index) ImportRows.toggle(r) else r } }
+
+    /** The user accepted the warning for this entry; only now can it be imported and sent. */
+    fun confirm(index: Int) = updateRows { rows -> rows.mapIndexed { i, r -> if (i == index) ImportRows.confirm(r) else r } }
 
     fun choose(index: Int, candidate: Int) = updateRows { rows ->
         rows.mapIndexed { i, r ->
@@ -151,10 +199,11 @@ internal class ImportViewModel(
                 groupIds.getOrPut(it) { walletRepository.findGroup(it) ?: walletRepository.createGroup(it) }
             }
             val addedLinks = mutableMapOf<Long, String>()
+            var secret: com.altaran.watchwallet.core.security.SecretKind? = null
             phase.rows.forEach { row ->
                 val target = row.entry.candidates.getOrNull(row.chosen)
                 when {
-                    !row.selected -> skipped++
+                    !row.mayImport -> skipped++
 
                     target == null -> failed++
 
@@ -174,8 +223,16 @@ internal class ImportViewModel(
                                 cost.decoded()?.let { (hash, assetId) -> CostKey(walletId, hash, assetId) to cost.valueUsd }
                             }.toMap(),
                         )
-                    }.onSuccess { imported++ }.onFailure { failed++ }
+                    }.onSuccess { imported++ }.onFailure { failure ->
+                        failed++
+                        (failure as? SecretRejectedException)?.let { secret = it.kind }
+                    }
                 }
+            }
+            // The last line of defence: a warning, never a crash.
+            secret?.let { kind ->
+                _state.value = ImportUiState(phase = ImportPhase.SecretRejected(kind, 0))
+                return@launch
             }
             // Links last: the wallet they point to can come later in the file.
             val all = walletRepository.activeWallets.first()
@@ -197,10 +254,6 @@ internal class ImportViewModel(
     private fun updateRows(transform: (List<ImportRow>) -> List<ImportRow>) = _state.update { state ->
         val phase = state.phase as? ImportPhase.Preview ?: return@update state
         state.copy(phase = phase.copy(rows = transform(phase.rows)))
-    }
-
-    private companion object {
-        val IMPORTABLE = setOf(EntryStatus.READY, EntryStatus.AMBIGUOUS)
     }
 }
 

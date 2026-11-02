@@ -10,6 +10,7 @@ kotlin {
             api(libs.ktor.serialization.kotlinx.json)
             api(libs.kotlinx.serialization.json)
             api(libs.kotlinx.coroutines.core)
+            implementation(projects.core.common)
         }
         jvmMain.dependencies {
             implementation(libs.ktor.client.okhttp)

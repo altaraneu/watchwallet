@@ -15,7 +15,7 @@
     <string name="import_status_tracked">पहले से ट्रैक हो रहा है, छोड़ दिया जाएगा</string>
     <string name="import_status_duplicate">इस सूची में डुप्लिकेट</string>
     <string name="import_status_unsupported">%1$s अभी समर्थित नहीं है</string>
-    <string name="import_status_confirm">Sui या Aptos पता: इसे वॉलेट जोड़ें स्क्रीन पर जोड़ें, जहाँ पुष्टि माँगी जाती है</string>
+    <string name="import_status_confirm">Sui या Aptos पता: समीक्षा करने तक चयनित नहीं</string>
     <string name="import_status_invalid">पहचाना गया पता नहीं है</string>
     <string name="import_secret_title">इंपोर्ट रोक दिया गया: निजी कुंजी या सीड फ़्रेज़ मिली</string>
     <string name="import_secret_message">इनपुट में कुछ ऐसा था जो निजी कुंजी या सीड फ़्रेज़ जैसा दिखता है। कुछ भी इंपोर्ट, सहेजा या कहीं भेजा नहीं गया, और इनपुट मिटा दिया गया है। वह प्रविष्टि हटाकर दोबारा कोशिश करें।</string>
@@ -43,4 +43,10 @@
     <string name="export_share">साझा करें</string>
     <string name="export_saved">सहेजा गया</string>
     <string name="export_save_failed">फ़ाइल सहेजी नहीं जा सकी</string>
+    <string name="import_confirm_action">समीक्षा करें</string>
+    <string name="import_confirm_title">यह प्रारूप निजी कुंजी जैसा ही है</string>
+    <string name="import_confirm_message">ऐप इस मान को Ethereum या अन्य चेन की निजी कुंजी से अलग नहीं कर सकता। पुष्टि करने पर यह सहेजा जाएगा और %1$s के सार्वजनिक सर्वर पर भेजा जाएगा। केवल तभी पुष्टि करें जब यह आपका अपना बैकअप हो और मान सार्वजनिक पता हो।</string>
+    <string name="import_confirm_accept">मैं समझता/समझती हूँ, यह सार्वजनिक पता है</string>
+    <string name="import_confirm_cancel">अभी नहीं</string>
+    <string name="import_secret_hex_hint">0x और 64 हेक्साडेसिमल अक्षरों वाला मान भी अस्वीकार होता है, क्योंकि निजी कुंजी भी ऐसी ही दिखती है। Sui और Aptos पते वॉलेट जोड़ें स्क्रीन पर जोड़ें या JSON बैकअप से पुनर्स्थापित करें।</string>
 </resources>

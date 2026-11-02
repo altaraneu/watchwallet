@@ -70,7 +70,21 @@ internal class MarketsViewModel(
     private val _searchResults = MutableStateFlow<List<com.altaran.watchwallet.core.pricing.CoinSearchResult>>(emptyList())
     val searchResults: StateFlow<List<com.altaran.watchwallet.core.pricing.CoinSearchResult>> = _searchResults
 
+    private val _searchRejected = MutableStateFlow(false)
+
+    /** The last input was refused: it looks like an address, a key or a sentence and stays here. */
+    val searchRejected: StateFlow<Boolean> = _searchRejected
+
+    /** Runs on every change of the search field. Returns `false` when the field must be cleared. */
+    fun onSearchInput(query: String): Boolean {
+        val allowed = com.altaran.watchwallet.core.security.SearchQueryGuard.isAllowed(query)
+        _searchRejected.value = !allowed
+        if (!allowed) _searchResults.value = emptyList()
+        return allowed
+    }
+
     fun search(query: String) {
+        if (!onSearchInput(query)) return
         viewModelScope.launch { _searchResults.value = priceRepository.search(query).getOrDefault(emptyList()) }
     }
 

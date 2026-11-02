@@ -18,7 +18,7 @@
     <string name="import_status_duplicate">Duplicate in this list</string>
     <!-- %1$s = chain name -->
     <string name="import_status_unsupported">%1$s is not supported yet</string>
-    <string name="import_status_confirm">Sui or Aptos address: add it on the Add wallet screen, which asks for confirmation</string>
+    <string name="import_status_confirm">Sui or Aptos address: not selected until you review it</string>
     <string name="import_status_invalid">Not a recognised address</string>
     <string name="import_secret_title">Import stopped: private key or seed phrase found</string>
     <string name="import_secret_message">The input contained something that looks like a private key or seed phrase. Nothing was imported, saved or sent anywhere, and the input was cleared. Remove that entry and try again.</string>
@@ -49,4 +49,10 @@
     <string name="export_share">Share</string>
     <string name="export_saved">Saved</string>
     <string name="export_save_failed">Could not save the file</string>
+    <string name="import_confirm_action">Review</string>
+    <string name="import_confirm_title">This format is identical to a private key</string>
+    <string name="import_confirm_message">The app cannot tell this value from the private key of Ethereum or another chain. If you confirm, it is saved and sent to the public %1$s server. Confirm only if this is your own backup and the value is a public address.</string>
+    <string name="import_confirm_accept">I understand, this is a public address</string>
+    <string name="import_confirm_cancel">Not now</string>
+    <string name="import_secret_hex_hint">A value of 0x and 64 hexadecimal characters is refused too, because a private key looks the same. Add Sui and Aptos addresses on the Add wallet screen, or restore them from a JSON backup.</string>
 </resources>

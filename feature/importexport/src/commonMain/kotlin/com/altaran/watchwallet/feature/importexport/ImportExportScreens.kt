@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,6 +34,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,6 +57,9 @@ import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
 import com.altaran.watchwallet.core.importexport.EntryStatus
 import com.altaran.watchwallet.core.ui.familyLabel
+import com.altaran.watchwallet.core.ui.secret.SecretFieldWarning
+import com.altaran.watchwallet.core.ui.secret.SensitiveInput
+import com.altaran.watchwallet.core.ui.secret.rememberClipboardScrubber
 import com.altaran.watchwallet.core.ui.shortAddress
 import com.altaran.watchwallet.core.ui.targetDescription
 import com.altaran.watchwallet.feature.importexport.generated.resources.*
@@ -80,6 +85,7 @@ private fun ScreenScaffold(title: String, onNavigateUp: () -> Unit, content: @Co
 internal fun ImportRoute(onNavigateUp: () -> Unit, onDone: () -> Unit, viewModel: ImportViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val documents = rememberDocumentActions()
+    val scrubClipboard = rememberClipboardScrubber()
     ScreenScaffold(stringResource(Res.string.import_title), onNavigateUp) { modifier ->
         when (val phase = state.phase) {
             ImportPhase.Input, is ImportPhase.SecretRejected -> Column(
@@ -87,16 +93,18 @@ internal fun ImportRoute(onNavigateUp: () -> Unit, onDone: () -> Unit, viewModel
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text(stringResource(Res.string.import_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (phase is ImportPhase.SecretRejected) SecretCard()
-                OutlinedTextField(
-                    value = state.text,
-                    onValueChange = viewModel::onTextChange,
-                    label = { Text(stringResource(Res.string.import_paste_label)) },
-                    textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                    minLines = 6,
-                    keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, keyboardType = KeyboardType.Password),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                if (phase is ImportPhase.SecretRejected) SecretCard(phase.kind)
+                SensitiveInput {
+                    OutlinedTextField(
+                        value = state.text,
+                        onValueChange = { text -> if (viewModel.onTextChange(text)) scrubClipboard(text) },
+                        label = { Text(stringResource(Res.string.import_paste_label)) },
+                        textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        minLines = 6,
+                        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     FilledTonalButton(onClick = { documents.openText { text -> text?.let(viewModel::parse) } }) {
                         Text(stringResource(Res.string.import_choose_file))
@@ -111,7 +119,7 @@ internal fun ImportRoute(onNavigateUp: () -> Unit, onDone: () -> Unit, viewModel
                 modifier = modifier,
             )
 
-            is ImportPhase.Preview -> PreviewList(phase, state.groupName, viewModel, modifier)
+            is ImportPhase.Preview -> PreviewList(phase, state.groupName, state.groupRejected, viewModel, modifier)
 
             ImportPhase.Importing, ImportPhase.Decrypting -> Column(
                 modifier.fillMaxSize(),
@@ -136,7 +144,7 @@ internal fun ImportRoute(onNavigateUp: () -> Unit, onDone: () -> Unit, viewModel
 }
 
 @Composable
-private fun SecretCard() {
+private fun SecretCard(kind: com.altaran.watchwallet.core.security.SecretKind) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
         Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Icon(WwIcon.Warning.painter(), contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
@@ -151,6 +159,13 @@ private fun SecretCard() {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
+                if (kind == com.altaran.watchwallet.core.security.SecretKind.HEX_PRIVATE_KEY) {
+                    Text(
+                        stringResource(Res.string.import_secret_hex_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                }
             }
         }
     }
@@ -177,21 +192,43 @@ private fun PasswordPrompt(wrong: Boolean, onSubmit: (String) -> Unit, modifier:
 }
 
 @Composable
-private fun PreviewList(phase: ImportPhase.Preview, groupName: String, viewModel: ImportViewModel, modifier: Modifier) {
-    val selected = phase.rows.count { it.selected }
+private fun PreviewList(phase: ImportPhase.Preview, groupName: String, groupRejected: Boolean, viewModel: ImportViewModel, modifier: Modifier) {
+    val selected = phase.rows.count { it.mayImport }
+    val scrubClipboard = rememberClipboardScrubber()
+    var confirming by remember { mutableStateOf<Int?>(null) }
+    confirming?.let { index ->
+        val family = phase.rows.getOrNull(index)?.entry?.candidates?.firstOrNull()?.family
+        AlertDialog(
+            onDismissRequest = { confirming = null },
+            title = { Text(stringResource(Res.string.import_confirm_title)) },
+            text = { Text(stringResource(Res.string.import_confirm_message, family?.let { familyLabel(it) }.orEmpty())) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirming = null
+                    viewModel.confirm(index)
+                }) { Text(stringResource(Res.string.import_confirm_accept)) }
+            },
+            dismissButton = { TextButton(onClick = { confirming = null }) { Text(stringResource(Res.string.import_confirm_cancel)) } },
+        )
+    }
     Column(modifier.fillMaxSize()) {
         LazyColumn(Modifier.weight(1f)) {
             item {
-                OutlinedTextField(
-                    value = groupName,
-                    onValueChange = viewModel::onGroupNameChange,
-                    label = { Text(stringResource(Res.string.import_group)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                )
+                SensitiveInput {
+                    OutlinedTextField(
+                        value = groupName,
+                        onValueChange = { text -> if (viewModel.onGroupNameChange(text)) scrubClipboard(text) },
+                        label = { Text(stringResource(Res.string.import_group)) },
+                        isError = groupRejected,
+                        supportingText = if (groupRejected) ({ SecretFieldWarning() }) else null,
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false),
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    )
+                }
             }
             itemsIndexed(phase.rows) { index, row ->
-                val selectable = row.entry.status in setOf(EntryStatus.READY, EntryStatus.AMBIGUOUS)
+                val selectable = ImportRows.canToggle(row)
                 // One touch target and one semantics node per row: the row toggles, the checkbox
                 // only shows the state.
                 Row(
@@ -226,7 +263,7 @@ private fun PreviewList(phase: ImportPhase.Preview, groupName: String, viewModel
                                     }.orEmpty(),
                                 )
 
-                                row.entry.status == EntryStatus.NEEDS_CONFIRMATION -> stringResource(Res.string.import_status_confirm)
+                                row.needsConfirmation -> stringResource(Res.string.import_status_confirm)
 
                                 row.entry.status == EntryStatus.INVALID -> stringResource(Res.string.import_status_invalid)
 
@@ -239,6 +276,9 @@ private fun PreviewList(phase: ImportPhase.Preview, groupName: String, viewModel
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        if (row.needsConfirmation && !row.alreadyTracked) {
+                            TextButton(onClick = { confirming = index }) { Text(stringResource(Res.string.import_confirm_action)) }
+                        }
                         if (row.entry.status == EntryStatus.AMBIGUOUS) {
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 row.entry.candidates.forEachIndexed { i, candidate ->

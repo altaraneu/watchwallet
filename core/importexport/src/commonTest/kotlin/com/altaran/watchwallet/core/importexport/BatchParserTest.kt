@@ -67,7 +67,10 @@ class BatchParserTest {
         assertEquals(export, decoded, "export → import → export is lossless")
 
         val imported = entries(ExportFormat.encode(export))
-        assertEquals(wallets.map { it.toTarget() }, imported.map { it.candidates.single() })
+        // What is imported comes out of the parsers: an xpub in canonical form, as manual entry stores it.
+        assertEquals(wallets[0].toTarget(), imported[0].candidates.single())
+        assertEquals(ScriptType.P2WPKH, (imported[1].candidates.single() as WatchTarget.ExtendedPublicKey).scriptType)
+        assertEquals(wallets[2].toTarget(), imported[2].candidates.single())
         assertEquals(listOf("Alice", null, "Bob"), imported.map { it.group })
     }
 
@@ -150,6 +153,114 @@ class BatchParserTest {
         assertEquals(hash to ibc, entry.costs[0].decoded())
         assertEquals(4447.91, entry.costs[0].valueUsd)
         assertEquals(solanaSignature to "solana:native", entry.costs[1].decoded())
+    }
+
+    private val hex64 = "0x" + "a1".repeat(32)
+
+    private fun backup(vararg wallets: ExportedWallet) =
+        ExportFormat.encode(WatchWalletExport(exportedAt = "2026-11-02T00:00:00Z", wallets = wallets.toList()))
+
+    private fun wallet(family: String, chain: String, value: String, kind: String = "ADDRESS", script: String? = null, gap: Int? = null) =
+        ExportedWallet(name = "W", family = family, chain = chain, kind = kind, value = value, scriptType = script, gapLimit = gap)
+
+    /** The audit's finding C: fields alone made a READY, preselected, immediately synced target. */
+    @Test
+    fun backupValuesThatFailChainValidationAreInvalidAndNeverCandidates() {
+        listOf(
+            wallet("UTXO", "bitcoin", "not-an-address"),
+            wallet("UTXO", "bitcoin", "../../../v1/secrets"),
+            wallet("UTXO", "bitcoin", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNb"), // wrong checksum
+            wallet("EVM", "evm:1", "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAeD"), // wrong EIP-55 checksum
+            wallet("EVM", "evm:1", btc), // valid address of another family
+            wallet("UTXO", "bitcoin", eth),
+            wallet("UTXO", "bitcoin", "xpub-not-a-key", "XPUB", "P2WPKH"),
+            wallet("TEZOS", "tezos", "tz1abc/../../account"),
+            wallet("SOLANA", "solana", "x?y=1"),
+        ).forEach { bad ->
+            val entry = entries(backup(bad)).single()
+            assertEquals(EntryStatus.INVALID, entry.status, bad.value)
+            assertEquals(emptyList(), entry.candidates, bad.value)
+        }
+    }
+
+    @Test
+    fun validBackupEntriesAreBuiltFromTheValidatorResult() {
+        val parsed = WatchTarget.Address(ChainFamily.UTXO, ChainId.BITCOIN, btc, ScriptType.P2WPKH)
+        val seen = mutableListOf<WatchTarget>()
+        val result = BatchParser.parse(backup(wallet("UTXO", "bitcoin", btc)), validate = {
+            seen += it
+            parsed
+        })
+        val entry = assertIs<BatchResult.Entries>(result).entries.single()
+        assertEquals(1, seen.size)
+        assertEquals(EntryStatus.READY, entry.status)
+        assertEquals(listOf<WatchTarget>(parsed), entry.candidates)
+    }
+
+    @Test
+    fun suiAndAptosFromABackupWaitForAConfirmationOfTheirOwn() {
+        listOf("SUI" to "sui", "APTOS" to "aptos").forEach { (family, chain) ->
+            val entry = entries(backup(wallet(family, chain, hex64))).single()
+            assertEquals(EntryStatus.NEEDS_CONFIRMATION, entry.status)
+            assertEquals(hex64, (entry.candidates.single() as WatchTarget.Address).address)
+        }
+    }
+
+    @Test
+    fun theHexFormIsAcceptedOnlyAsTheAddressOfASuiOrAptosWallet() {
+        listOf(
+            wallet("EVM", "evm:1", hex64),
+            wallet("UTXO", "bitcoin", hex64),
+            wallet("SUI", "sui", hex64, kind = "XPUB", script = "P2WPKH"),
+            wallet("SUI", "sui", hex64).copy(notes = hex64 + "ff"),
+            wallet("SUI", "sui", hex64).copy(notes = "key 0x" + "b2".repeat(32)),
+            wallet("SUI", "sui", hex64).copy(name = "0x" + "b2".repeat(32)),
+        ).forEach { bad -> assertIs<BatchResult.SecretDetected>(BatchParser.parse(backup(bad)), bad.toString()) }
+    }
+
+    @Test
+    fun aKeyInAFieldThisVersionDoesNotKnowIsFound() {
+        val text = backup(wallet("UTXO", "bitcoin", btc)).replaceFirst("{", "{\"future\": \"0x" + "c3".repeat(32) + "\",")
+        assertIs<BatchResult.SecretDetected>(BatchParser.parse(text))
+        val seed = backup(wallet("UTXO", "bitcoin", btc)).replaceFirst("{", "{\"future\": \"$mnemonic\",")
+        assertIs<BatchResult.SecretDetected>(BatchParser.parse(seed))
+    }
+
+    @Test
+    fun aRealBackupIsNotMistakenForAWordList() {
+        // Its field names ("family", "chain", "kind", "value", "group") are words on the BIP-39 list.
+        val many = Array(40) { wallet("UTXO", "bitcoin", btc).copy(name = "Family wallet", group = "Family") }
+        assertIs<BatchResult.Entries>(BatchParser.parse(backup(*many)))
+    }
+
+    @Test
+    fun csvAndPlainListsCannotUseTheBackupRoute() {
+        listOf(
+            hex64,
+            "$btc\n$hex64",
+            "My Sui, $hex64",
+            "label,chain,type,address_or_xpub\nMy Sui,sui,address,$hex64",
+            "label;family;kind;value\nX;SUI;ADDRESS;$hex64",
+            // Not an export (no schemaVersion): the chain field means nothing.
+            """{"family":"SUI","kind":"ADDRESS","value":"$hex64"}""",
+        ).forEach { input ->
+            val result = assertIs<BatchResult.SecretDetected>(BatchParser.parse(input), input)
+            assertEquals(SecretKind.HEX_PRIVATE_KEY, result.kind)
+        }
+    }
+
+    @Test
+    fun csvRowsPassTheSameValidationAsManualEntry() {
+        val rows = entries("label,address\nA,$btc\nB,not-an-address\nC,../../etc\nD,1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNb")
+        assertEquals(listOf(EntryStatus.READY, EntryStatus.INVALID, EntryStatus.INVALID, EntryStatus.INVALID), rows.map { it.status })
+    }
+
+    @Test
+    fun theSecretCheckAloneFindsTheSameAsTheParser() {
+        assertEquals(null, BatchParser.findSecret("$btc\n$eth"))
+        assertEquals(null, BatchParser.findSecret(backup(wallet("SUI", "sui", hex64))))
+        assertIs<BatchResult.SecretDetected>(BatchParser.findSecret(hex64))
+        assertIs<BatchResult.SecretDetected>(BatchParser.findSecret("name,address\nA,$mnemonic"))
     }
 
     @Test

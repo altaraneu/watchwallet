@@ -37,6 +37,7 @@ internal class SettingsViewModel(
     private val activeNetwork: com.altaran.watchwallet.core.model.NetworkSettings,
     private val restarter: com.altaran.watchwallet.core.data.platform.AppRestarter,
     private val walletRepository: com.altaran.watchwallet.core.data.repository.WalletRepository,
+    private val lockAuthenticator: com.altaran.watchwallet.core.data.platform.LockAuthenticator,
 ) : ViewModel() {
     /** Number of tracked wallets, for the "delete all" row. */
     val walletCount: StateFlow<Int> = walletRepository.activeWalletCount
@@ -78,7 +79,7 @@ internal class SettingsViewModel(
     fun setLanguage(tag: String?) = languageController.setLanguage(tag)
 
     fun setAppLock(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setAppLock(enabled) }
+        viewModelScope.launch { settingsRepository.changeAppLock(enabled, lockAuthenticator) }
     }
 
     fun setRemoteIcons(enabled: Boolean) {

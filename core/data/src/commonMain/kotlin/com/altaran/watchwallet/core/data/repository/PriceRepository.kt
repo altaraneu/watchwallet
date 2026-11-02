@@ -14,6 +14,7 @@ import com.altaran.watchwallet.core.pricing.CoinGeckoUsage
 import com.altaran.watchwallet.core.pricing.CurrentPrice
 import com.altaran.watchwallet.core.pricing.MarketInfo
 import com.altaran.watchwallet.core.pricing.PriceProvider
+import com.altaran.watchwallet.core.security.SearchQueryGuard
 import com.altaran.watchwallet.core.timeline.TimedPrice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -272,7 +273,7 @@ class PriceRepository(
         runCatching { provider.markets(coinIds, currency.code.lowercase()) }
 
     suspend fun search(query: String): Result<List<com.altaran.watchwallet.core.pricing.CoinSearchResult>> =
-        runCatching { provider.search(query) }
+        runCatching { if (SearchQueryGuard.isAllowed(query)) provider.search(query) else emptyList() }
 
     companion object {
         private val CURRENT_FRESH = 30.seconds

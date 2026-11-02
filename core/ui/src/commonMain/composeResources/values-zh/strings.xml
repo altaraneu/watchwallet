@@ -44,4 +44,5 @@
     <string name="chart_performance">不计充值和提现:%1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
     <string name="chart_current_value">当前:%1$s</string>
+    <string name="secret_field_warning">这看起来像助记词或私钥。WatchWallet 永远不需要它们。输入框已清空,未保存或发送任何内容。</string>
 </resources>

@@ -6,8 +6,9 @@ import androidx.compose.runtime.Composable
 internal expect val isQrScanningSupported: Boolean
 
 /**
- * Full-screen QR scanner. Calls [onResult] once with the decoded text (the add-wallet flow then
- * runs it through the secret guard and classifier like pasted text), or [onDismiss].
+ * Full-screen QR scanner. Calls [onResult] once with the decoded text and, when the code holds raw
+ * bytes, those bytes (the add-wallet flow runs both through the secret guard and classifier like
+ * pasted text), or [onDismiss].
  */
 @Composable
-internal expect fun QrScannerDialog(onResult: (String) -> Unit, onDismiss: () -> Unit)
+internal expect fun QrScannerDialog(onResult: (String, ByteArray?) -> Unit, onDismiss: () -> Unit)

@@ -39,6 +39,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 private class FakeProvider : PriceProvider {
+    val searched = mutableListOf<String>()
     val lock = Mutex()
     var currentCalls = 0
     val historyCalls = mutableListOf<String>()
@@ -74,7 +75,10 @@ private class FakeProvider : PriceProvider {
 
     override suspend fun markets(coinIds: Collection<String>, currency: String): List<MarketInfo> = emptyList()
 
-    override suspend fun search(query: String): List<CoinSearchResult> = emptyList()
+    override suspend fun search(query: String): List<CoinSearchResult> {
+        searched += query
+        return emptyList()
+    }
 }
 
 @RunWith(RobolectricTestRunner::class)
@@ -96,6 +100,16 @@ class PriceRepositoryTest {
     }
 
     private suspend fun storedPrices() = repository.currentPrices(settings.settings.first().quoteCurrency).first()
+
+    @Test
+    fun searchSendsCoinNamesButNoAddressesOrKeys() = runBlocking {
+        repository.search("bitcoin")
+        repository.search("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq")
+        repository.search("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed")
+        repository.search("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about")
+        repository.search("this is not the name of any coin at all")
+        assertEquals(listOf("bitcoin"), provider.searched)
+    }
 
     @Test
     fun concurrentPriceRefreshesShareOneRequest() = runBlocking {

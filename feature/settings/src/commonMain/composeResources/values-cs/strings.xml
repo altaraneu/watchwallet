@@ -84,4 +84,5 @@
     <string name="settings_remote_icons">Stahovat ikony mincí</string>
     <string name="settings_remote_icons_summary">Loga mincí a tokenů z repozitáře Trust Wallet na GitHubu, uložená v zařízení. Prozradí jen to, které mince se zobrazují, nikdy tvoje adresy.</string>
     <string name="settings_privacy_policy">Zásady ochrany soukromí</string>
+    <string name="settings_esplora_invalid">Zadej celou adresu https://. Obyčejné http:// funguje jen pro adresy .onion, localhost a adresy ve vlastní síti.</string>
 </resources>

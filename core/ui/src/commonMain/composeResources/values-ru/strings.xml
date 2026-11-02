@@ -44,4 +44,5 @@
     <string name="chart_performance">Без учёта пополнений и выводов: %1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
     <string name="chart_current_value">Сейчас: %1$s</string>
+    <string name="secret_field_warning">Похоже на сид-фразу или приватный ключ. WatchWallet они никогда не нужны. Поле очищено, ничего не сохранено и не отправлено.</string>
 </resources>

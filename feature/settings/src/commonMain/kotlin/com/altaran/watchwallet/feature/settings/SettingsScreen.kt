@@ -232,7 +232,7 @@ internal fun SettingsScreen(
             SectionHeader(stringResource(Res.string.settings_section_about))
             SettingsItem(
                 title = stringResource(Res.string.settings_privacy_policy),
-                onClick = { uriHandler.openUri(uiState.appInfo.sourceCodeUrl + "/blob/main/PRIVACY.md") },
+                onClick = { uriHandler.openUri(uiState.appInfo.privacyPolicyUrl) },
             )
             SettingsItem(
                 title = stringResource(Res.string.settings_source_code),

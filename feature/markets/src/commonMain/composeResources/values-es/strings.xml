@@ -45,4 +45,5 @@
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
     <string name="asset_current_price">Ahora: %1$s</string>
+    <string name="watchlist_search_rejected">No parece el nombre de una moneda: puede ser una dirección o una clave. El campo se ha vaciado y no se ha enviado nada.</string>
 </resources>

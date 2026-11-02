@@ -17,7 +17,7 @@
     <string name="import_status_tracked">Už sledováno, přeskočí se</string>
     <string name="import_status_duplicate">Duplicita v tomto seznamu</string>
     <string name="import_status_unsupported">%1$s zatím není podporován</string>
-    <string name="import_status_confirm">Adresa Sui nebo Aptos: přidej ji na obrazovce Přidat peněženku, kde se vyžaduje potvrzení</string>
+    <string name="import_status_confirm">Adresa Sui nebo Aptos: nebude vybrána, dokud ji nezkontroluješ</string>
     <string name="import_status_invalid">Nerozpoznaná adresa</string>
     <string name="import_secret_title">Import zastaven: nalezen privátní klíč nebo seed fráze</string>
     <string name="import_secret_message">Vstup obsahoval něco, co vypadá jako privátní klíč nebo seed fráze. Nic se neimportovalo, neuložilo ani neodeslalo a vstup byl vymazán. Odstraň tuto položku a zkus to znovu.</string>
@@ -45,4 +45,10 @@
     <string name="export_share">Sdílet</string>
     <string name="export_saved">Uloženo</string>
     <string name="export_save_failed">Soubor se nepodařilo uložit</string>
+    <string name="import_confirm_action">Zkontrolovat</string>
+    <string name="import_confirm_title">Tento formát je totožný s privátním klíčem</string>
+    <string name="import_confirm_message">Aplikace tuto hodnotu nerozezná od privátního klíče Etherea nebo jiného řetězce. Po potvrzení se uloží a odešle na veřejný server sítě %1$s. Potvrď jen, pokud je to tvoje vlastní záloha a hodnota je veřejná adresa.</string>
+    <string name="import_confirm_accept">Rozumím, je to veřejná adresa</string>
+    <string name="import_confirm_cancel">Teď ne</string>
+    <string name="import_secret_hex_hint">Odmítá se i hodnota 0x a 64 hexadecimálních znaků, protože privátní klíč vypadá stejně. Adresy Sui a Aptos přidej na obrazovce Přidat peněženku, nebo je obnov ze zálohy JSON.</string>
 </resources>

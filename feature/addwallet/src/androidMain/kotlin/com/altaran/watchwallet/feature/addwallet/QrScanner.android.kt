@@ -50,6 +50,8 @@ import com.google.zxing.BinaryBitmap
 import com.google.zxing.DecodeHintType
 import com.google.zxing.MultiFormatReader
 import com.google.zxing.PlanarYUVLuminanceSource
+import com.google.zxing.Result
+import com.google.zxing.ResultMetadataType
 import com.google.zxing.common.HybridBinarizer
 import org.jetbrains.compose.resources.stringResource
 import java.util.concurrent.Executors
@@ -57,7 +59,7 @@ import java.util.concurrent.Executors
 internal actual val isQrScanningSupported: Boolean = true
 
 @Composable
-internal actual fun QrScannerDialog(onResult: (String) -> Unit, onDismiss: () -> Unit) {
+internal actual fun QrScannerDialog(onResult: (String, ByteArray?) -> Unit, onDismiss: () -> Unit) {
     val context = LocalContext.current
     var granted by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
@@ -98,7 +100,7 @@ internal actual fun QrScannerDialog(onResult: (String) -> Unit, onDismiss: () ->
 }
 
 @Composable
-private fun CameraPreview(onResult: (String) -> Unit) {
+private fun CameraPreview(onResult: (String, ByteArray?) -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val callback by rememberUpdatedState(onResult)
@@ -122,11 +124,11 @@ private fun CameraPreview(onResult: (String) -> Unit) {
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
                 analysis.setAnalyzer(executor) { image ->
-                    val text = decode(reader, image)
+                    val scan = decode(reader, image)
                     image.close()
-                    if (text != null && !delivered) {
+                    if (scan != null && !delivered) {
                         delivered = true
-                        ContextCompat.getMainExecutor(ctx).execute { callback(text) }
+                        ContextCompat.getMainExecutor(ctx).execute { callback(scan.text, scan.bytes) }
                     }
                 }
                 provider.unbindAll()
@@ -144,10 +146,19 @@ private fun CameraPreview(onResult: (String) -> Unit) {
 }
 
 /** Decodes a QR code from the luminance (Y) plane of a camera frame. */
-private fun decode(reader: MultiFormatReader, image: ImageProxy): String? {
+private fun decode(reader: MultiFormatReader, image: ImageProxy): Scan? {
     val plane = image.planes.firstOrNull() ?: return null
     val buffer = plane.buffer
     val data = ByteArray(buffer.remaining()).also { buffer.get(it) }
     val source = PlanarYUVLuminanceSource(data, plane.rowStride, image.height, 0, 0, image.width, image.height, false)
-    return runCatching { reader.decodeWithState(BinaryBitmap(HybridBinarizer(source))).text }.getOrNull().also { reader.reset() }
+    return runCatching { reader.decodeWithState(BinaryBitmap(HybridBinarizer(source))).toScan() }.getOrNull().also { reader.reset() }
+}
+
+private class Scan(val text: String, val bytes: ByteArray?)
+
+/** ZXing renders byte-mode segments as text, which garbles binary; the raw segments are in the metadata. */
+private fun Result.toScan(): Scan {
+    val segments = resultMetadata?.get(ResultMetadataType.BYTE_SEGMENTS) as? List<*>
+    val bytes = segments?.filterIsInstance<ByteArray>()?.takeIf { it.isNotEmpty() }?.reduce { all, part -> all + part }
+    return Scan(text.orEmpty(), bytes)
 }

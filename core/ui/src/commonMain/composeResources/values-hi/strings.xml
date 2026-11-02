@@ -44,4 +44,5 @@
     <string name="chart_performance">जमा और निकासी को छोड़कर: %1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
     <string name="chart_current_value">अभी: %1$s</string>
+    <string name="secret_field_warning">यह सीड फ़्रेज़ या निजी कुंजी जैसा दिखता है। WatchWallet को इनकी कभी ज़रूरत नहीं होती। फ़ील्ड साफ़ कर दिया गया है और कुछ भी सहेजा या भेजा नहीं गया।</string>
 </resources>

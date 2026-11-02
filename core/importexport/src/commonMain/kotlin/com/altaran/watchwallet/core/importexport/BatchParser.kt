@@ -8,6 +8,10 @@ import com.altaran.watchwallet.core.security.SecretCheck
 import com.altaran.watchwallet.core.security.SecretGuard
 import com.altaran.watchwallet.core.security.SecretKind
 
+/**
+ * [NEEDS_CONFIRMATION]: a Sui or Aptos address from a backup. Identical to a private key in form, so
+ * it needs a confirmation of its own before anything is saved or sent.
+ */
 enum class EntryStatus { READY, AMBIGUOUS, DUPLICATE, NEEDS_CONFIRMATION, UNSUPPORTED, INVALID }
 
 /** One row of a batch import preview. */
@@ -54,29 +58,26 @@ object BatchParser {
     /**
      * [otherChains] recognises formats of chains beyond Bitcoin and EVM (provided by the data
      * layer, which knows the registered chain adapters); it only sees rows that passed the guard.
+     * [validate] is the chain validation of manual entry, applied to every target of a backup; what
+     * it returns is what gets imported, and with `null` the entry is invalid.
      */
-    fun parse(input: String, otherChains: (String) -> List<WatchTarget> = { emptyList() }): BatchResult {
+    fun parse(
+        input: String,
+        otherChains: (String) -> List<WatchTarget> = { emptyList() },
+        validate: (WatchTarget) -> WatchTarget? = { target -> validateByClassifier(target, otherChains) },
+    ): BatchResult {
         // Excel and other tools prepend a byte order mark to UTF-8 files.
         val text = input.removePrefix(BYTE_ORDER_MARK.toString()).trim()
         if (text.isEmpty()) return BatchResult.Empty
 
+        findSecret(text)?.let { return it }
         if (ExportFormat.looksLikeExport(text)) {
-            (SecretGuard.check(text) as? SecretCheck.Secret)?.let { return BatchResult.SecretDetected(it.kind, 0) }
             val export = ExportFormat.decode(text) ?: return BatchResult.Entries(emptyList())
-            return fromExport(export)
+            return fromCheckedExport(export, validate)
         }
 
         val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }
         val delimiter = Csv.detectDelimiter(lines.first())
-        // Row by row first (reports the line), then every single cell (a seed phrase in a notes
-        // column is diluted by the other cells of its row), then the whole input (mnemonics split
-        // over lines).
-        lines.forEachIndexed { i, line ->
-            val cells = listOf(line) + Csv.split(line, delimiter) + line.split(',', ';', '	')
-            secretIn(cells)?.let { return BatchResult.SecretDetected(it, i + 1) }
-        }
-        (SecretGuard.check(text) as? SecretCheck.Secret)?.let { return BatchResult.SecretDetected(it.kind, 0) }
-
         val header = Csv.split(lines.first(), delimiter).map { it.trim().lowercase() }
         val addressColumn = header.indexOfFirst { it in ADDRESS_HEADERS }
         val parser = RowParser(otherChains)
@@ -88,18 +89,52 @@ object BatchParser {
         return BatchResult.Entries(markDuplicates(rows))
     }
 
+    /**
+     * The secret check alone, also for every change of the import field. A plain list or CSV has no
+     * route for `0x` + 64 hex: only a backup can name the chain of such a value.
+     */
+    fun findSecret(input: String): BatchResult.SecretDetected? {
+        val text = input.removePrefix(BYTE_ORDER_MARK.toString()).trim()
+        if (text.isEmpty()) return null
+        if (ExportFormat.looksLikeExport(text)) {
+            val export = ExportFormat.decode(text)
+            return if (export != null) secretInExport(export, text) else secretInWhole(text)
+        }
+        val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }
+        if (lines.isEmpty()) return null
+        val delimiter = Csv.detectDelimiter(lines.first())
+        // Row by row first (reports the line), then every single cell (a seed phrase in a notes
+        // column is diluted by the other cells of its row), then the whole input (mnemonics split
+        // over lines).
+        lines.forEachIndexed { i, line ->
+            val cells = listOf(line) + Csv.split(line, delimiter) + line.split(',', ';', '	')
+            secretIn(cells)?.let { return BatchResult.SecretDetected(it, i + 1) }
+        }
+        return secretInWhole(text)
+    }
+
+    private fun secretInWhole(text: String): BatchResult.SecretDetected? =
+        (SecretGuard.check(text) as? SecretCheck.Secret)?.let { BatchResult.SecretDetected(it.kind, 0) }
+
     /** The kind of the first secret found in any of [values], checked one by one. */
     private fun secretIn(values: Iterable<String?>): SecretKind? = values.firstNotNullOfOrNull { value ->
         value?.let { (SecretGuard.check(it) as? SecretCheck.Secret)?.kind }
     }
 
-    private fun fromExport(export: WatchWalletExport): BatchResult {
+    /**
+     * Field names of a backup read like words, so word lists are searched in the values only. Every
+     * string in the file counts, also in fields this version does not know. A value of the form
+     * `0x` + 64 hex passes only as the address of a wallet that names Sui or Aptos as its chain, and
+     * such an entry still waits for a confirmation in the preview.
+     */
+    private fun secretInExport(export: WatchWalletExport, text: String): BatchResult.SecretDetected? {
         secretIn(export.groups.map { it.name })?.let { return BatchResult.SecretDetected(it, 0) }
+        val deliberate = export.wallets.filter(ExportedWallet::isDeliberateChainAddress).map { it.value }.toSet()
         // Every field on its own, before any entry is built.
         export.wallets.forEachIndexed { i, wallet ->
             val fields =
                 listOf(
-                    wallet.value,
+                    wallet.value.takeUnless { it in deliberate && wallet.isDeliberateChainAddress() },
                     wallet.name,
                     wallet.group,
                     wallet.notes,
@@ -112,20 +147,26 @@ object BatchParser {
                     wallet.tags + wallet.costs.map { it.ref }
             secretIn(fields)?.let { return BatchResult.SecretDetected(it, i + 1) }
         }
-        return fromCheckedExport(export)
+        secretIn(ExportFormat.stringValues(text).filterNot { it in deliberate })?.let { return BatchResult.SecretDetected(it, 0) }
+        val rest = deliberate.fold(text) { remaining, value -> remaining.replace(value, "") }
+        return (SecretGuard.checkKeyMaterial(rest) as? SecretCheck.Secret)?.let { BatchResult.SecretDetected(it.kind, 0) }
     }
 
-    private fun fromCheckedExport(export: WatchWalletExport): BatchResult = BatchResult.Entries(
+    private fun fromCheckedExport(export: WatchWalletExport, validate: (WatchTarget) -> WatchTarget?): BatchResult = BatchResult.Entries(
         markDuplicates(
             export.wallets.mapIndexed { i, wallet ->
-                val target = wallet.toTarget()
+                val target = wallet.toTarget()?.let(validate)
                 BatchEntry(
                     line = i + 1,
                     raw = wallet.value,
                     label = wallet.name,
                     group = wallet.group,
                     notes = wallet.notes,
-                    status = if (target != null) EntryStatus.READY else EntryStatus.INVALID,
+                    status = when {
+                        target == null -> EntryStatus.INVALID
+                        wallet.isDeliberateChainAddress() -> EntryStatus.NEEDS_CONFIRMATION
+                        else -> EntryStatus.READY
+                    },
                     candidates = listOfNotNull(target),
                     costs = wallet.costs,
                     subtractFrom = wallet.subtractFrom,
@@ -133,6 +174,23 @@ object BatchParser {
             },
         ),
     )
+
+    /** Validation with the classifier and [otherChains] only; the app passes the full chain parsers. */
+    private fun validateByClassifier(target: WatchTarget, otherChains: (String) -> List<WatchTarget>): WatchTarget? {
+        val value = when (target) {
+            is WatchTarget.Address -> target.address
+            is WatchTarget.ExtendedPublicKey -> target.key
+        }
+        if (target.family == ChainFamily.SUI || target.family == ChainFamily.APTOS) return target.takeIf { SecretGuard.isHexAddressForm(value) }
+        val classified = (AddressClassifier.classify(value) as? Classification.Candidates)?.candidates?.map { it.target }.orEmpty()
+        return (classified + otherChains(value)).firstOrNull { parsed ->
+            when {
+                parsed.family != target.family -> false
+                parsed is WatchTarget.ExtendedPublicKey -> target is WatchTarget.ExtendedPublicKey && parsed.scriptType == target.scriptType
+                else -> target is WatchTarget.Address
+            }
+        }
+    }
 
     /** Row classification for one parse call. */
     private class RowParser(private val otherChains: (String) -> List<WatchTarget>) {
@@ -187,7 +245,7 @@ object BatchParser {
         }
 
         private fun isAddressLike(value: String): Boolean = when (AddressClassifier.classify(value)) {
-            is Classification.Candidates, is Classification.ConfirmationRequired, is Classification.Unsupported, Classification.WrongChecksum -> true
+            is Classification.Candidates, is Classification.Unsupported, Classification.WrongChecksum -> true
             else -> otherChains(value).isNotEmpty()
         }
 
@@ -197,10 +255,6 @@ object BatchParser {
                 is Classification.Candidates -> {
                     val targets = result.candidates.map { it.target }
                     base.copy(status = if (targets.size == 1) EntryStatus.READY else EntryStatus.AMBIGUOUS, candidates = targets)
-                }
-
-                is Classification.ConfirmationRequired -> {
-                    base.copy(status = EntryStatus.NEEDS_CONFIRMATION)
                 }
 
                 is Classification.Unsupported, Classification.Unrecognized -> {

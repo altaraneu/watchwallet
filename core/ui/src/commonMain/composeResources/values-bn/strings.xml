@@ -44,4 +44,5 @@
     <string name="chart_performance">জমা ও উত্তোলন বাদে: %1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
     <string name="chart_current_value">এখন: %1$s</string>
+    <string name="secret_field_warning">এটি সিড ফ্রেজ বা প্রাইভেট কী বলে মনে হচ্ছে। WatchWallet-এর এগুলো কখনও দরকার হয় না। ঘরটি মুছে ফেলা হয়েছে এবং কিছুই সংরক্ষণ বা পাঠানো হয়নি।</string>
 </resources>

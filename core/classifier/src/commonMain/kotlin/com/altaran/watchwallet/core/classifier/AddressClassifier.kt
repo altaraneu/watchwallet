@@ -31,13 +31,6 @@ sealed interface Classification {
      */
     data class Candidates(val candidates: List<Candidate>) : Classification
 
-    /**
-     * Valid format that also matches a private key format (`0x` + 64 hex: Sui / Aptos address
-     * or an EVM private key). Never probed automatically: the user must pick the chain explicitly
-     * and confirm, see [ConfirmationRequired.options].
-     */
-    data class ConfirmationRequired(val value: String, val options: List<ChainFamily>) : Classification
-
     /** Recognized format of a chain that the app does not support yet. */
     data class Unsupported(val family: ChainFamily) : Classification
 
@@ -51,7 +44,8 @@ sealed interface Classification {
 }
 
 /**
- * Pure, offline classification of pasted input. The secret guard always runs first.
+ * Pure, offline classification of pasted input. The secret guard always runs first, and it rejects
+ * `0x` + 64 hex: Sui and Aptos addresses of that form have their own deliberately chosen route.
  *
  * Supported now: Bitcoin addresses, extended public keys (SLIP-132) and single-key output
  * descriptors; EVM addresses. Other chains are recognized and reported as [Classification.Unsupported]
@@ -68,7 +62,6 @@ object AddressClassifier {
 
         return bitcoin(input)
             ?: evm(input)
-            ?: suiOrAptos(input)
             ?: OtherChains.recognize(input)?.let { Classification.Unsupported(it) }
             ?: Classification.Unrecognized
     }
@@ -144,15 +137,6 @@ object AddressClassifier {
 
         EvmAddresses.Validation.Invalid -> null
     }
-
-    private val HEX_64 = Regex("""^0x[0-9a-fA-F]{64}$""")
-
-    private fun suiOrAptos(input: String): Classification? =
-        if (HEX_64.matches(input)) {
-            Classification.ConfirmationRequired(input.lowercase(), listOf(ChainFamily.SUI, ChainFamily.APTOS))
-        } else {
-            null
-        }
 }
 
 /** Strips payment URI schemes and parameters: BIP21, EIP-681, `solana:`, `ripple:`, `tron:`… */

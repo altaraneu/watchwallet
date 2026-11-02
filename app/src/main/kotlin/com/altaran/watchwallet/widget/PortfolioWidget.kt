@@ -1,6 +1,8 @@
 package com.altaran.watchwallet.widget
 
 import android.content.Context
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -25,29 +27,38 @@ import com.altaran.watchwallet.R
 import com.altaran.watchwallet.core.data.repository.PortfolioRepository
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.ui.format.MoneyFormatter
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 /**
- * Home-screen widget with the total portfolio value and its 24-hour change. Respects discreet
- * mode: amounts are replaced by dots. Data comes from the local cache; no network access here.
+ * Home-screen widget with the total portfolio value and its 24-hour change. With discreet mode or
+ * the app lock on, amounts are replaced by dots. Data comes from the local cache; no network access here.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class PortfolioWidget : GlanceAppWidget(), KoinComponent {
     private val settingsRepository: SettingsRepository by inject()
     private val portfolioRepository: PortfolioRepository by inject()
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val settings = settingsRepository.settings.first()
-        val snapshot = portfolioRepository.snapshot(settings.quoteCurrency).first()
-        val hidden = settings.discreetMode
-        val value = if (hidden) HIDDEN else MoneyFormatter.format(snapshot.totalValue, settings.quoteCurrency)
-        val change = snapshot.change24hPercent?.let { pct ->
-            context.getString(R.string.widget_change_24h, if (hidden) HIDDEN else MoneyFormatter.formatPercentChange(pct / 100))
-        }
         val title = context.getString(R.string.widget_title)
+        val settingsFlow = settingsRepository.settings
+        val snapshots = settingsFlow.map { it.quoteCurrency }.distinctUntilChanged().flatMapLatest { portfolioRepository.snapshot(it) }
 
         provideContent {
+            // Read inside the composition: turning on discreet mode or the lock takes effect in a running session.
+            val settings by settingsFlow.collectAsState(initial = null)
+            val snapshot by snapshots.collectAsState(initial = null)
+            val shown = settings?.takeUnless { it.widgetHidesAmounts }
+            val current = snapshot
+            val hidden = shown == null
+            val value = if (shown == null || current == null) HIDDEN else MoneyFormatter.format(current.totalValue, shown.quoteCurrency)
+            val change = current?.change24hPercent?.let { pct ->
+                context.getString(R.string.widget_change_24h, if (hidden) HIDDEN else MoneyFormatter.formatPercentChange(pct / 100))
+            }
             GlanceTheme {
                 Column(
                     modifier = GlanceModifier

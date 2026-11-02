@@ -63,9 +63,10 @@ class AddressClassifierTest {
     }
 
     @Test
-    fun suiAptosLookalikesRequireConfirmationAndAreNeverAutoProbed() {
-        val result = assertIs<Classification.ConfirmationRequired>(AddressClassifier.classify("0x" + "A1".repeat(32)))
-        assertEquals(listOf(ChainFamily.SUI, ChainFamily.APTOS), result.options)
+    fun prefixedHexOf64CharactersIsRejectedLikeAnyKey() {
+        // Identical to a Sui or Aptos address, which has its own deliberately chosen route.
+        assertEquals(Classification.Secret(SecretKind.HEX_PRIVATE_KEY), AddressClassifier.classify("0x" + "A1".repeat(32)))
+        assertEquals(Classification.Secret(SecretKind.HEX_PRIVATE_KEY), AddressClassifier.classify("ethereum:0x" + "a1".repeat(32)))
     }
 
     @Test

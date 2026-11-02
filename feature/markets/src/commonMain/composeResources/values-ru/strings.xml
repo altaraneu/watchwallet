@@ -45,4 +45,5 @@
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
     <string name="asset_current_price">Сейчас: %1$s</string>
+    <string name="watchlist_search_rejected">Это не похоже на название монеты: возможно, это адрес или ключ. Поле очищено, ничего не отправлено.</string>
 </resources>

@@ -14,7 +14,7 @@
     <string name="import_status_tracked">已在跟踪,将跳过</string>
     <string name="import_status_duplicate">列表中有重复</string>
     <string name="import_status_unsupported">暂不支持 %1$s</string>
-    <string name="import_status_confirm">Sui 或 Aptos 地址:请在“添加钱包”页面添加,该页面会要求确认</string>
+    <string name="import_status_confirm">Sui 或 Aptos 地址:查看之前不会选中</string>
     <string name="import_status_invalid">无法识别的地址</string>
     <string name="import_secret_title">导入已停止:发现私钥或助记词</string>
     <string name="import_secret_message">输入内容中有看起来像私钥或助记词的内容。未导入、未保存,也未发送到任何地方,输入内容已被清除。请移除该条目后重试。</string>
@@ -42,4 +42,10 @@
     <string name="export_share">分享</string>
     <string name="export_saved">已保存</string>
     <string name="export_save_failed">无法保存文件</string>
+    <string name="import_confirm_action">查看</string>
+    <string name="import_confirm_title">此格式与私钥完全相同</string>
+    <string name="import_confirm_message">应用无法区分此值与以太坊或其他链的私钥。确认后,它会被保存并发送到 %1$s 的公共服务器。只有当这是您自己的备份且该值是公开地址时才确认。</string>
+    <string name="import_confirm_accept">我明白,这是公开地址</string>
+    <string name="import_confirm_cancel">暂不</string>
+    <string name="import_secret_hex_hint">0x 加 64 个十六进制字符的值也会被拒绝,因为私钥看起来一样。请在添加钱包页面添加 Sui 和 Aptos 地址,或从 JSON 备份恢复。</string>
 </resources>

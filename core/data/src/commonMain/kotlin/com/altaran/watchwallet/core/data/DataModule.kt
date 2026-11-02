@@ -93,7 +93,9 @@ val dataModule: Module = module {
     single<EndpointCatalog> {
         val network = get<NetworkSettings>()
         val stored = runBlocking { get<SettingsDataSource>().endpointConfig.first() }
-        EndpointCatalog.resolve(stored, network.autoUpdateEndpoints, network.esploraUrl, Clock.System.now().epochSeconds)
+        // A stored server that the rules no longer allow (plain http to a public host) is not used.
+        val customServer = network.esploraUrl?.let(com.altaran.watchwallet.core.common.CustomServerUrl::validate)
+        EndpointCatalog.resolve(stored, network.autoUpdateEndpoints, customServer, Clock.System.now().epochSeconds)
     }
     single {
         val debug = get<AppInfo>().isDebug
@@ -150,5 +152,6 @@ val dataModule: Module = module {
     single<WalletSyncStateStore> { DataStoreWalletSyncStateStore(get()) }
     single { SyncEngine(get(), get(), get<PriceRepository>(), get(), getOrNull<SyncLog>() ?: SyncLog.None) }
     single { AddWalletService(get(), get(), get()) }
+    single<AddWalletOperations> { get<AddWalletService>() }
     single { DemoWallets(get(), get()) }
 }

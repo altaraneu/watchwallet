@@ -45,4 +45,5 @@
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
     <string name="asset_current_price">Maintenant : %1$s</string>
+    <string name="watchlist_search_rejected">Cela ne ressemble pas au nom d’une cryptomonnaie : il peut s’agir d’une adresse ou d’une clé. Le champ a été vidé et rien n’a été envoyé.</string>
 </resources>

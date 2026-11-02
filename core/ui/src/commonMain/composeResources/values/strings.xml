@@ -63,4 +63,5 @@
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
     <!-- Current value, shown while a past point of the chart is selected. -->
     <string name="chart_current_value">Now: %1$s</string>
+    <string name="secret_field_warning">This looks like a seed phrase or private key. WatchWallet never needs them. The field was cleared and nothing was saved or sent.</string>
 </resources>

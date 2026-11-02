@@ -47,7 +47,7 @@ class WatchWalletApplication : Application() {
                 .collect { PortfolioWidget().updateAll(this@WatchWalletApplication) }
         }
         appScope.launch {
-            settings.settings.map { it.discreetMode to it.quoteCurrency }.distinctUntilChanged()
+            settings.settings.map { Triple(it.discreetMode, it.appLock, it.quoteCurrency) }.distinctUntilChanged()
                 .collect { PortfolioWidget().updateAll(this@WatchWalletApplication) }
         }
     }
@@ -76,6 +76,9 @@ class WatchWalletApplication : Application() {
     private val androidPlatformModule = module {
         single<AppLanguageController> { AndroidAppLanguageController(BuildConfig.SUPPORTED_LANGUAGES) }
         single<AppRestarter> { AndroidAppRestarter(this@WatchWalletApplication) }
+        single { com.altaran.watchwallet.core.common.AppLockGate() }
+        single { com.altaran.watchwallet.platform.ActivityLockAuthenticator() }
+        single<com.altaran.watchwallet.core.data.platform.LockAuthenticator> { get<com.altaran.watchwallet.platform.ActivityLockAuthenticator>() }
         single<SyncLog> { if (BuildConfig.DEBUG) SyncLog { android.util.Log.d("WWSync", it) } else SyncLog.None }
         single {
             AppInfo(

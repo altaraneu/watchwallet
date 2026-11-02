@@ -7,6 +7,6 @@ import androidx.compose.runtime.LaunchedEffect
 internal actual val isQrScanningSupported: Boolean = false
 
 @Composable
-internal actual fun QrScannerDialog(onResult: (String) -> Unit, onDismiss: () -> Unit) {
+internal actual fun QrScannerDialog(onResult: (String, ByteArray?) -> Unit, onDismiss: () -> Unit) {
     LaunchedEffect(Unit) { onDismiss() }
 }

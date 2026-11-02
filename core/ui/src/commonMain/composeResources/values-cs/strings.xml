@@ -44,4 +44,5 @@
     <string name="chart_performance">Bez vkladů a výběrů: %1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
     <string name="chart_current_value">Nyní: %1$s</string>
+    <string name="secret_field_warning">Vypadá to jako seed fráze nebo privátní klíč. WatchWallet je nikdy nepotřebuje. Pole bylo vymazáno a nic se neuložilo ani neodeslalo.</string>
 </resources>

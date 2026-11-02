@@ -19,7 +19,7 @@
     <string name="import_status_tracked">تتم متابعتها بالفعل، وسيتم تخطيها</string>
     <string name="import_status_duplicate">مكرر في هذه القائمة</string>
     <string name="import_status_unsupported">%1$s غير مدعومة بعد</string>
-    <string name="import_status_confirm">عنوان Sui أو Aptos: أضفه من شاشة إضافة محفظة، حيث يُطلب التأكيد</string>
+    <string name="import_status_confirm">عنوان Sui أو Aptos: لا يُحدَّد حتى تراجعه</string>
     <string name="import_status_invalid">ليس عنوانًا معروفًا</string>
     <string name="import_secret_title">تم إيقاف الاستيراد: عُثر على مفتاح خاص أو عبارة استرداد</string>
     <string name="import_secret_message">احتوى ما أدخلته على شيء يشبه مفتاحًا خاصًا أو عبارة استرداد. لم يُستورد أو يُحفظ أو يُرسل أي شيء إلى أي مكان، وتم مسح ما أدخلته. أزل هذا الإدخال وحاول مرة أخرى.</string>
@@ -47,4 +47,10 @@
     <string name="export_share">مشاركة</string>
     <string name="export_saved">تم الحفظ</string>
     <string name="export_save_failed">تعذر حفظ الملف</string>
+    <string name="import_confirm_action">مراجعة</string>
+    <string name="import_confirm_title">هذا التنسيق مطابق للمفتاح الخاص</string>
+    <string name="import_confirm_message">لا يستطيع التطبيق تمييز هذه القيمة عن المفتاح الخاص لـ Ethereum أو سلسلة أخرى. عند التأكيد تُحفظ وتُرسل إلى خادم %1$s العام. أكّد فقط إذا كانت هذه نسختك الاحتياطية وكانت القيمة عنوانًا عامًا.</string>
+    <string name="import_confirm_accept">أفهم ذلك، هذا عنوان عام</string>
+    <string name="import_confirm_cancel">ليس الآن</string>
+    <string name="import_secret_hex_hint">تُرفض أيضًا القيمة المكونة من 0x و64 محرفًا سداسيًا عشريًا لأن المفتاح الخاص يبدو مثلها. أضف عناوين Sui وAptos من شاشة إضافة محفظة أو استعدها من نسخة JSON احتياطية.</string>
 </resources>

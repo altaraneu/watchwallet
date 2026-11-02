@@ -44,4 +44,5 @@
     <string name="chart_performance">Hors dépôts et retraits : %1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
     <string name="chart_current_value">Maintenant : %1$s</string>
+    <string name="secret_field_warning">Cela ressemble à une phrase de récupération ou à une clé privée. WatchWallet n’en a jamais besoin. Le champ a été vidé et rien n’a été enregistré ni envoyé.</string>
 </resources>

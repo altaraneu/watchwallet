@@ -18,6 +18,16 @@ interface SettingsRepository {
     suspend fun setUseDynamicColor(enabled: Boolean)
     suspend fun setDiscreetMode(enabled: Boolean)
     suspend fun setAppLock(enabled: Boolean)
+
+    /**
+     * The switch in Settings: turning the lock off needs the same authentication as opening the app,
+     * or whoever finds the phone unlocked could remove it. Returns whether the setting was changed.
+     */
+    suspend fun changeAppLock(enabled: Boolean, authenticator: com.altaran.watchwallet.core.data.platform.LockAuthenticator): Boolean {
+        if (!enabled && !authenticator.authenticate()) return false
+        setAppLock(enabled)
+        return true
+    }
     suspend fun setSecureScreen(enabled: Boolean)
     suspend fun setRemoteIcons(enabled: Boolean)
     suspend fun setBackgroundRefresh(hours: Int, wifiOnly: Boolean)

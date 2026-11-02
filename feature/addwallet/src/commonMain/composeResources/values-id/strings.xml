@@ -41,8 +41,6 @@
     <string name="qr_close">Tutup pemindai</string>
     <string name="qr_no_permission">Akses kamera diperlukan untuk memindai kode QR. Anda dapat mengizinkannya di pengaturan aplikasi.</string>
     <string name="default_name_generic">Dompet %1$s</string>
-    <string name="confirm_chain_title">Pilih jaringan</string>
-    <string name="confirm_chain_message">Ini tampak seperti alamat Sui atau Aptos, tetapi kunci privat beberapa jaringan terlihat persis sama. Belum ada yang diperiksa atau dikirim. Pilih jaringan alamat ini. Jika Anda tidak sengaja menyalin kunci privat, hapus.</string>
     <string name="confirm_unused_title">Alamat ini belum pernah digunakan</string>
     <string name="confirm_unused_message">Jika Anda tidak sengaja menyalin kunci privat, hapus sekarang dan jangan pernah membagikannya. Tambahkan hanya jika Anda yakin ini adalah alamat baru yang belum digunakan.</string>
     <string name="confirm_add_anyway">Tetap tambahkan</string>
@@ -53,4 +51,14 @@
     <string name="overlap_message">Alamat akan ditambahkan sebagai dompet tersendiri. Jika Anda menguranginya dari %1$s, saldonya tidak dihitung dua kali dan kedua dompet dapat dipantau secara terpisah.</string>
     <string name="overlap_subtract">Tambah dan kurangi</string>
     <string name="overlap_keep_both">Tambah, hitung keduanya</string>
+    <string name="add_sui_aptos_action">Tambahkan alamat Sui atau Aptos</string>
+    <string name="deliberate_pick_title">Alamat ini ada di jaringan apa?</string>
+    <string name="deliberate_pick_message">Alamat ini punya jalur sendiri karena terlihat persis seperti kunci pribadi. Belum ada yang diperiksa atau dikirim.</string>
+    <string name="deliberate_warning_title">Format ini identik dengan kunci pribadi</string>
+    <string name="deliberate_warning_message">Aplikasi tidak bisa membedakan alamat dari kunci pribadi Ethereum atau chain lain: keduanya 0x dan 64 karakter heksadesimal. Yang Anda masukkan di sini dikirim ke server publik %1$s. Lanjutkan hanya dengan alamat publik yang disalin dari layar terima dompet Anda. Jangan pernah memasukkan kunci pribadi.</string>
+    <string name="deliberate_accept">Saya mengerti, ini alamat publik</string>
+    <string name="deliberate_entry_title">Masukkan alamat %1$s di atas</string>
+    <string name="deliberate_entry_message">Hanya di sini nilai berbentuk ini diterima. Nilai dikirim ke server publik jaringan itu saat Anda menambahkannya.</string>
+    <string name="deliberate_entry_invalid">Ini bukan alamat yang valid di jaringan itu.</string>
+    <string name="secret_hex_hint">Jika ini alamat Sui atau Aptos, gunakan “Tambahkan alamat Sui atau Aptos” di bawah.</string>
 </resources>
