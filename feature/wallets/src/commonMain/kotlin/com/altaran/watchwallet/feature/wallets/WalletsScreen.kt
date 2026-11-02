@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.altaran.watchwallet.core.data.sync.WalletSyncHealth
 import com.altaran.watchwallet.core.designsystem.component.AmountText
 import com.altaran.watchwallet.core.designsystem.component.CryptoIcon
 import com.altaran.watchwallet.core.designsystem.component.CryptoIcons
@@ -136,9 +137,7 @@ private fun WalletRow(item: WalletListItem, currency: QuoteCurrency, onClick: ()
             if (target != null) {
                 Text(targetDescription(target), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
             }
-            if (item.failed) {
-                Text(stringResource(Res.string.wallets_sync_failed), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-            }
+            SyncHealthHint(item.syncHealth)
         }
         if (item.syncing) {
             val syncingDescription = stringResource(Res.string.wallets_syncing)
@@ -150,4 +149,21 @@ private fun WalletRow(item: WalletListItem, currency: QuoteCurrency, onClick: ()
         }
         AmountText(item.value?.let { MoneyFormatter.format(it, currency) } ?: "—", style = MaterialTheme.typography.titleSmall)
     }
+}
+
+/** Nothing while all is well; only a sync that really failed reads as an error. */
+@Composable
+internal fun SyncHealthHint(health: WalletSyncHealth, modifier: Modifier = Modifier) {
+    val text = when (health) {
+        WalletSyncHealth.OK -> return
+        WalletSyncHealth.NATIVE_ONLY -> Res.string.wallets_sync_native_only
+        WalletSyncHealth.PARTIAL -> Res.string.wallets_sync_partial
+        WalletSyncHealth.FAILED -> Res.string.wallets_sync_failed
+    }
+    Text(
+        stringResource(text),
+        style = MaterialTheme.typography.bodySmall,
+        color = if (health == WalletSyncHealth.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
+    )
 }

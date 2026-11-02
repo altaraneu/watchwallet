@@ -1,5 +1,6 @@
 package com.altaran.watchwallet.chain.ton
 
+import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.chain.common.Base64Codec
 import com.altaran.watchwallet.chain.common.Crc16
 import com.altaran.watchwallet.chain.common.Hex
@@ -9,9 +10,11 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -153,5 +156,47 @@ class TonTest {
             .probe(assertNotNull(TonAddresses.parse(ours)))
         assertFalse(probe.hasActivity)
         assertNull(probe.transactionCount)
+    }
+
+    @Test
+    fun jettonWalletsAreReadPageByPage() = runBlocking {
+        val jettonLimit = 100
+        val wallet = """{"balance":"5","jetton":"$usdtMaster"}"""
+        val engine = MockEngine { request ->
+            val path = request.url.encodedPath
+            val body = when {
+                path.endsWith("/account") -> """{"balance":"7","status":"active"}"""
+
+                path.endsWith("/jetton/wallets") && request.url.parameters["offset"] == "0" -> List(jettonLimit) {
+                    wallet
+                }.joinToString(",", """{"jetton_wallets":[""", "]}")
+
+                path.endsWith("/jetton/wallets") -> """{"jetton_wallets":[$wallet]}"""
+
+                path.endsWith("/transactions") -> """{"transactions":[]}"""
+
+                else -> """{"jetton_transfers":[]}"""
+            }
+            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val result = TonAdapter(
+            createHttpClient(engine = engine),
+            "https://ton.test",
+            minInterval = 1.milliseconds,
+        ).sync(assertNotNull(TonAddresses.parse(ours)), emptySet())
+        assertEquals(jettonLimit + 2, result.balances.size, "TON and all jetton wallets")
+        assertEquals(listOf("0", "100"), engine.requestHistory.filter { it.url.encodedPath.endsWith("/jetton/wallets") }.map { it.url.parameters["offset"] })
+        assertTrue(result.balancesComplete)
+    }
+
+    @Test
+    fun malformedJettonListFailsInsteadOfDroppingJettons() = runBlocking {
+        val engine = MockEngine { request ->
+            val body = if (request.url.encodedPath.endsWith("/account")) """{"balance":"7","status":"active"}""" else """{"error":"overloaded"}"""
+            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val adapter = TonAdapter(createHttpClient(engine = engine), "https://ton.test", minInterval = 1.milliseconds)
+        assertFailsWith<ChainDataException> { adapter.sync(assertNotNull(TonAddresses.parse(ours)), emptySet()) }
+        Unit
     }
 }

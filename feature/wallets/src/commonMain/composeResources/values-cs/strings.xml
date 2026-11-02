@@ -5,6 +5,8 @@
     <string name="wallets_empty_title">Zatím žádné peněženky</string>
     <string name="wallets_empty_message">Vlož libovolnou veřejnou adresu nebo xpub a WatchWallet rozpozná blockchain. Žádné klíče, nikdy.</string>
     <string name="wallets_sync_failed">Obnovení se nezdařilo. Zobrazuji poslední známá data.</string>
+    <string name="wallets_sync_partial">Některé sítě se nepodařilo aktualizovat</string>
+    <string name="wallets_sync_native_only">Zůstatek mince je aktuální. Tokeny nebo historii se nepodařilo aktualizovat.</string>
     <string name="detail_back">Zpět</string>
     <string name="detail_more">Další možnosti</string>
     <string name="detail_rename">Přejmenovat</string>

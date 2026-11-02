@@ -72,6 +72,8 @@ internal class EsploraClient(
         require(baseUrls.isNotEmpty())
     }
 
+    suspend fun resetHostHealth() = health.reset()
+
     private suspend inline fun <reified T> get(path: String): T =
         health.firstAvailable(baseUrls) { base -> throttle.run { http.get("${base.trimEnd('/')}/$path").body() } }
 

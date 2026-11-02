@@ -3,6 +3,7 @@
 
 package com.altaran.watchwallet.chain.solana
 
+import com.altaran.watchwallet.chain.api.SyncOptions
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.network.createHttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -12,10 +13,12 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -160,5 +163,88 @@ class SolanaTest {
             val probe = adapter.probe(WatchTarget.Address(target.family, target.chainId, owner))
             assertTrue(probe.hasActivity)
         }
+    }
+
+    /** 60 old signatures whose transactions change nothing of the wallet: they leave no row. */
+    @Test
+    fun signaturesWithoutChangesDoNotStallTheBackfill() = runBlocking {
+        val noChange = """{"jsonrpc":"2.0","id":1,"result":{"blockTime":1,"slot":1,"meta":{"err":null,"fee":5000,"preBalances":[1,1],"postBalances":[1,1],"preTokenBalances":[],"postTokenBalances":[]},
+            "transaction":{"message":{"accountKeys":[{"pubkey":"$other","signer":true},{"pubkey":"$owner","signer":false}]}}}}"""
+        val all = (1..60).map { "sig$it" }
+        val fetched = mutableListOf<String>()
+        val engine = MockEngine { request ->
+            val body = request.body.toByteArray().decodeToString()
+            val response = when {
+                "getBalance" in body -> {
+                    """{"jsonrpc":"2.0","result":{"value":1},"id":1}"""
+                }
+
+                "getProgramAccounts" in body -> {
+                    """{"jsonrpc":"2.0","result":[],"id":1}"""
+                }
+
+                "getTokenAccountsByOwner" in body -> {
+                    """{"jsonrpc":"2.0","result":{"value":[]},"id":1}"""
+                }
+
+                "getSignaturesForAddress" in body -> {
+                    val before = Regex("\"before\":\"(sig\\d+)\"").find(body)?.groupValues?.get(1)
+                    val rest = if (before == null) all else all.dropWhile { it != before }.drop(1)
+                    rest.take(100).joinToString(",", """{"jsonrpc":"2.0","id":1,"result":[""", "]}") {
+                        """{"signature":"$it","confirmationStatus":"finalized"}"""
+                    }
+                }
+
+                else -> {
+                    fetched += Regex("sig\\d+").find(body)!!.value
+                    noChange
+                }
+            }
+            respond(response, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val adapter = SolanaAdapter(createHttpClient(engine = engine), "https://sol.test")
+        var state: String? = null
+
+        // sig1 is stored, so the head walk stops at once and only the backfill reads anything.
+        suspend fun sync() = adapter.sync(
+            target,
+            setOf("sig1"),
+            SyncOptions(
+                continueHistory = true,
+                chainState = state?.let {
+                    mapOf(SolanaChain.ID to it)
+                }.orEmpty(),
+            ),
+        ) { part ->
+            part.state?.let { state = it }
+        }
+        assertTrue(sync().historyTruncated)
+        assertEquals((2..26).map { "sig$it" }, fetched)
+        assertEquals("sig26", state)
+        fetched.clear()
+        assertTrue(sync().historyTruncated)
+        assertEquals((27..51).map { "sig$it" }, fetched, "the same signatures are not read again")
+        fetched.clear()
+        assertFalse(sync().historyTruncated, "the end was reached")
+        assertEquals((52..60).map { "sig$it" }, fetched)
+    }
+
+    @Test
+    fun aPrunedTransactionKeepsTheHistoryMarkedAsCutOff() = runBlocking {
+        val engine = MockEngine { request ->
+            val body = request.body.toByteArray().decodeToString()
+            val response = when {
+                "getBalance" in body -> """{"jsonrpc":"2.0","result":{"value":1},"id":1}"""
+                "getProgramAccounts" in body -> """{"jsonrpc":"2.0","result":[],"id":1}"""
+                "getTokenAccountsByOwner" in body -> """{"jsonrpc":"2.0","result":{"value":[]},"id":1}"""
+                "getSignaturesForAddress" in body -> """{"jsonrpc":"2.0","id":1,"result":[{"signature":"known"},{"signature":"old","confirmationStatus":"finalized"}]}"""
+                else -> """{"jsonrpc":"2.0","id":1,"result":null}"""
+            }
+            respond(response, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val adapter = SolanaAdapter(createHttpClient(engine = engine), "https://sol.test")
+        val result = adapter.sync(target, setOf("known"), SyncOptions(continueHistory = true)) { }
+        assertTrue(result.historyTruncated)
+        assertTrue(result.storedProgressively)
     }
 }

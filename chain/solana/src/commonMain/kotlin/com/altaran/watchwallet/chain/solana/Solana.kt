@@ -5,6 +5,9 @@ import com.altaran.watchwallet.chain.api.ChainAdapter
 import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.chain.api.ChainTransaction
 import com.altaran.watchwallet.chain.api.ProbeResult
+import com.altaran.watchwallet.chain.api.SyncOptions
+import com.altaran.watchwallet.chain.api.SyncPart
+import com.altaran.watchwallet.chain.api.SyncPartSink
 import com.altaran.watchwallet.chain.api.SyncResult
 import com.altaran.watchwallet.chain.common.Base58Checks
 import com.altaran.watchwallet.chain.common.JsonRpcClient
@@ -153,24 +156,48 @@ class SolanaAdapter(
     /**
      * Every transaction costs one rate-limited `getTransaction` call, so the first sync loads only
      * the newest [FIRST_SYNC_SIGNATURES]; with [continueHistory] each later sync adds up to
-     * [BACKFILL_SIGNATURES] older ones (walking past the known signatures).
+     * [BACKFILL_SIGNATURES] older ones, going on from where the last one stopped.
      */
-    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, continueHistory: Boolean): SyncResult = chainCall("Solana") {
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, continueHistory: Boolean): SyncResult =
+        fetch(target, knownTransactions, continueHistory, cursor = null).result
+
+    /**
+     * Stored as one part, so the backfill position cannot get ahead of the rows. It is remembered
+     * because transactions that do not change a balance leave no row, and would otherwise take up
+     * the same budget again every time.
+     */
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, options: SyncOptions, sink: SyncPartSink): SyncResult {
+        // Cached chain data dropped means the position describes rows that are gone.
+        val cursor = options.chainState[SolanaChain.ID]?.takeIf { it.isNotEmpty() && knownTransactions.isNotEmpty() }
+        val fetched = fetch(target, knownTransactions, options.continueHistory, cursor)
+        val result = fetched.result
+        sink.store(
+            SyncPart(
+                chainId = SolanaChain.ID,
+                balances = result.balances,
+                balancesComplete = true,
+                transactions = result.transactions,
+                historyFetched = true,
+                active = result.activeChains.isNotEmpty(),
+                state = fetched.cursor,
+            ),
+        )
+        return result.copy(balances = emptyList(), transactions = emptyList(), storedProgressively = true)
+    }
+
+    override suspend fun resetHostHealth() = rpc.resetHostHealth()
+
+    private class Fetched(val result: SyncResult, val cursor: String?)
+
+    private suspend fun fetch(target: WatchTarget, knownTransactions: Set<String>, continueHistory: Boolean, cursor: String?): Fetched = chainCall("Solana") {
         val address = address(target)
         val balances = listOf(amountOf(SolanaChain.SOL, balance(address))) + stakedAmount(stakedLamports(address)) + tokenBalances(address)
         val tokenAssets = balances.associate { (it.asset.contract ?: "") to it.asset }
 
         // Signatures newest first; stop at the first known one.
         val backfill = continueHistory && knownTransactions.isNotEmpty()
-        val maxSignatures = when {
-            backfill -> BACKFILL_SIGNATURES
-            knownTransactions.isEmpty() -> FIRST_SYNC_SIGNATURES
-            else -> MAX_SIGNATURES
-        }
-        val (newSignatures, signaturesTruncated) = newSignatures(address, knownTransactions, backfill, maxSignatures)
-        var truncated = signaturesTruncated
-
-        val transactions = newSignatures.flatMap { entry ->
+        val (head, headTruncated) = newSignatures(address, knownTransactions, false, if (knownTransactions.isEmpty()) FIRST_SYNC_SIGNATURES else MAX_SIGNATURES)
+        val transactions = head.flatMap { entry ->
             val signature = entry.str("signature")!!
             val confirmed = entry.str("confirmationStatus") != "processed"
             val tx = transaction(signature)
@@ -179,33 +206,58 @@ class SolanaAdapter(
                 // confirmed transaction fails the sync; skipping it would leave a permanent gap
                 // because later syncs stop at the newer signatures stored now.
                 if (!confirmed) return@flatMap emptyList()
-                if (backfill) {
-                    // Nodes prune very old transactions. Going back further must not block balances.
-                    truncated = true
-                    return@flatMap emptyList()
-                }
                 throw ChainDataException("Solana transaction $signature not available")
             }
             parseTransaction(signature, tx, address, tokenAssets, confirmed)
+        }.toMutableList()
+        var truncated = headTruncated
+        var position = cursor
+        // A cut-off head leaves a gap above the position, so a later backfill starts from the top.
+        if (headTruncated) position = ""
+        if (backfill && !headTruncated) {
+            val skip = knownTransactions + head.mapNotNull { it.str("signature") }
+            val (older, more) = newSignatures(address, skip, true, BACKFILL_SIGNATURES, cursor)
+            truncated = more
+            for (entry in older) {
+                val signature = entry.str("signature")!!
+                val tx = transaction(signature)
+                if (tx == null) {
+                    // Nodes prune very old transactions. Going back further must not block balances;
+                    // the position stays, so history is still reported as cut off.
+                    truncated = true
+                    break
+                }
+                transactions += parseTransaction(signature, tx, address, tokenAssets, entry.str("confirmationStatus") != "processed")
+                position = signature
+            }
         }
-        SyncResult(
-            balances = balances,
-            transactions = transactions,
-            activeChains = if (transactions.isNotEmpty() ||
-                balances.any { !it.amount.isZero }
-            ) {
-                listOf(SolanaChain.ID)
-            } else {
-                emptyList()
-            },
-            historyTruncated = truncated,
+        Fetched(
+            SyncResult(
+                balances = balances,
+                transactions = transactions,
+                activeChains = if (transactions.isNotEmpty() ||
+                    balances.any { !it.amount.isZero }
+                ) {
+                    listOf(SolanaChain.ID)
+                } else {
+                    emptyList()
+                },
+                historyTruncated = truncated,
+            ),
+            position,
         )
     }
 
-    /** Signatures to fetch, newest first, and whether more remain. */
-    private suspend fun newSignatures(address: String, known: Set<String>, backfill: Boolean, maxSignatures: Int): Pair<List<JsonElement>, Boolean> {
+    /** Signatures to fetch, newest first, from [start] on, and whether more remain. */
+    private suspend fun newSignatures(
+        address: String,
+        known: Set<String>,
+        backfill: Boolean,
+        maxSignatures: Int,
+        start: String? = null,
+    ): Pair<List<JsonElement>, Boolean> {
         val result = mutableListOf<JsonElement>()
-        var before: String? = null
+        var before = start
         while (true) {
             val page = signatures(address, before, SIGNATURE_PAGE)
             for (entry in page) {

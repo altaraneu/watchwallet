@@ -12,6 +12,7 @@ import com.altaran.watchwallet.chain.common.asList
 import com.altaran.watchwallet.chain.common.at
 import com.altaran.watchwallet.chain.common.chainCall
 import com.altaran.watchwallet.chain.common.parseBigInteger
+import com.altaran.watchwallet.chain.common.requireList
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.chain.common.tokenPriceId
@@ -55,7 +56,7 @@ class SuiAdapter(
 
     override suspend fun probe(target: WatchTarget): ProbeResult = chainCall("Sui") {
         val address = address(target)
-        val balances = balances(address)
+        val balances = balances(address).amounts
         val hasHistory = transactionsPage(address, null, 1).at("nodes").asList.isNotEmpty()
         val active = hasHistory || balances.any { !it.amount.isZero }
         ProbeResult(active, if (active) listOf(SuiChain.ID) else emptyList(), balances, transactionCount = null)
@@ -63,7 +64,8 @@ class SuiAdapter(
 
     override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("Sui") {
         val address = address(target)
-        val balances = balances(address)
+        val held = balances(address)
+        val balances = held.amounts
         val assets = balances.associate { (it.asset.contract ?: SuiChain.SUI_COIN_TYPE) to it.asset }
         val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES
 
@@ -88,26 +90,45 @@ class SuiAdapter(
         }
         val transactions = nodes.flatMap { node -> parseTransaction(node, address) { coinType -> assets[coinType] ?: coinAsset(coinType) } }
         val active = transactions.isNotEmpty() || balances.any { !it.amount.isZero }
-        SyncResult(
+        val result = SyncResult(
             balances,
             transactions.filterNotNull(),
             activeChains = if (active) listOf(SuiChain.ID) else emptyList(),
             historyTruncated = truncated,
         )
+        if (held.complete) result else result.withIncompleteBalances(SuiChain.ID)
     }
 
     private fun address(target: WatchTarget): String =
         (target as? WatchTarget.Address)?.address ?: throw ChainDataException("Sui supports addresses only")
 
-    private suspend fun balances(address: String): List<AssetAmount> {
-        val nodes = query(BALANCES_QUERY, buildJsonObject { put("a", address) }).at("address", "balances", "nodes").asList
+    private class CoinBalances(val amounts: List<AssetAmount>, val complete: Boolean)
+
+    /** Every coin, page by page; verified against the live service (at most 50 per page). */
+    private suspend fun balances(address: String): CoinBalances {
+        val nodes = mutableListOf<JsonElement>()
+        var after: String? = null
+        var complete = false
+        for (page in 0 until MAX_BALANCE_PAGES) {
+            val variables = buildJsonObject {
+                put("a", address)
+                put("after", after?.let { JsonPrimitive(it) } ?: JsonNull)
+            }
+            val balances = query(BALANCES_QUERY, variables).at("address", "balances") ?: throw ChainDataException("Sui balances: malformed answer")
+            nodes += balances.at("nodes").requireList("Sui balances")
+            after = balances.at("pageInfo").str("endCursor")
+            if (balances.at("pageInfo").str("hasNextPage") != "true" || after == null) {
+                complete = true
+                break
+            }
+        }
         val raw = nodes.mapNotNull { entry ->
             entry.at("coinType").str("repr")?.let { normalizeCoinType(it) to parseBigInteger(entry.str("totalBalance")) }
         }
         val sui = raw.firstOrNull { it.first == SuiChain.SUI_COIN_TYPE }?.second ?: BigInteger.ZERO
         val tokens = raw.filter { (coinType, amount) -> coinType != SuiChain.SUI_COIN_TYPE && !amount.isZero() }
             .mapNotNull { (coinType, amount) -> coinAsset(coinType)?.let { amountOf(it, amount) } }
-        return listOf(amountOf(SuiChain.SUI, sui)) + tokens
+        return CoinBalances(listOf(amountOf(SuiChain.SUI, sui)) + tokens, complete)
     }
 
     /** Asset for a coin type, or `null` when the coin has no on-chain metadata (decimals unknown). */
@@ -154,10 +175,12 @@ class SuiAdapter(
         const val PAGE_SIZE = 50
         const val FIRST_SYNC_PAGES = 2
         const val MAX_PAGES = 20
+        const val MAX_BALANCE_PAGES = 40
 
         private const val D = "$"
         val BALANCES_QUERY =
-            "query(${D}a: SuiAddress!) { address(address: ${D}a) { balances(first: 50) { nodes { coinType { repr } totalBalance } } } }"
+            "query(${D}a: SuiAddress!, ${D}after: String) { address(address: ${D}a) { balances(first: 50, after: ${D}after) { " +
+                "pageInfo { hasNextPage endCursor } nodes { coinType { repr } totalBalance } } } }"
         val METADATA_QUERY = "query(${D}t: String!) { coinMetadata(coinType: ${D}t) { decimals symbol name } }"
         val TRANSACTIONS_QUERY =
             "query(${D}a: SuiAddress!, ${D}before: String, ${D}last: Int) { address(address: ${D}a) { " +

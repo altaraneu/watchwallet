@@ -1,5 +1,6 @@
 package com.altaran.watchwallet.chain.near
 
+import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.core.network.createHttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -8,10 +9,12 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -67,5 +70,17 @@ class NearTest {
         withContext(Dispatchers.Default) {
             assertFalse(adapter.probe(assertNotNull(NearAddresses.parse("nobody.near"))).hasActivity)
         }
+    }
+
+    @Test
+    fun malformedAccountFailsInsteadOfReadingAsZero() = runBlocking {
+        val engine =
+            MockEngine {
+                respond("""{"jsonrpc":"2.0","result":{"block_height":1},"id":1}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+            }
+        assertFailsWith<ChainDataException> {
+            NearAdapter(createHttpClient(engine = engine), "https://near.test").sync(assertNotNull(NearAddresses.parse("example.near")), emptySet())
+        }
+        Unit
     }
 }

@@ -1,5 +1,6 @@
 package com.altaran.watchwallet.chain.polkadot
 
+import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.chain.common.Hex
 import com.altaran.watchwallet.core.network.createHttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -8,9 +9,11 @@ import io.ktor.client.engine.mock.toByteArray
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -119,5 +122,18 @@ class PolkadotTest {
         ).probe(assertNotNull(PolkadotAddresses.parse(aliceKusama)))
         assertFalse(probe.hasActivity)
         assertNull(probe.transactionCount)
+    }
+
+    @Test
+    fun malformedStorageFailsInsteadOfReadingAsNoAccount() = runBlocking {
+        listOf("\"0x1234\"", "{\"unexpected\":true}").forEach { answer ->
+            val engine =
+                MockEngine {
+                    respond("""{"jsonrpc":"2.0","result":$answer,"id":1}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+                }
+            val adapter = PolkadotAdapter(createHttpClient(engine = engine))
+            val address = PolkadotAddresses.parse(alicePolkadot)
+            assertFailsWith<ChainDataException>(answer) { adapter.sync(assertNotNull(address), emptySet()) }
+        }
     }
 }

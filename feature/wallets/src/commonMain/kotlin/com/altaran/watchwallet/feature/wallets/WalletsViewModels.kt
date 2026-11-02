@@ -9,6 +9,7 @@ import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.repository.WalletRepository
 import com.altaran.watchwallet.core.data.repository.historyPriceIds
 import com.altaran.watchwallet.core.data.sync.SyncEngine
+import com.altaran.watchwallet.core.data.sync.WalletSyncHealth
 import com.altaran.watchwallet.core.designsystem.chart.ChartPoint
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.AssetId
@@ -36,7 +37,7 @@ data class WalletListItem(
     val wallet: Wallet,
     val value: Double?,
     val syncing: Boolean,
-    val failed: Boolean,
+    val syncHealth: WalletSyncHealth,
 )
 
 data class WalletsUiState(
@@ -68,7 +69,7 @@ internal class WalletsViewModel(
                 items = wallets.map { wallet ->
                     // A synced wallet without balances is empty (0), not unknown.
                     val value = values[wallet.id] ?: 0.0.takeIf { wallet.lastSyncedAt != null }
-                    WalletListItem(wallet, value, wallet.id in sync.syncingWallets, wallet.id in sync.errors)
+                    WalletListItem(wallet, value, wallet.id in sync.syncingWallets, sync.healthOf(wallet.id))
                 },
                 currency = currency,
                 refreshing = sync.running && sync.manual,
@@ -97,7 +98,7 @@ data class WalletDetailUiState(
     val chart: List<ChartPoint>? = null,
     val range: ChartRange = ChartRange.M1,
     val syncing: Boolean = false,
-    val failed: Boolean = false,
+    val syncHealth: WalletSyncHealth = WalletSyncHealth.OK,
     /** Cost basis (USD) of incoming transfers, by transaction leg. */
     val costs: Map<com.altaran.watchwallet.core.data.repository.CostKey, com.altaran.watchwallet.core.data.repository.CostBasisEntry> = emptyMap(),
 )
@@ -157,7 +158,7 @@ internal class WalletDetailViewModel(
             chart = points,
             range = selectedRange,
             syncing = walletId in sync.syncingWallets,
-            failed = walletId in sync.errors,
+            syncHealth = sync.healthOf(walletId),
             costs = costs,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WalletDetailUiState())

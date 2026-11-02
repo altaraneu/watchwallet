@@ -1,5 +1,6 @@
 package com.altaran.watchwallet.chain.kaspa
 
+import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.core.network.createHttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -7,10 +8,13 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -79,6 +83,42 @@ class KaspaTest {
             val probe = adapter.probe(assertNotNull(KaspaAddresses.parse(schnorr)))
             assertTrue(probe.hasActivity)
             assertEquals(2, probe.transactionCount)
+        }
+    }
+
+    private fun tx(id: String) = """{"transaction_id":"$id","block_time":1716000000000,"is_accepted":true,"inputs":[],""" +
+        """"outputs":[{"amount":1,"script_public_key_address":"$schnorr"}]}"""
+
+    @Test
+    fun aShortPageBeforeTheEndDoesNotEndTheHistory() = runBlocking {
+        val pageSize = 50
+        val engine = MockEngine { request ->
+            val path = request.url.encodedPath.replace("%3A", ":")
+            val body = when {
+                path.endsWith("/balance") -> """{"balance":1}"""
+                path.endsWith("/transactions-count") -> """{"total":${pageSize + 1}}"""
+                request.url.parameters["offset"] == "0" -> "[" + tx("a") + "]"
+                else -> "[" + tx("b") + "]"
+            }
+            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val result = KaspaAdapter(createHttpClient(engine = engine), "https://kaspa.test").sync(assertNotNull(KaspaAddresses.parse(schnorr)), emptySet())
+        assertEquals(listOf("a", "b"), result.transactions.map { it.hash })
+        assertFalse(result.historyTruncated)
+    }
+
+    @Test
+    fun malformedAnswersFailInsteadOfReadingAsZero() = runBlocking {
+        listOf(
+            "balance" to { path: String -> if (path.endsWith("/balance")) """{"address":"x"}""" else "[]" },
+            "history" to { path: String -> if (path.endsWith("/balance")) """{"balance":1}""" else """{"detail":"overloaded"}""" },
+        ).forEach { (name, answer) ->
+            val engine = MockEngine { request ->
+                respond(answer(request.url.encodedPath), HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+            }
+            assertFailsWith<ChainDataException>(name) {
+                KaspaAdapter(createHttpClient(engine = engine), "https://kaspa.test").sync(assertNotNull(KaspaAddresses.parse(schnorr)), emptySet())
+            }
         }
     }
 }

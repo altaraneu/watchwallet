@@ -5,6 +5,8 @@
     <string name="wallets_empty_title">Belum ada dompet</string>
     <string name="wallets_empty_message">Tempel alamat publik atau xpub apa pun dan WatchWallet akan mengenali jaringannya. Tanpa kunci, selamanya.</string>
     <string name="wallets_sync_failed">Tidak dapat menyegarkan. Menampilkan data terakhir yang diketahui.</string>
+    <string name="wallets_sync_partial">Beberapa jaringan tidak dapat diperbarui</string>
+    <string name="wallets_sync_native_only">Saldo koin sudah terbaru. Token atau riwayat tidak dapat diperbarui.</string>
     <string name="detail_back">Kembali</string>
     <string name="detail_more">Opsi lainnya</string>
     <string name="detail_rename">Ganti nama</string>

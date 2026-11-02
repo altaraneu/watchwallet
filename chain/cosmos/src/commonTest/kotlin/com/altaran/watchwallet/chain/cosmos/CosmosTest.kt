@@ -3,6 +3,7 @@
 
 package com.altaran.watchwallet.chain.cosmos
 
+import com.altaran.watchwallet.chain.api.SyncOptions
 import com.altaran.watchwallet.chain.common.Bech32Codec
 import com.altaran.watchwallet.core.network.createHttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -10,9 +11,11 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -114,5 +117,35 @@ class CosmosTest {
         assertEquals(5_000L, byHash.getValue("AA11").fee?.longValue())
         assertEquals(3_500_000L, byHash.getValue("BB22").delta.longValue())
         assertEquals(false, result.historyTruncated)
+    }
+
+    private fun cosmos(history: () -> Pair<HttpStatusCode, String>) = MockEngine { request ->
+        val path = request.url.encodedPath
+        val (status, body) = when {
+            path.endsWith("/txs") -> history()
+            path.contains("/balances/") -> HttpStatusCode.OK to """{"balances":[{"denom":"uatom","amount":"1"}]}"""
+            else -> HttpStatusCode.OK to """{"delegation_responses":[],"unbonding_responses":[],"total":[]}"""
+        }
+        respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
+    }
+
+    @Test
+    fun aFailedHistoryRequestDoesNotStickButACutOffPageDoes() = runBlocking {
+        val fullPage = (1..50).joinToString(",", """{"tx_responses":[""", "]}") { """{"txhash":"H$it","events":[]}""" }
+        var history: Pair<HttpStatusCode, String> = HttpStatusCode.ServiceUnavailable to ""
+        val adapter = CosmosAdapter(createHttpClient(engine = cosmos { history }), "https://rest.test")
+        val target = assertNotNull(CosmosAddresses.parse(ours))
+        val states = HashMap<com.altaran.watchwallet.core.model.ChainId, String>()
+        suspend fun sync() = adapter.sync(target, emptySet(), SyncOptions(chainState = states)) { part -> part.state?.let { states[part.chainId] = it } }
+
+        assertTrue(sync().historyTruncated, "nothing is known about the history right now")
+        assertTrue(states.isEmpty())
+        history = HttpStatusCode.OK to """{"tx_responses":[]}"""
+        assertFalse(sync().historyTruncated, "and the failure is forgotten")
+
+        history = HttpStatusCode.OK to fullPage
+        assertTrue(sync().historyTruncated, "only the newest page can be read")
+        history = HttpStatusCode.OK to """{"tx_responses":[]}"""
+        assertTrue(sync().historyTruncated, "and what it cut off stays missing")
     }
 }

@@ -1,5 +1,6 @@
 package com.altaran.watchwallet.chain.common
 
+import com.altaran.watchwallet.chain.api.SyncOptions
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.Chain
@@ -59,5 +60,50 @@ class BlockbookUtxoTest {
         assertEquals(null, byHash.getValue("t1").fee)
         assertEquals(listOf(chainId), result.activeChains)
         assertTrue(engine.requestHistory.all { "/api/v2/address/DOurs" in it.url.encodedPath })
+    }
+
+    /** Pages of one transaction each; [known] stops a walk like the real backends do. */
+    private class FakeBackend(val histories: Map<String, List<UtxoTx>>) : UtxoBackend {
+        val walked = HashMap<String, Int>()
+
+        override suspend fun address(address: String) = UtxoAddressInfo(histories[address].orEmpty().size, histories[address].orEmpty().sumOf { 1L })
+
+        override suspend fun history(address: String, known: Set<String>, maxPages: Int): UtxoHistory {
+            val rows = histories[address].orEmpty()
+            val end = rows.indexOfFirst { it.confirmed && it.txid in known }
+            val seen = if (end < 0) rows else rows.take(end + 1)
+            walked[address] = seen.size
+            return UtxoHistory(seen, truncated = false)
+        }
+    }
+
+    private fun tx(id: String, vararg outputs: String) = UtxoTx(id, 1_000, true, 0, listOf(UtxoIo("elsewhere", 100)), outputs.map { UtxoIo(it, 10) })
+
+    @Test
+    fun anAddressEnteringTheGapWindowIsReadToItsEnd() = runTest {
+        val shared = tx("shared", "m0", "m1")
+        val older = tx("older", "m1")
+        val backend = FakeBackend(mapOf("m0" to listOf(shared), "m1" to listOf(shared, older)))
+        val target = WatchTarget.ExtendedPublicKey(ChainFamily.UTXO, chainId, "xpub", com.altaran.watchwallet.core.model.ScriptType.P2PKH, gapLimit = 2)
+        val adapter = UtxoAdapter(chain, asset, backend, deriver = { { change, index -> if (change) "c$index" else "m$index" } })
+
+        val result = adapter.sync(target, setOf("shared"), SyncOptions(usedAddresses = setOf("m0"))) { }
+
+        assertEquals(1, backend.walked["m0"], "a known address stops at the known transaction")
+        assertEquals(2, backend.walked["m1"], "the new one does not")
+        assertEquals(listOf("older"), result.transactions.map { it.hash })
+        assertEquals(listOf("shared"), result.correctedTransactions.map { it.hash })
+        assertEquals(20, result.correctedTransactions.single().delta.longValue(), "both outputs are ours now")
+    }
+
+    @Test
+    fun nothingIsCorrectedWhenAllAddressesWereKnown() = runTest {
+        val shared = tx("shared", "m0")
+        val backend = FakeBackend(mapOf("m0" to listOf(shared, tx("older", "m0"))))
+        val target = WatchTarget.ExtendedPublicKey(ChainFamily.UTXO, chainId, "xpub", com.altaran.watchwallet.core.model.ScriptType.P2PKH, gapLimit = 2)
+        val adapter = UtxoAdapter(chain, asset, backend, deriver = { { change, index -> if (change) "c$index" else "m$index" } })
+        val result = adapter.sync(target, setOf("shared"), SyncOptions(usedAddresses = setOf("m0"))) { }
+        assertEquals(1, backend.walked["m0"])
+        assertTrue(result.correctedTransactions.isEmpty())
     }
 }

@@ -5,6 +5,8 @@
     <string name="wallets_empty_title">لا توجد محافظ بعد</string>
     <string name="wallets_empty_message">الصق أي عنوان عام أو xpub وسيتعرف WatchWallet على الشبكة. بلا مفاتيح، أبدًا.</string>
     <string name="wallets_sync_failed">تعذر التحديث. يتم عرض آخر البيانات المعروفة.</string>
+    <string name="wallets_sync_partial">تعذر تحديث بعض الشبكات</string>
+    <string name="wallets_sync_native_only">رصيد العملة محدَّث. تعذر تحديث الرموز أو السجل.</string>
     <string name="detail_back">رجوع</string>
     <string name="detail_more">خيارات إضافية</string>
     <string name="detail_rename">إعادة التسمية</string>

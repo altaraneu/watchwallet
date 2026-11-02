@@ -80,6 +80,8 @@ class JsonRpcClient(
         require(urls.isNotEmpty())
     }
 
+    suspend fun resetHostHealth() = health.reset()
+
     /**
      * Calls [method]; tries the fallback URLs on transport failures (not on RPC errors) and leaves a
      * failing URL alone for a while.
@@ -133,5 +135,8 @@ fun JsonElement?.at(vararg path: String): JsonElement? {
 }
 
 val JsonElement?.asList: List<JsonElement> get() = (this as? JsonArray).orEmpty()
+
+/** A list a data source must answer with: anything else is a failure, not an empty list. */
+fun JsonElement?.requireList(what: String): List<JsonElement> = this as? JsonArray ?: throw ChainDataException("$what: malformed answer")
 
 val JsonElement?.content: String? get() = (this as? JsonPrimitive)?.contentOrNull

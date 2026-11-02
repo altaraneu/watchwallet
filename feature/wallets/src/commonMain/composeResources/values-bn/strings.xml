@@ -5,6 +5,8 @@
     <string name="wallets_empty_title">এখনো কোনো ওয়ালেট নেই</string>
     <string name="wallets_empty_message">যেকোনো পাবলিক ঠিকানা বা xpub পেস্ট করুন, WatchWallet চেইন চিনে নেবে। কোনো কী কখনোই নয়।</string>
     <string name="wallets_sync_failed">রিফ্রেশ করা যায়নি। সর্বশেষ জানা ডেটা দেখানো হচ্ছে।</string>
+    <string name="wallets_sync_partial">কিছু নেটওয়ার্ক আপডেট করা যায়নি</string>
+    <string name="wallets_sync_native_only">কয়েনের ব্যালেন্স হালনাগাদ আছে। টোকেন বা ইতিহাস আপডেট করা যায়নি।</string>
     <string name="detail_back">পিছনে</string>
     <string name="detail_more">আরও বিকল্প</string>
     <string name="detail_rename">নাম বদলান</string>

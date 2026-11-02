@@ -50,11 +50,26 @@ data class SyncState(
      * they show their last known data.
      */
     val partialFailures: Map<Long, Set<String>> = emptyMap(),
-)
+    /** Wallet ids whose native balances are current although nothing else could be refreshed. */
+    val nativeOnly: Set<Long> = emptySet(),
+) {
+    fun healthOf(walletId: Long): WalletSyncHealth = when (walletId) {
+        in errors -> WalletSyncHealth.FAILED
+        in nativeOnly -> WalletSyncHealth.NATIVE_ONLY
+        in partialFailures -> WalletSyncHealth.PARTIAL
+        else -> WalletSyncHealth.OK
+    }
+}
+
+/** How the last sync of a wallet ended, as far as the user should know. */
+enum class WalletSyncHealth { OK, NATIVE_ONLY, PARTIAL, FAILED }
 
 /** Refreshes current prices; the prices of a wallet just synced should not wait for the others. */
 fun interface CurrentPriceRefresher {
     suspend fun refreshCurrentPrices()
+
+    /** Forgets remembered host failures: the user asked to try everything again. */
+    suspend fun resetHostHealth() = Unit
 }
 
 /**
@@ -90,11 +105,19 @@ class SyncEngine(
         try {
             _state.update { it.copy(running = true, manual = manual || it.manual) }
             try {
+                if (manual) {
+                    registry.resetHostHealth()
+                    prices.resetHostHealth()
+                }
                 val wallets = walletDao.activeWallets()
                 // Errors of wallets that were deleted (or archived) are no longer relevant.
                 val ids = wallets.map { it.id }.toSet()
                 _state.update { state ->
-                    state.copy(errors = state.errors.filterKeys { it in ids }, partialFailures = state.partialFailures.filterKeys { it in ids })
+                    state.copy(
+                        errors = state.errors.filterKeys { it in ids },
+                        partialFailures = state.partialFailures.filterKeys { it in ids },
+                        nativeOnly = state.nativeOnly.filter { it in ids }.toSet(),
+                    )
                 }
                 // Archived wallets keep theirs: only bookkeeping of deleted wallets goes away.
                 syncStates.retain(walletDao.allWalletIds().toSet())
@@ -164,21 +187,23 @@ class SyncEngine(
             // Re-read: another sync may have finished since the snapshot (truncation, active chains).
             val wallet = walletDao.wallet(walletId)
             if (wallet == null) {
-                _state.update { it.copy(errors = it.errors - walletId, partialFailures = it.partialFailures - walletId) }
+                _state.update { it.copy(errors = it.errors - walletId, partialFailures = it.partialFailures - walletId, nativeOnly = it.nativeOnly - walletId) }
                 return
             }
             val result = runAdapter(wallet, target, adapter, manual)
             _state.update { state ->
                 val failed = result.failedChains.map { it.value }.toSet()
+                // The only networks failed, but their native balances are current: no failed sync.
+                val nativeOnly = result.allChainsFailed && failed.isNotEmpty() && failed.all { id -> result.nativeCurrentChains.any { it.value == id } }
+                val failedOutright = result.allChainsFailed && !nativeOnly
                 state.copy(
-                    errors = if (result.allChainsFailed) state.errors + (walletId to "All chains failed") else state.errors - walletId,
-                    partialFailures = if (failed.isEmpty() ||
-                        result.allChainsFailed
-                    ) {
+                    errors = if (failedOutright) state.errors + (walletId to "All chains failed") else state.errors - walletId,
+                    partialFailures = if (failed.isEmpty() || failedOutright) {
                         state.partialFailures - walletId
                     } else {
                         state.partialFailures + (walletId to failed)
                     },
+                    nativeOnly = if (nativeOnly) state.nativeOnly + walletId else state.nativeOnly - walletId,
                 )
             }
             log.log(
@@ -208,6 +233,7 @@ class SyncEngine(
             manual = manual,
             continueHistory = wallet.historyTruncated,
             chainState = syncState.chains.mapKeys { ChainId(it.key) },
+            usedAddresses = if (target is WatchTarget.ExtendedPublicKey) walletDao.usedDerivedAddresses(wallet.id).toSet() else emptySet(),
             trace = { log.log("wallet=${wallet.id} $it") },
         )
         val known = walletDao.knownConfirmedHashes(wallet.id).toSet()
@@ -276,6 +302,8 @@ class SyncEngine(
             // a wallet once truncated stays marked as such.
             truncated = (wallet.historyTruncated && !adapter.supportsHistoryContinuation) || result.historyTruncated,
             balanceChains = result.syncedChains?.map { it.value },
+            refreshedAssets = if (result.balancesComplete) null else result.balances.map { it.asset.id.value },
+            corrected = result.correctedTransactions.map { it.toEntity(wallet.id) },
         )
     }
 }

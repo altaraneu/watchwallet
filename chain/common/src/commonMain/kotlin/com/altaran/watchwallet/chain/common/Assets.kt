@@ -1,6 +1,7 @@
 package com.altaran.watchwallet.chain.common
 
 import com.altaran.watchwallet.chain.api.AssetAmount
+import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.chain.api.ChainTransaction
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.AssetId
@@ -52,6 +53,17 @@ fun amountOf(asset: Asset, raw: String?): AssetAmount = amountOf(asset, parseBig
 fun parseBigInteger(raw: String?): BigInteger =
     raw?.trim()?.takeIf { it.isNotEmpty() }?.let { runCatching { BigInteger.parseString(it) }.getOrNull() }
         ?: BigInteger.ZERO
+
+/** A balance from a data source: a missing or malformed value is a failure, never zero. */
+fun requireBigInteger(raw: String?, what: String): BigInteger =
+    raw?.trim()?.takeIf { it.isNotEmpty() }?.let { runCatching { BigInteger.parseString(it) }.getOrNull() }
+        ?: throw ChainDataException("$what: malformed answer")
+
+/** Like [parseDecimalUnits] for balances: a missing or malformed value is a failure, never zero. */
+fun requireDecimalUnits(value: String?, decimals: Int, what: String): BigInteger {
+    val text = value?.trim()?.uppercase()?.takeIf { it.isNotEmpty() } ?: throw ChainDataException("$what: malformed answer")
+    return runCatching { TokenAmount.parseDecimal(text, decimals).raw }.getOrElse { throw ChainDataException("$what: malformed answer", it) }
+}
 
 /** Parses a decimal string such as `12.5` or `1.2e-7` into base units with [decimals]. */
 fun parseDecimalUnits(value: String?, decimals: Int): BigInteger {

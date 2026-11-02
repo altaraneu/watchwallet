@@ -25,6 +25,7 @@ import com.ionspin.kotlin.bignum.integer.BigInteger
 import fr.acinq.bitcoin.Base58
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import org.kotlincrypto.hash.blake2.BLAKE2b
 import kotlin.time.Duration.Companion.milliseconds
@@ -191,6 +192,8 @@ class PolkadotAdapter(
     override val family = ChainFamily.POLKADOT
     override val chains = networks.map { it.chain }
 
+    override suspend fun resetHostHealth() = clients.values.flatten().forEach { it.resetHostHealth() }
+
     /** Polkadot has no keyless history source; callers can hide the history section. */
     val supportsHistory: Boolean = false
 
@@ -236,7 +239,13 @@ class PolkadotAdapter(
             ?: throw ChainDataException("Unsupported Substrate network")
         val key = "0x" + Hex.encode(SubstrateStorage.systemAccountKey(decoded.accountId))
         val parts = clients.getValue(network.id).mapNotNull { client ->
-            client.call("state_getStorage", JsonArray(listOf(JsonPrimitive(key)))).content?.let(SubstrateStorage::decodeAccountInfo)
+            // An explicit null means no such account; anything else has to be the account data.
+            val answer = client.call("state_getStorage", JsonArray(listOf(JsonPrimitive(key))))
+            if (answer is JsonNull) {
+                null
+            } else {
+                answer.content?.let(SubstrateStorage::decodeAccountInfo) ?: throw ChainDataException("Substrate account: malformed answer")
+            }
         }
         return network to parts.reduceOrNull(PolkadotAccountBalances::plus)
     }

@@ -5,6 +5,8 @@
     <string name="wallets_empty_title">Кошельков пока нет</string>
     <string name="wallets_empty_message">Вставьте любой публичный адрес или xpub, и WatchWallet распознает сеть. Никаких ключей — никогда.</string>
     <string name="wallets_sync_failed">Не удалось обновить. Показаны последние известные данные.</string>
+    <string name="wallets_sync_partial">Не удалось обновить некоторые сети</string>
+    <string name="wallets_sync_native_only">Баланс монеты актуален. Не удалось обновить токены или историю.</string>
     <string name="detail_back">Назад</string>
     <string name="detail_more">Другие действия</string>
     <string name="detail_rename">Переименовать</string>

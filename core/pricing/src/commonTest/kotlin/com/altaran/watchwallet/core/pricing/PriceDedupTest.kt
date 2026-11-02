@@ -251,7 +251,18 @@ class PriceDedupTest {
 
     @Test
     fun marketRowsSayWhereTheyCameFrom() = runBlocking {
-        val rich = LayeredPriceProvider(CountingProvider(), ExchangePrices(offline, hosts = listOf("https://ex.test")), FxRates(offline, listOf("https://fx.test")), now = { time })
+        val rich =
+            LayeredPriceProvider(
+                CountingProvider(),
+                ExchangePrices(
+                    offline,
+                    hosts = listOf("https://ex.test"),
+                ),
+                FxRates(offline, listOf("https://fx.test")),
+                now = {
+                    time
+                },
+            )
         assertTrue(rich.markets(listOf("bitcoin"), "usd").all { it.fromCoinGecko })
     }
 

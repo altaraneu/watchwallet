@@ -5,6 +5,8 @@ import com.altaran.watchwallet.chain.api.ChainAdapter
 import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.chain.api.ChainTransaction
 import com.altaran.watchwallet.chain.api.ProbeResult
+import com.altaran.watchwallet.chain.api.SyncOptions
+import com.altaran.watchwallet.chain.api.SyncPartSink
 import com.altaran.watchwallet.chain.api.SyncResult
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
@@ -136,7 +138,19 @@ open class UtxoAdapter(
         }
     }
 
-    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall(chain.name) {
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = scan(target, knownTransactions, usedBefore = null)
+
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, options: SyncOptions, sink: SyncPartSink): SyncResult =
+        scan(target, knownTransactions, options.usedAddresses.takeIf { target is WatchTarget.ExtendedPublicKey && knownTransactions.isNotEmpty() })
+
+    /**
+     * @param usedBefore extended keys: addresses earlier syncs found with history. An address that
+     * has history now but is not among them (it just entered the gap window) must be walked to its
+     * end: stopping at a known transaction would skip its older ones for good, since known
+     * transactions are all later syncs ever stop at. Known transactions it reaches are corrected,
+     * because their amounts did not count this address yet.
+     */
+    private suspend fun scan(target: WatchTarget, knownTransactions: Set<String>, usedBefore: Set<String>?): SyncResult = chainCall(chain.name) {
         val scanned = when (target) {
             is WatchTarget.Address -> {
                 val address = normalize(target.address)
@@ -151,15 +165,20 @@ open class UtxoAdapter(
         var truncated = false
         val transactions = LinkedHashMap<String, UtxoTx>()
         val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES_PER_ADDRESS
+        val corrected = HashSet<String>()
         for (address in scanned.filter { it.info.txCount > 0 }) {
-            val history = backend.history(address.address, knownTransactions, maxPages)
+            val isNew = usedBefore != null && address.address !in usedBefore
+            val history = backend.history(address.address, if (isNew) emptySet() else knownTransactions, maxPages)
             truncated = truncated || history.truncated
             history.transactions.forEach { transactions.getOrPut(it.txid) { it } }
+            if (isNew) history.transactions.filter { it.txid in knownTransactions }.mapTo(corrected) { it.txid }
         }
         val active = scanned.any { it.info.txCount > 0 }
+        val (changed, fresh) = transactions.values.mapNotNull { utxoChainTransaction(chain, asset, it, ours) }.partition { it.hash in corrected }
         SyncResult(
             balances = listOf(amount(scanned.sumOf { it.info.balance })),
-            transactions = transactions.values.mapNotNull { utxoChainTransaction(chain, asset, it, ours) },
+            transactions = fresh,
+            correctedTransactions = changed,
             derivedAddresses = if (target is WatchTarget.ExtendedPublicKey) {
                 scanned.map { DerivedAddress(it.address, it.change, it.index, used = it.info.txCount > 0) }
             } else {

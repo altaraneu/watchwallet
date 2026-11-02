@@ -16,6 +16,8 @@ import com.altaran.watchwallet.chain.common.long
 import com.altaran.watchwallet.chain.common.nativeAsset
 import com.altaran.watchwallet.chain.common.notFoundAsNull
 import com.altaran.watchwallet.chain.common.parseBigInteger
+import com.altaran.watchwallet.chain.common.requireBigInteger
+import com.altaran.watchwallet.chain.common.requireList
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.core.endpoints.BundledEndpoints
 import com.altaran.watchwallet.core.endpoints.EndpointProtocol
@@ -128,14 +130,16 @@ class AptosAdapter(
         var pages = 0
         paging@ while (end > 0) {
             val start = maxOf(0L, end - PAGE_SIZE)
-            val page = get("$base/accounts/$address/transactions") {
-                parameter("start", start)
-                parameter("limit", end - start)
-            }.asList
+            val page = window(address, start, end)
             for (tx in page.reversed()) {
                 val hash = tx.str("hash") ?: continue
                 if (hash in knownTransactions) break@paging
                 parseAptosTransaction(tx, address)?.let { transactions += it }
+            }
+            // A node that has pruned this range ends the walk: the older part cannot be read.
+            if (page.size < end - start) {
+                truncated = true
+                break
             }
             end = start
             if (++pages >= maxPages && end > 0) {
@@ -150,6 +154,23 @@ class AptosAdapter(
             activeChains = if (active) listOf(AptosChain.ID) else emptyList(),
             historyTruncated = truncated,
         )
+    }
+
+    /**
+     * All transactions with a sequence number in `[start, end)`, oldest first. A short answer is
+     * asked again for the rest; later syncs stop at what is stored, so a hole would stay.
+     */
+    private suspend fun window(address: String, start: Long, end: Long): List<JsonElement> {
+        val rows = mutableListOf<JsonElement>()
+        while (start + rows.size < end) {
+            val part = get("$base/accounts/$address/transactions") {
+                parameter("start", start + rows.size)
+                parameter("limit", end - start - rows.size)
+            }.requireList("Aptos transactions")
+            if (part.isEmpty()) break
+            rows += part
+        }
+        return rows
     }
 
     private fun address(target: WatchTarget): String =
@@ -173,7 +194,7 @@ class AptosAdapter(
                     listOf("0x1::fungible_asset::Metadata"),
                     listOf(address, "0xa"),
                 )
-        return parseBigInteger(value.asList.firstOrNull().content)
+        return requireBigInteger(value.asList.firstOrNull().content, "Aptos balance")
     }
 
     private suspend fun view(

@@ -1,5 +1,8 @@
 package com.altaran.watchwallet.chain.bitcoin
 
+import com.altaran.watchwallet.chain.api.SyncOptions
+import com.altaran.watchwallet.core.crypto.BitcoinAddresses
+import com.altaran.watchwallet.core.crypto.ExtendedKeys
 import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.ScriptType
@@ -143,5 +146,40 @@ class BitcoinAdapterTest {
         val backfill = adapter.sync(target, known, continueHistory = true)
         assertEquals(older, backfill.transactions.map { it.hash }.toSet())
         assertEquals(false, backfill.historyTruncated)
+    }
+
+    @Test
+    fun anAddressEnteringTheGapWindowIsReadToItsEnd() = runTest {
+        val xpub = "xpub6BosfCnifzxcFwrSzQiqu2DBVTshkCXacvNsWGYJVVhhawA7d4R5WSWGFNbi8Aw6ZRc1brxMyWMzG3DSSSSoekkudhUd9yLb6qx39T9nMdj"
+        val key = assertNotNull(ExtendedKeys.parse(xpub)).key
+        val first = BitcoinAddresses.derive(key, ScriptType.P2PKH, false, 0)
+        val second = BitcoinAddresses.derive(key, ScriptType.P2PKH, false, 1)
+
+        fun txJson(id: String, vararg outputs: String) = """{"txid":"$id","status":{"confirmed":true,"block_time":1700000000},"fee":1,"vin":[],"vout":[""" +
+            outputs.joinToString(",") { """{"scriptpubkey_address":"$it","value":10}""" } + "]}"
+        val shared = txJson("shared", first, second)
+        val histories = mapOf(first to listOf(shared), second to List(25) { if (it == 0) shared else txJson("new$it", second) } + txJson("old", second))
+        val engine = MockEngine { request ->
+            val path = request.url.encodedPath
+            val address = path.substringAfter("/address/").substringBefore('/')
+            val rows = histories[address].orEmpty()
+            val body = when {
+                "/txs" !in path -> {
+                    """{"address":"$address","chain_stats":{"funded_txo_sum":${rows.size * 10},"spent_txo_sum":0,"tx_count":${rows.size}},"mempool_stats":{"funded_txo_sum":0,"spent_txo_sum":0,"tx_count":0}}"""
+                }
+
+                else -> {
+                    val after = path.substringAfter("/txs/chain/", "").ifEmpty { null }
+                    val start = after?.let { id -> rows.indexOfFirst { "\"txid\":\"$id\"" in it } + 1 } ?: 0
+                    rows.drop(start).take(25).joinToString(",", "[", "]")
+                }
+            }
+            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val adapter = BitcoinAdapter(createHttpClient(engine = engine), "https://esplora.test/api")
+        val target = WatchTarget.ExtendedPublicKey(ChainFamily.UTXO, ChainId.BITCOIN, xpub, ScriptType.P2PKH, gapLimit = 2)
+        val result = adapter.sync(target, setOf("shared"), SyncOptions(usedAddresses = setOf(first))) { }
+        assertTrue(result.transactions.any { it.hash == "old" }, "not stopped by the known transaction on its first page")
+        assertEquals(listOf(20L), result.correctedTransactions.map { it.delta.longValue() }, "both outputs of the known transaction are ours")
     }
 }

@@ -9,7 +9,7 @@ import com.altaran.watchwallet.chain.common.RpcErrorException
 import com.altaran.watchwallet.chain.common.amountOf
 import com.altaran.watchwallet.chain.common.chainCall
 import com.altaran.watchwallet.chain.common.nativeAsset
-import com.altaran.watchwallet.chain.common.parseBigInteger
+import com.altaran.watchwallet.chain.common.requireBigInteger
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.core.endpoints.BundledEndpoints
 import com.altaran.watchwallet.core.endpoints.EndpointProtocol
@@ -103,6 +103,8 @@ class NearAdapter(
     override val family = ChainFamily.NEAR
     override val chains = listOf(NearChain.CHAIN)
 
+    override suspend fun resetHostHealth() = rpc.resetHostHealth()
+
     override suspend fun probe(target: WatchTarget): ProbeResult = chainCall("NEAR") {
         val account = viewAccount(address(target))
         val balance = total(account)
@@ -133,7 +135,7 @@ class NearAdapter(
         ) {
             BigInteger.ZERO
         } else {
-            parseBigInteger(account.str("amount")) + parseBigInteger(account.str("locked"))
+            requireBigInteger(account.str("amount"), "NEAR balance") + requireBigInteger(account.str("locked"), "NEAR balance")
         }
 
     /** `view_account` result, or `null` when the account does not exist. */

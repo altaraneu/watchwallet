@@ -5,6 +5,8 @@
     <string name="wallets_empty_title">Aún no hay billeteras</string>
     <string name="wallets_empty_message">Pega cualquier dirección pública o xpub y WatchWallet reconocerá la cadena. Nunca claves.</string>
     <string name="wallets_sync_failed">No se pudo actualizar. Se muestran los últimos datos conocidos.</string>
+    <string name="wallets_sync_partial">No se pudieron actualizar algunas redes</string>
+    <string name="wallets_sync_native_only">El saldo de la moneda está actualizado. No se pudieron actualizar los tokens o el historial.</string>
     <string name="detail_back">Atrás</string>
     <string name="detail_more">Más opciones</string>
     <string name="detail_rename">Cambiar nombre</string>

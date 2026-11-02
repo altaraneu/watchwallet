@@ -20,6 +20,8 @@ import com.altaran.watchwallet.chain.common.nativeAsset
 import com.altaran.watchwallet.chain.common.notFoundAsNull
 import com.altaran.watchwallet.chain.common.obj
 import com.altaran.watchwallet.chain.common.parseBigInteger
+import com.altaran.watchwallet.chain.common.requireBigInteger
+import com.altaran.watchwallet.chain.common.requireList
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.chain.common.tokenPriceId
@@ -155,8 +157,11 @@ class TonAdapter(
         val address = address(target)
         val account = account(address)
         val active = account != null && account.str("status") != "nonexist"
-        val balances =
-            listOf(amountOf(TonChain.TON, account.str("balance"))) + if (active) jettons(address).first else emptyList()
+        val balances = if (active) {
+            listOf(amountOf(TonChain.TON, requireBigInteger(account.str("balance"), "toncenter balance"))) + jettons(address).amounts
+        } else {
+            listOf(amountOf(TonChain.TON, BigInteger.ZERO))
+        }
         ProbeResult(active, if (active) listOf(TonChain.ID) else emptyList(), balances, transactionCount = null)
     }
 
@@ -169,8 +174,9 @@ class TonAdapter(
         if (account == null || account.str("status") == "nonexist") {
             return@chainCall SyncResult(listOf(amountOf(TonChain.TON, BigInteger.ZERO)), emptyList())
         }
-        val (jettonBalances, jettonAssets) = jettons(address)
-        val balances = listOf(amountOf(TonChain.TON, account.str("balance"))) + jettonBalances
+        val held = jettons(address)
+        val jettonAssets = held.assets
+        val balances = listOf(amountOf(TonChain.TON, requireBigInteger(account.str("balance"), "toncenter balance"))) + held.amounts
         val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES
 
         val txPages = pages("$base/transactions", "transactions", maxPages, { parameter("account", address) }) {
@@ -182,13 +188,14 @@ class TonAdapter(
             }
         val transactions = txPages.items.mapNotNull { parseTonTransaction(it) } +
             transferPages.items.mapNotNull { parseJettonTransfer(it, raw, jettonAssets) }
-        SyncResult(
+        val result = SyncResult(
             balances,
             transactions,
             activeChains = listOf(TonChain.ID),
             historyTruncated =
                 txPages.truncated || transferPages.truncated,
         )
+        if (held.complete) result else result.withIncompleteBalances(TonChain.ID)
     }
 
     private fun address(target: WatchTarget): String =
@@ -199,22 +206,30 @@ class TonAdapter(
     }
 
     /** Jetton balances plus the asset of every master seen (also zero balances, for history). */
-    private suspend fun jettons(address: String): Pair<List<AssetAmount>, Map<String, Asset>> {
-        val response = get("$base/jetton/wallets") {
-            parameter("owner_address", address)
-            parameter("limit", JETTON_LIMIT)
-        }
-        val metadata = response.obj("metadata")
+    private class Jettons(val amounts: List<AssetAmount>, val assets: Map<String, Asset>, val complete: Boolean)
+
+    /** Every jetton wallet, page by page; offset paging was verified against the live API. */
+    private suspend fun jettons(address: String): Jettons {
         val assets = LinkedHashMap<String, Asset>()
         val balances = mutableListOf<AssetAmount>()
-        for (wallet in response.arr("jetton_wallets")) {
-            val master = wallet.str("jetton")?.let { TonAddresses.toRaw(it) } ?: continue
-            val asset = jettonAsset(master, metadata)
-            assets[master] = asset
-            val raw = parseBigInteger(wallet.str("balance"))
-            if (!raw.isZero()) balances += amountOf(asset, raw)
+        for (page in 0 until MAX_JETTON_PAGES) {
+            val response = get("$base/jetton/wallets") {
+                parameter("owner_address", address)
+                parameter("limit", JETTON_LIMIT)
+                parameter("offset", page * JETTON_LIMIT)
+            }
+            val metadata = response.obj("metadata")
+            val wallets = (response as? JsonObject)?.get("jetton_wallets").requireList("toncenter jetton wallets")
+            for (wallet in wallets) {
+                val master = wallet.str("jetton")?.let { TonAddresses.toRaw(it) } ?: continue
+                val asset = jettonAsset(master, metadata)
+                assets[master] = asset
+                val raw = requireBigInteger(wallet.str("balance"), "toncenter jetton balance")
+                if (!raw.isZero()) balances += amountOf(asset, raw)
+            }
+            if (wallets.size < JETTON_LIMIT) return Jettons(balances, assets, complete = true)
         }
-        return balances to assets
+        return Jettons(balances, assets, complete = false)
     }
 
     private class Paged(val items: List<JsonElement>, val truncated: Boolean)
@@ -252,6 +267,7 @@ class TonAdapter(
         const val FIRST_SYNC_PAGES = 2
         const val MAX_PAGES = 20
         const val JETTON_LIMIT = 100
+        const val MAX_JETTON_PAGES = 10
         const val RATE_LIMIT_RETRIES = 3
     }
 }

@@ -27,6 +27,8 @@ class ChainRegistry(private val adapters: List<ChainAdapter>) {
     fun chain(id: ChainId): Chain? = chainsById[id]
 
     val allChains: Collection<Chain> get() = chainsById.values
+
+    suspend fun resetHostHealth() = adapters.forEach { it.resetHostHealth() }
 }
 
 /** The chain a target is stored under (EVM targets use `evm:1` and cover all EVM networks). */

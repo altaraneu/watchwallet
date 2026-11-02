@@ -16,6 +16,7 @@ import com.altaran.watchwallet.chain.common.long
 import com.altaran.watchwallet.chain.common.nativeAsset
 import com.altaran.watchwallet.chain.common.notFoundAsNull
 import com.altaran.watchwallet.chain.common.parseBigInteger
+import com.altaran.watchwallet.chain.common.requireBigInteger
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.chain.common.tokenPriceId
@@ -140,21 +141,25 @@ class AlgorandAdapter(
                 break
             }
         }
-        SyncResult(balances, transactions, activeChains = listOf(AlgorandChain.ID), historyTruncated = truncated)
+        val result = SyncResult(balances, transactions, activeChains = listOf(AlgorandChain.ID), historyTruncated = truncated)
+        if (heldAssets(account).size <= MAX_ASSETS) result else result.withIncompleteBalances(AlgorandChain.ID)
     }
 
     private fun address(target: WatchTarget): String =
         (target as? WatchTarget.Address)?.address ?: throw ChainDataException("Algorand supports addresses only")
 
+    /** `null` only when the account does not exist; an answer without the account is a failure. */
     private suspend fun account(address: String): JsonElement? = notFoundAsNull {
         get("$base/v2/accounts/$address")
-    }?.at("account")
+    }?.let { it.at("account") ?: throw ChainDataException("Algorand account: malformed answer") }
+
+    /** Opt-ins without a balance must not use up the limit before real holdings. */
+    private fun heldAssets(account: JsonElement): List<JsonElement> =
+        account.arr("assets").filterNot { requireBigInteger(it.str("amount"), "Algorand asset").isZero() }
 
     private suspend fun balances(account: JsonElement): List<AssetAmount> {
-        val result = mutableListOf(amountOf(AlgorandChain.ALGO, account.str("amount")))
-        // Opt-ins without a balance must not use up the limit before real holdings.
-        val held = account.arr("assets").filterNot { parseBigInteger(it.str("amount")).isZero() }
-        for (holding in held.take(MAX_ASSETS)) {
+        val result = mutableListOf(amountOf(AlgorandChain.ALGO, requireBigInteger(account.str("amount"), "Algorand balance")))
+        for (holding in heldAssets(account).take(MAX_ASSETS)) {
             val id = holding.str("asset-id") ?: continue
             val raw = parseBigInteger(holding.str("amount"))
             result += amountOf(asa(id) ?: continue, raw)

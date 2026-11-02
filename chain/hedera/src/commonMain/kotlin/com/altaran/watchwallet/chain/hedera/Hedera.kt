@@ -143,7 +143,8 @@ class HederaAdapter(
                 break
             }
         }
-        SyncResult(balances, transactions, activeChains = listOf(HederaChain.ID), historyTruncated = truncated)
+        val result = SyncResult(balances, transactions, activeChains = listOf(HederaChain.ID), historyTruncated = truncated)
+        if (heldTokens(account).size <= MAX_TOKENS) result else result.withIncompleteBalances(HederaChain.ID)
     }
 
     private fun address(target: WatchTarget): String =
@@ -153,11 +154,13 @@ class HederaAdapter(
         get("$base/accounts/$id?transactions=false")
     }
 
+    /** Associated tokens without a balance must not use up the limit before real holdings. */
+    private fun heldTokens(account: JsonElement): List<JsonElement> =
+        account.at("balance").arr("tokens").filterNot { parseBigInteger(it.str("balance")).isZero() }
+
     private suspend fun balances(account: JsonElement): List<AssetAmount> {
         val result = mutableListOf(amountOf(HederaChain.HBAR, account.at("balance").str("balance")))
-        // Associated tokens without a balance must not use up the limit before real holdings.
-        val held = account.at("balance").arr("tokens").filterNot { parseBigInteger(it.str("balance")).isZero() }
-        for (entry in held.take(MAX_TOKENS)) {
+        for (entry in heldTokens(account).take(MAX_TOKENS)) {
             val tokenId = entry.str("token_id") ?: continue
             val raw = parseBigInteger(entry.str("balance"))
             result += amountOf(token(tokenId) ?: continue, raw)

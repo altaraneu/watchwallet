@@ -5,6 +5,8 @@
     <string name="wallets_empty_title">暂无钱包</string>
     <string name="wallets_empty_message">粘贴任意公开地址或 xpub,WatchWallet 会识别所属区块链。绝不需要密钥。</string>
     <string name="wallets_sync_failed">无法刷新。正在显示上次已知的数据。</string>
+    <string name="wallets_sync_partial">部分网络无法更新</string>
+    <string name="wallets_sync_native_only">币种余额已是最新。代币或历史记录无法更新。</string>
     <string name="detail_back">返回</string>
     <string name="detail_more">更多选项</string>
     <string name="detail_rename">重命名</string>

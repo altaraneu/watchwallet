@@ -3,6 +3,7 @@
 
 package com.altaran.watchwallet.chain.sui
 
+import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.core.network.createHttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -11,11 +12,15 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class SuiTest {
     private val ours = "0x02a212de6a9dfa3a69e22387acfbafbb1a9e591bd9d636e7895dcfc8de05f331"
@@ -88,5 +93,58 @@ class SuiTest {
             assertEquals("-2000000", byKey.getValue("d2/SUI").delta.toString())
             assertEquals("2500000", byKey.getValue("d2/USDC").delta.toString())
         }
+    }
+
+    private val owner = "0x" + "b".repeat(64)
+
+    private fun suiEngine(pages: (String?) -> String) = MockEngine { request ->
+        val body = request.body.toByteArray().decodeToString()
+        val response = when {
+            "balances(" in body -> {
+                pages(Regex("\"after\":\"([^\"]+)\"").find(body)?.groupValues?.get(1))
+            }
+
+            "coinMetadata" in body -> {
+                """{"data":{"coinMetadata":{"decimals":6,"symbol":"TOK","name":"Token"}}}"""
+            }
+
+            else -> {
+                """{"data":{"address":{"transactions":{"pageInfo":{"hasPreviousPage":false,"startCursor":null},"nodes":[]}}}}"""
+            }
+        }
+        respond(response, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+    }
+
+    private fun balancePage(next: Boolean, cursor: String, vararg coins: String) = coins.joinToString(",") {
+        """{"coinType":{"repr":"$it"},"totalBalance":"5"}"""
+    }.let { nodes ->
+        """{"data":{"address":{"balances":{"pageInfo":{"hasNextPage":$next,"endCursor":"$cursor"},"nodes":[$nodes]}}}}"""
+    }
+
+    @Test
+    fun balancesAreReadPageByPage() = runBlocking {
+        val engine = suiEngine { after ->
+            if (after == null) balancePage(true, "c1", pad2) else balancePage(false, "c2", "0x3::a::A")
+        }
+        val result = SuiAdapter(createHttpClient(engine = engine), "https://sui.test").sync(assertNotNull(SuiAddresses.parse(owner)), emptySet())
+        assertEquals(listOf("SUI", "TOK"), result.balances.map { it.asset.symbol })
+        assertTrue(result.balancesComplete)
+    }
+
+    @Test
+    fun aListThatNeverEndsIsMarkedInsteadOfDroppingHoldings() = runBlocking {
+        val engine = suiEngine { balancePage(true, "c", pad2) }
+        val result = SuiAdapter(createHttpClient(engine = engine), "https://sui.test").sync(assertNotNull(SuiAddresses.parse(owner)), emptySet())
+        assertFalse(result.balancesComplete)
+        assertEquals(listOf(SuiChain.ID), result.nativeCurrentChains)
+    }
+
+    @Test
+    fun anAnswerWithoutBalancesFails() = runBlocking {
+        val engine = suiEngine { """{"data":{"address":null}}""" }
+        assertFailsWith<ChainDataException> {
+            SuiAdapter(createHttpClient(engine = engine), "https://sui.test").sync(assertNotNull(SuiAddresses.parse(owner)), emptySet())
+        }
+        Unit
     }
 }

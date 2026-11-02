@@ -195,9 +195,7 @@ internal fun WalletDetailScreen(
                         ActiveChains(state, chain)
                         wallet?.target?.let { WalletAddress(it, state.derivedAddresses) }
                         OverlapHint(state)
-                        if (state.failed) {
-                            Text(stringResource(Res.string.wallets_sync_failed), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
-                        }
+                        SyncHealthHint(state.syncHealth, Modifier.padding(16.dp))
                         Spacer(Modifier.size(8.dp))
                         ValueChartSection(
                             label = stringResource(Res.string.detail_balance),

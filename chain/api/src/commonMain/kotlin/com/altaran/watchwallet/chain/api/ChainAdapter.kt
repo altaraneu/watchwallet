@@ -58,6 +58,9 @@ interface ChainAdapter {
      */
     suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, options: SyncOptions, sink: SyncPartSink): SyncResult =
         sync(target, knownTransactions, options.continueHistory)
+
+    /** Forgets remembered host failures: the user asked to try everything again. */
+    suspend fun resetHostHealth() = Unit
 }
 
 /** What the engine knows about the wallet before a sync. */
@@ -72,6 +75,8 @@ data class SyncOptions(
     val continueHistory: Boolean = false,
     /** Adapter-defined state per chain, from [SyncPart.state]. */
     val chainState: Map<ChainId, String> = emptyMap(),
+    /** Extended keys: derived addresses earlier syncs found with history. */
+    val usedAddresses: Set<String> = emptySet(),
     /** Debug timing log; messages must never contain addresses or amounts. */
     val trace: (String) -> Unit = {},
 )
@@ -133,7 +138,21 @@ data class SyncResult(
     val failedChains: List<ChainId> = emptyList(),
     /** Every chain with activity failed, which the UI reports as a failed sync. */
     val allChainsFailed: Boolean = false,
-)
+    /** Those of [failedChains] whose native balance is current anyway; only tokens or history failed. */
+    val nativeCurrentChains: List<ChainId> = emptyList(),
+    /** `false`: a limit was hit, so assets missing from [balances] may still be held and stay stored. */
+    val balancesComplete: Boolean = true,
+    /** Stored transactions whose amounts changed, because an address found later took part in them. */
+    val correctedTransactions: List<ChainTransaction> = emptyList(),
+) {
+    /** The token list of [chainId] hit a limit: known tokens stay stored and the wallet shows a hint. */
+    fun withIncompleteBalances(chainId: ChainId): SyncResult = copy(
+        balancesComplete = false,
+        failedChains = listOf(chainId),
+        allChainsFailed = true,
+        nativeCurrentChains = listOf(chainId),
+    )
+}
 
 /** A transaction's net effect on the wallet for one asset. */
 data class ChainTransaction(

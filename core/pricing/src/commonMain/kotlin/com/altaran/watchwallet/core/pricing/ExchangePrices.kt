@@ -41,6 +41,8 @@ class ExchangePrices(
 ) {
     private val throttle = Throttle(maxConcurrent = 4, minInterval = 50.milliseconds)
 
+    suspend fun resetHostHealth() = health.reset()
+
     /**
      * Symbols the exchange rejected as invalid (HTTP 400: not listed); not requested again in this
      * session. Guarded by [unlistedLock] (written from parallel requests).

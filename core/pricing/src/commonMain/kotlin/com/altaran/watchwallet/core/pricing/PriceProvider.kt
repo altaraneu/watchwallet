@@ -67,6 +67,9 @@ interface PriceProvider {
 
     /** Coins matching a name or symbol, for adding to the watchlist. */
     suspend fun search(query: String): List<CoinSearchResult>
+
+    /** Forgets remembered host failures: the user asked to try everything again. */
+    suspend fun resetHostHealth() = Unit
 }
 
 data class CoinSearchResult(val priceId: String, val symbol: String, val name: String, val marketCapRank: Int?)

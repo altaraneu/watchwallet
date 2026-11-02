@@ -3,6 +3,7 @@
 
 package com.altaran.watchwallet.chain.algorand
 
+import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.chain.common.Hex
 import com.altaran.watchwallet.core.network.createHttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -11,10 +12,12 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 
@@ -109,6 +112,20 @@ class AlgorandTest {
     fun unknownAccount() = runTest {
         withContext(Dispatchers.Default) {
             assertFalse(adapter.probe(assertNotNull(AlgorandAddresses.parse(feeSink))).hasActivity)
+        }
+    }
+
+    @Test
+    fun malformedAccountFailsInsteadOfReadingAsZero() = runBlocking {
+        listOf(
+            "no account" to """{"current-round":1}""",
+            "no amount" to """{"account":{"address":"$ours"}}""",
+            "broken asset" to """{"account":{"amount":5,"assets":[{"asset-id":1}]}}""",
+        ).forEach { (name, body) ->
+            val engine = MockEngine { respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json")) }
+            assertFailsWith<ChainDataException>(name) {
+                AlgorandAdapter(createHttpClient(engine = engine), "https://algo.test").sync(assertNotNull(AlgorandAddresses.parse(ours)), emptySet())
+            }
         }
     }
 }

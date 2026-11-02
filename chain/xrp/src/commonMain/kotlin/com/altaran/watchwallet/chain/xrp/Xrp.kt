@@ -18,6 +18,9 @@ import com.altaran.watchwallet.chain.common.nativeAsset
 import com.altaran.watchwallet.chain.common.obj
 import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.parseDecimalUnits
+import com.altaran.watchwallet.chain.common.requireBigInteger
+import com.altaran.watchwallet.chain.common.requireDecimalUnits
+import com.altaran.watchwallet.chain.common.requireList
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.core.endpoints.BundledEndpoints
@@ -126,6 +129,8 @@ internal class XrplClient(
     private val throttle: Throttle,
     private val health: HostHealth = HostHealth(),
 ) {
+    suspend fun resetHostHealth() = health.reset()
+
     suspend fun call(method: String, params: JsonObject): JsonElement = health.firstAvailable(urls) { url ->
         val response: JsonObject = throttle.run {
             http.post(url) {
@@ -160,13 +165,15 @@ class XrpAdapter(
     override val family = ChainFamily.XRP
     override val chains = listOf(XrpChain.CHAIN)
 
+    override suspend fun resetHostHealth() = client.resetHostHealth()
+
     override suspend fun probe(target: WatchTarget): ProbeResult = chainCall("XRPL") {
         val account = address(target)
         val info = accountInfo(account)
         if (info == null) {
             ProbeResult(false, emptyList(), listOf(amountOf(XrpChain.XRP, BigInteger.ZERO)), 0)
         } else {
-            val balances = listOf(amountOf(XrpChain.XRP, info.str("Balance"))) + trustLines(account)
+            val balances = listOf(amountOf(XrpChain.XRP, requireBigInteger(info.str("Balance"), "XRPL balance"))) + trustLines(account).amounts
             ProbeResult(true, listOf(XrpChain.ID), balances, transactionCount = null)
         }
     }
@@ -175,7 +182,8 @@ class XrpAdapter(
         val account = address(target)
         val info = accountInfo(account)
             ?: return@chainCall SyncResult(listOf(amountOf(XrpChain.XRP, BigInteger.ZERO)), emptyList())
-        val balances = listOf(amountOf(XrpChain.XRP, info.str("Balance"))) + trustLines(account)
+        val lines = trustLines(account)
+        val balances = listOf(amountOf(XrpChain.XRP, requireBigInteger(info.str("Balance"), "XRPL balance"))) + lines.amounts
         val assets = balances.associateBy { it.asset.contract ?: "" }.mapValues { it.value.asset }
 
         val transactions = mutableListOf<ChainTransaction>()
@@ -207,7 +215,8 @@ class XrpAdapter(
                 break
             }
         }
-        SyncResult(balances, transactions, activeChains = listOf(XrpChain.ID), historyTruncated = truncated)
+        val result = SyncResult(balances, transactions, activeChains = listOf(XrpChain.ID), historyTruncated = truncated)
+        if (lines.complete) result else result.withIncompleteBalances(XrpChain.ID)
     }
 
     /**
@@ -237,10 +246,12 @@ class XrpAdapter(
         )
         if (result.str("error") == "actNotFound") return null
         checkError(result)
-        return result.obj("account_data")
+        return result.obj("account_data") ?: throw ChainDataException("XRPL account: malformed answer")
     }
 
-    private suspend fun trustLines(account: String): List<AssetAmount> {
+    private class TrustLines(val amounts: List<AssetAmount>, val complete: Boolean)
+
+    private suspend fun trustLines(account: String): TrustLines {
         val lines = mutableListOf<AssetAmount>()
         var marker: JsonElement? = null
         repeat(MAX_LINE_PAGES) {
@@ -254,16 +265,16 @@ class XrpAdapter(
                 },
             )
             checkError(result)
-            for (line in result.arr("lines")) {
+            for (line in (result as? JsonObject)?.get("lines").requireList("XRPL trust lines")) {
                 val currency = line.str("currency") ?: continue
                 val issuer = line.str("account") ?: continue
-                val raw = parseDecimalUnits(line.str("balance"), XrpChain.TOKEN_DECIMALS)
+                val raw = requireDecimalUnits(line.str("balance"), XrpChain.TOKEN_DECIMALS, "XRPL trust line")
                 if (raw.isZero()) continue
                 lines += amountOf(xrplToken(currency, issuer), raw)
             }
-            marker = (result as? JsonObject)?.get("marker") ?: return lines
+            marker = (result as? JsonObject)?.get("marker") ?: return TrustLines(lines, complete = true)
         }
-        return lines
+        return TrustLines(lines, complete = false)
     }
 
     private fun checkError(result: JsonElement) {

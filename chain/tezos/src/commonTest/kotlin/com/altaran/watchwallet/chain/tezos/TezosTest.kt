@@ -3,6 +3,7 @@
 
 package com.altaran.watchwallet.chain.tezos
 
+import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.core.network.createHttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -10,12 +11,15 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class TezosTest {
     private val ours = "tz1VSUr8wwNhLAzempoch5d6hLRiTh8Cjcjb"
@@ -108,5 +112,39 @@ class TezosTest {
         withContext(Dispatchers.Default) {
             assertFalse(adapter.probe(assertNotNull(TezosAddresses.parse(other))).hasActivity)
         }
+    }
+
+    @Test
+    fun tokenBalancesAreReadPageByPage() = runBlocking {
+        val tokenPage = 1_000
+        val row = { id: Int ->
+            """{"id":$id,"balance":"5","token":{"tokenId":"$id","contract":{"address":"$tzbtc"},"metadata":{"decimals":"0","symbol":"T$id","name":"T"}}}"""
+        }
+        val engine = MockEngine { request ->
+            val path = request.url.encodedPath
+            val offset = request.url.parameters["offset.cr"]?.toInt() ?: 0
+            val body = when {
+                path == "/v1/accounts/$ours" -> """{"type":"user","balance":7,"numTransactions":0}"""
+                path.endsWith("/operations") -> "[]"
+                offset == 0 -> (1..tokenPage).joinToString(",", "[", "]") { row(it) }
+                offset == tokenPage -> "[" + row(tokenPage + 1) + "]"
+                else -> error("Unexpected offset $offset")
+            }
+            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val result = TezosAdapter(createHttpClient(engine = engine), "https://tzkt.test/v1").sync(assertNotNull(TezosAddresses.parse(ours)), emptySet())
+        assertEquals(tokenPage + 2, result.balances.size, "XTZ and all tokens")
+        assertTrue(result.balancesComplete)
+    }
+
+    @Test
+    fun malformedTokenListFailsInsteadOfDroppingTokens() = runBlocking {
+        val engine = MockEngine { request ->
+            val body = if (request.url.encodedPath == "/v1/accounts/$ours") """{"type":"user","balance":7}""" else """{"code":500}"""
+            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val adapter = TezosAdapter(createHttpClient(engine = engine), "https://tzkt.test/v1")
+        assertFailsWith<ChainDataException> { adapter.sync(assertNotNull(TezosAddresses.parse(ours)), emptySet()) }
+        Unit
     }
 }

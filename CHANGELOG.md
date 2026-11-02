@@ -50,6 +50,16 @@ All notable changes to this project are documented here. The format follows
 - Value charts no longer project balances without transactions (staked coins, rewards) over the
   time before they existed: stake moves count as a pair, and such balances start at the wallet's
   first transaction on that chain. Wallets with cut-off history keep the old projection.
+- Extended keys: an address that newly enters the gap window has its whole history read, and stored
+  transactions it took part in are corrected.
+- Solana transactions that change no balance no longer hold back the loading of older history.
+- Token lists are read to their end on Sui, Tezos and TON. Where a limit is still hit (also XRP trust
+  lines, Algorand assets, Hedera tokens) known tokens stay and the wallet says so, instead of tokens disappearing.
+- Short pages from Aptos and Kaspa no longer leave holes in history. Malformed answers on Algorand,
+  XRP, Kaspa, NEAR, Polkadot, Aptos, Tezos and TON fail the sync instead of showing a zero balance.
+- A failed Cosmos history request no longer marks the history as cut off forever.
+- Wallets show "Some networks could not be updated" when only part of a sync failed, and say the coin
+  balance is current when only tokens or history failed. Pull to refresh tries all failed hosts again.
 - Failures no longer read as empty data: a Solana node error no longer drops staked SOL, a held Tron
   token without a recent transfer stays, and malformed answers fail the sync instead of showing a
   zero balance (JSON-RPC, Tron, Dogecoin, Bitcoin Cash, Litecoin). Algorand and Hedera holdings are

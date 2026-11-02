@@ -146,6 +146,11 @@ class LayeredPriceProvider(
 
     override suspend fun search(query: String): List<CoinSearchResult> = fallback.search(query)
 
+    override suspend fun resetHostHealth() {
+        exchange.resetHostHealth()
+        fallback.resetHostHealth()
+    }
+
     override suspend fun historyBefore(priceId: String, currency: String, before: Instant): List<PricePoint> {
         val symbol = KnownAssets.symbolOf(priceId) ?: return emptyList()
         val conversion = conversion(currency) ?: return emptyList()

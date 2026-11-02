@@ -3,6 +3,7 @@
 
 package com.altaran.watchwallet.chain.xrp
 
+import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.core.network.createHttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -11,10 +12,12 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -142,5 +145,62 @@ class XrpTest {
             val probe = XrpAdapter(createHttpClient(engine = unfunded), listOf("https://xrpl.test")).probe(target)
             assertFalse(probe.hasActivity)
         }
+    }
+
+    private fun xrpl(lines: String, info: String = """{"account_data":{"Balance":"1000000","OwnerCount":0}}""") = MockEngine { request ->
+        val body = request.body.toByteArray().decodeToString()
+        val result = when {
+            "account_info" in body -> info
+            "account_lines" in body -> lines
+            else -> """{"transactions":[]}"""
+        }
+        respond("""{"result":$result}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+    }
+
+    @Test
+    fun trustLinesBeyondThePageCapAreMarkedAndKeptByTheStore() = runBlocking {
+        val line = """{"currency":"USD","account":"$other","balance":"5"}"""
+        val result = XrpAdapter(
+            createHttpClient(engine = xrpl("""{"lines":[$line],"marker":"m"}""")),
+            listOf("https://x.test"),
+        ).sync(assertNotNull(XrpAddresses.parse(ours)), emptySet())
+        assertFalse(result.balancesComplete)
+        assertEquals(listOf(XrpChain.ID), result.nativeCurrentChains)
+    }
+
+    @Test
+    fun malformedAnswersFailInsteadOfReadingAsZero() = runBlocking {
+        val good = """{"lines":[]}"""
+        listOf(
+            "account without data" to xrpl(good, info = """{"status":"success"}"""),
+            "account without balance" to xrpl(good, info = """{"account_data":{"OwnerCount":0}}"""),
+            "no trust line list" to xrpl("""{"status":"success"}"""),
+            "broken trust line" to xrpl("""{"lines":[{"currency":"USD","account":"$other"}]}"""),
+        ).forEach { (name, engine) ->
+            assertFailsWith<ChainDataException>(name) {
+                XrpAdapter(createHttpClient(engine = engine), listOf("https://x.test")).sync(assertNotNull(XrpAddresses.parse(ours)), emptySet())
+            }
+        }
+    }
+
+    @Test
+    fun resetHostHealthTriesAFailedHostAgain() = runBlocking {
+        val good = xrpl("""{"lines":[]}""")
+        val asked = mutableListOf<String>()
+        var failing = true
+        val engine = MockEngine { request ->
+            asked += request.url.host
+            if (request.url.host == "a.test" && failing) respond("", HttpStatusCode.Forbidden) else good.config.requestHandlers.first()(this, request)
+        }
+        val adapter = XrpAdapter(createHttpClient(engine = engine), listOf("https://a.test", "https://b.test"))
+        val target = assertNotNull(XrpAddresses.parse(ours))
+        adapter.sync(target, emptySet())
+        asked.clear()
+        adapter.sync(target, emptySet())
+        assertFalse("a.test" in asked, "a failing host is left alone for a while")
+        failing = false
+        adapter.resetHostHealth()
+        adapter.sync(target, emptySet())
+        assertTrue("a.test" in asked)
     }
 }

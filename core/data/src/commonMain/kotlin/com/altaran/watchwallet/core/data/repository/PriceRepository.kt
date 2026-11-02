@@ -114,6 +114,8 @@ class PriceRepository(
      * Refreshes current prices of all tracked assets in the selected currency, unless that just
      * happened. Prices are stored as they arrive. Failures leave the stored prices in place.
      */
+    override suspend fun resetHostHealth() = provider.resetHostHealth()
+
     override suspend fun refreshCurrentPrices() {
         try {
             val currency = settings.settings.first().quoteCurrency.code.lowercase()

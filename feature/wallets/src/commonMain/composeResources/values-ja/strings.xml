@@ -5,6 +5,8 @@
     <string name="wallets_empty_title">ウォレットはまだありません</string>
     <string name="wallets_empty_message">公開アドレスや xpub を貼り付けるだけで、WatchWallet がチェーンを認識します。鍵は一切不要です。</string>
     <string name="wallets_sync_failed">更新できませんでした。最後に取得したデータを表示しています。</string>
+    <string name="wallets_sync_partial">一部のネットワークを更新できませんでした</string>
+    <string name="wallets_sync_native_only">コインの残高は最新です。トークンまたは履歴を更新できませんでした。</string>
     <string name="detail_back">戻る</string>
     <string name="detail_more">その他のオプション</string>
     <string name="detail_rename">名前を変更</string>

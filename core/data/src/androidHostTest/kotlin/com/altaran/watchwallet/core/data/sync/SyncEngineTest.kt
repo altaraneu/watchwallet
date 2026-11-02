@@ -19,6 +19,7 @@ import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
+import com.altaran.watchwallet.core.model.DerivedAddress
 import com.altaran.watchwallet.core.model.TokenAmount
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.ionspin.kotlin.bignum.integer.BigInteger
@@ -294,5 +295,122 @@ class SyncEngineTest {
         }
         engine(adapter, CurrentPriceRefresher { pricesAsked.complete(Unit) }).syncAll().join()
         assertTrue(pricesAsked.isCompleted)
+    }
+
+    @Test
+    fun walletHealthTellsWhatFailed() = runBlocking {
+        val cases = listOf(
+            "all fine" to (SyncResult(emptyList(), emptyList(), storedProgressively = true) to WalletSyncHealth.OK),
+            "one network of several" to
+                (SyncResult(emptyList(), emptyList(), storedProgressively = true, failedChains = listOf(NET_B)) to WalletSyncHealth.PARTIAL),
+            "only network unreachable" to
+                (
+                    SyncResult(emptyList(), emptyList(), storedProgressively = true, failedChains = listOf(NET_A), allChainsFailed = true) to
+                        WalletSyncHealth.FAILED
+                ),
+            "only network, blocked indexer" to (
+                SyncResult(
+                    emptyList(),
+                    emptyList(),
+                    storedProgressively = true,
+                    failedChains = listOf(NET_A),
+                    allChainsFailed = true,
+                    nativeCurrentChains = listOf(NET_A),
+                ) to
+                    WalletSyncHealth.NATIVE_ONLY
+            ),
+        )
+        cases.forEach { (name, case) ->
+            val id = wallet()
+            val engine = engine(FakeAdapter { _, _, _ -> case.first })
+            engine.syncWallet(id).join()
+            assertEquals(name, case.second, engine.state.value.healthOf(id))
+        }
+    }
+
+    @Test
+    fun aBalanceListCutOffByALimitKeepsWhatItDoesNotName() = runBlocking {
+        val id = wallet()
+        val kept = token(NET_A, "kept")
+        val sold = token(NET_A, "sold")
+        var result = SyncResult(listOf(amount(native(NET_A), 5), amount(kept, 7), amount(sold, 9)), emptyList())
+        val engine = engine(FakeAdapter { _, _, _ -> result })
+        engine.syncWallet(id).join()
+        result = SyncResult(listOf(amount(native(NET_A), 6), amount(sold, 0)), emptyList()).withIncompleteBalances(NET_A)
+        engine.syncWallet(id).join()
+        assertEquals(mapOf(AssetId.native(NET_A).value to "6", kept.id.value to "7"), balances())
+        assertEquals(WalletSyncHealth.NATIVE_ONLY, engine.state.value.healthOf(id))
+    }
+
+    @Test
+    fun correctedTransactionsReplaceStoredOnesButNewOnesDoNot() = runBlocking {
+        val id = wallet()
+        var result = SyncResult(emptyList(), listOf(tx(NET_A, "h", delta = 1)))
+        val engine = engine(FakeAdapter { _, _, _ -> result })
+        engine.syncWallet(id).join()
+        result = SyncResult(emptyList(), listOf(tx(NET_A, "h", delta = 2)))
+        engine.syncWallet(id).join()
+        assertEquals("1", dao.observeTransactions(id).first().single().delta)
+        result = SyncResult(emptyList(), emptyList(), correctedTransactions = listOf(tx(NET_A, "h", delta = 3)))
+        engine.syncWallet(id).join()
+        assertEquals("3", dao.observeTransactions(id).first().single().delta)
+    }
+
+    @Test
+    fun aManualRefreshForgetsFailingHostsEverywhere() = runBlocking {
+        val id = wallet()
+        var chainResets = 0
+        var priceResets = 0
+        val adapter = object : ChainAdapter by FakeAdapter({ _, _, _ -> SyncResult(emptyList(), emptyList(), storedProgressively = true) }) {
+            override suspend fun resetHostHealth() {
+                chainResets++
+            }
+        }
+        val prices = object : CurrentPriceRefresher {
+            override suspend fun refreshCurrentPrices() = Unit
+
+            override suspend fun resetHostHealth() {
+                priceResets++
+            }
+        }
+        engine(adapter, prices).syncAll(manual = false).join()
+        assertEquals(0, chainResets)
+        engine(adapter, prices).syncAll(manual = true).join()
+        assertEquals(1, chainResets)
+        assertEquals(1, priceResets)
+        assertNotNull(dao.wallet(id))
+    }
+
+    @Test
+    fun extendedKeyWalletsPassTheAddressesFoundBefore() = runBlocking {
+        val id = dao.insert(
+            WalletEntity(
+                name = "X",
+                emoji = null,
+                groupId = null,
+                notes = null,
+                sortOrder = 0,
+                archived = false,
+                createdAtEpochMs = 0,
+                family = "UTXO",
+                chainId = NET_A.value,
+                targetKind = "XPUB",
+                targetValue = "xpub",
+                scriptType = "P2PKH",
+                gapLimit = 20,
+            ),
+        )
+        val result =
+            SyncResult(
+                emptyList(),
+                emptyList(),
+                derivedAddresses = listOf(DerivedAddress("a", false, 0, used = true), DerivedAddress("b", false, 1, used = false)),
+            )
+        val adapter = FakeAdapter { _, _, _ -> result }
+        val engine = engine(adapter)
+        engine.syncWallet(id).join()
+        assertEquals(emptySet<String>(), adapter.lastOptions?.usedAddresses)
+        engine.syncWallet(id).join()
+        assertEquals(setOf("a"), adapter.lastOptions?.usedAddresses)
     }
 }

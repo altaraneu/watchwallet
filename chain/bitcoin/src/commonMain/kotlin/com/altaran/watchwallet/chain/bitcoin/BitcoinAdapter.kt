@@ -5,6 +5,8 @@ import com.altaran.watchwallet.chain.api.ChainAdapter
 import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.chain.api.ChainTransaction
 import com.altaran.watchwallet.chain.api.ProbeResult
+import com.altaran.watchwallet.chain.api.SyncOptions
+import com.altaran.watchwallet.chain.api.SyncPartSink
 import com.altaran.watchwallet.chain.api.SyncResult
 import com.altaran.watchwallet.core.crypto.BitcoinAddresses
 import com.altaran.watchwallet.core.crypto.ExtendedKeys
@@ -95,7 +97,26 @@ class BitcoinAdapter(
     override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult =
         sync(target, knownTransactions, continueHistory = false)
 
-    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, continueHistory: Boolean): SyncResult = wrap {
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, continueHistory: Boolean): SyncResult =
+        scan(target, knownTransactions, continueHistory, usedBefore = null)
+
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, options: SyncOptions, sink: SyncPartSink): SyncResult = scan(
+        target,
+        knownTransactions,
+        options.continueHistory,
+        options.usedAddresses.takeIf { target is WatchTarget.ExtendedPublicKey && knownTransactions.isNotEmpty() },
+    )
+
+    override suspend fun resetHostHealth() = esplora.resetHostHealth()
+
+    /**
+     * @param usedBefore extended keys: addresses earlier syncs found with history. An address that
+     * has history now but is not among them (it just entered the gap window) must be walked to its
+     * end: stopping at a known transaction would skip its older ones for good, since known
+     * transactions are all later syncs ever stop at. Known transactions it reaches are corrected,
+     * because their amounts did not count this address yet.
+     */
+    private suspend fun scan(target: WatchTarget, knownTransactions: Set<String>, continueHistory: Boolean, usedBefore: Set<String>?): SyncResult = wrap {
         val scanned: List<ScannedAddress> = when (target) {
             is WatchTarget.Address -> listOf(ScannedAddress(target.address, change = false, index = 0, info = esplora.address(target.address)))
             is WatchTarget.ExtendedPublicKey -> discover(target)
@@ -109,19 +130,24 @@ class BitcoinAdapter(
         // stop at known transactions anyway. Older history is marked as truncated and fetched in
         // chunks by the following syncs (continueHistory).
         val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES_PER_ADDRESS
+        val corrected = HashSet<String>()
         for (address in scanned.filter { it.info.txCount > 0 }) {
-            val history = if (continueHistory && knownTransactions.isNotEmpty()) {
-                backfillHistory(address.address, knownTransactions)
-            } else {
-                fetchHistory(address.address, knownTransactions, maxPages)
+            val isNew = usedBefore != null && address.address !in usedBefore
+            val history = when {
+                isNew -> fetchHistory(address.address, emptySet(), maxPages)
+                continueHistory && knownTransactions.isNotEmpty() -> backfillHistory(address.address, knownTransactions)
+                else -> fetchHistory(address.address, knownTransactions, maxPages)
             }
             truncated = truncated || history.truncated
             history.transactions.forEach { transactions.getOrPut(it.txid) { it } }
+            if (isNew) history.transactions.filter { it.txid in knownTransactions }.mapTo(corrected) { it.txid }
         }
+        val (changed, fresh) = transactions.values.mapNotNull { toChainTransaction(it, ours) }.partition { it.hash in corrected }
 
         SyncResult(
             balances = listOf(AssetAmount(BitcoinChain.BTC, TokenAmount(balance.toBigInteger(), BitcoinChain.BTC.decimals))),
-            transactions = transactions.values.mapNotNull { toChainTransaction(it, ours) },
+            transactions = fresh,
+            correctedTransactions = changed,
             derivedAddresses = if (target is WatchTarget.ExtendedPublicKey) {
                 scanned.map { DerivedAddress(it.address, it.change, it.index, used = it.info.txCount > 0) }
             } else {

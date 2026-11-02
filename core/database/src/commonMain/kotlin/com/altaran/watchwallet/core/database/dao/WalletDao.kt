@@ -164,6 +164,9 @@ abstract class WalletDao {
     @Query("SELECT DISTINCT hash FROM wallet_tx WHERE wallet_id = :walletId AND confirmed = 1")
     abstract suspend fun knownConfirmedHashes(walletId: Long): List<String>
 
+    @Query("SELECT address FROM derived_address WHERE wallet_id = :walletId AND used = 1")
+    abstract suspend fun usedDerivedAddresses(walletId: Long): List<String>
+
     @Query("SELECT * FROM derived_address WHERE wallet_id = :walletId ORDER BY is_change, derivation_index")
     abstract fun observeDerivedAddresses(walletId: Long): Flow<List<DerivedAddressEntity>>
 
@@ -203,6 +206,9 @@ abstract class WalletDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     protected abstract suspend fun insertNewTransactions(transactions: List<WalletTxEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    protected abstract suspend fun replaceTransactions(transactions: List<WalletTxEntity>)
+
     @Query("DELETE FROM wallet_tx WHERE wallet_id = :walletId AND confirmed = 0")
     protected abstract suspend fun clearPending(walletId: Long)
 
@@ -234,19 +240,25 @@ abstract class WalletDao {
         syncedAt: Long,
         truncated: Boolean,
         balanceChains: List<String>?,
+        refreshedAssets: List<String>? = null,
+        corrected: List<WalletTxEntity> = emptyList(),
     ) {
         // Keep the user's visibility choice when metadata is refreshed.
         insertAssetsIfMissing(assets)
         assets.forEach { refreshAssetMetadata(it.id, it.symbol, it.name, it.decimals, it.priceId, it.isSpam) }
-        if (balanceChains == null) {
-            clearBalances(walletId)
-        } else if (balanceChains.isNotEmpty()) {
-            clearBalancesOfChains(walletId, balanceChains)
+        when {
+            // A list cut off by a limit: what it names is current, the rest stays as it was.
+            refreshedAssets != null -> clearBalancesOfAssets(walletId, refreshedAssets)
+
+            balanceChains == null -> clearBalances(walletId)
+
+            balanceChains.isNotEmpty() -> clearBalancesOfChains(walletId, balanceChains)
         }
         insertBalances(balances)
         // Pending transactions are re-fetched every sync; drop stale ones (replaced or confirmed).
         clearPending(walletId)
         insertNewTransactions(transactions)
+        replaceTransactions(corrected)
         if (derived != null) {
             clearDerived(walletId)
             insertDerived(derived)

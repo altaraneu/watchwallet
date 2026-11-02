@@ -5,6 +5,8 @@
     <string name="wallets_empty_title">Noch keine Wallets</string>
     <string name="wallets_empty_message">Füge eine beliebige öffentliche Adresse oder xpub ein und WatchWallet erkennt die Chain. Niemals Schlüssel.</string>
     <string name="wallets_sync_failed">Aktualisierung fehlgeschlagen. Die zuletzt bekannten Daten werden angezeigt.</string>
+    <string name="wallets_sync_partial">Einige Netzwerke konnten nicht aktualisiert werden</string>
+    <string name="wallets_sync_native_only">Der Coin-Kontostand ist aktuell. Token oder Verlauf konnten nicht aktualisiert werden.</string>
     <string name="detail_back">Zurück</string>
     <string name="detail_more">Weitere Optionen</string>
     <string name="detail_rename">Umbenennen</string>

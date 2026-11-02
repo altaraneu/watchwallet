@@ -5,6 +5,8 @@
     <string name="wallets_empty_title">Pas encore de portefeuille</string>
     <string name="wallets_empty_message">Collez n’importe quelle adresse publique ou xpub et WatchWallet reconnaîtra la chaîne. Jamais de clés.</string>
     <string name="wallets_sync_failed">Actualisation impossible. Affichage des dernières données connues.</string>
+    <string name="wallets_sync_partial">Certains réseaux n’ont pas pu être mis à jour</string>
+    <string name="wallets_sync_native_only">Le solde de la cryptomonnaie est à jour. Les jetons ou l’historique n’ont pas pu être mis à jour.</string>
     <string name="detail_back">Retour</string>
     <string name="detail_more">Plus d’options</string>
     <string name="detail_rename">Renommer</string>

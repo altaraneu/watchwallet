@@ -1,5 +1,8 @@
 package com.altaran.watchwallet.chain.evm
 
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointCatalog
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.WatchTarget
@@ -160,5 +163,17 @@ class EvmRpcRequestTest {
             RpcRequest(method = "eth_getBalance", params = listOf("0x0", "latest")),
         )
         kotlin.test.assertTrue("\"jsonrpc\":\"2.0\"" in body && "\"id\":1" in body, body)
+    }
+
+    @Test
+    fun theCatalogSuppliesAllUrlsOfANetwork() {
+        val ethereum = EvmNetworks.DEFAULT.first { it.chainId == 1L }
+        assertEquals(BundledEndpoints.urls(ethereum.id, EndpointProtocol.EVM_RPC), ethereum.rpcUrls)
+        assertTrue(ethereum.rpcUrls.size > 1, "this network falls back to a second host")
+        assertEquals(EvmNetworks.DEFAULT, EvmNetworks.withEndpoints(EndpointCatalog.BUNDLED))
+        EvmNetworks.DEFAULT.forEach { network ->
+            assertEquals(BundledEndpoints.urls(network.id, EndpointProtocol.EVM_RPC), network.rpcUrls)
+            assertEquals(BundledEndpoints.urls(network.id, EndpointProtocol.BLOCKSCOUT), network.blockscoutUrls)
+        }
     }
 }

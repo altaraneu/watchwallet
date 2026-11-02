@@ -13,6 +13,8 @@ import com.altaran.watchwallet.chain.common.asList
 import com.altaran.watchwallet.chain.common.chainCall
 import com.altaran.watchwallet.chain.common.long
 import com.altaran.watchwallet.chain.common.nativeAsset
+import com.altaran.watchwallet.chain.common.requireBigInteger
+import com.altaran.watchwallet.chain.common.requireList
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.utxoChainTransaction
 import com.altaran.watchwallet.core.endpoints.BundledEndpoints
@@ -23,6 +25,7 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.network.Throttle
+import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -90,7 +93,7 @@ class KaspaAdapter(
 
     override suspend fun probe(target: WatchTarget): ProbeResult = chainCall("Kaspa") {
         val address = address(target)
-        val balance = get("$base/addresses/$address/balance").str("balance")
+        val balance = balance(address)
         val count = get("$base/addresses/$address/transactions-count").long("total") ?: 0L
         val active = count > 0
         ProbeResult(
@@ -103,7 +106,7 @@ class KaspaAdapter(
 
     override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("Kaspa") {
         val address = address(target)
-        val balances = listOf(amountOf(KaspaChain.KAS, get("$base/addresses/$address/balance").str("balance")))
+        val balances = listOf(amountOf(KaspaChain.KAS, balance(address)))
         val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES
 
         val txs = mutableListOf<UtxoTx>()
@@ -114,14 +117,20 @@ class KaspaAdapter(
                 parameter("limit", PAGE_SIZE)
                 parameter("offset", offset)
                 parameter("resolve_previous_outpoints", "light")
-            }.asList
+            }.requireList("Kaspa transactions")
             for (item in items) {
                 val tx = toUtxoTx(item) ?: continue
                 if (tx.confirmed && tx.txid in knownTransactions) break@paging
                 txs += tx
             }
-            if (items.size < PAGE_SIZE) break
             offset += PAGE_SIZE
+            // A transaction the service cannot resolve shortens its page, also before the end:
+            // only the count tells, since later syncs would never come back for what is skipped.
+            if (items.size < PAGE_SIZE) {
+                val total = get("$base/addresses/$address/transactions-count").long("total")
+                if (total == null) truncated = true
+                if (total == null || offset >= total) break
+            }
             if (page == maxPages - 1) truncated = true
         }
         val ours = setOf(address)
@@ -134,6 +143,9 @@ class KaspaAdapter(
             historyTruncated = truncated,
         )
     }
+
+    private suspend fun balance(address: String): BigInteger =
+        requireBigInteger(get("$base/addresses/$address/balance").str("balance"), "Kaspa balance")
 
     private fun address(target: WatchTarget): String =
         (target as? WatchTarget.Address)?.address?.let { KaspaAddresses.parse(it)?.address ?: it }

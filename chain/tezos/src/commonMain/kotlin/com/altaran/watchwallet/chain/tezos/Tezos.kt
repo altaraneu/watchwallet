@@ -15,6 +15,8 @@ import com.altaran.watchwallet.chain.common.chainCall
 import com.altaran.watchwallet.chain.common.long
 import com.altaran.watchwallet.chain.common.nativeAsset
 import com.altaran.watchwallet.chain.common.parseBigInteger
+import com.altaran.watchwallet.chain.common.requireBigInteger
+import com.altaran.watchwallet.chain.common.requireList
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.core.endpoints.BundledEndpoints
@@ -95,8 +97,11 @@ class TezosAdapter(
         val address = address(target)
         val account = get("$base/accounts/$address")
         val active = account.str("type") != "empty"
-        val balances =
-            listOf(amountOf(TezosChain.XTZ, account.str("balance"))) + if (active) tokens(address) else emptyList()
+        val balances = if (active) {
+            listOf(amountOf(TezosChain.XTZ, requireBigInteger(account.str("balance"), "TzKT balance"))) + tokens(address).amounts
+        } else {
+            listOf(amountOf(TezosChain.XTZ, BigInteger.ZERO))
+        }
         ProbeResult(
             active,
             if (active) listOf(TezosChain.ID) else emptyList(),
@@ -111,7 +116,8 @@ class TezosAdapter(
         if (account.str("type") == "empty") {
             return@chainCall SyncResult(listOf(amountOf(TezosChain.XTZ, BigInteger.ZERO)), emptyList())
         }
-        val balances = listOf(amountOf(TezosChain.XTZ, account.str("balance"))) + tokens(address)
+        val held = tokens(address)
+        val balances = listOf(amountOf(TezosChain.XTZ, requireBigInteger(account.str("balance"), "TzKT balance"))) + held.amounts
         val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES
 
         val operations = mutableListOf<JsonElement>()
@@ -139,24 +145,41 @@ class TezosAdapter(
                 break
             }
         }
-        SyncResult(
+        val result = SyncResult(
             balances,
             groupOperations(operations, address),
             activeChains = listOf(TezosChain.ID),
             historyTruncated = truncated,
         )
+        if (held.complete) result else result.withIncompleteBalances(TezosChain.ID)
     }
 
     private fun address(target: WatchTarget): String =
         (target as? WatchTarget.Address)?.address ?: throw ChainDataException("Tezos supports addresses only")
 
-    private suspend fun tokens(address: String): List<AssetAmount> {
-        val list = get("$base/tokens/balances") {
-            parameter("account", address)
-            parameter("balance.gt", 0)
-            parameter("limit", MAX_TOKENS)
-        }.asList
-        return list.mapNotNull { entry ->
+    private class Tokens(val amounts: List<AssetAmount>, val complete: Boolean)
+
+    /** Every token balance, page by page; `offset.cr` was verified against the live API. */
+    private suspend fun tokens(address: String): Tokens {
+        val list = mutableListOf<JsonElement>()
+        var lastId: String? = null
+        var complete = false
+        for (page in 0 until MAX_TOKEN_PAGES) {
+            val rows = get("$base/tokens/balances") {
+                parameter("account", address)
+                parameter("balance.gt", 0)
+                parameter("limit", TOKEN_PAGE)
+                parameter("sort.asc", "id")
+                lastId?.let { parameter("offset.cr", it) }
+            }.requireList("TzKT token balances")
+            list += rows
+            lastId = rows.lastOrNull().str("id")
+            if (rows.size < TOKEN_PAGE || lastId == null) {
+                complete = true
+                break
+            }
+        }
+        val amounts = list.mapNotNull { entry ->
             val token = entry.at("token")
             val contract = token.at("contract").str("address") ?: return@mapNotNull null
             val decimals = token.at("metadata").str("decimals")?.toIntOrNull() ?: return@mapNotNull null
@@ -172,6 +195,7 @@ class TezosAdapter(
             )
             amountOf(asset, raw)
         }
+        return Tokens(amounts, complete)
     }
 
     private suspend fun get(
@@ -185,7 +209,8 @@ class TezosAdapter(
         const val PAGE_SIZE = 100
         const val FIRST_SYNC_PAGES = 2
         const val MAX_PAGES = 20
-        const val MAX_TOKENS = 100
+        const val TOKEN_PAGE = 1_000
+        const val MAX_TOKEN_PAGES = 10
     }
 }
 

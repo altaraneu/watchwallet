@@ -5,6 +5,8 @@
     <string name="wallets_empty_title">No wallets yet</string>
     <string name="wallets_empty_message">Paste any public address or xpub and WatchWallet will recognise the chain. No keys, ever.</string>
     <string name="wallets_sync_failed">Could not refresh. Showing the last known data.</string>
+    <string name="wallets_sync_partial">Some networks could not be updated</string>
+    <string name="wallets_sync_native_only">The coin balance is current. Tokens or history could not be updated.</string>
     <string name="detail_back">Back</string>
     <string name="detail_more">More options</string>
     <string name="detail_rename">Rename</string>

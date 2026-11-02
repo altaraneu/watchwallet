@@ -132,8 +132,12 @@ class EvmAdapter(
             discoveryCompleted = isDiscovery(options) && outcomes.count { !it.reachable } * 2 <= outcomes.size,
             failedChains = outcomes.filter { it.failed || (!it.reachable && it.wasActive) }.map { it.network.id },
             allChainsFailed = allFailed(outcomes),
+            // A network only ends as failed after its RPC answered, and its native balance is stored.
+            nativeCurrentChains = outcomes.filter { it.failed && it.reachable }.map { it.network.id },
         )
     }
+
+    override suspend fun resetHostHealth() = health.reset()
 
     private fun addressOf(target: WatchTarget): String =
         (target as? WatchTarget.Address)?.address ?: throw ChainDataException("EVM supports addresses only")

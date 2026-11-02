@@ -8,6 +8,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
@@ -91,5 +92,34 @@ class AptosTest {
         withContext(Dispatchers.Default) {
             assertFalse(adapter.probe(assertNotNull(AptosAddresses.parse(other))).hasActivity)
         }
+    }
+
+    private fun userTx(sequence: Long) = """{"type":"user_transaction","hash":"h$sequence","sender":"$ours","sequence_number":"$sequence",""" +
+        """"success":true,"gas_used":"1","gas_unit_price":"1","timestamp":"1716000000000000","payload":{"function":"0x1::x::y"}}"""
+
+    private fun aptos(answer: (Long, Long) -> List<Long>) = MockEngine { request ->
+        val path = request.url.encodedPath
+        val parameters = request.url.parameters
+        val body = when {
+            path.endsWith("/view") -> """["5"]"""
+            path.endsWith("/transactions") -> answer(parameters["start"]!!.toLong(), parameters["limit"]!!.toLong()).joinToString(",", "[", "]") { userTx(it) }
+            else -> """{"sequence_number":"4"}"""
+        }
+        respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+    }
+
+    @Test
+    fun aShortPageIsAskedAgainForTheRest() = runBlocking {
+        val engine = aptos { start, limit -> (start until start + minOf(limit, 2)).toList() }
+        val result = AptosAdapter(createHttpClient(engine = engine), "https://aptos.test").sync(assertNotNull(AptosAddresses.parse(ours)), emptySet())
+        assertEquals(setOf("h0", "h1", "h2", "h3"), result.transactions.map { it.hash }.toSet())
+        assertFalse(result.historyTruncated)
+    }
+
+    @Test
+    fun aRangeTheNodeNoLongerHasIsCutOffNotSkipped() = runBlocking {
+        val engine = aptos { start, limit -> (maxOf(start, 2) until start + limit).toList().takeIf { start >= 2 }.orEmpty() }
+        val result = AptosAdapter(createHttpClient(engine = engine), "https://aptos.test").sync(assertNotNull(AptosAddresses.parse(ours)), emptySet())
+        assertTrue(result.historyTruncated)
     }
 }

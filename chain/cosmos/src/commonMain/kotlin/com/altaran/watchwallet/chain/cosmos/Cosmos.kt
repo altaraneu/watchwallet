@@ -5,6 +5,9 @@ import com.altaran.watchwallet.chain.api.ChainAdapter
 import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.chain.api.ChainTransaction
 import com.altaran.watchwallet.chain.api.ProbeResult
+import com.altaran.watchwallet.chain.api.SyncOptions
+import com.altaran.watchwallet.chain.api.SyncPart
+import com.altaran.watchwallet.chain.api.SyncPartSink
 import com.altaran.watchwallet.chain.api.SyncResult
 import com.altaran.watchwallet.chain.common.Bech32Codec
 import com.altaran.watchwallet.chain.common.accountTransaction
@@ -185,6 +188,9 @@ class CosmosAdapter(
     override val family = ChainFamily.COSMOS
     override val chains = networks.map { it.chain }
 
+    /** A failed request says nothing about the history, so each sync decides again; see [sync]. */
+    override val supportsHistoryContinuation = true
+
     override suspend fun probe(target: WatchTarget): ProbeResult = chainCall("Cosmos REST") {
         val (network, address) = resolve(target)
         val balances = balances(network, address)
@@ -195,28 +201,52 @@ class CosmosAdapter(
     override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall(
         "Cosmos REST",
     ) {
+        fetch(target, knownTransactions).result
+    }
+
+    /**
+     * Older pages cannot be fetched: cosmos.directory balances over nodes with different retention
+     * (tested live: page 1 and 2 of one query came from nodes reporting 1 and 1499 results, and
+     * another chain refused page 2). So a full page without known transactions cuts history off for
+     * good, which is remembered; a failed request only for as long as it keeps failing.
+     */
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, options: SyncOptions, sink: SyncPartSink): SyncResult = chainCall(
+        "Cosmos REST",
+    ) {
+        val fetched = fetch(target, knownTransactions)
+        val chainId = resolve(target).first.id
+        val wasCutOff = options.chainState[chainId] == CUT_OFF
+        if (fetched.cutOff && !wasCutOff) sink.store(SyncPart(chainId, state = CUT_OFF))
+        fetched.result.copy(historyTruncated = fetched.result.historyTruncated || wasCutOff)
+    }
+
+    private class Fetched(val result: SyncResult, val cutOff: Boolean)
+
+    private suspend fun fetch(target: WatchTarget, knownTransactions: Set<String>): Fetched {
         val (network, address) = resolve(target)
         val balances = balances(network, address)
-        var truncated = false
+        var failed = false
+        var cutOff = false
         val transactions = try {
             val history = history(network, address, knownTransactions)
-            truncated = history.truncated
+            cutOff = history.truncated
             history.transactions
         } catch (e: CancellationException) {
             throw e
         } catch (
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
-            truncated = true
+            failed = true
             emptyList()
         }
         val active = balances.any { !it.amount.isZero } || transactions.isNotEmpty()
-        SyncResult(
+        val result = SyncResult(
             balances,
             transactions,
             activeChains = if (active) listOf(network.id) else emptyList(),
-            historyTruncated = truncated,
+            historyTruncated = cutOff || failed,
         )
+        return Fetched(result, cutOff)
     }
 
     private fun resolve(target: WatchTarget): Pair<CosmosNetwork, String> {
@@ -302,6 +332,7 @@ class CosmosAdapter(
     private companion object {
         const val PAGE_SIZE = 50
         const val RATE_LIMIT_RETRIES = 2
+        const val CUT_OFF = "cut-off"
     }
 }
 
