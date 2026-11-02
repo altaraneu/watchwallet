@@ -14,7 +14,9 @@ actual fun createPlatformEngine(proxy: ProxyConfig?): HttpClientEngine = OkHttp.
     config {
         // No HTTP cache on disk: responses may contain addresses and balances.
         cache(null)
-        followRedirects(true)
+        // Not for any host or scheme: see createHttpClient and PRIVACY.md.
+        followRedirects(false)
+        followSslRedirects(false)
         retryOnConnectionFailure(true)
     }
 }
