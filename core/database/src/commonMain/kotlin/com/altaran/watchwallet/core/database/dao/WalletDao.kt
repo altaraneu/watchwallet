@@ -64,10 +64,13 @@ abstract class WalletDao {
     @Update
     abstract suspend fun update(wallet: WalletEntity)
 
-    /** The wallet that derives [address] from its extended key, if any. */
+    /**
+     * The wallet that derives [address] from its extended key, if any. Stake wallets are left out:
+     * their row is what a server reported, and a balance must not be subtracted on that basis.
+     */
     @Query(
         """SELECT w.* FROM wallet w JOIN derived_address d ON d.wallet_id = w.id
-           WHERE w.family = :family AND d.address = :address LIMIT 1""",
+           WHERE w.family = :family AND d.address = :address AND w.target_kind = 'XPUB' LIMIT 1""",
     )
     abstract suspend fun findByDerivedAddress(family: String, address: String): WalletEntity?
 

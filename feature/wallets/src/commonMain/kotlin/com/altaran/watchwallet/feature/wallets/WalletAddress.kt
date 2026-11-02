@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.altaran.watchwallet.core.data.chain.ChainParsers
 import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.DerivedAddress
 import com.altaran.watchwallet.core.model.WatchTarget
@@ -47,7 +48,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /** What the wallet can show as its address. */
-private data class ShownAddress(
+internal data class ShownAddress(
     val value: String,
     val label: StringResource,
     val hint: StringResource? = null,
@@ -55,13 +56,20 @@ private data class ShownAddress(
     val canReceive: Boolean = true,
 )
 
-private fun shownAddress(target: WatchTarget, derived: List<DerivedAddress>): ShownAddress? = when (target) {
+/**
+ * Only addresses the app can vouch for are offered for receiving money: what the user entered,
+ * what was derived on this device from the extended key, or a Cardano address proven to carry the
+ * wallet's stake key. The last one comes from a server, and a row stored by an older version was
+ * never checked, so it is checked here on every display.
+ */
+internal fun shownAddress(target: WatchTarget, derived: List<DerivedAddress>): ShownAddress? = when (target) {
     is WatchTarget.ExtendedPublicKey -> {
         derived.firstOrNull { !it.change && !it.used }?.let { ShownAddress(it.address, Res.string.address_next_receive) }
     }
 
-    is WatchTarget.Address if target.address.startsWith("stake1") -> {
-        derived.firstOrNull()?.let { ShownAddress(it.address, Res.string.detail_address, Res.string.detail_address_cardano_hint) }
+    is WatchTarget.Address if target.family == ChainFamily.CARDANO && target.address.startsWith("stake1") -> {
+        derived.firstNotNullOfOrNull { ChainParsers.cardanoPaymentAddress(it.address, target.address) }
+            ?.let { ShownAddress(it, Res.string.detail_address, Res.string.detail_address_cardano_hint) }
             ?: ShownAddress(target.address, Res.string.detail_stake_key, Res.string.detail_stake_key_hint, canReceive = false)
     }
 
