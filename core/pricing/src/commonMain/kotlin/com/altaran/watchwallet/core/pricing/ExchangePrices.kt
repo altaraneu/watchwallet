@@ -107,6 +107,37 @@ class ExchangePrices(
         }
     }
 
+    /**
+     * Closes in USD of the finished [stepMinutes] candles that close between [from] and [to], oldest
+     * first, dated at their close like [history]. One request, at most [MAX_CANDLES] candles.
+     */
+    suspend fun closes(symbol: String, stepMinutes: Int, from: Instant, to: Instant): List<ExchangeCandle> {
+        if (symbol in STABLECOINS || isUnlisted(symbol)) return emptyList()
+        val intervalMs = stepMinutes * MINUTE_MS
+        val rows: JsonArray = try {
+            request("api/v3/klines") {
+                parameter("symbol", symbol + QUOTE)
+                parameter("interval", if (stepMinutes == 1) "1m" else "${stepMinutes / MINUTES_PER_HOUR}h")
+                parameter("startTime", from.toEpochMilliseconds() - intervalMs)
+                parameter("endTime", to.toEpochMilliseconds() - intervalMs)
+                parameter("limit", MAX_CANDLES)
+            }
+        } catch (e: ResponseException) {
+            if (!e.isInvalidSymbol()) throw PriceDataException("Exchange data unavailable", e)
+            unlistedLock.withLock { unlisted += symbol }
+            return emptyList()
+        }
+        val now = Clock.System.now().toEpochMilliseconds()
+        return rows.mapNotNull { row ->
+            val cells = row as? JsonArray ?: return@mapNotNull null
+            val openTime = cells.getOrNull(0)?.jsonPrimitive?.longOrNull ?: return@mapNotNull null
+            val close = cells.getOrNull(4)?.jsonPrimitive?.contentOrNull?.toDoubleOrNull() ?: return@mapNotNull null
+            val closeTime = openTime + intervalMs
+            if (closeTime > now) return@mapNotNull null
+            ExchangeCandle(Instant.fromEpochMilliseconds(closeTime), close)
+        }
+    }
+
     private suspend fun fetchTickers(symbols: List<String>): Map<String, ExchangeTicker> {
         val list = symbols.joinToString(",", "[", "]") { "\"$it$QUOTE\"" }
         val rows: JsonArray = request("api/v3/ticker/24hr") {
@@ -152,6 +183,8 @@ class ExchangePrices(
     companion object {
         const val MAX_CANDLES = 1000
         private const val HTTP_BAD_REQUEST = 400
+        private const val MINUTE_MS = 60_000L
+        private const val MINUTES_PER_HOUR = 60
         private const val HOUR_MS = 3_600_000L
         private const val DAY_MS = 24 * HOUR_MS
         private const val PERCENT = 100.0

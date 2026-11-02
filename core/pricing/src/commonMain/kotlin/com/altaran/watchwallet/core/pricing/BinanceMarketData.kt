@@ -30,8 +30,11 @@ class BinanceMarketData(
     private val restHosts: List<String> = ExchangePrices.DEFAULT_HOSTS,
     private val wsUrl: String = "wss://stream.binance.com:9443/ws",
 ) {
-    /** Up to 1000 most recent candles, or an empty list when the pair is not listed. */
-    suspend fun candles(base: String, interval: CandleInterval): List<OhlcCandle> {
+    /**
+     * Up to 1000 candles, or an empty list when the pair is not listed: the most recent ones, those
+     * ending before [beforeSeconds], or those starting after [afterSeconds].
+     */
+    suspend fun candles(base: String, interval: CandleInterval, beforeSeconds: Long? = null, afterSeconds: Long? = null): List<OhlcCandle> {
         val pair = pairOf(base) ?: return emptyList()
         for (host in restHosts) {
             val rows = try {
@@ -39,6 +42,8 @@ class BinanceMarketData(
                     parameter("symbol", pair)
                     parameter("interval", intervalCode(interval))
                     parameter("limit", ExchangePrices.MAX_CANDLES)
+                    beforeSeconds?.let { parameter("endTime", it * MILLIS - 1) }
+                    afterSeconds?.let { parameter("startTime", it * MILLIS + 1) }
                 }.body<JsonArray>()
             } catch (e: CancellationException) {
                 throw e

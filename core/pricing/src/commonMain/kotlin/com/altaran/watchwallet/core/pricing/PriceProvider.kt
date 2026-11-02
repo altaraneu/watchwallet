@@ -47,6 +47,14 @@ interface PriceProvider {
      */
     suspend fun historyBefore(priceId: String, currency: String, before: kotlin.time.Instant): List<PricePoint> = emptyList()
 
+    /**
+     * Closes of finished candles between [from] and [to], every [stepMinutes] (1 or 60), oldest
+     * first, at most 1000. Only sources with cheap bulk access implement this; everything else
+     * returns nothing and charts keep the coarser prices they have.
+     */
+    suspend fun candleCloses(priceId: String, currency: String, stepMinutes: Int, from: kotlin.time.Instant, to: kotlin.time.Instant): List<PricePoint> =
+        emptyList()
+
     /** Coins matching a name or symbol, for adding to the watchlist. */
     suspend fun search(query: String): List<CoinSearchResult>
 }
