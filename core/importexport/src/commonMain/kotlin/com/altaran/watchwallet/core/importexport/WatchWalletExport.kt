@@ -4,6 +4,7 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.ScriptType
 import com.altaran.watchwallet.core.model.WatchTarget
+import com.altaran.watchwallet.core.security.SecretGuard
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -42,14 +43,34 @@ data class ExportedCost(val ref: String, val valueUsd: Double) {
         val separator = text.indexOf(SEPARATOR)
         if (separator <= 0 || separator == text.lastIndex) return null
         val hash = text.substring(0, separator)
-        return if (TX_HASH.matches(hash)) hash to text.substring(separator + 1) else null
+        val assetId = text.substring(separator + 1)
+        val valid = TX_HASH.matches(hash) && ASSET_ID.matches(assetId) && !hidesWords(hash) && !hidesWords(assetId)
+        return if (valid) hash to assetId else null
     }
 
     companion object {
         private const val REF_PREFIX = "cost-"
         private const val SEPARATOR = '|'
         private const val HEX_RADIX = 16
+        private const val MIN_MNEMONIC_WORDS = 12
         private val TX_HASH = Regex("""^[A-Za-z0-9_=+/-]{8,128}$""")
+
+        /**
+         * `<chain>:native` or `<chain>:<contract>`. Contracts are token ids in the form each chain
+         * uses, for example `ibc/27…`, `0.0.456858` or `0x2.sui.sui`, generics included; no spaces.
+         */
+        private val ASSET_ID = Regex("""^[a-z0-9-]+(:[0-9]+)?:[A-Za-z0-9._~+/=<>,-]{1,256}$""")
+        private val WORD_SEPARATORS = Regex("""[^A-Za-z0-9]+""")
+
+        /**
+         * The file-level secret guard cannot read inside the hex of [ref], so a seed phrase joined
+         * by separators is looked for here. Short values are left alone: a token id that merely
+         * looks like a key must not cost the user their entered cost basis.
+         */
+        private fun hidesWords(value: String): Boolean {
+            val words = value.split(WORD_SEPARATORS).filter { it.isNotEmpty() }
+            return words.size >= MIN_MNEMONIC_WORDS && SecretGuard.isSecret(words.joinToString(" "))
+        }
 
         fun of(hash: String, assetId: String, valueUsd: Double): ExportedCost {
             val hex = "$hash$SEPARATOR$assetId".encodeToByteArray()

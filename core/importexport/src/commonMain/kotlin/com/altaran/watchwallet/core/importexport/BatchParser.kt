@@ -146,12 +146,13 @@ object BatchParser {
             val chain = col(CHAIN_HEADERS) // Reserved: resolve ambiguous rows by chain.
             return rows.mapIndexed { i, row ->
                 val cells = Csv.split(row, delimiter)
+                fun text(column: Int?) = column?.let { cells.getOrNull(it) }?.let(Csv::unescapeFormula)?.trim()?.ifBlank { null }
                 entry(
                     line = i + 2,
                     value = cells.getOrNull(addressColumn).orEmpty().trim(),
-                    label = label?.let { cells.getOrNull(it)?.trim() }?.ifBlank { null },
-                    group = group?.let { cells.getOrNull(it)?.trim() }?.ifBlank { null },
-                    notes = notes?.let { cells.getOrNull(it)?.trim() }?.ifBlank { null },
+                    label = text(label),
+                    group = text(group),
+                    notes = text(notes),
                 )
             }
         }
@@ -273,6 +274,28 @@ object Csv {
         return cells
     }
 
-    fun escape(value: String): String =
-        if (value.any { it == ',' || it == ';' || it == '"' || it == '\n' || it == '\r' }) "\"" + value.replace("\"", "\"\"") + "\"" else value
+    private const val TEXT_MARK = '\''
+    private const val FORMULA_STARTS = "=+-@\t\r\n"
+    private val PLAIN_NUMBER = Regex("""^[+-]?[0-9]+(\.[0-9]+)?$""")
+
+    /**
+     * Whether a spreadsheet could run [value] as a formula (it starts with one of [FORMULA_STARTS],
+     * also behind spaces or text marks). Token names and symbols come from servers, so they are
+     * untrusted. A plain number stays a number, so negative amounts remain usable.
+     */
+    private fun looksLikeFormula(value: String): Boolean {
+        val body = value.trimStart(TEXT_MARK)
+        val first = body.firstOrNull { it in FORMULA_STARTS || !it.isWhitespace() } ?: return false
+        return first in FORMULA_STARTS && !PLAIN_NUMBER.matches(body.trim())
+    }
+
+    /** Quotes [value] for a CSV file and marks formula-like text as text with a leading `'`. */
+    fun escape(value: String): String {
+        val safe = if (looksLikeFormula(value)) TEXT_MARK + value else value
+        return if (safe.any { it == ',' || it == ';' || it == '"' || it == '\n' || it == '\r' }) "\"" + safe.replace("\"", "\"\"") + "\"" else safe
+    }
+
+    /** Undoes the mark of [escape], and only that: any other leading `'` belongs to the value. */
+    fun unescapeFormula(value: String): String =
+        if (value.firstOrNull() == TEXT_MARK && looksLikeFormula(value.drop(1))) value.drop(1) else value
 }
