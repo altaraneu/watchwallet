@@ -7,6 +7,7 @@ import com.altaran.watchwallet.core.data.repository.PortfolioSnapshot
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.repository.WalletRepository
 import com.altaran.watchwallet.core.data.repository.historyPriceIds
+import com.altaran.watchwallet.core.data.repository.usesCoinGecko
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.designsystem.chart.ChartPoint
 import com.altaran.watchwallet.core.model.ChartRange
@@ -39,6 +40,8 @@ sealed interface PortfolioUiState {
         val groups: List<com.altaran.watchwallet.core.model.WalletGroup> = emptyList(),
         /** `null` = all wallets. */
         val selectedGroupId: Long? = null,
+        /** An amount on the screen is based on CoinGecko data. */
+        val poweredByCoinGecko: Boolean = false,
     ) : PortfolioUiState
 }
 
@@ -91,6 +94,8 @@ class PortfolioViewModel(
             groups = chartState.groups,
             selectedGroupId = chartState.selectedGroup,
         )
+    }.combine(portfolioRepository.coinGeckoPriceIds) { ready, ids ->
+        ready.copy(poweredByCoinGecko = ready.snapshot.holdings.usesCoinGecko(ids))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PortfolioUiState.Loading)
 
     init {

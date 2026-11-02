@@ -72,8 +72,8 @@
     <string name="settings_delete_all_message">すべてのウォレット、そのキャッシュされた履歴、グループがこのデバイスから削除されます。設定とウォッチリストは残ります。ブロックチェーン上では何も変わりません。先にバックアップをエクスポートすることをおすすめします。</string>
     <string name="settings_delete_all_confirm">すべて削除</string>
     <string name="settings_delete_all_cancel">キャンセル</string>
-    <string name="settings_remote_icons">コインのアイコンをダウンロード</string>
-    <string name="settings_remote_icons_summary">コインとトークンのロゴを GitHub の Trust Wallet アセットリポジトリから取得し、デバイスにキャッシュします。分かるのは表示されるコインのみで、アドレスが知られることはありません。</string>
+    <string name="settings_remote_icons">他のコインのロゴをダウンロード</string>
+    <string name="settings_remote_icons_summary">主要なコインのロゴはアプリに内蔵されています。オンにすると、他のトークンのロゴを GitHub の Trust Wallet リポジトリから取得します。その際 GitHub には IP アドレスと、保有または閲覧しているトークンが分かります。アドレスが送信されることはありません。オフの場合、これらのトークンには文字が表示されます。</string>
     <string name="settings_privacy_policy">プライバシーポリシー</string>
     <string name="settings_esplora_invalid">https:// から始まる完全なアドレスを入力してください。http:// は .onion アドレス、localhost、自分のネットワーク内のアドレスでのみ使えます。</string>
     <string name="settings_endpoints_list">サーバーリスト</string>

@@ -78,8 +78,8 @@
     <string name="settings_delete_all_message">Все кошельки, их сохранённая история и группы будут удалены с этого устройства. Настройки и список наблюдения останутся. В блокчейнах ничего не изменится. Рекомендуем сначала экспортировать резервную копию.</string>
     <string name="settings_delete_all_confirm">Удалить все</string>
     <string name="settings_delete_all_cancel">Отмена</string>
-    <string name="settings_remote_icons">Загружать значки монет</string>
-    <string name="settings_remote_icons_summary">Логотипы монет и токенов из репозитория ресурсов Trust Wallet на GitHub, сохраняются на устройстве. Раскрывает только то, какие монеты показываются, но никогда — ваши адреса.</string>
+    <string name="settings_remote_icons">Загружать логотипы других монет</string>
+    <string name="settings_remote_icons_summary">У распространённых монет логотипы встроены в приложение. Если включено, логотипы других токенов загружаются из репозитория Trust Wallet на GitHub, который при этом видит ваш IP-адрес и какие токены вы держите или просматриваете. Ваши адреса никогда не отправляются. Если выключено, у таких токенов показывается буква.</string>
     <string name="settings_privacy_policy">Политика конфиденциальности</string>
     <string name="settings_esplora_invalid">Введите полный адрес https://. Обычный http:// работает только для адресов .onion, localhost и адресов в вашей собственной сети.</string>
     <string name="settings_endpoints_list">Список серверов</string>

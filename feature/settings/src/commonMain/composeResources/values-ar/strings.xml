@@ -82,8 +82,8 @@
     <string name="settings_delete_all_message">ستُزال جميع المحافظ وسجلها المخزن ومجموعاتها من هذا الجهاز. ستبقى الإعدادات وقائمة المتابعة. لن يتغير شيء على أي سلسلة كتل. يُستحسن تصدير نسخة احتياطية أولًا.</string>
     <string name="settings_delete_all_confirm">حذف الكل</string>
     <string name="settings_delete_all_cancel">إلغاء</string>
-    <string name="settings_remote_icons">تنزيل أيقونات العملات</string>
-    <string name="settings_remote_icons_summary">شعارات العملات والتوكنات من مستودع أصول Trust Wallet على GitHub، وتُخزَّن مؤقتًا على الجهاز. لا يكشف ذلك إلا عن العملات المعروضة، ولا يكشف عناوينك أبدًا.</string>
+    <string name="settings_remote_icons">تنزيل شعارات العملات الأخرى</string>
+    <string name="settings_remote_icons_summary">شعارات العملات الشائعة مضمّنة في التطبيق. عند التفعيل، تأتي شعارات التوكنات الأخرى من مستودع Trust Wallet على GitHub، الذي يمكنه حينها رؤية عنوان IP الخاص بك والتوكنات التي تملكها أو تعرضها. لا تُرسل عناوينك أبدًا. عند الإيقاف، يظهر حرف بدلًا من الشعار لهذه التوكنات.</string>
     <string name="settings_privacy_policy">سياسة الخصوصية</string>
     <string name="settings_esplora_invalid">أدخل عنوان https:// كاملًا. يعمل http:// العادي فقط مع عناوين .onion وlocalhost وعناوين شبكتك الخاصة.</string>
     <string name="settings_endpoints_list">قائمة الخوادم</string>

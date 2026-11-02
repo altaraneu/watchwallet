@@ -38,6 +38,7 @@ import com.altaran.watchwallet.core.designsystem.component.AmountText
 import com.altaran.watchwallet.core.designsystem.component.CryptoIcon
 import com.altaran.watchwallet.core.designsystem.component.CryptoIcons
 import com.altaran.watchwallet.core.designsystem.component.EmptyState
+import com.altaran.watchwallet.core.designsystem.component.PoweredByCoinGecko
 import com.altaran.watchwallet.core.designsystem.component.SectionHeader
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
@@ -104,6 +105,7 @@ internal fun WalletsScreen(
                             HorizontalDivider(Modifier.padding(start = 72.dp))
                         }
                     }
+                    if (state.poweredByCoinGecko) item { PoweredByCoinGecko(Modifier.padding(16.dp)) }
                 }
             }
         }

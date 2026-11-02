@@ -81,8 +81,8 @@
     <string name="settings_delete_all_message">Ze zařízení se odstraní všechny peněženky, jejich uložená historie i skupiny. Nastavení a sledované mince zůstanou. Na žádném blockchainu se nic nezmění. Zvaž nejdřív export zálohy.</string>
     <string name="settings_delete_all_confirm">Smazat vše</string>
     <string name="settings_delete_all_cancel">Zrušit</string>
-    <string name="settings_remote_icons">Stahovat ikony mincí</string>
-    <string name="settings_remote_icons_summary">Loga mincí a tokenů z repozitáře Trust Wallet na GitHubu, uložená v zařízení. Prozradí jen to, které mince se zobrazují, nikdy tvoje adresy.</string>
+    <string name="settings_remote_icons">Stahovat loga dalších mincí</string>
+    <string name="settings_remote_icons_summary">Běžné mince mají loga přímo v aplikaci. Když je volba zapnutá, loga ostatních tokenů se stahují z repozitáře Trust Wallet na GitHubu, který pak může vidět tvoji IP adresu a které tokeny držíš nebo si prohlížíš. Tvoje adresy se nikdy neodesílají. Když je vypnutá, tyto tokeny ukazují jen písmeno.</string>
     <string name="settings_privacy_policy">Zásady ochrany soukromí</string>
     <string name="settings_esplora_invalid">Zadej celou adresu https://. Obyčejné http:// funguje jen pro adresy .onion, localhost a adresy ve vlastní síti.</string>
     <string name="settings_endpoints_list">Seznam serverů</string>

@@ -74,8 +74,8 @@
     <string name="settings_delete_all_message">Alle Wallets, ihr zwischengespeicherter Verlauf und ihre Gruppen werden von diesem Gerät entfernt. Einstellungen und Watchlist bleiben erhalten. Auf keiner Blockchain ändert sich etwas. Erstelle am besten vorher ein Backup.</string>
     <string name="settings_delete_all_confirm">Alle löschen</string>
     <string name="settings_delete_all_cancel">Abbrechen</string>
-    <string name="settings_remote_icons">Coin-Icons herunterladen</string>
-    <string name="settings_remote_icons_summary">Logos von Coins und Token aus dem Trust Wallet Assets-Repository auf GitHub, auf dem Gerät zwischengespeichert. Verrät nur, welche Coins angezeigt werden, niemals deine Adressen.</string>
+    <string name="settings_remote_icons">Logos anderer Coins herunterladen</string>
+    <string name="settings_remote_icons_summary">Gängige Coins haben eingebaute Logos. Wenn aktiviert, kommen Logos anderer Token aus dem Trust Wallet-Repository auf GitHub. GitHub kann dann deine IP-Adresse sehen und welche Token du hältst oder ansiehst. Deine Adressen werden nie gesendet. Wenn deaktiviert, zeigen diese Token einen Buchstaben.</string>
     <string name="settings_privacy_policy">Datenschutzerklärung</string>
     <string name="settings_esplora_invalid">Gib eine vollständige https://-Adresse ein. Einfaches http:// funktioniert nur für .onion-Adressen, localhost und Adressen im eigenen Netzwerk.</string>
     <string name="settings_endpoints_list">Serverliste</string>

@@ -3,10 +3,10 @@ package com.altaran.watchwallet.core.data
 import com.altaran.watchwallet.core.crypto.EvmAddresses
 
 /**
- * Remote coin and token logos from the Trust Wallet assets repository (MIT), which covers native
- * coins and tokens of most chains and keeps adding new ones. Derived from the price id, so every
- * asset gets a URL without extra requests; the image loader caches them on disk. Only the
- * coin/contract is revealed to GitHub, never an address of the user.
+ * Remote coin and token logos from the Trust Wallet assets repository (MIT), for assets without a
+ * bundled logo when the user turned downloads on. Derived from the price id, so every asset gets a
+ * URL without extra requests; the image loader caches them on disk. GitHub learns the coin or
+ * contract and the IP address asking, so downloads are off by default.
  */
 object AssetIcons {
     private const val BASE = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains"

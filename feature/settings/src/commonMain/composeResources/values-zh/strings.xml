@@ -72,8 +72,8 @@
     <string name="settings_delete_all_message">所有钱包及其缓存的历史记录和分组都将从此设备中移除。设置和自选列表会保留。任何区块链上都不会发生变化。建议先导出备份。</string>
     <string name="settings_delete_all_confirm">全部删除</string>
     <string name="settings_delete_all_cancel">取消</string>
-    <string name="settings_remote_icons">下载币种图标</string>
-    <string name="settings_remote_icons_summary">币种和代币的徽标来自 GitHub 上的 Trust Wallet 资产仓库,并缓存在设备上。只会透露显示了哪些币种,绝不会透露您的地址。</string>
+    <string name="settings_remote_icons">下载其他币种的徽标</string>
+    <string name="settings_remote_icons_summary">常见币种的徽标已内置。开启后,其他代币的徽标来自 GitHub 上的 Trust Wallet 仓库,GitHub 因此可以看到您的 IP 地址以及您持有或查看的代币。绝不会发送您的地址。关闭时,这些代币显示一个字母。</string>
     <string name="settings_privacy_policy">隐私政策</string>
     <string name="settings_esplora_invalid">请输入完整的 https:// 地址。普通 http:// 仅适用于 .onion 地址、localhost 和您自己网络中的地址。</string>
     <string name="settings_endpoints_list">服务器列表</string>

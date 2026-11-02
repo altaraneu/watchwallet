@@ -72,8 +72,8 @@
     <string name="settings_delete_all_message">Semua dompet, riwayat yang di-cache, dan grup akan dihapus dari perangkat ini. Pengaturan dan daftar pantau tetap ada. Tidak ada yang berubah di blockchain mana pun. Sebaiknya ekspor cadangan terlebih dahulu.</string>
     <string name="settings_delete_all_confirm">Hapus semua</string>
     <string name="settings_delete_all_cancel">Batal</string>
-    <string name="settings_remote_icons">Unduh ikon koin</string>
-    <string name="settings_remote_icons_summary">Logo koin dan token dari repositori aset Trust Wallet di GitHub, di-cache di perangkat. Hanya mengungkap koin yang ditampilkan, tidak pernah alamat Anda.</string>
+    <string name="settings_remote_icons">Unduh logo koin lainnya</string>
+    <string name="settings_remote_icons_summary">Koin umum sudah memiliki logo bawaan. Jika aktif, logo token lain diambil dari repositori Trust Wallet di GitHub, yang kemudian dapat melihat alamat IP Anda dan token yang Anda miliki atau lihat. Alamat Anda tidak pernah dikirim. Jika nonaktif, token tersebut menampilkan huruf.</string>
     <string name="settings_privacy_policy">Kebijakan privasi</string>
     <string name="settings_esplora_invalid">Masukkan alamat https:// lengkap. http:// biasa hanya berfungsi untuk alamat .onion, localhost, dan alamat di jaringan Anda sendiri.</string>
     <string name="settings_endpoints_list">Daftar server</string>

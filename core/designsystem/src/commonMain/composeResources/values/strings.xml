@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="powered_by_coingecko" translatable="false">Powered by CoinGecko</string>
     <!-- Accessibility label read instead of an amount while discreet mode is on. -->
     <string name="amount_hidden">Amount hidden</string>
     <string name="action_cancel">Cancel</string>

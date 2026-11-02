@@ -74,8 +74,8 @@
     <string name="settings_delete_all_message">সব ওয়ালেট, সেগুলোর সংরক্ষিত ইতিহাস ও গ্রুপ এই ডিভাইস থেকে সরানো হবে। সেটিংস ও ওয়াচলিস্ট থাকবে। কোনো ব্লকচেইনে কিছুই বদলাবে না। আগে একটি ব্যাকআপ এক্সপোর্ট করে নেওয়ার কথা ভাবুন।</string>
     <string name="settings_delete_all_confirm">সব মুছুন</string>
     <string name="settings_delete_all_cancel">বাতিল</string>
-    <string name="settings_remote_icons">কয়েন আইকন ডাউনলোড করুন</string>
-    <string name="settings_remote_icons_summary">GitHub-এ Trust Wallet অ্যাসেট রিপোজিটরি থেকে কয়েন ও টোকেনের লোগো, ডিভাইসে ক্যাশ করা হয়। এতে শুধু কোন কয়েনগুলো দেখানো হচ্ছে তা প্রকাশ পায়, আপনার ঠিকানা কখনোই নয়।</string>
+    <string name="settings_remote_icons">অন্যান্য কয়েনের লোগো ডাউনলোড করুন</string>
+    <string name="settings_remote_icons_summary">জনপ্রিয় কয়েনের লোগো অ্যাপেই আছে। চালু থাকলে অন্যান্য টোকেনের লোগো GitHub-এর Trust Wallet রিপোজিটরি থেকে আসে, যা তখন আপনার IP ঠিকানা এবং আপনি কোন টোকেন রাখেন বা দেখেন তা দেখতে পারে। আপনার ঠিকানা কখনোই পাঠানো হয় না। বন্ধ থাকলে সেই টোকেনগুলোতে একটি অক্ষর দেখায়।</string>
     <string name="settings_privacy_policy">গোপনীয়তা নীতি</string>
     <string name="settings_esplora_invalid">সম্পূর্ণ https:// ঠিকানা লিখুন। সাধারণ http:// শুধু .onion ঠিকানা, localhost এবং আপনার নিজের নেটওয়ার্কের ঠিকানায় কাজ করে।</string>
     <string name="settings_endpoints_list">সার্ভার তালিকা</string>

@@ -8,6 +8,7 @@ import com.altaran.watchwallet.core.data.repository.PortfolioRepository
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.repository.WalletRepository
 import com.altaran.watchwallet.core.data.repository.historyPriceIds
+import com.altaran.watchwallet.core.data.repository.usesCoinGecko
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.data.sync.WalletSyncHealth
 import com.altaran.watchwallet.core.designsystem.chart.ChartPoint
@@ -47,6 +48,8 @@ data class WalletsUiState(
     val refreshing: Boolean = false,
     /** Group id → name, for section headers. */
     val groups: Map<Long, String> = emptyMap(),
+    /** A value on the list is based on CoinGecko data. */
+    val poweredByCoinGecko: Boolean = false,
 )
 
 internal class WalletsViewModel(
@@ -74,6 +77,8 @@ internal class WalletsViewModel(
                 currency = currency,
                 refreshing = sync.running && sync.manual,
             )
+        }.combine(portfolioRepository.walletsUsingCoinGecko(currency)) { state, ids ->
+            state.copy(poweredByCoinGecko = state.items.any { it.value != null && it.wallet.id in ids })
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WalletsUiState())
 
@@ -103,6 +108,8 @@ data class WalletDetailUiState(
     val syncHealth: WalletSyncHealth = WalletSyncHealth.OK,
     /** Cost basis (USD) of incoming transfers, by transaction leg. */
     val costs: Map<com.altaran.watchwallet.core.data.repository.CostKey, com.altaran.watchwallet.core.data.repository.CostBasisEntry> = emptyMap(),
+    /** An amount on the screen is based on CoinGecko data. */
+    val poweredByCoinGecko: Boolean = false,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -164,6 +171,8 @@ internal class WalletDetailViewModel(
             syncHealth = sync.healthOf(walletId),
             costs = costs,
         )
+    }.combine(portfolioRepository.coinGeckoPriceIds) { state, ids ->
+        state.copy(poweredByCoinGecko = state.holdings.usesCoinGecko(ids))
     }.combine(secretRejected) { state, rejected -> state.copy(secretRejected = rejected) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WalletDetailUiState())
 

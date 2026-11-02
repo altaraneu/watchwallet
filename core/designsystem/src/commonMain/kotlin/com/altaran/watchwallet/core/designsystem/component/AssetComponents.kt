@@ -29,6 +29,7 @@ import com.altaran.watchwallet.core.designsystem.chart.Sparkline
 import com.altaran.watchwallet.core.designsystem.generated.resources.Res
 import com.altaran.watchwallet.core.designsystem.generated.resources.change_down
 import com.altaran.watchwallet.core.designsystem.generated.resources.change_up
+import com.altaran.watchwallet.core.designsystem.generated.resources.powered_by_coingecko
 import com.altaran.watchwallet.core.designsystem.generated.resources.range_1h
 import com.altaran.watchwallet.core.designsystem.generated.resources.range_1m
 import com.altaran.watchwallet.core.designsystem.generated.resources.range_1y
@@ -194,6 +195,20 @@ fun rangeLabel(range: ChartRange): String = stringResource(
         ChartRange.ALL -> Res.string.range_all
     },
 )
+
+/**
+ * Required by CoinGecko's API terms where its data is displayed. The name is not translated. Terms
+ * ask for at least font size 10; labelSmall is 11sp.
+ */
+@Composable
+fun PoweredByCoinGecko(modifier: Modifier = Modifier) {
+    Text(
+        stringResource(Res.string.powered_by_coingecko),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
+    )
+}
 
 /** Small pill showing a network name with its icon. */
 @Composable

@@ -39,7 +39,9 @@ class SettingsDataSource(
             appLock = prefs[Keys.APP_LOCK] ?: false,
             // On unless switched off: the key exists only after the user has used the switch.
             secureScreen = prefs[Keys.SECURE_SCREEN] ?: true,
-            remoteIcons = prefs[Keys.REMOTE_ICONS] ?: true,
+            // Stored only once the user flips the switch. Version 1.0 defaulted to on, so without a
+            // stored value nobody ever chose downloads: updating stops them.
+            remoteIcons = prefs[Keys.REMOTE_ICONS] ?: false,
             backgroundRefreshHours = prefs[Keys.BACKGROUND_HOURS] ?: 0,
             backgroundRefreshWifiOnly = prefs[Keys.BACKGROUND_WIFI_ONLY] ?: true,
             network = NetworkSettings(

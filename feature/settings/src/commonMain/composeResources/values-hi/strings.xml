@@ -74,8 +74,8 @@
     <string name="settings_delete_all_message">सभी वॉलेट, उनका सहेजा गया इतिहास और समूह इस डिवाइस से हटा दिए जाएँगे। सेटिंग्स और वॉचलिस्ट बनी रहेंगी। किसी भी ब्लॉकचेन पर कुछ नहीं बदलेगा। पहले बैकअप एक्सपोर्ट करने पर विचार करें।</string>
     <string name="settings_delete_all_confirm">सभी हटाएँ</string>
     <string name="settings_delete_all_cancel">रद्द करें</string>
-    <string name="settings_remote_icons">कॉइन आइकन डाउनलोड करें</string>
-    <string name="settings_remote_icons_summary">GitHub पर Trust Wallet एसेट रिपॉज़िटरी से कॉइन और टोकन के लोगो, जो डिवाइस पर कैश होते हैं। इससे सिर्फ़ यह पता चलता है कि कौन से कॉइन दिखाए जा रहे हैं, आपके पते कभी नहीं।</string>
+    <string name="settings_remote_icons">अन्य कॉइन के लोगो डाउनलोड करें</string>
+    <string name="settings_remote_icons_summary">आम कॉइन के लोगो ऐप में ही मौजूद हैं। चालू होने पर अन्य टोकन के लोगो GitHub पर Trust Wallet रिपॉज़िटरी से आते हैं, जो तब आपका IP पता और यह देख सकता है कि आप कौन से टोकन रखते या देखते हैं। आपके पते कभी नहीं भेजे जाते। बंद होने पर उन टोकन में एक अक्षर दिखता है।</string>
     <string name="settings_privacy_policy">निजता नीति</string>
     <string name="settings_esplora_invalid">पूरा https:// पता दर्ज करें। सादा http:// केवल .onion पतों, localhost और आपके अपने नेटवर्क के पतों के लिए काम करता है।</string>
     <string name="settings_endpoints_list">सर्वर सूची</string>
