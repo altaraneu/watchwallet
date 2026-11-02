@@ -61,6 +61,8 @@ android {
             isShrinkResources = true
             signingConfig = uploadSigning
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // The file depends on the kind of checkout, so it would break reproducible builds.
+            vcsInfo.include = false
         }
     }
 

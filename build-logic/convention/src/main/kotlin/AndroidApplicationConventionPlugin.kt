@@ -33,6 +33,9 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                 resources.excludes += setOf(
                     "/META-INF/{AL2.0,LGPL2.1}",
                     "/META-INF/versions/9/previous-compilation-data.bin",
+                    // Desktop builds of secp256k1, which the JVM target of :core:crypto pulls in. The
+                    // app loads its own from lib/ (secp256k1-kmp-jni-android), never these.
+                    "/fr/acinq/secp256k1/jni/native/**",
                 )
             }
         }

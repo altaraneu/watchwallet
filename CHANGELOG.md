@@ -6,7 +6,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- Coin logos no longer tell GitHub what you hold. Native coins and well-known tokens have logos built
+  into the app and never cause a request. Downloading other logos from GitHub is now off by default
+  and explains what GitHub sees; other tokens show a letter. If you never touched the old switch,
+  updating turns downloads off; if you set it yourself, your choice stays.
+- A token only gets a well-known logo by its contract, no longer by copying a symbol such as USDC.
+- "Powered by CoinGecko" also appears on Portfolio and Wallets when an amount there uses its data.
+
 ### Added
+- Release integrity: GitHub Actions pinned by commit, an unsigned release build from tags that is built
+  twice and compared, published checksums, and steps to reproduce a build
+  (`docs/reproducible-builds.md`, `docs/release.md`).
 - Value charts refine like a map: they draw at once from stored prices, then load better prices
   only for the visible window (one bar per minute for views up to 8 hours, per hour up to 14 days,
   per day beyond). Zoom in as far as single minutes, also far in the past. New 1H range.
