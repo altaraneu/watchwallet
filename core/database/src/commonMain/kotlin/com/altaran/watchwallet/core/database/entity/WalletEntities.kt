@@ -137,6 +137,22 @@ data class PricePointEntity(
     val price: Double,
 )
 
+/**
+ * Minute and hourly prices of chart windows the user looked at. Kept apart from [PricePointEntity]
+ * because the long history there is observed as a whole by every chart: writes here must not
+ * trigger re-reading it, and a finer series can never mix into valuations and cost basis.
+ * A disposable cache, pruned by age and row count.
+ */
+@Entity(tableName = "price_detail", primaryKeys = ["price_id", "currency", "step_seconds", "time"])
+data class PriceDetailEntity(
+    @ColumnInfo(name = "price_id") val priceId: String,
+    val currency: String,
+    @ColumnInfo(name = "step_seconds") val stepSeconds: Int,
+    /** Epoch milliseconds of the candle close. */
+    val time: Long,
+    val price: Double,
+)
+
 /** Coins the user follows in the Markets tab in addition to held assets. */
 @Entity(tableName = "watchlist")
 data class WatchlistEntity(
