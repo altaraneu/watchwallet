@@ -54,6 +54,7 @@ import com.altaran.watchwallet.core.designsystem.chart.DonutSlice
 import com.altaran.watchwallet.core.designsystem.component.AssetRow
 import com.altaran.watchwallet.core.designsystem.component.CryptoIcons
 import com.altaran.watchwallet.core.designsystem.component.EmptyState
+import com.altaran.watchwallet.core.designsystem.component.PoweredByCoinGecko
 import com.altaran.watchwallet.core.designsystem.component.SectionHeader
 import com.altaran.watchwallet.core.designsystem.component.SkeletonBlock
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
@@ -210,6 +211,7 @@ private fun PortfolioContent(
                 modifier = Modifier.padding(top = 8.dp),
             )
         }
+        if (state.poweredByCoinGecko) item { PoweredByCoinGecko(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
         item { SectionHeader(stringResource(Res.string.portfolio_assets)) }
         items(snapshot.holdings, key = { it.key }) { holding ->
             HoldingRow(holding, currency, onOpenHolding, onHide = { onSetVisibility(holding.assets, false) })
@@ -294,7 +296,7 @@ private fun HiddenAssetRow(hidden: HiddenAsset, onShow: () -> Unit) {
 @Composable
 private fun HoldingAssetRow(holding: Holding, currency: QuoteCurrency, onOpen: (String) -> Unit, onLongClick: (() -> Unit)?) {
     AssetRow(
-        iconKey = CryptoIcons.forSymbol(holding.symbol),
+        iconKey = CryptoIcons.forPriceId(holding.priceId),
         symbol = holding.symbol,
         subtitle = MoneyFormatter.formatCrypto(holding.amount, holding.symbol),
         value = holding.value?.let { MoneyFormatter.format(it, currency) },

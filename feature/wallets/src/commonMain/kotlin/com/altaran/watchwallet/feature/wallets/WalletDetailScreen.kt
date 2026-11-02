@@ -50,6 +50,7 @@ import com.altaran.watchwallet.core.designsystem.component.AssetRow
 import com.altaran.watchwallet.core.designsystem.component.ChainBadge
 import com.altaran.watchwallet.core.designsystem.component.CryptoIcons
 import com.altaran.watchwallet.core.designsystem.component.EmptyState
+import com.altaran.watchwallet.core.designsystem.component.PoweredByCoinGecko
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
 import com.altaran.watchwallet.core.model.Chain
@@ -209,6 +210,7 @@ internal fun WalletDetailScreen(
                             numberFormat = chartFormatFor(state.currency),
                             markerTimes = state.transactions.map { it.timestamp.toEpochMilliseconds() },
                         )
+                        if (state.poweredByCoinGecko) PoweredByCoinGecko(Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
                     }
                 }
                 item {
@@ -285,7 +287,7 @@ private fun stringResource0(res: org.jetbrains.compose.resources.StringResource)
 @Composable
 internal fun HoldingRow(holding: Holding, state: WalletDetailUiState, onOpen: (String) -> Unit) {
     AssetRow(
-        iconKey = CryptoIcons.forSymbol(holding.symbol),
+        iconKey = CryptoIcons.forPriceId(holding.priceId),
         symbol = holding.symbol,
         subtitle = MoneyFormatter.formatCrypto(holding.amount, holding.symbol),
         value = holding.value?.let { MoneyFormatter.format(it, state.currency) },

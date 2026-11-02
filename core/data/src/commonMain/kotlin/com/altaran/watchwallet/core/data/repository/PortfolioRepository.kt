@@ -55,6 +55,10 @@ data class Holding(
 fun List<Holding>.historyPriceIds(): List<String> =
     filter { it.price != null }.sortedByDescending { it.value ?: 0.0 }.mapNotNull { it.priceId }.distinct()
 
+/** Something in these holdings is valued with data from CoinGecko, which then has to be credited. */
+fun List<Holding>.usesCoinGecko(coinGeckoPriceIds: Set<String>): Boolean =
+    any { holding -> holding.value != null && holding.priceId?.let { it in coinGeckoPriceIds } == true }
+
 data class PortfolioSnapshot(
     val totalValue: Double,
     /** Value change over 24 hours, from current holdings and 24h price changes. */
@@ -118,6 +122,16 @@ class PortfolioRepository(
             balances.filter { isVisible(it, prices) }.groupBy { it.walletId }.mapValues { (_, rows) ->
                 rows.sumOf { row -> row.asset.priceId?.let { prices[it]?.price }?.let { it * row.amount.toDouble() } ?: 0.0 }
             }
+        }
+
+    /** Assets with stored prices from CoinGecko, see [usesCoinGecko]. */
+    val coinGeckoPriceIds: Flow<Set<String>> get() = priceRepository.coinGeckoPriceIds
+
+    /** Wallets whose value in [walletValues] includes an asset priced by CoinGecko. */
+    fun walletsUsingCoinGecko(currency: QuoteCurrency): Flow<Set<Long>> =
+        combine(walletRepository.balances, priceRepository.currentPrices(currency), coinGeckoPriceIds) { balances, prices, ids ->
+            balances.filter { row -> isVisible(row, prices) && row.asset.priceId?.let { it in ids } == true }
+                .mapTo(HashSet()) { it.walletId }
         }
 
     /**

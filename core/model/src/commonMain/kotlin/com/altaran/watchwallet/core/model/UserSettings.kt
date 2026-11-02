@@ -31,8 +31,8 @@ data class UserSettings(
     val appLock: Boolean = false,
     /** Block screenshots and hide the app content in the recent-apps preview. */
     val secureScreen: Boolean = false,
-    /** Load coin logos from the internet (Trust Wallet assets); otherwise bundled icons only. */
-    val remoteIcons: Boolean = true,
+    /** Download logos that are not bundled (Trust Wallet assets on GitHub); otherwise a letter. */
+    val remoteIcons: Boolean = false,
     /** Background refresh interval in hours; 0 = off. */
     val backgroundRefreshHours: Int = 0,
     val backgroundRefreshWifiOnly: Boolean = true,

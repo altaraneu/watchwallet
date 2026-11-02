@@ -76,7 +76,7 @@
     <string name="settings_delete_all_message">Todas as carteiras, o histórico em cache e os grupos serão removidos deste dispositivo. As configurações e a lista de observação permanecem. Nada muda em nenhuma blockchain. Considere exportar um backup antes.</string>
     <string name="settings_delete_all_confirm">Excluir tudo</string>
     <string name="settings_delete_all_cancel">Cancelar</string>
-    <string name="settings_remote_icons">Baixar ícones de moedas</string>
-    <string name="settings_remote_icons_summary">Logos de moedas e tokens do repositório de ativos da Trust Wallet no GitHub, armazenados em cache no dispositivo. Revela apenas quais moedas são exibidas, nunca seus endereços.</string>
+    <string name="settings_remote_icons">Baixar logos de outras moedas</string>
+    <string name="settings_remote_icons_summary">Moedas comuns já têm o logo incluído. Se ativado, os logos de outros tokens vêm do repositório da Trust Wallet no GitHub, que poderá ver seu endereço IP e quais tokens você tem ou visualiza. Seus endereços nunca são enviados. Se desativado, esses tokens mostram uma letra.</string>
     <string name="settings_privacy_policy">Política de privacidade</string>
 </resources>

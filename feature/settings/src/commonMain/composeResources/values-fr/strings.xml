@@ -76,7 +76,7 @@
     <string name="settings_delete_all_message">Tous les portefeuilles, leur historique en cache et leurs groupes seront supprimés de cet appareil. Les paramètres et la liste de suivi sont conservés. Rien ne change sur aucune blockchain. Pensez à exporter une sauvegarde au préalable.</string>
     <string name="settings_delete_all_confirm">Tout supprimer</string>
     <string name="settings_delete_all_cancel">Annuler</string>
-    <string name="settings_remote_icons">Télécharger les icônes des cryptos</string>
-    <string name="settings_remote_icons_summary">Logos des cryptos et des jetons issus du dépôt d’actifs de Trust Wallet sur GitHub, mis en cache sur l’appareil. Révèle seulement les cryptos affichées, jamais vos adresses.</string>
+    <string name="settings_remote_icons">Télécharger les logos des autres cryptos</string>
+    <string name="settings_remote_icons_summary">Les cryptos courantes ont leur logo intégré. Si cette option est activée, les logos des autres jetons viennent du dépôt Trust Wallet sur GitHub, qui peut alors voir votre adresse IP et les jetons que vous détenez ou consultez. Vos adresses ne sont jamais envoyées. Si elle est désactivée, ces jetons affichent une lettre.</string>
     <string name="settings_privacy_policy">Politique de confidentialité</string>
 </resources>

@@ -52,6 +52,7 @@ import com.altaran.watchwallet.core.designsystem.component.AssetRow
 import com.altaran.watchwallet.core.designsystem.component.CryptoIcon
 import com.altaran.watchwallet.core.designsystem.component.CryptoIcons
 import com.altaran.watchwallet.core.designsystem.component.EmptyState
+import com.altaran.watchwallet.core.designsystem.component.PoweredByCoinGecko
 import com.altaran.watchwallet.core.designsystem.component.SectionHeader
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
@@ -138,7 +139,7 @@ internal fun MarketsScreen(state: MarketsUiState, onOpenAsset: (String) -> Unit,
 @Composable
 private fun MarketRow(row: com.altaran.watchwallet.core.pricing.MarketInfo, state: MarketsUiState, onOpen: (String) -> Unit) {
     AssetRow(
-        iconKey = CryptoIcons.forSymbol(row.symbol),
+        iconKey = CryptoIcons.forPriceId(row.priceId),
         symbol = row.symbol,
         subtitle = row.name,
         value = MoneyFormatter.formatPrice(row.price, state.currency),
@@ -200,7 +201,7 @@ internal fun AssetDetailScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         CryptoIcon(
-                            iconKey = CryptoIcons.forSymbol(symbol),
+                            iconKey = CryptoIcons.forPriceId(state.holding?.priceId ?: state.market?.priceId),
                             fallbackText = symbol,
                             size = 32.dp,
                             remoteUrl = com.altaran.watchwallet.core.data.AssetIcons.url(state.holding?.priceId ?: state.market?.priceId),
@@ -341,17 +342,6 @@ internal fun AssetDetailScreen(
             if (state.poweredByCoinGecko) PoweredByCoinGecko(Modifier.padding(16.dp))
         }
     }
-}
-
-/** Required by CoinGecko's API terms where its data is displayed. The name is not translated. */
-@Composable
-private fun PoweredByCoinGecko(modifier: Modifier = Modifier) {
-    Text(
-        stringResource(Res.string.powered_by_coingecko),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier,
-    )
 }
 
 @Composable

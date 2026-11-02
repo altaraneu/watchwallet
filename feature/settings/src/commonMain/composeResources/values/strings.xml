@@ -81,8 +81,8 @@
     <string name="settings_delete_all_message">All wallets, their cached history and groups are removed from this device. Settings and the watchlist stay. Nothing changes on any blockchain. Consider exporting a backup first.</string>
     <string name="settings_delete_all_confirm">Delete all</string>
     <string name="settings_delete_all_cancel">Cancel</string>
-    <string name="settings_remote_icons">Download coin icons</string>
-    <!-- Explains what is sent: only which coin/token logo is needed, never addresses. -->
-    <string name="settings_remote_icons_summary">Logos of coins and tokens from the Trust Wallet assets repository on GitHub, cached on the device. Reveals only which coins are shown, never your addresses.</string>
+    <string name="settings_remote_icons">Download other coin logos</string>
+    <!-- Explains what GitHub sees when logos are downloaded: IP address and which tokens, never addresses. -->
+    <string name="settings_remote_icons_summary">Common coins have logos built in. If on, logos of other tokens come from the Trust Wallet repository on GitHub, which can then see your IP address and which tokens you hold or view. Your addresses are never sent. If off, those tokens show a letter.</string>
     <string name="settings_privacy_policy">Privacy policy</string>
 </resources>
