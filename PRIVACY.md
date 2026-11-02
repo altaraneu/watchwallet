@@ -24,6 +24,10 @@ one is rejected, is not stored anywhere (including logs) and is never sent over 
 All requests are plain HTTPS GET/POST calls without cookies, accounts or tracking headers.
 Responses are not cached on disk by the HTTP client.
 
+The servers listed below are those built into the app. A signed server list can replace them
+without an app update (see [Server list updates](#server-list-updates)); its current content is
+public in [`config/endpoints.source.json`](config/endpoints.source.json).
+
 ### Blockchain data (sends the individual addresses you track)
 
 | Service | Used for | Data sent |
@@ -60,12 +64,29 @@ Responses are not cached on disk by the HTTP client.
 | `api.kraken.com`, `ws.kraken.com` | Candlestick charts and live price updates | Trading pair (for example `BTC/EUR`) and candle interval |
 | `api.frankfurter.dev` (fallback `api.frankfurter.app`) | ECB reference exchange rates for currencies Kraken does not quote (CZK, PLN…) | Currency codes |
 
+### Server list updates
+
+| Service | Used for | Data sent |
+|---|---|---|
+| `raw.githubusercontent.com` (`altaraneu/watchwallet`), fallback `cdn.jsdelivr.net` when it fails | Signed list of public blockchain servers, at most once a day at app start | Nothing about you or your wallets: a plain download of a public file. As with any download, GitHub or jsDelivr see your IP address (or your proxy's) and the time. |
+
+The list lets the project replace a public server that died or went bad without an app update. It
+contains only chain names, API types and https addresses of servers, never code. The app accepts it
+only with a valid signature of the project's key, and only for API types it already knows. Once
+applied, the addresses you track go to the servers it names instead of those in the table above,
+for the same purpose and with the same data. The history of the list is public in this repository.
+If the list expires, the app returns to its built-in servers. Details:
+[`docs/endpoints-config.md`](docs/endpoints-config.md).
+
+To turn this off, disable **Update server list automatically** in Settings → Network and restart the
+app: it then makes no such request and uses only the built-in servers.
+
 ### Your own server and proxy
 
 - **Custom Esplora server (Settings → Network).** You can replace the default Bitcoin Esplora
   servers with your own (for example a self-hosted mempool or Esplora instance). The app then
   sends the Bitcoin addresses described above to that server instead of `mempool.space` /
-  `blockstream.info`.
+  `blockstream.info`. Your own server always takes precedence over the server list.
 - **SOCKS5 proxy (Settings → Network, Android).** All HTTP and WebSocket traffic of the app can be
   routed through a SOCKS5 proxy, for example Orbot on `127.0.0.1:9050` for Tor. Host names are
   resolved by the proxy, not on the device. The option is not offered on platforms whose network
