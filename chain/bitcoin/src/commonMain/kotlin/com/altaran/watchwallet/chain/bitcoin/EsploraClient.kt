@@ -2,6 +2,7 @@ package com.altaran.watchwallet.chain.bitcoin
 
 import com.altaran.watchwallet.core.network.HostHealth
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.pathSegment
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -77,14 +78,14 @@ internal class EsploraClient(
     private suspend inline fun <reified T> get(path: String): T =
         health.firstAvailable(baseUrls) { base -> throttle.run { http.get("${base.trimEnd('/')}/$path").body() } }
 
-    suspend fun address(address: String): EsploraAddress = get("address/$address")
+    suspend fun address(address: String): EsploraAddress = get("address/${pathSegment(address)}")
 
     /**
      * First call (`lastSeenTxid == null`) returns mempool transactions plus the newest
      * [PAGE_SIZE] confirmed ones; subsequent calls return the next confirmed page.
      */
     suspend fun transactions(address: String, lastSeenTxid: String?): List<EsploraTx> =
-        get(if (lastSeenTxid == null) "address/$address/txs" else "address/$address/txs/chain/$lastSeenTxid")
+        get(if (lastSeenTxid == null) "address/${pathSegment(address)}/txs" else "address/${pathSegment(address)}/txs/chain/${pathSegment(lastSeenTxid)}")
 
     companion object {
         const val PAGE_SIZE = 25

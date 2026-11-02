@@ -6,6 +6,7 @@ import com.altaran.watchwallet.chain.common.UtxoHistory
 import com.altaran.watchwallet.chain.common.UtxoIo
 import com.altaran.watchwallet.chain.common.UtxoTx
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.pathSegment
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -58,7 +59,7 @@ internal class EsploraBackend(
     private val base = baseUrl.trimEnd('/')
 
     override suspend fun address(address: String): UtxoAddressInfo {
-        val info: EsploraAddress = throttle.run { http.get("$base/address/$address").body() }
+        val info: EsploraAddress = throttle.run { http.get("$base/address/${pathSegment(address)}").body() }
         val c = info.chainStats
         val m = info.mempoolStats
         return UtxoAddressInfo(c.txCount + m.txCount, c.funded - c.spent + m.funded - m.spent)
@@ -68,8 +69,8 @@ internal class EsploraBackend(
         val collected = mutableListOf<UtxoTx>()
         var lastSeen: String? = null
         repeat(maxPages) {
-            val path = if (lastSeen == null) "txs" else "txs/chain/$lastSeen"
-            val page: List<EsploraTx> = throttle.run { http.get("$base/address/$address/$path").body() }
+            val path = if (lastSeen == null) "txs" else "txs/chain/${pathSegment(requireNotNull(lastSeen))}"
+            val page: List<EsploraTx> = throttle.run { http.get("$base/address/${pathSegment(address)}/$path").body() }
             collected += page.map { it.toUtxoTx() }
             val confirmed = page.filter { it.status.confirmed }
             if (confirmed.size < PAGE_SIZE ||

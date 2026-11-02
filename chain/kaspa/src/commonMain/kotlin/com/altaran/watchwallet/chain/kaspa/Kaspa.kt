@@ -25,6 +25,7 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.pathSegment
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -94,7 +95,7 @@ class KaspaAdapter(
     override suspend fun probe(target: WatchTarget): ProbeResult = chainCall("Kaspa") {
         val address = address(target)
         val balance = balance(address)
-        val count = get("$base/addresses/$address/transactions-count").long("total") ?: 0L
+        val count = get("$base/addresses/${pathSegment(address)}/transactions-count").long("total") ?: 0L
         val active = count > 0
         ProbeResult(
             active,
@@ -113,7 +114,7 @@ class KaspaAdapter(
         var truncated = false
         var offset = 0
         paging@ for (page in 0 until maxPages) {
-            val items = get("$base/addresses/$address/full-transactions") {
+            val items = get("$base/addresses/${pathSegment(address)}/full-transactions") {
                 parameter("limit", PAGE_SIZE)
                 parameter("offset", offset)
                 parameter("resolve_previous_outpoints", "light")
@@ -127,7 +128,7 @@ class KaspaAdapter(
             // A transaction the service cannot resolve shortens its page, also before the end:
             // only the count tells, since later syncs would never come back for what is skipped.
             if (items.size < PAGE_SIZE) {
-                val total = get("$base/addresses/$address/transactions-count").long("total")
+                val total = get("$base/addresses/${pathSegment(address)}/transactions-count").long("total")
                 if (total == null) truncated = true
                 if (total == null || offset >= total) break
             }
@@ -145,7 +146,7 @@ class KaspaAdapter(
     }
 
     private suspend fun balance(address: String): BigInteger =
-        requireBigInteger(get("$base/addresses/$address/balance").str("balance"), "Kaspa balance")
+        requireBigInteger(get("$base/addresses/${pathSegment(address)}/balance").str("balance"), "Kaspa balance")
 
     private fun address(target: WatchTarget): String =
         (target as? WatchTarget.Address)?.address?.let { KaspaAddresses.parse(it)?.address ?: it }
