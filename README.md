@@ -7,15 +7,17 @@ and extended public keys only**. It never asks for a seed phrase or private key 
 send anything; input that looks like one is rejected ([limits](SECURITY.md)).
 
 - **Private by design** – no accounts, no backend, no analytics, no ads, no Google Play Services.
-  Everything stays on your device. Every network endpoint is listed in [PRIVACY.md](PRIVACY.md).
-  You can use your own Bitcoin server and a SOCKS5 proxy, and turn off server list updates.
+  Wallets, labels and settings stay on your device. To read balances and prices the app contacts
+  public blockchain and price services directly, and they can see the addresses or coins requested
+  and your IP address. Every endpoint is listed in [PRIVACY.md](PRIVACY.md). You can use your own
+  Bitcoin server and a SOCKS5 proxy, and turn off server list updates.
 - **Multichain, one design** – Bitcoin, Ethereum and EVM networks, Solana, XRP and more in one
   consistent interface.
 - **Paste and done** – paste an address, an xpub or a name; WatchWallet detects the chain.
 - **Unlimited** – no limit on wallets, addresses, groups or chains.
 
-> **Status:** pre-release (not yet 1.0). Bitcoin and EVM networks work end to end; more chains
-> are being added. See [CHANGELOG.md](CHANGELOG.md).
+> **Status:** alpha. Version 1.0.0 is in a closed test on Google Play. Expect bugs, and do not rely
+> on it as your only record of your funds. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
@@ -33,14 +35,19 @@ send anything; input that looks like one is rejected ([limits](SECURITY.md)).
 - **Privacy and security**: discreet mode, app lock (biometrics / screen lock), screenshot
   blocking, Tor/SOCKS5 proxy, your own Esplora server, no cloud backup.
 - **Export**: JSON backup (optionally AES-256-GCM encrypted), CSV, plain addresses.
-- **Languages**: English and Czech; currencies CZK, EUR, USD, GBP, CHF, PLN and more.
+- **Languages**: Arabic, Bengali, Chinese (Simplified), Czech, English, French, German, Hindi,
+  Indonesian, Japanese, Portuguese, Russian and Spanish. Translations other than English and Czech
+  are machine-made and await human review. Currencies CZK, EUR, USD, GBP, CHF, PLN and more.
 
 ## Supported chains
 
-| Status | Chains |
-|---|---|
-| Available | Bitcoin, Ethereum and 20 more EVM networks |
-| In progress | Litecoin, Dogecoin, Bitcoin Cash, Solana, XRP Ledger, Tron, TON, Cardano, Cosmos ecosystem, Polkadot, Stellar, Sui, Aptos, NEAR, Hedera, Algorand, Tezos, Kaspa |
+- Bitcoin, Ethereum and 20 more EVM networks
+- Litecoin, Dogecoin, Bitcoin Cash, Solana, XRP Ledger, Tron, TON, Cardano
+- Cosmos Hub, Osmosis, Celestia, Injective, Polkadot, Kusama
+- Stellar, Sui, Aptos, NEAR, Hedera, Algorand, Tezos, Kaspa
+
+All of these are in the app, but they are not equally well tested in this alpha. Some networks have
+no public history service, so they show balances without full history.
 
 Privacy coins (Monero, shielded Zcash) are intentionally not supported: watching them requires
 a private view key.
@@ -62,16 +69,19 @@ today; iOS targets are compiled in CI on macOS so that a future iOS app stays ch
 
 ## Verifying release builds
 
-Release APKs are published on GitHub Releases together with their SHA-256 checksums.
-Verify a download with:
+The Google Play version is distributed as App Bundles, signed by Google with this certificate:
 
-```sh
-sha256sum WatchWallet-<version>.apk
-apksigner verify --print-certs WatchWallet-<version>.apk
+```
+SHA-256: AD:53:D1:37:FC:94:B5:7F:13:5E:12:6F:35:38:D9:61:B5:47:91:9D:86:24:C9:22:E1:F4:34:3E:AB:BC:F2:01
 ```
 
-The signing certificate fingerprint will be published here with the first release.
-Reproducible builds for F-Droid are a project goal.
+Check it with `apksigner verify --print-certs` on the APK from your device. Play builds also carry a
+post-quantum signature; on an older Java, `apksigner` stops with "ML-DSA KeyFactory not available".
+
+**What this does and does not prove.** The fingerprint shows who signed the app. It does not prove
+that the app was built from this source code. Builds are not reproducible yet, so today nobody else
+can confirm that. No APK is published on GitHub Releases yet; signed APKs with SHA-256 checksums,
+reproducible builds and F-Droid are the planned ways to close this gap.
 
 ## Support the project
 
