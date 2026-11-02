@@ -2,6 +2,7 @@
 <resources>
     <string name="amount_hidden">Betrag ausgeblendet</string>
     <string name="action_cancel">Abbrechen</string>
+    <string name="range_1h">1H</string>
     <string name="range_24h">24H</string>
     <string name="range_7d">7T</string>
     <string name="range_1m">1M</string>

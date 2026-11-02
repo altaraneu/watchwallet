@@ -11,6 +11,7 @@ import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.designsystem.chart.ChartPoint
 import com.altaran.watchwallet.core.model.ChartRange
 import com.altaran.watchwallet.core.model.QuoteCurrency
+import com.altaran.watchwallet.core.timeline.ChartViewport
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -59,8 +60,12 @@ class PortfolioViewModel(
 
     private val snapshot = combine(currency, walletScope) { c, w -> c to w }.flatMapLatest { (c, w) -> portfolioRepository.snapshot(c, w) }
 
-    private val chart = combine(currency, range, walletScope) { c, r, w -> Triple(c, r, w) }.flatMapLatest { (c, r, w) ->
-        portfolioRepository.valueSeries(c, r, w)
+    /** The part of the chart on screen, refined with better prices. */
+    private val viewport = ChartViewport(range.value)
+
+    // A new range keeps the old series until the new one is computed: the chart never goes blank.
+    private val chart = combine(currency, walletScope) { c, w -> c to w }.flatMapLatest { (c, w) ->
+        range.flatMapLatest { r -> portfolioRepository.valueSeries(c, r, w, viewport.detail) }
             .map<List<com.altaran.watchwallet.core.timeline.TimedValue>, List<ChartPoint>?> { series ->
                 series.map { ChartPoint(it.time.toEpochMilliseconds(), it.value, it.flow) }
             }
@@ -113,7 +118,13 @@ class PortfolioViewModel(
     )
 
     fun setRange(value: ChartRange) {
+        viewport.show(value)
         range.value = value
+    }
+
+    /** The chart settled on a window after pan or zoom (epoch ms). */
+    fun onVisibleWindow(from: Long, to: Long) {
+        viewport.onVisible(from, to)
     }
 
     fun refresh() {

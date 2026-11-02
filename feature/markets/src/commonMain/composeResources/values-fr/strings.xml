@@ -26,7 +26,6 @@
     <string name="interval_1d">1J</string>
     <string name="interval_1w">1S</string>
     <string name="asset_live_price">Prix de %1$s · en direct</string>
-    <string name="asset_source_kraken">Bougies en direct : données de marché publiques de Kraken. Les devises autres que EUR/USD sont converties avec les taux de référence de la BCE.</string>
     <string name="asset_visible_range">sur la période visible</string>
     <string name="asset_high">Max</string>
     <string name="asset_low">Min</string>
@@ -45,4 +44,5 @@
     <string name="asset_activity">Activité</string>
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
+    <string name="asset_current_price">Maintenant : %1$s</string>
 </resources>

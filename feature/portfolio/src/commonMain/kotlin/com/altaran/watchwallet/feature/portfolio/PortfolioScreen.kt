@@ -88,6 +88,7 @@ internal fun PortfolioRoute(
         onToggleDiscreetMode = viewModel::onToggleDiscreetMode,
         onAddWallet = onAddWallet,
         onRangeChange = viewModel::setRange,
+        onVisibleWindow = viewModel::onVisibleWindow,
         onRefresh = viewModel::refresh,
         onOpenHolding = onOpenHolding,
         onSelectGroup = viewModel::selectGroup,
@@ -102,6 +103,7 @@ internal fun PortfolioScreen(
     onToggleDiscreetMode: (current: Boolean) -> Unit,
     onAddWallet: () -> Unit,
     onRangeChange: (ChartRange) -> Unit,
+    onVisibleWindow: (Long, Long) -> Unit = { _, _ -> },
     onRefresh: () -> Unit,
     onOpenHolding: (String) -> Unit,
     onSelectGroup: (Long?) -> Unit = {},
@@ -152,7 +154,7 @@ internal fun PortfolioScreen(
                         onAction = onAddWallet,
                     )
                 } else {
-                    PortfolioContent(uiState, onRangeChange, onOpenHolding, onSelectGroup, onSetVisibility)
+                    PortfolioContent(uiState, onRangeChange, onOpenHolding, onSelectGroup, onSetVisibility, onVisibleWindow)
                 }
             }
         }
@@ -166,6 +168,7 @@ private fun PortfolioContent(
     onOpenHolding: (String) -> Unit,
     onSelectGroup: (Long?) -> Unit,
     onSetVisibility: (List<Asset>, Boolean) -> Unit,
+    onVisibleWindow: (Long, Long) -> Unit,
 ) {
     val currency = state.quoteCurrency
     var hiddenExpanded by rememberSaveable { mutableStateOf(false) }
@@ -193,6 +196,7 @@ private fun PortfolioContent(
                 points = state.chart,
                 range = state.range,
                 onRangeChange = onRangeChange,
+                onVisibleWindow = onVisibleWindow,
                 format = { MoneyFormatter.format(it, currency) },
                 formatChange = { MoneyFormatter.formatChange(it, currency) },
                 numberFormat = chartFormatFor(currency),

@@ -29,9 +29,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.altaran.watchwallet.core.chart.ChartNumberFormat
 import com.altaran.watchwallet.core.chart.ChartSeries
+import com.altaran.watchwallet.core.chart.ChartView
 import com.altaran.watchwallet.core.chart.CrosshairValue
 import com.altaran.watchwallet.core.chart.TradingChart
 import com.altaran.watchwallet.core.designsystem.component.AssetRow
@@ -53,6 +56,7 @@ import com.altaran.watchwallet.core.designsystem.component.SectionHeader
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
 import com.altaran.watchwallet.core.model.CandleInterval
+import com.altaran.watchwallet.core.model.ChartRange
 import com.altaran.watchwallet.core.ui.TransactionDetails
 import com.altaran.watchwallet.core.ui.TransactionRow
 import com.altaran.watchwallet.core.ui.TxView
@@ -66,8 +70,10 @@ import com.altaran.watchwallet.feature.markets.generated.resources.Res
 import com.altaran.watchwallet.feature.markets.generated.resources.asset_activity
 import com.altaran.watchwallet.feature.markets.generated.resources.asset_cost_basis
 import com.altaran.watchwallet.feature.markets.generated.resources.asset_cost_incomplete
+import com.altaran.watchwallet.feature.markets.generated.resources.asset_current_price
 import com.altaran.watchwallet.feature.markets.generated.resources.asset_in_wallets
 import com.altaran.watchwallet.feature.markets.generated.resources.asset_unrealized
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -161,6 +167,8 @@ internal fun AssetDetailRoute(
         viewModel::toggleWatch,
         onOpenWallet = onOpenWallet,
         onSetCost = viewModel::setCost,
+        onVisibleWindow = viewModel::onVisibleWindow,
+        onCandleView = viewModel::onCandleView,
     )
 }
 
@@ -176,6 +184,8 @@ internal fun AssetDetailScreen(
     onToggleWatch: (Boolean) -> Unit = {},
     onOpenWallet: (Long) -> Unit = {},
     onSetCost: (TxView, Double?) -> Unit = { _, _ -> },
+    onVisibleWindow: (Long, Long) -> Unit = { _, _ -> },
+    onCandleView: (ChartView) -> Unit = {},
 ) {
     var selectedTx by remember { mutableStateOf<TxView?>(null) }
     val uriHandler = LocalUriHandler.current
@@ -243,7 +253,7 @@ internal fun AssetDetailScreen(
             val isBalance = state.mode == AssetChartMode.BALANCE
             val candles = state.candles
             if (state.mode == AssetChartMode.PRICE && candles is CandleChartState.Ready) {
-                CandleSection(state, candles, symbol, onIntervalChange)
+                CandleSection(state, candles, symbol, onIntervalChange, onCandleView)
             } else {
                 val current = when (state.mode) {
                     AssetChartMode.PRICE -> state.holding?.price ?: state.market?.price
@@ -264,9 +274,16 @@ internal fun AssetDetailScreen(
                     },
                     format = { if (isBalance) MoneyFormatter.formatCrypto(it, symbol) else MoneyFormatter.formatPrice(it, currency) },
                     formatChange = { value ->
-                        if (isBalance) formatCryptoChange(value, symbol) else MoneyFormatter.formatChange(value, currency)
+                        when (state.mode) {
+                            AssetChartMode.BALANCE -> formatCryptoChange(value, symbol)
+                            AssetChartMode.PRICE -> MoneyFormatter.formatPriceChange(value, currency)
+                            AssetChartMode.VALUE -> MoneyFormatter.formatChange(value, currency)
+                        }
                     },
                     windowKey = state.mode.name,
+                    // The line chart of prices is a fallback from stored prices without minutes.
+                    ranges = if (state.mode == AssetChartMode.PRICE) ChartRange.entries - ChartRange.H1 else ChartRange.entries,
+                    onVisibleWindow = if (state.mode == AssetChartMode.PRICE) { _, _ -> } else onVisibleWindow,
                 )
             }
             Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -311,7 +328,9 @@ internal fun AssetDetailScreen(
             }
             state.market?.let { market ->
                 SectionHeader(stringResource(Res.string.asset_market))
-                Stat(stringResource(Res.string.asset_mode_price), MoneyFormatter.formatPrice(market.price, currency), discreet = false)
+                // The same price as the header above: the live one once the exchange feed runs.
+                val livePrice = (state.candles as? CandleChartState.Ready)?.let { it.live ?: it.candles.lastOrNull() }?.close
+                Stat(stringResource(Res.string.asset_mode_price), MoneyFormatter.formatPrice(livePrice ?: market.price, currency), discreet = false)
                 market.change24hPercent?.let {
                     Stat(stringResource(Res.string.asset_change_24h), MoneyFormatter.formatPercentChange(it / 100), discreet = false)
                 }
@@ -410,13 +429,27 @@ private fun priceDecimals(price: Double?): Int = when {
  * candle shows its date with high, low and volume-weighted average price.
  */
 @Composable
-private fun CandleSection(state: AssetDetailUiState, candles: CandleChartState.Ready, symbol: String, onIntervalChange: (CandleInterval) -> Unit) {
+private fun CandleSection(
+    state: AssetDetailUiState,
+    candles: CandleChartState.Ready,
+    symbol: String,
+    onIntervalChange: (CandleInterval) -> Unit,
+    onCandleView: (ChartView) -> Unit,
+) {
     val currency = state.currency
-    // Pan, zoom and the tapped candle survive data refreshes and reset with the interval (the
-    // chart page keeps them in the same way and re-reports them after each refresh).
-    val windowKey = "${state.interval.name}|${currency.code}"
+    // Pan, zoom and the tapped candle survive data refreshes and interval changes caused by zooming
+    // (the chart page keeps the time window); a chip or another currency resets them.
+    val windowKey = "${state.candleViewKey}|${currency.code}"
     var crosshair by remember(windowKey) { mutableStateOf<CrosshairValue?>(null) }
     var window by remember(windowKey) { mutableStateOf<Pair<Long, Long>?>(null) }
+    var view by remember(windowKey) { mutableStateOf<ChartView?>(null) }
+    val currentOnCandleView by rememberUpdatedState(onCandleView)
+    // Once the gesture has settled: the candle width does not change under a moving finger.
+    LaunchedEffect(view) {
+        val settled = view ?: return@LaunchedEffect
+        delay(CANDLE_SETTLE_MS)
+        currentOnCandleView(settled)
+    }
     val all = candles.candles
     val live = candles.live
     val last = live ?: all.lastOrNull()
@@ -439,28 +472,34 @@ private fun CandleSection(state: AssetDetailUiState, candles: CandleChartState.R
         value = shown?.let { MoneyFormatter.formatPrice(it, currency) },
         change = if (firstVisible != null && shown != null) shown - firstVisible.open else null,
         changePercent = if (firstVisible != null && shown != null && firstVisible.open > 0) (shown - firstVisible.open) / firstVisible.open else null,
-        formatChange = { MoneyFormatter.formatChange(it, currency) },
+        formatChange = { MoneyFormatter.formatPriceChange(it, currency) },
         rangeText = if (crosshair == null) stringResource(Res.string.asset_visible_range) else null,
+        // A selected candle is in the past: say what the price is now.
+        secondaryLine = last?.takeIf {
+            crosshair != null
+        }?.let { stringResource(Res.string.asset_current_price, MoneyFormatter.formatPrice(it.close, currency)) },
+        reserveSecondaryLine = true,
     )
-    if (selected != null) {
-        val vwap = candles.vwap[selected.time]?.takeIf { it > 0 }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            CandleStat(stringResource(Res.string.asset_high), MoneyFormatter.formatPrice(selected.high, currency))
-            CandleStat(stringResource(Res.string.asset_low), MoneyFormatter.formatPrice(selected.low, currency))
-            if (vwap != null) CandleStat(stringResource(Res.string.asset_average), MoneyFormatter.formatPrice(vwap, currency))
-        }
+    // Always there, empty without a selected candle, so that the chart does not move on a tap.
+    val vwap = selected?.let { candles.vwap[it.time] }?.takeIf { it > 0 }
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        CandleStat(stringResource(Res.string.asset_high), selected?.let { MoneyFormatter.formatPrice(it.high, currency) } ?: NO_VALUE)
+        CandleStat(stringResource(Res.string.asset_low), selected?.let { MoneyFormatter.formatPrice(it.low, currency) } ?: NO_VALUE)
+        CandleStat(stringResource(Res.string.asset_average), vwap?.let { MoneyFormatter.formatPrice(it, currency) } ?: NO_VALUE)
     }
     TradingChart(
         series = series,
         live = live,
         format = chartFormatFor(currency, maxDecimals = priceDecimals(last?.close)),
         height = 320.dp,
-        intraday = state.interval.isIntraday,
         logScale = state.logScale,
         visibleBars = visibleBars,
         windowKey = windowKey,
         onCrosshair = { crosshair = it },
-        onVisibleRange = { from, to -> window = from to to },
+        onVisibleRange = {
+            window = it.from to it.to
+            view = it
+        },
         modifier = Modifier.padding(vertical = 8.dp),
         contentDescription = last?.let { stringResource(Res.string.asset_chart_a11y, symbol, MoneyFormatter.formatPrice(it.close, currency)) },
     )
@@ -472,13 +511,13 @@ private fun CandleSection(state: AssetDetailUiState, candles: CandleChartState.R
             FilterChip(selected = state.interval == interval, onClick = { onIntervalChange(interval) }, label = { Text(intervalLabel(interval)) })
         }
     }
-    Text(
-        stringResource(Res.string.asset_source_kraken),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-    )
 }
+
+/** How long the candle view must rest before the width follows it. */
+private const val CANDLE_SETTLE_MS = 300L
+
+/** Placeholder of the candle details while no candle is selected. */
+private const val NO_VALUE = "—"
 
 @Composable
 private fun CandleStat(label: String, value: String) {

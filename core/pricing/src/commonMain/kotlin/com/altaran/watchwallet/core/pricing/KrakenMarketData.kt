@@ -46,6 +46,25 @@ data class OhlcCandle(
 }
 
 /**
+ * [old] and [new] as one series in time order, [new] winning for the same candle. Above [maxCandles]
+ * the candles farthest from [keepAround] (UTC seconds) are dropped, so paging through a long history
+ * uses bounded memory.
+ */
+fun mergeCandles(old: List<OhlcCandle>, new: List<OhlcCandle>, maxCandles: Int, keepAround: Long): List<OhlcCandle> {
+    val byTime = HashMap<Long, OhlcCandle>(old.size + new.size)
+    old.forEach { byTime[it.time] = it }
+    new.forEach { byTime[it.time] = it }
+    val sorted = byTime.values.sortedBy { it.time }
+    if (sorted.size <= maxCandles) return sorted
+    var from = 0
+    var to = sorted.size
+    while (to - from > maxCandles) {
+        if (keepAround - sorted[from].time > sorted[to - 1].time - keepAround) from++ else to--
+    }
+    return sorted.subList(from, to).toList()
+}
+
+/**
  * Kraken public market data (no account, no key): candles over REST and live candle updates
  * over WebSocket v2. Only the trading pair (for example `BTC/EUR`) is sent.
  */
@@ -54,7 +73,7 @@ class KrakenMarketData(
     private val restUrl: String = "https://api.kraken.com/0/public",
     private val wsUrl: String = "wss://ws.kraken.com/v2",
 ) {
-    /** Up to 720 most recent candles. */
+    /** The 720 most recent candles: the API has no paging, older ones need a coarser interval. */
     suspend fun candles(base: String, quote: String, interval: CandleInterval): List<OhlcCandle> {
         val body: JsonObject = http.get("$restUrl/OHLC") {
             parameter("pair", restBase(base) + restQuote(quote))
@@ -140,6 +159,9 @@ class KrakenMarketData(
         private fun restQuote(symbol: String): String = restBase(symbol)
 
         fun wsBase(symbol: String): String = symbol.uppercase()
+
+        /** The OHLC endpoint serves this many candles of any interval, however it is asked. */
+        const val MAX_CANDLES = 720
 
         /** Fiat quotes Kraken lists directly. Other fiat currencies are converted from EUR. */
         val DIRECT_FIAT = setOf("USD", "EUR", "GBP", "CHF", "CAD", "AUD", "JPY")

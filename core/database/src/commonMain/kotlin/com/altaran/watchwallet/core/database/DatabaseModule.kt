@@ -10,4 +10,5 @@ val databaseModule: Module = module {
     databaseBuilder()
     single { get<WatchWalletDatabase>().walletDao() }
     single { get<WatchWalletDatabase>().priceDao() }
+    single { get<WatchWalletDatabase>().priceDetailDao() }
 }

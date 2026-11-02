@@ -43,4 +43,5 @@
     <string name="tx_open_explorer">ব্লক এক্সপ্লোরারে খুলুন</string>
     <string name="chart_performance">জমা ও উত্তোলন বাদে: %1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
+    <string name="chart_current_value">এখন: %1$s</string>
 </resources>

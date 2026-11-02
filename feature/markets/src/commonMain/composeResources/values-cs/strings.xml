@@ -26,7 +26,6 @@
     <string name="interval_1d">1 den</string>
     <string name="interval_1w">1 týden</string>
     <string name="asset_live_price">Cena %1$s · živě</string>
-    <string name="asset_source_kraken">Živé svíčky: veřejná tržní data Kraken. Měny jiné než EUR/USD přepočteny referenčním kurzem ECB.</string>
     <string name="asset_visible_range">ve zobrazeném období</string>
     <string name="asset_high">Max</string>
     <string name="asset_low">Min</string>
@@ -45,4 +44,5 @@
     <string name="asset_activity">Aktivita</string>
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
+    <string name="asset_current_price">Nyní: %1$s</string>
 </resources>

@@ -2,6 +2,7 @@
 <resources>
     <string name="amount_hidden">Částka skryta</string>
     <string name="action_cancel">Zrušit</string>
+    <string name="range_1h">1 h</string>
     <string name="range_24h">24 h</string>
     <string name="range_7d">7 d</string>
     <string name="range_1m">1 M</string>

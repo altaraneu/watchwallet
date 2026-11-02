@@ -29,7 +29,6 @@
     <string name="interval_1w">1W</string>
     <!-- %1$s = asset symbol -->
     <string name="asset_live_price">%1$s price · live</string>
-    <string name="asset_source_kraken">Live candles: Kraken public market data. Non-EUR/USD currencies converted with ECB reference rates.</string>
     <string name="asset_visible_range">in the visible range</string>
     <string name="asset_high">Max</string>
     <string name="asset_low">Min</string>
@@ -54,4 +53,6 @@
     <string name="asset_title">%1$s (%2$s)</string>
     <!-- A signed change followed by its percentage. %1$s = signed amount, %2$s = signed percent. -->
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
+    <!-- Current price, shown while a past candle is selected. -->
+    <string name="asset_current_price">Now: %1$s</string>
 </resources>

@@ -3,6 +3,7 @@ package com.altaran.watchwallet.feature.markets
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.altaran.watchwallet.core.chart.Candle
+import com.altaran.watchwallet.core.chart.ChartView
 import com.altaran.watchwallet.core.common.DispatcherProvider
 import com.altaran.watchwallet.core.data.repository.CandleFeed
 import com.altaran.watchwallet.core.data.repository.Holding
@@ -12,11 +13,16 @@ import com.altaran.watchwallet.core.data.repository.PriceRepository
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.designsystem.chart.ChartPoint
 import com.altaran.watchwallet.core.model.CandleInterval
+import com.altaran.watchwallet.core.model.CandleViewport
 import com.altaran.watchwallet.core.model.ChartRange
 import com.altaran.watchwallet.core.model.QuoteCurrency
 import com.altaran.watchwallet.core.pricing.MarketInfo
 import com.altaran.watchwallet.core.pricing.OhlcCandle
+import com.altaran.watchwallet.core.pricing.mergeCandles
+import com.altaran.watchwallet.core.timeline.ChartViewport
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +37,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -119,6 +126,10 @@ sealed interface CandleChartState {
         val live: Candle?,
         /** Candle start (UTC seconds) → VWAP, for the tap details. */
         val vwap: Map<Long, Double> = emptyMap(),
+        /** Interval of [candles]: the selected one may still be loading. */
+        val interval: CandleInterval = CandleInterval.H1,
+        /** Candles the source can serve at most, or `null` when it can page back further. */
+        val depthBars: Int? = null,
     ) : CandleChartState
 
     data object Unavailable : CandleChartState
@@ -131,6 +142,8 @@ data class AssetDetailUiState(
     val mode: AssetChartMode = AssetChartMode.PRICE,
     val range: ChartRange = ChartRange.M1,
     val interval: CandleInterval = CandleInterval.H1,
+    /** Changes when a chip or the currency resets the view of the candle chart; zooming does not. */
+    val candleViewKey: Int = 0,
     val logScale: Boolean = false,
     val candles: CandleChartState = CandleChartState.Loading,
     /** Line chart (fallback price, value or balance). */
@@ -179,22 +192,34 @@ internal class AssetDetailViewModel(
     private val logScale = MutableStateFlow(false)
     private val market = MutableStateFlow<MarketInfo?>(null)
     private val candles = MutableStateFlow<CandleChartState>(CandleChartState.Loading)
+    private val candleViewKey = MutableStateFlow(0)
+
+    /** The settled view of the candle chart; drives paging. */
+    private val candleView = MutableStateFlow<ChartView?>(null)
+
+    /** The view to keep across an interval change caused by zooming. */
+    private var zoomedWindow: ChartView? = null
+
+    /** The part of the value chart on screen, refined with better prices. */
+    private val viewport = ChartViewport(range.value)
     private val currency = settingsRepository.settings.map { it.quoteCurrency }.distinctUntilChanged()
 
     private val holding = currency.flatMapLatest { c -> portfolioRepository.snapshot(c).map { snap -> snap.holdings.firstOrNull { it.key == key } } }
 
     private val symbol = combine(holding, market) { h, m -> h?.symbol ?: m?.symbol }.filterNotNull().distinctUntilChanged()
 
-    private val chart = combine(currency, range, mode, holding.map { it != null }.distinctUntilChanged()) { c, r, m, held -> Quad(c, r, m, held) }
-        .flatMapLatest { (c, r, m, held) ->
-            val series = when {
-                m == AssetChartMode.PRICE || !held -> priceSeries(c, r)
+    // A new range keeps the old series until the new one is computed: the chart never goes blank.
+    private val chart = combine(currency, mode, holding.map { it != null }.distinctUntilChanged()) { c, m, held -> Triple(c, m, held) }
+        .flatMapLatest { (c, m, held) ->
+            range.flatMapLatest { r ->
+                when {
+                    m == AssetChartMode.PRICE || !held -> priceSeries(c, r)
 
-                else -> portfolioRepository.holdingSeries(c, key, r).map { s ->
-                    (if (m == AssetChartMode.VALUE) s.value else s.balance).map { ChartPoint(it.time.toEpochMilliseconds(), it.value) }
+                    else -> portfolioRepository.holdingSeries(c, key, r, viewport.detail).map { s ->
+                        (if (m == AssetChartMode.VALUE) s.value else s.balance).map { ChartPoint(it.time.toEpochMilliseconds(), it.value) }
+                    }
                 }
-            }
-            series.map<List<ChartPoint>, List<ChartPoint>?> { it }.onStart { emit(null) }
+            }.map<List<ChartPoint>, List<ChartPoint>?> { it }.onStart { emit(null) }
         }
         .flowOn(dispatchers.default)
 
@@ -202,7 +227,7 @@ internal class AssetDetailViewModel(
 
     val state: StateFlow<AssetDetailUiState> = combine(
         combine(currency, holding, market) { c, h, mk -> Triple(c, h, mk) },
-        combine(mode, range, interval, logScale) { m, r, i, l -> Settings(m, r, i, l) },
+        combine(mode, range, interval, logScale, candleViewKey) { m, r, i, l, k -> Settings(m, r, i, l, k) },
         combine(candles, watched) { cs, w -> cs to w },
         chart,
     ) { (c, h, mk), st, (cs, w), points ->
@@ -213,6 +238,7 @@ internal class AssetDetailViewModel(
             if (h == null) AssetChartMode.PRICE else st.mode,
             st.range,
             st.interval,
+            st.viewKey,
             st.log,
             cs,
             points,
@@ -295,30 +321,155 @@ internal class AssetDetailViewModel(
                 priceRepository.ensureHistory(listOf(key), c, r)
             }
         }
-        // Exchange candles with live updates; restarts when the currency, interval or asset changes.
+        // Exchange candles with live updates; restarts when the currency, interval or asset changes,
+        // which also closes the previous live connection. An interval change caused by zooming
+        // keeps the old candles on screen until the new ones are there.
         viewModelScope.launch {
             combine(currency, interval, symbol) { c, i, s -> Triple(c, i, s) }.collectLatest { (c, i, s) ->
-                candles.value = CandleChartState.Loading
-                marketData.candles(s, c, i).collect { feed ->
-                    candles.value = when (feed) {
-                        is CandleFeed.History -> CandleChartState.Ready(
-                            candles = feed.candles.map { it.toChart() },
-                            live = null,
-                            vwap = feed.candles.associate { it.time to it.vwap },
-                        )
+                val zoomed = zoomedWindow
+                zoomedWindow = null
+                if (zoomed == null) candles.value = CandleChartState.Loading
+                candleView.value = null
+                candleSession(s, c, i, zoomed)
+            }
+        }
+    }
 
-                        is CandleFeed.Live -> (candles.value as? CandleChartState.Ready)?.let { ready ->
-                            ready.copy(live = feed.candle.toChart(), vwap = ready.vwap + (feed.candle.time to feed.candle.vwap))
-                        } ?: candles.value
+    /** One interval of one asset: the feed plus older pages requested by the view. */
+    private suspend fun candleSession(symbol: String, currency: QuoteCurrency, interval: CandleInterval, zoomed: ChartView?) = coroutineScope {
+        val session = CandleSession(symbol, currency, interval)
+        launch { candleView.filterNotNull().collectLatest { view -> loadPageFor(session, view) } }
+        var anchor = zoomed
+        marketData.candles(symbol, currency, interval).collect { feed ->
+            when (feed) {
+                is CandleFeed.History -> {
+                    session.depthBars = feed.depthBars
+                    session.merge(feed.candles, anchor?.from ?: candleView.value?.from ?: Long.MAX_VALUE)
+                    // Zoomed while panned back: the latest page may not reach the window.
+                    anchor?.let { loadAround(session, it) }
+                    anchor = null
+                    publish(session)
+                }
 
-                        CandleFeed.Unavailable -> CandleChartState.Unavailable
-                    }
+                is CandleFeed.Live -> {
+                    session.merge(listOf(feed.candle), candleView.value?.from ?: Long.MAX_VALUE)
+                    candles.value = (candles.value as? CandleChartState.Ready)?.let { ready ->
+                        if (ready.interval != interval) return@let ready
+                        ready.copy(live = feed.candle.toChart(), vwap = ready.vwap + (feed.candle.time to feed.candle.vwap))
+                    } ?: candles.value
+                }
+
+                CandleFeed.Unavailable -> {
+                    candles.value = CandleChartState.Unavailable
                 }
             }
         }
     }
 
+    private suspend fun loadAround(session: CandleSession, window: ChartView) {
+        if (session.depthBars != null || session.candles.firstOrNull()?.let { it.time <= window.from } == true) return
+        val seconds = session.interval.minutes * SECONDS_PER_MINUTE
+        val page = runCatchingPage {
+            marketData.candlePage(
+                session.symbol,
+                session.currency,
+                session.interval,
+                beforeSeconds =
+                    window.to + MAX_VISIBLE_BARS * seconds,
+            )
+        }
+        session.merge(page, window.from)
+    }
+
+    /** Requests what the settled [view] needs next; the page changes the view report, and so on. */
+    private suspend fun loadPageFor(session: CandleSession, view: ChartView) {
+        if ((candles.value as? CandleChartState.Ready)?.interval != session.interval) return
+        val fetch = CandleViewport.nextFetch(
+            times = session.candles.map { it.time },
+            interval = session.interval,
+            fromSeconds = view.from,
+            toSeconds = view.to,
+            barsBefore = view.barsBefore,
+            bars = view.bars,
+            canLoadOlder = session.depthBars == null && !session.reachedStart,
+            ignoreGapsAt = session.emptyGaps,
+        ) ?: return
+        when (fetch) {
+            is CandleViewport.Fetch.Older -> {
+                val page = runCatchingPage { marketData.candlePage(session.symbol, session.currency, session.interval, beforeSeconds = fetch.beforeSeconds) }
+                if (page.isEmpty()) session.reachedStart = true else session.merge(page, view.from)
+            }
+
+            is CandleViewport.Fetch.Newer -> {
+                val page = runCatchingPage { marketData.candlePage(session.symbol, session.currency, session.interval, afterSeconds = fetch.afterSeconds) }
+                val next = session.candles.firstOrNull { it.time > fetch.afterSeconds }?.time
+                if (page.none { next == null || it.time < next }) session.emptyGaps += fetch.afterSeconds
+                session.merge(page, view.from)
+            }
+        }
+        publish(session)
+    }
+
+    /** A failed page leaves the chart as it is; the next settled view asks again. */
+    private suspend fun runCatchingPage(block: suspend () -> List<OhlcCandle>): List<OhlcCandle> = try {
+        block()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (
+        @Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception,
+    ) {
+        emptyList()
+    }
+
+    private suspend fun publish(session: CandleSession) {
+        val list = session.candles
+        val live = (candles.value as? CandleChartState.Ready)?.takeIf { it.interval == session.interval }?.live
+        candles.value = withContext(dispatchers.default) {
+            CandleChartState.Ready(
+                candles = list.map { it.toChart() },
+                live = live,
+                vwap = list.associate { it.time to it.vwap },
+                interval = session.interval,
+                depthBars = session.depthBars,
+            )
+        }
+    }
+
+    /** The candle chart settled on [view]: follows the zoom with the candle width, or loads pages. */
+    fun onCandleView(view: ChartView) {
+        val ready = candles.value as? CandleChartState.Ready ?: return
+        if (ready.interval != interval.value) return
+        if (view.userMoved) {
+            val next = CandleViewport.next(
+                current = ready.interval,
+                bars = view.bars,
+                spanSeconds = view.to - view.from,
+                windowAgeSeconds = Clock.System.now().epochSeconds - view.from,
+                depthBars = ready.depthBars,
+                barsBefore = view.barsBefore,
+            )
+            if (next != ready.interval) {
+                zoomedWindow = view
+                interval.value = next
+                return
+            }
+        }
+        candleView.value = view
+    }
+
     private fun OhlcCandle.toChart() = Candle(time, open, high, low, close)
+
+    /** The candles of one interval; only touched on the main thread. */
+    private class CandleSession(val symbol: String, val currency: QuoteCurrency, val interval: CandleInterval) {
+        var candles: List<OhlcCandle> = emptyList()
+        var depthBars: Int? = null
+        var reachedStart = false
+        val emptyGaps = HashSet<Long>()
+
+        fun merge(new: List<OhlcCandle>, keepAround: Long) {
+            candles = mergeCandles(candles, new, MAX_CANDLES_IN_MEMORY, keepAround)
+        }
+    }
 
     private fun priceSeries(currency: QuoteCurrency, range: ChartRange) = priceRepository.history(listOf(key), currency).map { all ->
         val points = all[key].orEmpty()
@@ -331,13 +482,24 @@ internal class AssetDetailViewModel(
 
     fun setMode(value: AssetChartMode) {
         mode.value = value
+        // The line chart of prices has no minutes to show.
+        if (value == AssetChartMode.PRICE && range.value == ChartRange.H1) setRange(ChartRange.H24)
     }
 
     fun setRange(value: ChartRange) {
+        viewport.show(value)
         range.value = value
     }
 
+    /** The value chart settled on a window after pan or zoom (epoch ms). */
+    fun onVisibleWindow(from: Long, to: Long) {
+        viewport.onVisible(from, to)
+    }
+
+    /** A tap on an interval chip: that interval, in its default view. */
     fun setInterval(value: CandleInterval) {
+        zoomedWindow = null
+        candleViewKey.value++
         interval.value = value
     }
 
@@ -353,10 +515,13 @@ internal class AssetDetailViewModel(
         logScale.value = !logScale.value
     }
 
-    private data class Quad(val c: QuoteCurrency, val r: ChartRange, val m: AssetChartMode, val held: Boolean)
-
-    private data class Settings(val mode: AssetChartMode, val range: ChartRange, val interval: CandleInterval, val log: Boolean)
+    private data class Settings(val mode: AssetChartMode, val range: ChartRange, val interval: CandleInterval, val log: Boolean, val viewKey: Int)
 }
+
+/** Candles of one interval kept while paging back: about 3.5 days of minutes, 7 months of hours. */
+private const val MAX_CANDLES_IN_MEMORY = 5000
+private const val MAX_VISIBLE_BARS = 200
+private const val SECONDS_PER_MINUTE = 60L
 
 /** Most recent transactions shown in the asset detail. */
 private const val MAX_ACTIVITY = 200

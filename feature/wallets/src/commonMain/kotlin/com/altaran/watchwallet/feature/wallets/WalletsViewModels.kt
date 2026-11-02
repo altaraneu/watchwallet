@@ -122,8 +122,12 @@ internal class WalletDetailViewModel(
     }
     private val currency = settingsRepository.settings.map { it.quoteCurrency }
 
-    private val chart = combine(currency, range) { c, r -> c to r }.flatMapLatest { (c, r) ->
-        portfolioRepository.valueSeries(c, r, setOf(walletId))
+    /** The part of the chart on screen, refined with better prices. */
+    private val viewport = com.altaran.watchwallet.core.timeline.ChartViewport(range.value)
+
+    // A new range keeps the old series until the new one is computed: the chart never goes blank.
+    private val chart = currency.flatMapLatest { c ->
+        range.flatMapLatest { r -> portfolioRepository.valueSeries(c, r, setOf(walletId), viewport.detail) }
             .map<List<com.altaran.watchwallet.core.timeline.TimedValue>, List<ChartPoint>?> { series ->
                 series.map { ChartPoint(it.time.toEpochMilliseconds(), it.value, it.flow) }
             }
@@ -171,7 +175,13 @@ internal class WalletDetailViewModel(
     fun chain(id: ChainId): Chain? = registry.chain(id)
 
     fun setRange(value: ChartRange) {
+        viewport.show(value)
         range.value = value
+    }
+
+    /** The chart settled on a window after pan or zoom (epoch ms). */
+    fun onVisibleWindow(from: Long, to: Long) {
+        viewport.onVisible(from, to)
     }
 
     fun refresh() {

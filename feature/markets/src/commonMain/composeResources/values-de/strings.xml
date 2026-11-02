@@ -26,7 +26,6 @@
     <string name="interval_1d">1T</string>
     <string name="interval_1w">1W</string>
     <string name="asset_live_price">%1$s-Preis · live</string>
-    <string name="asset_source_kraken">Live-Kerzen: öffentliche Marktdaten von Kraken. Andere Währungen als EUR/USD werden mit EZB-Referenzkursen umgerechnet.</string>
     <string name="asset_visible_range">im sichtbaren Bereich</string>
     <string name="asset_high">Max</string>
     <string name="asset_low">Min</string>
@@ -45,4 +44,5 @@
     <string name="asset_activity">Aktivität</string>
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
+    <string name="asset_current_price">Jetzt: %1$s</string>
 </resources>

@@ -7,10 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.altaran.watchwallet.core.database.dao.PriceDao
+import com.altaran.watchwallet.core.database.dao.PriceDetailDao
 import com.altaran.watchwallet.core.database.dao.WalletDao
 import com.altaran.watchwallet.core.database.entity.AssetEntity
 import com.altaran.watchwallet.core.database.entity.DerivedAddressEntity
 import com.altaran.watchwallet.core.database.entity.PriceCurrentEntity
+import com.altaran.watchwallet.core.database.entity.PriceDetailEntity
 import com.altaran.watchwallet.core.database.entity.PricePointEntity
 import com.altaran.watchwallet.core.database.entity.TxCostBasisEntity
 import com.altaran.watchwallet.core.database.entity.WalletBalanceEntity
@@ -28,6 +30,7 @@ import kotlinx.coroutines.IO
  *      price_current, price_point, watchlist (additive auto-migration, no data loss)
  * - 3: tx_cost_basis (additive auto-migration, no data loss)
  * - 4: wallet.subtract_from_wallet_id (additive auto-migration, no data loss)
+ * - 5: price_detail, a disposable cache (additive auto-migration, no data loss)
  */
 @Database(
     entities = [
@@ -39,18 +42,21 @@ import kotlinx.coroutines.IO
         DerivedAddressEntity::class,
         PriceCurrentEntity::class,
         PricePointEntity::class,
+        PriceDetailEntity::class,
         WatchlistEntity::class,
         TxCostBasisEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5)],
 )
 @ConstructedBy(WatchWalletDatabaseConstructor::class)
 abstract class WatchWalletDatabase : RoomDatabase() {
     abstract fun walletDao(): WalletDao
 
     abstract fun priceDao(): PriceDao
+
+    abstract fun priceDetailDao(): PriceDetailDao
 
     companion object {
         const val FILE_NAME = "watchwallet.db"

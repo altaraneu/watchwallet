@@ -2,6 +2,7 @@
 <resources>
     <string name="amount_hidden">المبلغ مخفي</string>
     <string name="action_cancel">إلغاء</string>
+    <string name="range_1h">1س</string>
     <string name="range_24h">24س</string>
     <string name="range_7d">7ي</string>
     <string name="range_1m">1ش</string>

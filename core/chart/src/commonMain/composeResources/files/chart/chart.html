@@ -22,8 +22,15 @@
   var userMoved = false, lastWindowKey = null;
   // Real user input (touch, pointer, wheel); only that may mark the view as moved by the user.
   var pointerDown = false, lastInputAt = 0;
-  var markerTimes = [], lineColors = null, lastReapplyAt = 0;
-  var MIN_MAX_BAR_SPACING = 50, INPUT_GRACE_MS = 600;
+  var markerTimes = [], lineColors = null;
+  // Own copy of the bars: series.data() rebuilds the whole array on every call.
+  var bars = [];
+  // Data that arrived under the finger; applied when the gesture is over, so nothing moves meanwhile.
+  var pendingData = null, pendingTimer = null;
+  var priceDecimals = -1, priceFormatTimer = null, pinFrame = null, markersShown = false;
+  // At full zoom about six bars fill the width, whatever the screen: single minutes can be read.
+  var MIN_MAX_BAR_SPACING = 50, FULL_ZOOM_BARS = 6, INPUT_GRACE_MS = 600, MAX_DECIMALS = 12;
+  var MARKERS_FROM_SPACING = 24, SECONDS_PER_DAY = 86400;
 
   function post(name, payload) {
     try {
@@ -36,7 +43,7 @@
 
   function markInput() { lastInputAt = Date.now(); }
   function onDown() { pointerDown = true; markInput(); }
-  function onUp() { pointerDown = false; markInput(); }
+  function onUp() { pointerDown = false; markInput(); schedulePending(); }
   document.addEventListener('pointerdown', onDown, { capture: true, passive: true });
   document.addEventListener('touchstart', onDown, { capture: true, passive: true });
   document.addEventListener('pointermove', function () { if (pointerDown) markInput(); }, { capture: true, passive: true });
@@ -49,14 +56,14 @@
 
   function userIsInteracting() { return pointerDown || Date.now() - lastInputAt < INPUT_GRACE_MS; }
 
-  function makeFormatter(o) {
+  function makeFormatter(o, decimals) {
     if (o.hideValues) { return function () { return '•••'; }; }
     try {
       if (o.currencyStyle) {
-        var nf = new Intl.NumberFormat(o.locale, { style: 'currency', currency: o.currency, maximumFractionDigits: o.maxDecimals, minimumFractionDigits: Math.min(o.maxDecimals, o.minDecimals) });
+        var nf = new Intl.NumberFormat(o.locale, { style: 'currency', currency: o.currency, maximumFractionDigits: decimals, minimumFractionDigits: decimals });
         return function (p) { return nf.format(p); };
       }
-      var df = new Intl.NumberFormat(o.locale, { maximumFractionDigits: o.maxDecimals });
+      var df = new Intl.NumberFormat(o.locale, { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
       return function (p) { return df.format(p) + (o.suffix ? ' ' + o.suffix : ''); };
     } catch (e) {
       return function (p) { return String(p); };
@@ -67,9 +74,9 @@
     options = o;
     if (chart) { chart.remove(); chart = null; series = null; markersApi = null; }
     // A new chart starts with the default view and no selection; the app is told so.
-    pinnedTime = null; userMoved = false; lastWindowKey = null;
+    pinnedTime = null; userMoved = false; lastWindowKey = null; bars = []; pendingData = null; priceDecimals = -1; markersShown = false;
     post('onCrosshair', JSON.stringify(null));
-    formatter = makeFormatter(o);
+    formatter = makeFormatter(o, o.minDecimals);
     var LWC = LightweightCharts;
     chart = LWC.createChart(document.getElementById('chart'), {
       autoSize: true,
@@ -82,12 +89,15 @@
       },
       grid: { vertLines: { color: o.colors.grid }, horzLines: { color: o.colors.grid } },
       rightPriceScale: { borderVisible: false, visible: !o.hideValues, mode: o.logScale ? 1 : 0, scaleMargins: { top: 0.12, bottom: 0.08 } },
-      timeScale: { borderVisible: false, timeVisible: o.intraday, secondsVisible: false, rightOffset: 0, minBarSpacing: 0.5, maxBarSpacing: MIN_MAX_BAR_SPACING,
+      timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false, rightOffset: 0, minBarSpacing: 0.2, maxBarSpacing: MIN_MAX_BAR_SPACING,
         // Panning stops at the first and the latest bar: no empty space before or after the data.
+        // The first bar is the start of the history (value charts have bars back to the first
+        // activity), or the oldest loaded candle (more are requested before the view gets there).
         fixLeftEdge: true, fixRightEdge: true, lockVisibleTimeRangeOnResize: true,
         tickMarkFormatter: function (t, type) { return tickLabel(t, type, o.locale); } },
-      crosshair: { mode: 0, vertLine: { labelBackgroundColor: o.colors.accent }, horzLine: { visible: !o.hideValues, labelVisible: !o.hideValues, labelBackgroundColor: o.colors.accent } },
-      localization: { locale: o.locale, priceFormatter: formatter, timeFormatter: function (t) { return crosshairLabel(t, o); } },
+      // Magnet: the horizontal line and its axis label always show the value of the selected bar.
+      crosshair: { mode: 1, vertLine: { labelBackgroundColor: o.colors.accent }, horzLine: { visible: !o.hideValues, labelVisible: !o.hideValues, labelBackgroundColor: o.colors.accent } },
+      localization: { locale: o.locale, priceFormatter: function (p) { return formatter(p); }, timeFormatter: function (t) { return crosshairLabel(t, o); } },
       handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
       handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true }
     });
@@ -112,15 +122,22 @@
       if (!range || !series) return;
       if (userIsInteracting()) userMoved = true;
       reportVisibleRange(range);
+      updatePointMarkers(range);
+      schedulePriceFormat();
+      schedulePin();
     });
     chart.subscribeCrosshairMove(function (param) {
+      // The library recomputes a crosshair from its old screen position whenever the view or the
+      // price scale changes (no source event). A pin belongs to a bar, not to a screen position:
+      // put it back on the bar, so its lines stay exactly on the point and the header does not
+      // start following whatever bar slid under the old position.
+      if (pinnedTime !== null && param && param.point && !param.sourceEvent) { reapplyPin(); return; }
       var d = param && param.time !== undefined ? param.seriesData.get(series) : null;
       if (!param || !param.point || !d) {
         // Finger lifted or off the data: a tapped bar stays selected (and shown in the header)
         // until the user taps it again or taps empty space.
         if (pinnedTime === null) { post('onCrosshair', JSON.stringify(null)); return; }
-        if (d && param.time === pinnedTime) { postBar(pinnedTime, d); return; }
-        showPinned();
+        reapplyPin();
         return;
       }
       postBar(param.time, d);
@@ -130,53 +147,56 @@
       var d = param && param.time !== undefined ? param.seriesData.get(series) : null;
       if (!d || param.time === pinnedTime) { clearPin(); return; }
       pinnedTime = param.time;
-      chart.setCrosshairPosition(valueOf(d), param.time, series);
-      postBar(param.time, d);
+      reapplyPin();
     });
   }
 
   function reportVisibleRange(range) {
-    if (!range || !series) return;
-    var from = series.dataByIndex(Math.max(0, Math.ceil(range.from)), 1);
-    var to = series.dataByIndex(Math.floor(range.to), -1);
-    if (from && to) post('onVisibleRange', JSON.stringify({ from: from.time, to: to.time }));
-    // A tapped (pinned) cursor stays inside the window while panning: it sticks to the edge.
-    if (pinnedTime !== null && from && to) {
+    if (!range || !series || bars.length === 0) return;
+    var fromIndex = Math.min(bars.length - 1, Math.max(0, Math.ceil(range.from)));
+    var toIndex = Math.min(bars.length - 1, Math.max(fromIndex, Math.floor(range.to)));
+    var from = bars[fromIndex], to = bars[toIndex];
+    post('onVisibleRange', JSON.stringify({ from: from.time, to: to.time, bars: toIndex - fromIndex + 1, barsBefore: fromIndex, userMoved: userMoved }));
+    // A tapped (pinned) cursor stays inside the window while panning: when its bar leaves the view
+    // it moves to the edge bar, and the header follows that bar.
+    if (pinnedTime !== null) {
       var edge = pinnedTime < from.time ? from : (pinnedTime > to.time ? to : null);
       if (edge) {
         pinnedTime = edge.time;
-        chart.setCrosshairPosition(valueOf(edge), edge.time, series);
-        postBar(edge.time, edge);
+        reapplyPin();
       }
     }
   }
 
   function valueOf(d) { return d.close !== undefined ? d.close : d.value; }
 
-  // Bar at exactly [time] (binary search over the sorted series data), or null.
-  function barAt(time) {
-    if (!series) return null;
-    var data = series.data();
-    var lo = 0, hi = data.length - 1;
-    while (lo <= hi) {
-      var mid = (lo + hi) >> 1, t = data[mid].time;
-      if (t === time) return data[mid];
-      if (t < time) lo = mid + 1; else hi = mid - 1;
+  // Index of the bar closest to [time], or -1 without bars (binary search over the sorted bars).
+  function nearestIndex(time) {
+    if (bars.length === 0) return -1;
+    var lo = 0, hi = bars.length - 1;
+    while (lo < hi) {
+      var mid = (lo + hi) >> 1;
+      if (bars[mid].time < time) lo = mid + 1; else hi = mid;
     }
-    return null;
+    return lo > 0 && time - bars[lo - 1].time < bars[lo].time - time ? lo - 1 : lo;
   }
 
-  // Shows the pinned bar again (after a long press ends or the data was replaced).
-  function showPinned() {
-    if (pinnedTime === null) return;
-    var bar = barAt(pinnedTime);
-    if (!bar) { clearPin(); return; }
-    postBar(pinnedTime, bar);
-    // setCrosshairPosition raises a crosshair event itself; never re-enter in a loop.
-    var now = Date.now();
-    if (now - lastReapplyAt < 50) return;
-    lastReapplyAt = now;
-    chart.setCrosshairPosition(valueOf(bar), pinnedTime, series);
+  // Draws the pin exactly on its bar and tells the app. The bar may have been replaced by a refresh
+  // of the data: then the closest one takes over.
+  function reapplyPin() {
+    if (pinnedTime === null || !series) return;
+    var index = nearestIndex(pinnedTime);
+    if (index < 0) { clearPin(); return; }
+    var bar = bars[index];
+    pinnedTime = bar.time;
+    chart.setCrosshairPosition(valueOf(bar), bar.time, series);
+    postBar(bar.time, bar);
+  }
+
+  // Once more after the frame: the price scale fits itself to the new view only then.
+  function schedulePin() {
+    if (pinnedTime === null || pinFrame !== null) return;
+    pinFrame = requestAnimationFrame(function () { pinFrame = null; reapplyPin(); });
   }
 
   // Bar times are UTC seconds; labels use the device time zone like the rest of the app.
@@ -192,12 +212,15 @@
     } catch (e) { return null; }
   }
 
+  // Short on purpose: the label covers axis dates next to it. Daily and weekly bars start at
+  // midnight UTC and have no meaningful time; the year appears only when it is not this year.
   function crosshairLabel(t, o) {
     var d = localDate(t);
     try {
-      return o.intraday
-        ? d.toLocaleString(o.locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-        : d.toLocaleDateString(o.locale, { day: 'numeric', month: 'short', year: 'numeric' });
+      var format = { day: 'numeric', month: 'short' };
+      if (d.getFullYear() !== new Date().getFullYear()) format.year = 'numeric';
+      if (t % SECONDS_PER_DAY !== 0) { format.hour = '2-digit'; format.minute = '2-digit'; }
+      return d.toLocaleString(o.locale, format);
     } catch (e) { return d.toISOString(); }
   }
 
@@ -210,6 +233,46 @@
     var mid = (lo + hi) / 2, need = Math.abs(mid) * 0.005;
     if (hi - lo < need) { res.priceRange.minValue = mid - need / 2; res.priceRange.maxValue = mid + need / 2; }
     return res;
+  }
+
+  // Axis ticks exist only at multiples of the series' minimum move, so the format has to follow the
+  // visible prices: a stablecoin moving by 0.2 % needs three decimals, SHIB nine, a portfolio two.
+  function updatePriceFormat() {
+    if (!series || !options || options.hideValues || bars.length === 0) return;
+    var range = chart.timeScale().getVisibleLogicalRange();
+    var first = range ? Math.max(0, Math.ceil(range.from)) : 0;
+    var last = range ? Math.min(bars.length - 1, Math.floor(range.to)) : bars.length - 1;
+    var lo = Infinity, hi = -Infinity;
+    for (var i = first; i <= last; i++) {
+      var d = bars[i];
+      var low = d.low !== undefined ? d.low : d.value, high = d.high !== undefined ? d.high : d.value;
+      if (low < lo) lo = low;
+      if (high > hi) hi = high;
+    }
+    if (!isFinite(lo) || !isFinite(hi)) return;
+    var span = Math.max(hi - lo, Math.abs((lo + hi) / 2) * 0.005);
+    if (span <= 0) return;
+    // Five ticks or so: enough decimals to tell neighbouring ticks apart.
+    var decimals = Math.max(options.minDecimals, Math.min(MAX_DECIMALS, Math.ceil(-Math.log10(span / 5))));
+    if (decimals === priceDecimals) return;
+    priceDecimals = decimals;
+    formatter = makeFormatter(options, decimals);
+    series.applyOptions({ priceFormat: { type: 'price', precision: decimals, minMove: Math.pow(10, -decimals) } });
+  }
+
+  function schedulePriceFormat() {
+    if (priceFormatTimer !== null) return;
+    priceFormatTimer = setTimeout(function () { priceFormatTimer = null; updatePriceFormat(); }, 120);
+  }
+
+  // Dots on the line once single points can be told apart, so that minutes read as points.
+  function updatePointMarkers(range) {
+    if (!series || !options || options.kind !== 'area' || !range) return;
+    var width = chart.timeScale().width();
+    var show = width > 0 && width / Math.max(1, range.to - range.from) >= MARKERS_FROM_SPACING;
+    if (show === markersShown) return;
+    markersShown = show;
+    series.applyOptions({ pointMarkersVisible: show });
   }
 
   function postBar(time, d) {
@@ -226,39 +289,75 @@
   function updateMaxBarSpacing(count) {
     var width = document.getElementById('chart').clientWidth || window.innerWidth || 0;
     var fill = count > 0 ? Math.ceil(width / count) + 1 : 0;
-    chart.timeScale().applyOptions({ maxBarSpacing: Math.max(MIN_MAX_BAR_SPACING, fill) });
+    chart.timeScale().applyOptions({ maxBarSpacing: Math.max(MIN_MAX_BAR_SPACING, Math.ceil(width / FULL_ZOOM_BARS), fill) });
   }
 
-  // visibleBars > 0: show only the most recent bars (the user can pan back and zoom out);
-  // otherwise fit everything. The user's pan, zoom and tapped bar survive refreshes of the same
-  // window (same windowKey) and are reset when the window changes.
-  function setData(points, fit, visibleBars, windowKey) {
+  function schedulePending() {
+    if (pendingData === null || pendingTimer !== null) return;
+    pendingTimer = setTimeout(function () {
+      pendingTimer = null;
+      if (pendingData === null) return;
+      if (userIsInteracting()) { schedulePending(); return; }
+      var args = pendingData;
+      pendingData = null;
+      setData.apply(null, args);
+    }, INPUT_GRACE_MS);
+  }
+
+  // visibleFrom: show from this time to the latest bar. visibleBars > 0: show only the most recent
+  // bars. Otherwise fit everything (in each case the user can pan back and zoom out). The user's
+  // pan, zoom and tapped bar survive refreshes of the same window (same windowKey) and are reset
+  // when the window changes.
+  function setData(points, fit, visibleBars, windowKey, visibleFrom) {
     if (!series) return;
     var sameWindow = windowKey === lastWindowKey;
+    // New points never move the view under a finger: they wait for the end of the gesture.
+    if (sameWindow && userIsInteracting()) {
+      pendingData = [points, fit, visibleBars, windowKey, visibleFrom];
+      schedulePending();
+      return;
+    }
+    pendingData = null;
     lastWindowKey = windowKey;
     if (!sameWindow) { clearPin(); userMoved = false; }
     var keep = userMoved ? chart.timeScale().getVisibleRange() : null;
+    var oldLast = bars.length > 0 ? bars[bars.length - 1].time : null;
+    var newLast = points.length > 0 ? points[points.length - 1].time : null;
+    // Following the present: the view moves along with the newest bar.
+    if (keep && oldLast !== null && newLast !== null && keep.to >= oldLast && newLast > oldLast) {
+      keep = { from: keep.from + (newLast - oldLast), to: newLast };
+    }
+    bars = points;
     updateMaxBarSpacing(points.length);
     series.setData(points);
     applyMarkers();
     if (keep) {
       chart.timeScale().setVisibleRange(keep);
     } else if (fit) {
-      if (visibleBars && points.length > visibleBars) {
+      if (visibleFrom && points.length > 1 && points[0].time < visibleFrom) {
+        chart.timeScale().setVisibleRange({ from: visibleFrom, to: points[points.length - 1].time });
+      } else if (visibleBars && points.length > visibleBars) {
         chart.timeScale().setVisibleLogicalRange({ from: points.length - visibleBars, to: points.length - 1 });
       } else {
         chart.timeScale().fitContent();
       }
     }
     // Keep the app in sync with what is drawn: the visible window and the tapped bar.
-    reportVisibleRange(chart.timeScale().getVisibleLogicalRange());
-    if (pinnedTime !== null) showPinned();
+    var range = chart.timeScale().getVisibleLogicalRange();
+    reportVisibleRange(range);
+    updatePointMarkers(range);
+    updatePriceFormat();
+    if (pinnedTime !== null) { reapplyPin(); schedulePin(); }
   }
 
   function update(point) {
     if (!series) return;
-    try { series.update(point); } catch (e) { /* out-of-order update: ignore */ }
-    if (pinnedTime !== null && point.time === pinnedTime) postBar(pinnedTime, point);
+    try {
+      series.update(point);
+      if (bars.length > 0 && bars[bars.length - 1].time === point.time) bars[bars.length - 1] = point;
+      else if (bars.length === 0 || bars[bars.length - 1].time < point.time) bars.push(point);
+    } catch (e) { /* out-of-order update: ignore */ }
+    if (pinnedTime !== null && point.time === pinnedTime) reapplyPin();
   }
 
   function setMarkers(times) {

@@ -26,7 +26,6 @@
     <string name="interval_1d">1D</string>
     <string name="interval_1w">1S</string>
     <string name="asset_live_price">Precio de %1$s · en vivo</string>
-    <string name="asset_source_kraken">Velas en vivo: datos públicos de mercado de Kraken. Las monedas distintas de EUR/USD se convierten con los tipos de referencia del BCE.</string>
     <string name="asset_visible_range">en el rango visible</string>
     <string name="asset_high">Máx</string>
     <string name="asset_low">Mín</string>
@@ -45,4 +44,5 @@
     <string name="asset_activity">Actividad</string>
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
+    <string name="asset_current_price">Ahora: %1$s</string>
 </resources>

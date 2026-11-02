@@ -2,6 +2,7 @@
 <resources>
     <string name="amount_hidden">राशि छिपी हुई है</string>
     <string name="action_cancel">रद्द करें</string>
+    <string name="range_1h">1घं</string>
     <string name="range_24h">24घं</string>
     <string name="range_7d">7दि</string>
     <string name="range_1m">1मा</string>

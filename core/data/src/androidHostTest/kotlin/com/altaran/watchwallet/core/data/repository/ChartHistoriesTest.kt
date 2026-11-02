@@ -138,4 +138,30 @@ class ChartHistoriesTest {
         assertEquals(1000.0, flows.last() - 0.0, 0.0)
         assertEquals("10 coins bought at 100, worth 200 now", 1000.0, values.last().value - values.first().value - (flows.last() - flows.first()), 0.0)
     }
+
+    /** A refined window uses finer prices, but the same rows, balance starts and deposits. */
+    @Test
+    fun refinedWindowKeepsBalanceStartsAndDeposits() {
+        val rows = listOf(row(sol, 7), row(staked, 3))
+        val txs = listOf(tx("in", t0, sol, 10), tx("stake", t1, sol, -3, fee = 0, direction = TxDirection.SELF))
+        val wallets = mapOf(1L to wallet())
+        val fine = mapOf("solana" to listOf(TimedPrice(t0, 100.0), TimedPrice(t1 - 1.days, 150.0), TimedPrice(t1, 250.0)))
+        val grid = listOf(t1 - 2.days, t1 - 1.days, t1, t1 + 1.days)
+        val refined = buildHistories(rows, txs, fine, emptyMap(), wallets)
+        assertEquals(t1, refined[1].startsAt)
+        assertEquals(listOf(0.0, 0.0, 0.0, 3.0), Timeline.balances(refined[1], grid, lastIsLive = false))
+        assertEquals(listOf(1000.0, 1500.0, 2500.0, 2500.0), Timeline.portfolio(refined, grid, lastIsLive = false).map { it.value })
+        assertEquals(List(grid.size) { 1000.0 }, cumulativeFlows(txs, rows, prices, wallets, grid).toList())
+    }
+
+    /** A window ending before the balance began has no "now" sample that could count it. */
+    @Test
+    fun pastWindowEndingBeforeTheBalanceBeganIsEmpty() {
+        val rows = listOf(row(staked, 3))
+        val txs = listOf(tx("in", t0, sol, 10), tx("stake", t1, sol, -3, fee = 0, direction = TxDirection.SELF))
+        val history = buildHistories(rows, txs, prices, emptyMap(), mapOf(1L to wallet())).single()
+        val grid = listOf(t0 + 1.days, t0 + 2.days)
+        assertEquals(listOf(0.0, 0.0), Timeline.balances(history, grid, lastIsLive = false))
+        assertEquals(listOf(0.0, 0.0), Timeline.portfolio(listOf(history), grid, lastIsLive = false).map { it.value })
+    }
 }

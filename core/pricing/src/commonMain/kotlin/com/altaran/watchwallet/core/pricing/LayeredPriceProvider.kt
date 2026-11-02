@@ -143,6 +143,16 @@ class LayeredPriceProvider(
         return candles.mapNotNull { c -> quote[c.time]?.closeUsd?.takeIf { it > 0 }?.let { PricePoint(c.time, c.closeUsd / it) } }
     }
 
+    /** Exchange candles only: never a per-asset CoinGecko call, its keyless tier could not bear it. */
+    override suspend fun candleCloses(priceId: String, currency: String, stepMinutes: Int, from: Instant, to: Instant): List<PricePoint> {
+        val symbol = KnownAssets.symbolOf(priceId) ?: return emptyList()
+        val conversion = conversion(currency) ?: return emptyList()
+        val candles = exchange.closes(symbol, stepMinutes, from, to)
+        if (conversion.needs.isEmpty()) return candles.map { PricePoint(it.time, it.closeUsd * conversion.fiatFactor) }
+        val quote = exchange.closes(conversion.needs.single(), stepMinutes, from, to).associateBy { it.time }
+        return candles.mapNotNull { c -> quote[c.time]?.closeUsd?.takeIf { it > 0 }?.let { PricePoint(c.time, c.closeUsd / it) } }
+    }
+
     // ---------------------------------------------------------------- exchange helpers
 
     private suspend fun exchangeCurrent(symbols: Map<String, String>, currency: String): Map<String, CurrentPrice> {

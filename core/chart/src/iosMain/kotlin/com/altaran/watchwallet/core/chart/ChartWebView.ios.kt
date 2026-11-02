@@ -19,7 +19,7 @@ internal actual fun ChartWebView(
     html: String,
     controller: ChartController,
     onCrosshair: (CrosshairValue?) -> Unit,
-    onVisibleRange: (Long, Long) -> Unit,
+    onVisibleRange: (ChartView) -> Unit,
     modifier: Modifier,
 ) {
     val delegate = remember {

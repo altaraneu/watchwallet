@@ -26,7 +26,6 @@
     <string name="interval_1d">1দি</string>
     <string name="interval_1w">1স</string>
     <string name="asset_live_price">%1$s-এর দাম · লাইভ</string>
-    <string name="asset_source_kraken">লাইভ ক্যান্ডেল: Kraken-এর পাবলিক মার্কেট ডেটা। EUR/USD ছাড়া অন্য মুদ্রা ECB-এর রেফারেন্স রেটে রূপান্তরিত।</string>
     <string name="asset_visible_range">দৃশ্যমান সময়সীমায়</string>
     <string name="asset_high">সর্বোচ্চ</string>
     <string name="asset_low">সর্বনিম্ন</string>
@@ -45,4 +44,5 @@
     <string name="asset_activity">কার্যকলাপ</string>
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
+    <string name="asset_current_price">এখন: %1$s</string>
 </resources>

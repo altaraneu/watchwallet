@@ -2,6 +2,7 @@
 <resources>
     <string name="amount_hidden">金额已隐藏</string>
     <string name="action_cancel">取消</string>
+    <string name="range_1h">1时</string>
     <string name="range_24h">24时</string>
     <string name="range_7d">7天</string>
     <string name="range_1m">1个月</string>

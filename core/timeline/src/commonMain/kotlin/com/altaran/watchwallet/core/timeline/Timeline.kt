@@ -21,7 +21,7 @@ data class AssetHistory(
     val currentBalance: BigInteger,
     val decimals: Int,
     val deltas: List<TimedDelta>,
-    /** Price history sorted by time; may be empty (unpriced asset contributes 0). */
+    /** Price history sorted by time; may be empty (values then use [currentPrice], or 0 without one). */
     val prices: List<TimedPrice>,
     /** Latest price, used for the final sample so the chart ends at the live value. */
     val currentPrice: Double?,
@@ -63,8 +63,32 @@ object Timeline {
         return times
     }
 
-    /** Balance (as a decimal number) of one asset at every sample time. */
-    fun balances(history: AssetHistory, samples: List<Instant>): List<Double> {
+    /**
+     * Pins sample times to multiples of [stepMillis], so bars keep their time across recomputations
+     * (a tapped bar stays selected). The first sample (the start of the history) and the last one
+     * (now) stay exact.
+     */
+    fun alignedSamples(samples: List<Instant>, stepMillis: Long): List<Instant> {
+        if (samples.size < 2) return samples
+        val result = ArrayList<Instant>(samples.size)
+        result += samples.first()
+        for (i in 1 until samples.lastIndex) {
+            val aligned = Instant.fromEpochMilliseconds(samples[i].toEpochMilliseconds() / stepMillis * stepMillis)
+            if (aligned > result.last() && aligned < samples.last()) result += aligned
+        }
+        result += samples.last()
+        return result
+    }
+
+    /**
+     * Balance (as a decimal number) of one asset at every sample time.
+     *
+     * @param lastIsLive the last sample is "now", where the current balance always counts; false
+     * for a window that ends in the past, which may end before [AssetHistory.startsAt].
+     */
+    fun balances(history: AssetHistory, samples: List<Instant>, lastIsLive: Boolean = true): List<Double> = balanceArray(history, samples, lastIsLive).asList()
+
+    private fun balanceArray(history: AssetHistory, samples: List<Instant>, lastIsLive: Boolean): DoubleArray {
         // Doubles are exact enough for a chart and avoid allocating a decimal per sample (charts
         // have thousands of samples over years of history).
         val scale = 10.0.pow(history.decimals)
@@ -80,10 +104,10 @@ object Timeline {
                 running -= deltaValues[index]
                 index++
             }
-            val notYet = history.startsAt != null && sample <= history.startsAt && i != samples.lastIndex
+            val notYet = history.startsAt != null && sample <= history.startsAt && !(lastIsLive && i == samples.lastIndex)
             result[i] = if (notYet) 0.0 else running.coerceAtLeast(0.0)
         }
-        return result.asList()
+        return result
     }
 
     /** Price at [time]: the last known price at or before it (or the first one for earlier times). */
@@ -99,26 +123,46 @@ object Timeline {
         return prices[low].price
     }
 
-    /** Value of one asset over time. */
+    /**
+     * Value of one asset over time. Without any price history yet the current price is the nearest
+     * thing available: a held asset does not count as worthless while its history is loading.
+     */
     fun values(history: AssetHistory, samples: List<Instant>): List<TimedValue> {
-        val balances = balances(history, samples)
-        return samples.mapIndexed { i, time ->
-            val price = if (i == samples.lastIndex && history.currentPrice != null) {
-                history.currentPrice
-            } else {
-                priceAt(history.prices, time)
-            }
-            TimedValue(time, balances[i] * (price ?: 0.0))
-        }
+        val totals = DoubleArray(samples.size)
+        addValues(history, samples, lastIsLive = true, totals)
+        return samples.mapIndexed { i, time -> TimedValue(time, totals[i]) }
     }
 
-    /** Total value over time across assets. */
-    fun portfolio(histories: List<AssetHistory>, samples: List<Instant>): List<TimedValue> {
+    /**
+     * Total value over time across assets.
+     *
+     * @param lastIsLive the last sample is "now" and uses the live price; false for a window that
+     * ends in the past.
+     */
+    fun portfolio(histories: List<AssetHistory>, samples: List<Instant>, lastIsLive: Boolean = true): List<TimedValue> {
         val totals = DoubleArray(samples.size)
-        histories.forEach { history ->
-            values(history, samples).forEachIndexed { i, value -> totals[i] += value.value }
-        }
+        histories.forEach { addValues(it, samples, lastIsLive, totals) }
         return samples.mapIndexed { i, time -> TimedValue(time, totals[i]) }
+    }
+
+    /** Adds one asset to [totals]: samples and prices are both sorted, so one pass is enough. */
+    private fun addValues(history: AssetHistory, samples: List<Instant>, lastIsLive: Boolean, totals: DoubleArray) {
+        val balances = balanceArray(history, samples, lastIsLive)
+        val prices = history.prices
+        var index = 0
+        for (i in samples.indices) {
+            val balance = balances[i]
+            if (balance == 0.0) continue
+            val live = if (lastIsLive && i == samples.lastIndex) history.currentPrice else null
+            val price = live ?: if (prices.isEmpty()) {
+                history.currentPrice ?: 0.0
+            } else {
+                val time = samples[i]
+                while (index + 1 < prices.size && prices[index + 1].time <= time) index++
+                prices[index].price
+            }
+            totals[i] += balance * price
+        }
     }
 
     /**

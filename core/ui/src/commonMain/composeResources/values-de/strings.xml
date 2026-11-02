@@ -43,4 +43,5 @@
     <string name="tx_open_explorer">Im Block-Explorer öffnen</string>
     <string name="chart_performance">Ohne Ein- und Auszahlungen: %1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
+    <string name="chart_current_value">Jetzt: %1$s</string>
 </resources>

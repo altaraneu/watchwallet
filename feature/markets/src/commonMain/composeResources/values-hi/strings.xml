@@ -26,7 +26,6 @@
     <string name="interval_1d">1दि</string>
     <string name="interval_1w">1स</string>
     <string name="asset_live_price">%1$s कीमत · लाइव</string>
-    <string name="asset_source_kraken">लाइव कैंडल: Kraken का सार्वजनिक बाज़ार डेटा। EUR/USD के अलावा अन्य मुद्राएँ ECB की संदर्भ दरों से बदली गई हैं।</string>
     <string name="asset_visible_range">दिखाई दे रही अवधि में</string>
     <string name="asset_high">अधिकतम</string>
     <string name="asset_low">न्यूनतम</string>
@@ -45,4 +44,5 @@
     <string name="asset_activity">गतिविधि</string>
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
+    <string name="asset_current_price">अभी: %1$s</string>
 </resources>

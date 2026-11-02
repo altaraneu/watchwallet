@@ -26,7 +26,6 @@
     <string name="interval_1d">1日</string>
     <string name="interval_1w">1週</string>
     <string name="asset_live_price">%1$s 価格 · ライブ</string>
-    <string name="asset_source_kraken">ライブローソク足:Kraken の公開マーケットデータ。EUR/USD 以外の通貨は ECB の参照レートで換算しています。</string>
     <string name="asset_visible_range">表示範囲内</string>
     <string name="asset_high">最高</string>
     <string name="asset_low">最低</string>
@@ -45,4 +44,5 @@
     <string name="asset_activity">アクティビティ</string>
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
+    <string name="asset_current_price">現在: %1$s</string>
 </resources>

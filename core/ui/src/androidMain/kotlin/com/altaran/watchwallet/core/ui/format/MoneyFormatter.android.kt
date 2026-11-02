@@ -29,6 +29,9 @@ actual object MoneyFormatter {
     actual fun formatPrice(value: Double, currency: QuoteCurrency): String =
         isolated(format(value, currency, Locale.getDefault(), FormatRules.priceDecimals(value, currency.displayDecimals)))
 
+    actual fun formatPriceChange(value: Double, currency: QuoteCurrency): String =
+        isolated(formatPriceChange(value, currency, Locale.getDefault()))
+
     actual fun formatCrypto(value: Double, symbol: String, maxDecimals: Int): String =
         isolated(formatCrypto(value, symbol, maxDecimals, Locale.getDefault()))
 
@@ -80,6 +83,11 @@ actual object MoneyFormatter {
     internal fun formatChange(value: Double, currency: QuoteCurrency, locale: Locale): String {
         val magnitude = format(kotlin.math.abs(value), currency, locale)
         return signPrefix(value) + magnitude
+    }
+
+    internal fun formatPriceChange(value: Double, currency: QuoteCurrency, locale: Locale): String {
+        val magnitude = kotlin.math.abs(value)
+        return signPrefix(value) + format(magnitude, currency, locale, FormatRules.priceDecimals(magnitude, currency.displayDecimals))
     }
 
     internal fun formatPercentChange(fraction: Double, locale: Locale): String {

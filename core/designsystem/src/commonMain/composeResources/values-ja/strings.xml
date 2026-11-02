@@ -2,6 +2,7 @@
 <resources>
     <string name="amount_hidden">金額は非表示です</string>
     <string name="action_cancel">キャンセル</string>
+    <string name="range_1h">1時間</string>
     <string name="range_24h">24時間</string>
     <string name="range_7d">7日</string>
     <string name="range_1m">1か月</string>
