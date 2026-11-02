@@ -1,9 +1,11 @@
 package com.altaran.watchwallet.chain.evm
 
-import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.HostHealth
+import com.altaran.watchwallet.core.network.HostThrottles
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -22,6 +24,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import kotlin.time.Duration.Companion.milliseconds
 
 // ---------------------------------------------------------------- JSON-RPC
 
@@ -38,14 +41,19 @@ internal data class RpcRequest(
 @Serializable
 private data class RpcResponse(val result: String? = null, val error: JsonElement? = null)
 
-internal class EvmRpcClient(private val http: HttpClient) {
-    suspend fun balance(rpcUrl: String, address: String): BigInteger = hexCall(rpcUrl, "eth_getBalance", address)
+/**
+ * JSON-RPC over the hosts of a network. A host that fails, or answers with a JSON-RPC error (public
+ * nodes report rate limits that way), is left for the next one; it is skipped for a while after.
+ */
+internal class EvmRpcClient(private val http: HttpClient, private val health: HostHealth) {
+    suspend fun balance(rpcUrls: List<String>, address: String): BigInteger = hexCall(rpcUrls, "eth_getBalance", address)
 
-    suspend fun transactionCount(rpcUrl: String, address: String): BigInteger = hexCall(rpcUrl, "eth_getTransactionCount", address)
+    suspend fun transactionCount(rpcUrls: List<String>, address: String): BigInteger = hexCall(rpcUrls, "eth_getTransactionCount", address)
 
     /** `eth_call` of [data] on contract [to]; returns the raw hex result without `0x`. */
-    suspend fun call(rpcUrl: String, to: String, data: String): String {
-        val response: JsonObject = http.post(rpcUrl) {
+    suspend fun call(rpcUrls: List<String>, to: String, data: String): String = health.firstAvailable(rpcUrls) { url ->
+        val response: JsonObject = http.post(url) {
+            timeout { requestTimeoutMillis = RPC_TIMEOUT_MS }
             contentType(ContentType.Application.Json)
             setBody(
                 buildJsonObject {
@@ -68,16 +76,21 @@ internal class EvmRpcClient(private val http: HttpClient) {
             )
         }.body()
         val result = response["result"]?.jsonPrimitive?.contentOrNull ?: error("eth_call failed: ${response["error"]}")
-        return result.removePrefix("0x")
+        result.removePrefix("0x")
     }
 
-    private suspend fun hexCall(rpcUrl: String, method: String, address: String): BigInteger {
-        val response: RpcResponse = http.post(rpcUrl) {
+    private suspend fun hexCall(rpcUrls: List<String>, method: String, address: String): BigInteger = health.firstAvailable(rpcUrls) { url ->
+        val response: RpcResponse = http.post(url) {
+            timeout { requestTimeoutMillis = RPC_TIMEOUT_MS }
             contentType(ContentType.Application.Json)
             setBody(RpcRequest(method = method, params = listOf(address, "latest")))
         }.body()
-        val hex = response.result ?: error("RPC $method failed: ${response.error}")
-        return parseHex(hex)
+        parseHex(response.result ?: error("RPC $method failed: ${response.error}"))
+    }
+
+    private companion object {
+        /** Short, so that the alternative host is reached within the deadline of the network. */
+        const val RPC_TIMEOUT_MS = 8_000L
     }
 }
 
@@ -160,28 +173,36 @@ internal data class BsPage<T>(
     @SerialName("next_page_params") val nextPageParams: JsonObject? = null,
 )
 
-internal class BlockscoutClient(private val http: HttpClient) {
+/**
+ * Blockscout v2 over the instances of a network. Throttled per host: a slow instance never delays
+ * the others. A blocked host (HTTP 403) or an outage fails the call at once for a while, and the
+ * network keeps its last known tokens and history.
+ */
+internal class BlockscoutClient(private val http: HttpClient, private val health: HostHealth) {
     // Blockscout public instances allow a few requests per second per IP.
-    private val throttle = Throttle(maxConcurrent = 4, minInterval = kotlin.time.Duration.parse("150ms"))
+    private val throttles = HostThrottles(maxConcurrent = 4, minInterval = 150.milliseconds)
 
-    suspend fun counters(base: String, address: String): BsCounters =
-        throttle.run { http.get("$base/api/v2/addresses/$address/counters").body() }
+    suspend fun counters(hosts: List<String>, address: String): BsCounters =
+        request(hosts) { base -> http.get("$base/api/v2/addresses/$address/counters").body() }
 
-    suspend fun tokenBalances(base: String, address: String): List<BsTokenBalance> =
-        throttle.run { http.get("$base/api/v2/addresses/$address/token-balances").body() }
+    suspend fun tokenBalances(hosts: List<String>, address: String): List<BsTokenBalance> =
+        request(hosts) { base -> http.get("$base/api/v2/addresses/$address/token-balances").body() }
 
-    suspend fun transactions(base: String, address: String, next: JsonObject?): BsPage<BsTransaction> =
-        page("$base/api/v2/addresses/$address/transactions", next)
+    suspend fun transactions(hosts: List<String>, address: String, next: JsonObject?): BsPage<BsTransaction> =
+        page(hosts, "api/v2/addresses/$address/transactions", next)
 
-    suspend fun internalTransactions(base: String, address: String, next: JsonObject?): BsPage<BsInternalTransaction> =
-        page("$base/api/v2/addresses/$address/internal-transactions", next)
+    suspend fun internalTransactions(hosts: List<String>, address: String, next: JsonObject?): BsPage<BsInternalTransaction> =
+        page(hosts, "api/v2/addresses/$address/internal-transactions", next)
 
-    suspend fun tokenTransfers(base: String, address: String, next: JsonObject?): BsPage<BsTokenTransfer> =
-        page("$base/api/v2/addresses/$address/token-transfers", next, mapOf("type" to "ERC-20"))
+    suspend fun tokenTransfers(hosts: List<String>, address: String, next: JsonObject?): BsPage<BsTokenTransfer> =
+        page(hosts, "api/v2/addresses/$address/token-transfers", next, mapOf("type" to "ERC-20"))
 
-    private suspend inline fun <reified T> page(url: String, next: JsonObject?, extra: Map<String, String> = emptyMap()): BsPage<T> =
-        throttle.run {
-            http.get(url) {
+    private suspend fun <T> request(hosts: List<String>, block: suspend (String) -> T): T =
+        health.firstAvailable(hosts) { base -> throttles.run(base) { block(base) } }
+
+    private suspend inline fun <reified T> page(hosts: List<String>, path: String, next: JsonObject?, extra: Map<String, String> = emptyMap()): BsPage<T> =
+        request(hosts) { base ->
+            http.get("$base/$path") {
                 extra.forEach { (k, v) -> parameter(k, v) }
                 next?.forEach { (key, value) ->
                     val text = (value as? JsonPrimitive)?.takeIf { it.isString || it.jsonPrimitive.content != "null" }?.content

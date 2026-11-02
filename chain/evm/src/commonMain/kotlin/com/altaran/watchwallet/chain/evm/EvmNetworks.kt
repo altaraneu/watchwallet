@@ -12,6 +12,9 @@ import com.altaran.watchwallet.core.model.ChainId
  * @property blockscoutUrl Blockscout instance (open API, no key) for tokens and history; `null`
  * when the network has none, in which case only the native balance is available via RPC.
  * @property coingeckoPlatform CoinGecko asset platform id, used to price tokens by contract.
+ * @property rpcFallbacks Further RPC hosts, tried in order when [rpcUrl] fails. Every host must be
+ * verified with `eth_chainId` and listed in `PRIVACY.md`.
+ * @property blockscoutFallbacks Further Blockscout instances of this network.
  */
 data class EvmNetwork(
     val chainId: Long,
@@ -24,8 +27,15 @@ data class EvmNetwork(
     val explorerUrl: String,
     val coingeckoPlatform: String?,
     val color: Long,
+    val rpcFallbacks: List<String> = emptyList(),
+    val blockscoutFallbacks: List<String> = emptyList(),
 ) {
     val id: ChainId get() = ChainId.evm(chainId)
+
+    val rpcUrls: List<String> get() = listOf(rpcUrl) + rpcFallbacks
+
+    /** Empty when the network has no indexer. */
+    val blockscoutUrls: List<String> get() = listOfNotNull(blockscoutUrl) + blockscoutFallbacks
 
     val chain: Chain
         get() = Chain(
@@ -57,6 +67,7 @@ object EvmNetworks {
             "https://etherscan.io",
             "ethereum",
             0xFF627EEA,
+            rpcFallbacks = listOf("https://eth.drpc.org"),
         ),
         EvmNetwork(
             56,
@@ -69,6 +80,7 @@ object EvmNetworks {
             "https://bscscan.com",
             "binance-smart-chain",
             0xFFF0B90B,
+            rpcFallbacks = listOf("https://bsc-dataseed.binance.org"),
         ),
         EvmNetwork(
             42161,
@@ -81,6 +93,7 @@ object EvmNetworks {
             "https://arbiscan.io",
             "arbitrum-one",
             0xFF28A0F0,
+            rpcFallbacks = listOf("https://arb1.arbitrum.io/rpc"),
         ),
         EvmNetwork(
             10,
@@ -89,10 +102,11 @@ object EvmNetworks {
             "Ether",
             "ethereum",
             "https://optimism-rpc.publicnode.com",
-            "https://optimism.blockscout.com",
+            "https://explorer.optimism.io",
             "https://optimistic.etherscan.io",
             "optimistic-ethereum",
             0xFFFF0420,
+            rpcFallbacks = listOf("https://mainnet.optimism.io"),
         ),
         EvmNetwork(
             8453,
@@ -105,6 +119,7 @@ object EvmNetworks {
             "https://basescan.org",
             "base",
             0xFF0052FF,
+            rpcFallbacks = listOf("https://mainnet.base.org"),
         ),
         EvmNetwork(
             137,
@@ -117,6 +132,7 @@ object EvmNetworks {
             "https://polygonscan.com",
             "polygon-pos",
             0xFF8247E5,
+            rpcFallbacks = listOf("https://polygon.drpc.org"),
         ),
         EvmNetwork(
             43114,
@@ -129,6 +145,7 @@ object EvmNetworks {
             "https://snowtrace.io",
             "avalanche",
             0xFFE84142,
+            rpcFallbacks = listOf("https://api.avax.network/ext/bc/C/rpc"),
         ),
         EvmNetwork(
             324,
@@ -141,8 +158,21 @@ object EvmNetworks {
             "https://explorer.zksync.io",
             "zksync",
             0xFF8C8DFC,
+            rpcFallbacks = listOf("https://zksync.drpc.org"),
         ),
-        EvmNetwork(59144, "Linea", "ETH", "Ether", "ethereum", "https://rpc.linea.build", null, "https://lineascan.build", "linea", 0xFF61DFFF),
+        EvmNetwork(
+            59144,
+            "Linea",
+            "ETH",
+            "Ether",
+            "ethereum",
+            "https://rpc.linea.build",
+            null,
+            "https://lineascan.build",
+            "linea",
+            0xFF61DFFF,
+            rpcFallbacks = listOf("https://linea-rpc.publicnode.com"),
+        ),
         EvmNetwork(
             534352,
             "Scroll",
@@ -150,10 +180,11 @@ object EvmNetworks {
             "Ether",
             "ethereum",
             "https://rpc.scroll.io",
-            "https://scroll.blockscout.com",
+            "https://scrollscan.com",
             "https://scrollscan.com",
             "scroll",
             0xFFEBC28E,
+            rpcFallbacks = listOf("https://scroll-rpc.publicnode.com"),
         ),
         EvmNetwork(
             5000,
@@ -166,6 +197,7 @@ object EvmNetworks {
             "https://explorer.mantle.xyz",
             "mantle",
             0xFF65B3AE,
+            rpcFallbacks = listOf("https://mantle-rpc.publicnode.com"),
         ),
         EvmNetwork(
             100,
@@ -174,14 +206,51 @@ object EvmNetworks {
             "xDAI",
             "xdai",
             "https://rpc.gnosischain.com",
-            "https://gnosis.blockscout.com",
+            "https://gnosisscan.io",
             "https://gnosisscan.io",
             "xdai",
             0xFF04795B,
+            rpcFallbacks = listOf("https://gnosis-rpc.publicnode.com"),
         ),
-        EvmNetwork(25, "Cronos", "CRO", "Cronos", "crypto-com-chain", "https://evm.cronos.org", null, "https://cronoscan.com", "cronos", 0xFF1199FA),
-        EvmNetwork(146, "Sonic", "S", "Sonic", "sonic-3", "https://rpc.soniclabs.com", null, "https://sonicscan.org", "sonic", 0xFFFE9A4C),
-        EvmNetwork(42220, "Celo", "CELO", "Celo", "celo", "https://forno.celo.org", "https://celo.blockscout.com", "https://celoscan.io", "celo", 0xFFFCCF52),
+        EvmNetwork(
+            25,
+            "Cronos",
+            "CRO",
+            "Cronos",
+            "crypto-com-chain",
+            "https://evm.cronos.org",
+            null,
+            "https://cronoscan.com",
+            "cronos",
+            0xFF1199FA,
+            rpcFallbacks = listOf("https://cronos-evm-rpc.publicnode.com"),
+        ),
+        EvmNetwork(
+            146,
+            "Sonic",
+            "S",
+            "Sonic",
+            "sonic-3",
+            "https://rpc.soniclabs.com",
+            null,
+            "https://sonicscan.org",
+            "sonic",
+            0xFFFE9A4C,
+            rpcFallbacks = listOf("https://sonic-rpc.publicnode.com"),
+        ),
+        EvmNetwork(
+            42220,
+            "Celo",
+            "CELO",
+            "Celo",
+            "celo",
+            "https://forno.celo.org",
+            "https://celo.blockscout.com",
+            "https://celoscan.io",
+            "celo",
+            0xFFFCCF52,
+            rpcFallbacks = listOf("https://celo-rpc.publicnode.com"),
+        ),
         EvmNetwork(
             61,
             "Ethereum Classic",
@@ -205,6 +274,7 @@ object EvmNetworks {
             "https://hyperevmscan.io",
             "hyperevm",
             0xFF97FCE4,
+            rpcFallbacks = listOf("https://hyperliquid.drpc.org"),
         ),
         EvmNetwork(
             80094,
@@ -217,8 +287,21 @@ object EvmNetworks {
             "https://berascan.com",
             "berachain",
             0xFF814625,
+            rpcFallbacks = listOf("https://berachain-rpc.publicnode.com"),
         ),
-        EvmNetwork(1329, "Sei EVM", "SEI", "Sei", "sei-network", "https://evm-rpc.sei-apis.com", null, "https://seitrace.com", "sei-v2", 0xFF9E1F19),
+        EvmNetwork(
+            1329,
+            "Sei EVM",
+            "SEI",
+            "Sei",
+            "sei-network",
+            "https://evm-rpc.sei-apis.com",
+            null,
+            "https://seitrace.com",
+            "sei-v2",
+            0xFF9E1F19,
+            rpcFallbacks = listOf("https://sei-evm-rpc.publicnode.com"),
+        ),
         EvmNetwork(
             130,
             "Unichain",
@@ -230,7 +313,19 @@ object EvmNetworks {
             "https://uniscan.xyz",
             "unichain",
             0xFFF50DB4,
+            rpcFallbacks = listOf("https://unichain-rpc.publicnode.com"),
         ),
-        EvmNetwork(81457, "Blast", "ETH", "Ether", "ethereum", "https://rpc.blast.io", null, "https://blastscan.io", "blast", 0xFFDCDC00),
+        EvmNetwork(
+            81457,
+            "Blast",
+            "ETH",
+            "Ether",
+            "ethereum",
+            "https://rpc.blast.io",
+            null,
+            "https://blastscan.io",
+            "blast",
+            0xFFDCDC00,
+        ),
     )
 }
