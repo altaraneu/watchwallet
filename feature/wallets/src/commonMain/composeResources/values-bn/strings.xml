@@ -32,7 +32,7 @@
     <string name="detail_show_qr">QR কোড দেখান</string>
     <string name="detail_qr_description">এই ঠিকানার QR কোড</string>
     <string name="detail_address_evm_hint">একই ঠিকানা প্রতিটি EVM নেটওয়ার্কে কাজ করে। প্রেরক সঠিক নেটওয়ার্ক ব্যবহার করছেন কি না দেখে নিন।</string>
-    <string name="detail_address_cardano_hint">এই ওয়ালেটের ঠিকানাগুলোর একটি।</string>
+    <string name="detail_address_cardano_hint">একটি সার্ভার এটিকে এই ওয়ালেটের ঠিকানা হিসেবে জানিয়েছে; অ্যাপ এটি পুরোপুরি যাচাই করতে পারে না। কাউকে এতে পেমেন্ট করতে বলার আগে আপনার ওয়ালেট অ্যাপের সাথে মিলিয়ে নিন।</string>
     <string name="detail_stake_key">স্টেক কী</string>
     <string name="detail_stake_key_hint">স্টেক কী দিয়ে পেমেন্ট গ্রহণ করা যায় না। আপনার ওয়ালেট অ্যাপ থেকে একটি পেমেন্ট ঠিকানা ব্যবহার করুন।</string>
     <string name="wallets_ungrouped">অন্যান্য ওয়ালেট</string>

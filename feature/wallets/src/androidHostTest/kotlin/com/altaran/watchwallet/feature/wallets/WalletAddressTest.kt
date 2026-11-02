@@ -74,7 +74,13 @@ class WalletAddressTest {
 
     @Test
     fun anExtendedKeyShowsItsFirstUnusedReceiveAddress() {
-        val derived = listOf(row("used", index = 0), row("change", change = true, index = 0, used = false), row("next", index = 1, used = false), row("later", index = 2, used = false))
+        val derived =
+            listOf(
+                row("used", index = 0),
+                row("change", change = true, index = 0, used = false),
+                row("next", index = 1, used = false),
+                row("later", index = 2, used = false),
+            )
         val shown = shownAddress(xpub, derived)!!
         assertEquals("next", shown.value)
         assertEquals(Res.string.address_next_receive, shown.label)

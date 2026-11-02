@@ -32,7 +32,7 @@
     <string name="detail_show_qr">Показать QR-код</string>
     <string name="detail_qr_description">QR-код этого адреса</string>
     <string name="detail_address_evm_hint">Один и тот же адрес работает во всех сетях EVM. Убедитесь, что отправитель использует нужную сеть.</string>
-    <string name="detail_address_cardano_hint">Один из адресов этого кошелька.</string>
+    <string name="detail_address_cardano_hint">Сервер сообщил этот адрес как адрес данного кошелька; приложение не может полностью его проверить. Сравните его с приложением кошелька, прежде чем просить кого-либо заплатить на него.</string>
     <string name="detail_stake_key">Ключ стейкинга</string>
     <string name="detail_stake_key_hint">На ключ стейкинга нельзя получать платежи. Используйте платёжный адрес из приложения кошелька.</string>
     <string name="wallets_ungrouped">Другие кошельки</string>

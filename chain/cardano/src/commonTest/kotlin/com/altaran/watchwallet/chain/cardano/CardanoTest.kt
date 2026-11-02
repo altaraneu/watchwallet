@@ -93,6 +93,18 @@ class CardanoTest {
         ).forEach { answer -> assertEquals(emptyList(), reportedAddress(answer), answer) }
     }
 
+    /**
+     * A known limit, not a wanted result: a base address is two independent hashes, so somebody
+     * else's payment key combined with this stake key passes. Only the wallet's keys could tell.
+     */
+    @Test
+    fun theCheckCannotTellWhoHoldsThePaymentKey() = runTest {
+        val (_, bytes) = assertNotNull(Bech32Codec.decodeBytes(base))
+        val otherPayment = Bech32Codec.encodeBytes("addr", bytes.copyOfRange(0, 1) + ByteArray(28) { 0x22 } + bytes.copyOfRange(29, 57))
+        assertEquals(stake, CardanoAddresses.stakeAddressOf(otherPayment))
+        assertEquals(listOf(otherPayment), reportedAddress("""["$otherPayment"]"""))
+    }
+
     @Test
     fun onlyAnAddressOfTheKeyIsReportedFromAMixedAnswer() = runTest {
         assertEquals(listOf(base), reportedAddress("""["$foreign","$base"]"""))

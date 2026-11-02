@@ -57,10 +57,10 @@ internal data class ShownAddress(
 )
 
 /**
- * Only addresses the app can vouch for are offered for receiving money: what the user entered,
- * what was derived on this device from the extended key, or a Cardano address proven to carry the
- * wallet's stake key. The last one comes from a server, and a row stored by an older version was
- * never checked, so it is checked here on every display.
+ * What is offered for receiving money: what the user entered, what was derived on this device from
+ * the extended key, or a Cardano address carrying the wallet's stake key. The last one comes from a
+ * server, and a row stored by an older version was never checked, so it is checked on every display.
+ * That check cannot cover the address's payment part, see `CardanoAddresses.ownedPaymentAddress`.
  */
 internal fun shownAddress(target: WatchTarget, derived: List<DerivedAddress>): ShownAddress? = when (target) {
     is WatchTarget.ExtendedPublicKey -> {
