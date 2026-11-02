@@ -12,10 +12,10 @@ import com.altaran.watchwallet.core.designsystem.chart.ChartPoint
 import com.altaran.watchwallet.core.model.ChartRange
 import com.altaran.watchwallet.core.model.QuoteCurrency
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest

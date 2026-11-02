@@ -1,3 +1,6 @@
+// Fixtures contain long JSON payloads.
+@file:Suppress("ktlint:standard:max-line-length", "MaxLineLength")
+
 package com.altaran.watchwallet.chain.evm
 
 import com.altaran.watchwallet.chain.api.SyncOptions
@@ -316,8 +319,12 @@ class EvmSyncTest {
             Case("nothing changed", walked = false),
             Case("nonce changed", walked = true, change = { onChain[1] = "0x1" to "0x2" }),
             Case("native balance changed (incoming internal transfer)", walked = true, change = { onChain[1] = "0x2" to "0x1" }),
-            Case("transaction counter changed", walked = true, change = { counters["bs1.test"] = """{"transactions_count":"3","token_transfers_count":"0"}""" }),
-            Case("token transfer counter changed", walked = true, change = { counters["bs1.test"] = """{"transactions_count":"2","token_transfers_count":"1"}""" }),
+            Case("transaction counter changed", walked = true, change = {
+                counters["bs1.test"] = """{"transactions_count":"3","token_transfers_count":"0"}"""
+            }),
+            Case("token transfer counter changed", walked = true, change = {
+                counters["bs1.test"] = """{"transactions_count":"2","token_transfers_count":"1"}"""
+            }),
             Case("token balance changed", walked = true, change = {
                 tokenBalances["bs1.test"] = """[{"token":{"address_hash":"0x11","symbol":"T","name":"T","decimals":"1","type":"ERC-20"},"value":"9"}]"""
             }),

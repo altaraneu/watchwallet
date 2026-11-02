@@ -46,6 +46,7 @@ class ChartHistoriesTest {
     )
 
     @Test
+    @Suppress("LongMethod")
     fun whereABalanceWithoutTransactionsOfItsOwnStarts() {
         val deposit = tx("in", t0, sol, 10)
         val stake = tx("stake", t1, sol, -3, fee = 1, direction = TxDirection.SELF)

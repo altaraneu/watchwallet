@@ -51,11 +51,15 @@ object HttpRetryPolicy {
     private const val RATE_LIMIT_BACKOFF_MS = 2_000L
     private const val MAX_RETRY_AFTER_SECONDS = 10L
     private const val HTTP_TOO_MANY_REQUESTS = 429
+    private const val MILLIS_PER_SECOND = 1_000L
+    private val SERVER_ERRORS = 500..599
 
     fun shouldRetry(status: Int, retryAfter: String?): Boolean = when (status) {
         // Waiting longer than the cap would stall a sync; the next sync tries again.
         HTTP_TOO_MANY_REQUESTS -> (retryAfter?.trim()?.toLongOrNull() ?: 0L) <= MAX_RETRY_AFTER_SECONDS
-        in 500..599 -> true
+
+        in SERVER_ERRORS -> true
+
         else -> false
     }
 
@@ -72,7 +76,7 @@ object HttpRetryPolicy {
     fun delayMillis(status: Int?, retryAfter: String?): Long {
         if (status != HTTP_TOO_MANY_REQUESTS) return BACKOFF_MS
         val seconds = retryAfter?.trim()?.toLongOrNull() ?: return RATE_LIMIT_BACKOFF_MS
-        return seconds.coerceIn(0, MAX_RETRY_AFTER_SECONDS) * 1_000
+        return seconds.coerceIn(0, MAX_RETRY_AFTER_SECONDS) * MILLIS_PER_SECOND
     }
 }
 

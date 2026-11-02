@@ -204,7 +204,8 @@ class PriceRepository(
         val time = now()
         val latest = priceDao.latestPointTime(priceId, code)?.let(Instant::fromEpochMilliseconds) ?: return false
         return if (hourly) {
-            time - latest < STORED_HOURLY_AGE && priceDao.pointCountSince(priceId, code, (time - HOURLY_DAYS.days).toEpochMilliseconds()) >= MIN_STORED_HOURLY_POINTS
+            time - latest < STORED_HOURLY_AGE &&
+                priceDao.pointCountSince(priceId, code, (time - HOURLY_DAYS.days).toEpochMilliseconds()) >= MIN_STORED_HOURLY_POINTS
         } else {
             val earliest = priceDao.earliestPointTime(priceId, code)?.let(Instant::fromEpochMilliseconds) ?: return false
             time - latest < STORED_DAILY_AGE && time - earliest > MIN_STORED_DAILY_SPAN

@@ -172,10 +172,20 @@ class SyncEngine(
                 val failed = result.failedChains.map { it.value }.toSet()
                 state.copy(
                     errors = if (result.allChainsFailed) state.errors + (walletId to "All chains failed") else state.errors - walletId,
-                    partialFailures = if (failed.isEmpty() || result.allChainsFailed) state.partialFailures - walletId else state.partialFailures + (walletId to failed),
+                    partialFailures = if (failed.isEmpty() ||
+                        result.allChainsFailed
+                    ) {
+                        state.partialFailures - walletId
+                    } else {
+                        state.partialFailures + (walletId to failed)
+                    },
                 )
             }
-            log.log("wallet=$walletId done ${(Clock.System.now() - started).inWholeMilliseconds}ms failed=${result.failedChains.joinToString(",") { it.value }}")
+            log.log(
+                "wallet=$walletId done ${(Clock.System.now() - started).inWholeMilliseconds}ms failed=${result.failedChains.joinToString(",") {
+                    it.value
+                }}",
+            )
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (

@@ -150,7 +150,7 @@ class EvmAdapter(
         if (options.manual) health.reset()
         val discovery = isDiscovery(options)
         val targets = if (discovery) networks else networks.filter { it.id in options.activeChains }
-        val outcomes = targets.map { network -> async { syncNetwork(network, address, known, options, discovery, sink) } }.awaitAll()
+        val outcomes = targets.map { network -> async { NetworkSync(network, address, known, options, discovery, sink).run() } }.awaitAll()
         if (outcomes.isNotEmpty() && outcomes.none { it.reachable }) throw ChainDataException("No EVM network reachable")
         outcomes
     }
@@ -189,61 +189,76 @@ class EvmAdapter(
         }
     }
 
-    private suspend fun syncNetwork(
-        network: EvmNetwork,
-        address: String,
-        known: Set<String>,
-        options: SyncOptions,
-        discovery: Boolean,
-        sink: SyncPartSink,
-    ): Outcome {
+    /** One network of one sync; [known] are the stored hashes of the wallet. */
+    private inner class NetworkSync(
+        val network: EvmNetwork,
+        val address: String,
+        val known: Set<String>,
+        val options: SyncOptions,
+        val discovery: Boolean,
+        val sink: SyncPartSink,
+    ) {
         val id = network.id
         val wasActive = id in options.activeChains
         val started = now()
-        val onChain = onChain(network, address, options.trace) ?: return Outcome(network, wasActive, reachable = false, active = wasActive)
-        val counters = counters(network, address, options.trace)
         val indexed = network.blockscoutUrls.isNotEmpty()
-        val indexedRows = (counters?.transactions?.toIntOrNull() ?: 0) + (counters?.tokenTransfers?.toIntOrNull() ?: 0)
-        // The stored data says active and the indexer cannot tell: go on, the balances stay safe.
-        if (!onChain.active && indexedRows == 0 && !(wasActive && indexed && counters == null)) {
-            val conclusive = !indexed || counters != null
-            if (wasActive && conclusive) sink.store(SyncPart(id, balancesComplete = true, active = false))
-            return Outcome(network, wasActive, conclusive = conclusive)
-        }
 
-        val native = AssetAmount(network.nativeAsset, TokenAmount(onChain.balance, 18))
+        /** Cached chain data dropped means the state describes rows that are gone. */
         val previous = known.takeIf { it.isNotEmpty() }?.let { options.chainState[id] }?.let(EvmNetworkState::decode)
-        val previouslyTruncated = previous?.cursors?.isNotEmpty() ?: options.continueHistory
-        if (!indexed) {
-            sink.store(SyncPart(id, listOf(native), balancesComplete = true, active = true))
-            return Outcome(network, wasActive, active = true)
-        }
-        val tokens = withTimeoutOrNull(networkDeadline) {
-            attempt(options.trace, "${id.value} tokens") { tokenBalances(network, address) }
-        }
-        if (tokens == null) {
-            // Stored tokens are kept, never replaced by "no tokens"; the native balance is still news.
-            sink.store(SyncPart(id, listOf(native), balancesComplete = false, active = true))
-            return Outcome(network, wasActive, active = true, failed = true, truncated = previouslyTruncated)
-        }
-        sink.store(SyncPart(id, listOf(native) + tokens.amounts, balancesComplete = true, active = true))
-        options.trace("${id.value} balances ${(now() - started).inWholeMilliseconds}ms")
 
-        // Rebasing tokens change balances without any transaction, so token balances are always
-        // fetched; the balances and counters together tell whether there can be new history.
-        val fingerprint = counters?.let { "${onChain.balance}|${onChain.nonce}|${it.transactions}|${it.tokenTransfers}|${tokens.fingerprint}".hashCode().toString() }
-        val unchanged = !discovery && fingerprint != null && previous?.fingerprint == fingerprint && !previous.pending
-        val history = fetchHistory(network, address, known, previous, options, walkHead = !unchanged, keepPartial = known.isEmpty(), trace = options.trace)
-            ?: return Outcome(network, wasActive, active = true, failed = true, truncated = previouslyTruncated)
-        val state = EvmNetworkState(fingerprint, history.transactions.any { !it.confirmed }, history.cursors)
-        if (history.transactions.isNotEmpty() || !unchanged || previous?.cursors != history.cursors) {
-            sink.store(SyncPart(id, transactions = history.transactions, historyFetched = !unchanged, state = state.encode()))
+        /** A network that fails now stays as unfinished as it was. */
+        val stillTruncated = previous?.cursors?.isNotEmpty() ?: options.continueHistory
+
+        suspend fun run(): Outcome {
+            val onChain = onChain(network, address, options.trace)
+                ?: return Outcome(network, wasActive, reachable = false, active = wasActive, truncated = stillTruncated && wasActive)
+            val counters = counters(network, address, options.trace)
+            val indexedRows = (counters?.transactions?.toIntOrNull() ?: 0) + (counters?.tokenTransfers?.toIntOrNull() ?: 0)
+            // The stored data says active and the indexer cannot tell: go on, the balances stay safe.
+            if (!onChain.active && indexedRows == 0 && !(wasActive && indexed && counters == null)) {
+                val conclusive = !indexed || counters != null
+                if (wasActive && conclusive) sink.store(SyncPart(id, balancesComplete = true, active = false))
+                return Outcome(network, wasActive, conclusive = conclusive)
+            }
+            val native = AssetAmount(network.nativeAsset, TokenAmount(onChain.balance, 18))
+            if (!indexed) {
+                sink.store(SyncPart(id, listOf(native), balancesComplete = true, active = true))
+                return Outcome(network, wasActive, active = true)
+            }
+            val tokens = withTimeoutOrNull(networkDeadline) {
+                attempt(options.trace, "${id.value} tokens") { tokenBalances(network, address) }
+            }
+            if (tokens == null) {
+                // Stored tokens are kept, never replaced by "no tokens"; the native balance is still news.
+                sink.store(SyncPart(id, listOf(native), balancesComplete = false, active = true))
+                return Outcome(network, wasActive, active = true, failed = true, truncated = stillTruncated)
+            }
+            sink.store(SyncPart(id, listOf(native) + tokens.amounts, balancesComplete = true, active = true))
+            options.trace("${id.value} balances ${(now() - started).inWholeMilliseconds}ms")
+            return syncHistory(fingerprint(onChain, counters, tokens))
         }
-        options.trace(
-            "${id.value} history ${if (unchanged) "unchanged" else "walked"} rows=${history.transactions.size} " +
-                "open=${history.cursors.size} total=${(now() - started).inWholeMilliseconds}ms",
-        )
-        return Outcome(network, wasActive, active = true, truncated = history.cursors.isNotEmpty())
+
+        /**
+         * Rebasing tokens change balances without any transaction, so token balances are always
+         * fetched; balances and counters together tell whether there can be new history.
+         */
+        private fun fingerprint(onChain: OnChain, counters: BsCounters?, tokens: TokenBalances): String? = counters?.let {
+            "${onChain.balance}|${onChain.nonce}|${it.transactions}|${it.tokenTransfers}|${tokens.fingerprint}".hashCode().toString()
+        }
+
+        private suspend fun syncHistory(fingerprint: String?): Outcome {
+            val unchanged = !discovery && fingerprint != null && previous?.fingerprint == fingerprint && !previous.pending
+            val history = fetchHistory(network, address, known, previous, options, walkHead = !unchanged, keepPartial = known.isEmpty())
+                ?: return Outcome(network, wasActive, active = true, failed = true, truncated = stillTruncated)
+            val state = EvmNetworkState(fingerprint, history.transactions.any { !it.confirmed }, history.cursors)
+            val nothingNew = unchanged && history.transactions.isEmpty() && previous.cursors == history.cursors
+            if (!nothingNew) sink.store(SyncPart(id, transactions = history.transactions, historyFetched = !unchanged, state = state.encode()))
+            options.trace(
+                "${id.value} history ${if (unchanged) "unchanged" else "walked"} rows=${history.transactions.size} " +
+                    "open=${history.cursors.size} total=${(now() - started).inWholeMilliseconds}ms",
+            )
+            return Outcome(network, wasActive, active = true, truncated = history.cursors.isNotEmpty())
+        }
     }
 
     private class TokenBalances(val amounts: List<AssetAmount>, val fingerprint: Int)
@@ -271,6 +286,7 @@ class EvmAdapter(
      * the known transactions fails the whole network, because storing the other lists would make
      * the failed one stop too early next time (their hashes are shared).
      */
+    @Suppress("LongParameterList")
     private suspend fun fetchHistory(
         network: EvmNetwork,
         address: String,
@@ -279,7 +295,6 @@ class EvmAdapter(
         options: SyncOptions,
         walkHead: Boolean,
         keepPartial: Boolean,
-        trace: (String) -> Unit,
     ): History? = coroutineScope {
         val base = network.blockscoutUrls
         // Marked truncated, but nothing remembered (older app version): walk everything from the top.
@@ -287,7 +302,7 @@ class EvmAdapter(
         val deadline = now() + HISTORY_BUDGET
         fun <T> list(kind: HistoryList, hashOf: (T) -> String?, fetch: suspend (JsonObject?) -> BsPage<T>) = async {
             val label = "${network.id.value} ${kind.name}"
-            walkList(open[kind.name], walkHead, keepPartial, known, deadline, hashOf, trace, label, fetch)
+            walkList(open[kind.name], walkHead, keepPartial, known, deadline, hashOf, options.trace, label, fetch)
         }
         val native = list(HistoryList.NATIVE, BsTransaction::hash) { blockscout.transactions(base, address, it) }
         val internal = list(HistoryList.INTERNAL, BsInternalTransaction::transactionHash) { blockscout.internalTransactions(base, address, it) }
@@ -317,6 +332,7 @@ class EvmAdapter(
      * continues from there to the end of the list, past anything already stored, so no gap can
      * remain. An open [previous] cursor gets a further chunk; its failure only postpones it.
      */
+    @Suppress("LongParameterList", "CyclomaticComplexMethod")
     private suspend fun <T> walkList(
         previous: HistoryCursor?,
         walkHead: Boolean,

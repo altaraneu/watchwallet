@@ -79,6 +79,7 @@ class HostHealth(private val now: () -> Instant = { Clock.System.now() }) {
     }
 
     companion object {
+        private val CLIENT_ERRORS = 400..499
         private const val HTTP_FORBIDDEN = 403
         private const val HTTP_TIMEOUT = 408
         private const val HTTP_TOO_MANY_REQUESTS = 429
@@ -90,7 +91,7 @@ class HostHealth(private val now: () -> Instant = { Clock.System.now() }) {
         /** Client errors other than 403, 408 and 429 are about the request, not the host. */
         fun defaultIsHostFailure(cause: Throwable): Boolean {
             val status = (cause as? ResponseException)?.response?.status?.value ?: return true
-            return status !in 400..499 || status == HTTP_FORBIDDEN || status == HTTP_TIMEOUT || status == HTTP_TOO_MANY_REQUESTS
+            return status !in CLIENT_ERRORS || status == HTTP_FORBIDDEN || status == HTTP_TIMEOUT || status == HTTP_TOO_MANY_REQUESTS
         }
     }
 }

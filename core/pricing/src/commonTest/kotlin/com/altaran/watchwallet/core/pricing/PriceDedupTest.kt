@@ -1,3 +1,6 @@
+// Fixtures contain long JSON payloads.
+@file:Suppress("ktlint:standard:max-line-length", "MaxLineLength")
+
 package com.altaran.watchwallet.core.pricing
 
 import com.altaran.watchwallet.core.network.createHttpClient
@@ -41,7 +44,8 @@ class PriceDedupTest {
     private val offline = createHttpClient(engine = MockEngine { respond("", HttpStatusCode.ServiceUnavailable) })
     private var time = Instant.fromEpochSeconds(1_000)
     private val fallback = CountingProvider()
-    private val layered = LayeredPriceProvider(fallback, ExchangePrices(offline, hosts = listOf("https://ex.test")), FxRates(offline, listOf("https://fx.test"))) { time }
+    private val layered =
+        LayeredPriceProvider(fallback, ExchangePrices(offline, hosts = listOf("https://ex.test")), FxRates(offline, listOf("https://fx.test"))) { time }
 
     @Test
     fun marketRequestsAreSharedAcrossScreens() = runBlocking {
@@ -75,7 +79,11 @@ class PriceDedupTest {
                 else -> {
                     tokenCalls++
                     if (tokenStatus == HttpStatusCode.OK) {
-                        respond("""{"${usdc.substringAfterLast(':')}":{"usd":1.0}}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+                        respond(
+                            """{"${usdc.substringAfterLast(':')}":{"usd":1.0}}""",
+                            HttpStatusCode.OK,
+                            headersOf(HttpHeaders.ContentType, "application/json"),
+                        )
                     } else {
                         respond("x", tokenStatus)
                     }
@@ -143,17 +151,21 @@ class PriceDedupTest {
     private fun exchange(market: Market) = MockEngine { request ->
         val json = headersOf(HttpHeaders.ContentType, "application/json")
         when {
-            request.url.encodedPath.endsWith("exchangeInfo") -> respond("""{"symbols":[{"symbol":"BTCUSDT","status":"${market.status}"}]}""", HttpStatusCode.OK, json)
+            request.url.encodedPath.endsWith("exchangeInfo") -> {
+                respond("""{"symbols":[{"symbol":"BTCUSDT","status":"${market.status}"}]}""", HttpStatusCode.OK, json)
+            }
 
             request.url.encodedPath.endsWith("klines") -> {
                 respond("""[[${(market.close - 3_600) * 1000},"1","2","0.5","50"]]""", HttpStatusCode.OK, json)
             }
 
-            else -> respond(
-                """[{"symbol":"BTCUSDT","lastPrice":"${market.price}","openPrice":"90.0","closeTime":${market.close * 1000},"count":${market.count},"lastId":${market.lastId}}]""",
-                HttpStatusCode.OK,
-                json,
-            )
+            else -> {
+                respond(
+                    """[{"symbol":"BTCUSDT","lastPrice":"${market.price}","openPrice":"90.0","closeTime":${market.close * 1000},"count":${market.count},"lastId":${market.lastId}}]""",
+                    HttpStatusCode.OK,
+                    json,
+                )
+            }
         }
     }
 
@@ -215,7 +227,12 @@ class PriceDedupTest {
 
     private fun layered(market: Market, fallback: FallbackPrices, now: () -> Instant): LayeredPriceProvider {
         val client = createHttpClient(engine = exchange(market))
-        return LayeredPriceProvider(fallback, ExchangePrices(client, hosts = listOf("https://ex.test"), now = now), FxRates(client, listOf("https://fx.test")), now)
+        return LayeredPriceProvider(
+            fallback,
+            ExchangePrices(client, hosts = listOf("https://ex.test"), now = now),
+            FxRates(client, listOf("https://fx.test")),
+            now,
+        )
     }
 
     @Test

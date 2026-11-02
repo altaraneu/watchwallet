@@ -142,8 +142,18 @@ class SyncEngineTest {
         val tokenB = token(NET_B, "0xb")
         // Both networks are stored once.
         val first = FakeAdapter { _, _, sink ->
-            sink.store(SyncPart(NET_A, listOf(amount(native(NET_A), 1)), balancesComplete = true, transactions = listOf(tx(NET_A, "a1")), historyFetched = true))
-            sink.store(SyncPart(NET_B, listOf(amount(native(NET_B), 2), amount(tokenB, 3)), balancesComplete = true, transactions = listOf(tx(NET_B, "b1")), historyFetched = true))
+            sink.store(
+                SyncPart(NET_A, listOf(amount(native(NET_A), 1)), balancesComplete = true, transactions = listOf(tx(NET_A, "a1")), historyFetched = true),
+            )
+            sink.store(
+                SyncPart(
+                    NET_B,
+                    listOf(amount(native(NET_B), 2), amount(tokenB, 3)),
+                    balancesComplete = true,
+                    transactions = listOf(tx(NET_B, "b1")),
+                    historyFetched = true,
+                ),
+            )
             SyncResult(emptyList(), emptyList(), storedProgressively = true)
         }
         engine(first).syncWallet(id).join()
