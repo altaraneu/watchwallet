@@ -23,7 +23,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - name: Check strings
         run: python3 scripts/check_strings.py
       - name: Build, test and lint
@@ -46,6 +46,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - name: Compile all modules for iOS simulator
         run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64 :core:model:iosSimulatorArm64Test --continue
