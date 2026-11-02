@@ -49,4 +49,8 @@
     <string name="confirm_clear">Hapus</string>
     <string name="add_wallet_group_label">Grup (opsional)</string>
     <string name="add_wallet_group_hint">mis. Pasangan, Tabungan, Bisnis</string>
+    <string name="overlap_title">Alamat ini sudah termasuk dalam %1$s</string>
+    <string name="overlap_message">Alamat akan ditambahkan sebagai dompet tersendiri. Jika Anda menguranginya dari %1$s, saldonya tidak dihitung dua kali dan kedua dompet dapat dipantau secara terpisah.</string>
+    <string name="overlap_subtract">Tambah dan kurangi</string>
+    <string name="overlap_keep_both">Tambah, hitung keduanya</string>
 </resources>

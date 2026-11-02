@@ -55,4 +55,8 @@
     <string name="confirm_clear">Удалить</string>
     <string name="add_wallet_group_label">Группа (необязательно)</string>
     <string name="add_wallet_group_hint">например, Партнёр, Сбережения, Бизнес</string>
+    <string name="overlap_title">Этот адрес уже входит в %1$s</string>
+    <string name="overlap_message">Он будет добавлен как отдельный кошелёк. Если вычесть его из %1$s, баланс не будет учитываться дважды, а оба кошелька можно будет отслеживать отдельно.</string>
+    <string name="overlap_subtract">Добавить и вычесть</string>
+    <string name="overlap_keep_both">Добавить и считать оба</string>
 </resources>

@@ -60,6 +60,16 @@ abstract class WalletDao {
     @Update
     abstract suspend fun update(wallet: WalletEntity)
 
+    /** The wallet that derives [address] from its extended key, if any. */
+    @Query(
+        """SELECT w.* FROM wallet w JOIN derived_address d ON d.wallet_id = w.id
+           WHERE w.family = :family AND d.address = :address LIMIT 1""",
+    )
+    abstract suspend fun findByDerivedAddress(family: String, address: String): WalletEntity?
+
+    @Query("UPDATE wallet SET subtract_from_wallet_id = :parentId WHERE id = :id")
+    abstract suspend fun setSubtractFrom(id: Long, parentId: Long?)
+
     @Query("UPDATE wallet SET name = :name WHERE id = :id")
     abstract suspend fun rename(id: Long, name: String)
 

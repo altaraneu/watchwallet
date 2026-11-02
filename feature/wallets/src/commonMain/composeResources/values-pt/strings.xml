@@ -35,4 +35,7 @@
     <string name="detail_stake_key_hint">Uma chave de staking não pode receber pagamentos. Use um endereço de pagamento do seu app de carteira.</string>
     <string name="wallets_ungrouped">Outras carteiras</string>
     <string name="wallets_syncing">Sincronizando</string>
+    <string name="detail_subtracted_from">Subtraído de %1$s para não ser contado duas vezes.</string>
+    <string name="detail_contains_tracked">Sem os endereços acompanhados à parte: %1$s.</string>
+    <string name="detail_stop_subtract">Parar de subtrair</string>
 </resources>

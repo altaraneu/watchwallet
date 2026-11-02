@@ -53,4 +53,8 @@
     <string name="confirm_clear">Borrar</string>
     <string name="add_wallet_group_label">Grupo (opcional)</string>
     <string name="add_wallet_group_hint">p. ej., Pareja, Ahorros, Negocio</string>
+    <string name="overlap_title">Esta dirección ya forma parte de %1$s</string>
+    <string name="overlap_message">Se agregará como billetera propia. Si la restas de %1$s, su saldo no se contará dos veces y podrás seguir ambas billeteras por separado.</string>
+    <string name="overlap_subtract">Agregar y restar</string>
+    <string name="overlap_keep_both">Agregar y contar ambas</string>
 </resources>

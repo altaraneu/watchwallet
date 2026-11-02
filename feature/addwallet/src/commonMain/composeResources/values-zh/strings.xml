@@ -49,4 +49,8 @@
     <string name="confirm_clear">清除</string>
     <string name="add_wallet_group_label">分组(可选)</string>
     <string name="add_wallet_group_hint">例如:伴侣、储蓄、生意</string>
+    <string name="overlap_title">此地址已属于 %1$s</string>
+    <string name="overlap_message">它将作为独立钱包添加。如果从 %1$s 中扣除，其余额不会被重复计算，你也可以分别查看两个钱包。</string>
+    <string name="overlap_subtract">添加并扣除</string>
+    <string name="overlap_keep_both">添加并都计入</string>
 </resources>

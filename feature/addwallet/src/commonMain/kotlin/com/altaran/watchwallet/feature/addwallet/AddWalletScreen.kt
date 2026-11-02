@@ -96,6 +96,7 @@ internal fun AddWalletRoute(
         onBatchImport = onBatchImport,
         onConfirmChain = viewModel::onConfirmChain,
         onConfirmUnused = viewModel::onConfirmUnused,
+        onResolveOverlap = viewModel::onResolveOverlap,
         onClear = viewModel::onClear,
     )
 }
@@ -121,6 +122,7 @@ internal fun AddWalletScreen(
     onBatchImport: (String) -> Unit = {},
     onConfirmChain: (ChainFamily) -> Unit = {},
     onConfirmUnused: () -> Unit = {},
+    onResolveOverlap: (Boolean) -> Unit = {},
     onClear: () -> Unit = {},
 ) {
     val clipboard = LocalClipboard.current
@@ -224,6 +226,7 @@ internal fun AddWalletScreen(
                 onBatchImport = onBatchImport,
                 onConfirmChain = onConfirmChain,
                 onConfirmUnused = onConfirmUnused,
+                onResolveOverlap = onResolveOverlap,
                 onClear = onClear,
             )
         }
@@ -418,6 +421,7 @@ private fun PhaseContent(
     onBatchImport: (String) -> Unit,
     onConfirmChain: (ChainFamily) -> Unit,
     onConfirmUnused: () -> Unit,
+    onResolveOverlap: (Boolean) -> Unit,
     onClear: () -> Unit,
 ) {
     when (val phase = state.phase) {
@@ -459,6 +463,22 @@ private fun PhaseContent(
             ) {
                 androidx.compose.material3.TextButton(onClick = onClear) { Text(stringResource(Res.string.confirm_clear)) }
                 FilledTonalButton(onClick = onConfirmUnused) { Text(stringResource(Res.string.confirm_add_anyway)) }
+            }
+        }
+
+        is AddWalletPhase.ConfirmOverlap -> {
+            val owner = phase.preview.containingWallet?.name.orEmpty()
+            WarningCard(
+                title = stringResource(Res.string.overlap_title, owner),
+                message = stringResource(Res.string.overlap_message, owner),
+            ) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.material3.TextButton(onClick = onClear, enabled = !state.saving) { Text(stringResource(Res.string.confirm_clear)) }
+                    androidx.compose.material3.TextButton(onClick = { onResolveOverlap(false) }, enabled = !state.saving) {
+                        Text(stringResource(Res.string.overlap_keep_both))
+                    }
+                    FilledTonalButton(onClick = { onResolveOverlap(true) }, enabled = !state.saving) { Text(stringResource(Res.string.overlap_subtract)) }
+                }
             }
         }
 

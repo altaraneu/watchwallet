@@ -35,4 +35,7 @@
     <string name="detail_stake_key_hint">На ключ стейкинга нельзя получать платежи. Используйте платёжный адрес из приложения кошелька.</string>
     <string name="wallets_ungrouped">Другие кошельки</string>
     <string name="wallets_syncing">Синхронизация</string>
+    <string name="detail_subtracted_from">Вычитается из %1$s, чтобы не учитываться дважды.</string>
+    <string name="detail_contains_tracked">Без адресов, отслеживаемых отдельно: %1$s.</string>
+    <string name="detail_stop_subtract">Больше не вычитать</string>
 </resources>

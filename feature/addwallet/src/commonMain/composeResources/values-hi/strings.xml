@@ -51,4 +51,8 @@
     <string name="confirm_clear">मिटाएँ</string>
     <string name="add_wallet_group_label">समूह (वैकल्पिक)</string>
     <string name="add_wallet_group_hint">जैसे जीवनसाथी, बचत, व्यवसाय</string>
+    <string name="overlap_title">यह पता पहले से %1$s का हिस्सा है</string>
+    <string name="overlap_message">इसे अलग वॉलेट के रूप में जोड़ा जाएगा। अगर आप इसे %1$s से घटाते हैं, तो इसका बैलेंस दो बार नहीं गिना जाएगा और आप दोनों वॉलेट अलग-अलग देख सकेंगे।</string>
+    <string name="overlap_subtract">जोड़ें और घटाएँ</string>
+    <string name="overlap_keep_both">जोड़ें और दोनों गिनें</string>
 </resources>

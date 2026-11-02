@@ -46,6 +46,8 @@ All notable changes to this project are documented here. The format follows
 - Group field when adding a wallet; Add wallet in the Portfolio top bar.
 - Wallet detail shows the address with copy and QR code, for example to receive a payment.
 - JSON backups include notes and the cost basis entered by the user.
+- An address that already belongs to an extended key wallet can be subtracted from it, so it is
+  not counted twice while both wallets can be followed separately.
 - Languages: Arabic, Bengali, Chinese (Simplified), Czech, English, French, German, Hindi,
   Indonesian, Japanese, Portuguese, Russian and Spanish.
 

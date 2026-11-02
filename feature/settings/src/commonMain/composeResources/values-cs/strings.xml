@@ -76,7 +76,7 @@
         <item quantity="other">%1$d peněženek s historií a skupinami</item>
     </plurals>
     <string name="settings_delete_all_title">Smazat všechny peněženky?</string>
-    <string name="settings_delete_all_message">Ze zařízení se odstraní všechny peněženky, jejich uložená historie i skupiny. Nastavení a sledované mince zůstanou. Na žádném blockchainu se nic nezmění. Zvažte nejdřív export zálohy.</string>
+    <string name="settings_delete_all_message">Ze zařízení se odstraní všechny peněženky, jejich uložená historie i skupiny. Nastavení a sledované mince zůstanou. Na žádném blockchainu se nic nezmění. Zvaž nejdřív export zálohy.</string>
     <string name="settings_delete_all_confirm">Smazat vše</string>
     <string name="settings_delete_all_cancel">Zrušit</string>
     <string name="settings_remote_icons">Stahovat ikony mincí</string>

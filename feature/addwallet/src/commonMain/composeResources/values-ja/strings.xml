@@ -49,4 +49,8 @@
     <string name="confirm_clear">消去</string>
     <string name="add_wallet_group_label">グループ(任意)</string>
     <string name="add_wallet_group_hint">例:パートナー、貯蓄、事業</string>
+    <string name="overlap_title">このアドレスはすでに %1$s に含まれています</string>
+    <string name="overlap_message">別のウォレットとして追加されます。%1$s から差し引くと残高が二重に計上されず、両方のウォレットを別々に確認できます。</string>
+    <string name="overlap_subtract">追加して差し引く</string>
+    <string name="overlap_keep_both">追加して両方計上</string>
 </resources>

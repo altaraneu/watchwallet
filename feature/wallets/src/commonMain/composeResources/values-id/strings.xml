@@ -35,4 +35,7 @@
     <string name="detail_stake_key_hint">Kunci stake tidak dapat menerima pembayaran. Gunakan alamat pembayaran dari aplikasi dompet Anda.</string>
     <string name="wallets_ungrouped">Dompet lainnya</string>
     <string name="wallets_syncing">Menyinkronkan</string>
+    <string name="detail_subtracted_from">Dikurangi dari %1$s agar tidak dihitung dua kali.</string>
+    <string name="detail_contains_tracked">Tanpa alamat yang dipantau terpisah: %1$s.</string>
+    <string name="detail_stop_subtract">Berhenti mengurangi</string>
 </resources>

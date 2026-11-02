@@ -82,6 +82,10 @@ internal class WalletsViewModel(
 
 data class WalletDetailUiState(
     val wallet: Wallet? = null,
+    /** The wallet this address is subtracted from, if any. */
+    val subtractedFromName: String? = null,
+    /** Addresses tracked separately and taken out of this wallet. */
+    val separateWalletNames: List<String> = emptyList(),
     val deleted: Boolean = false,
     val currency: QuoteCurrency = QuoteCurrency.DEFAULT,
     val value: Double? = null,
@@ -128,14 +132,16 @@ internal class WalletDetailViewModel(
     private val snapshot = currency.flatMapLatest { c -> portfolioRepository.snapshot(c, setOf(walletId)).map { c to it } }
 
     val state: StateFlow<WalletDetailUiState> = combine(
-        walletRepository.wallet(walletId),
+        combine(walletRepository.wallet(walletId), walletRepository.activeWallets) { wallet, all -> wallet to all },
         snapshot,
         combine(walletRepository.transactions(walletId), walletRepository.derivedAddresses(walletId), walletRepository.assets) { a, b, c -> Triple(a, b, c) },
         combine(chart, range, costBasis.entries) { c, r, costs -> Triple(c, r, costs) },
         syncEngine.state,
-    ) { wallet, (cur, snap), (txs, derived, assets), (points, selectedRange, costs), sync ->
+    ) { (wallet, all), (cur, snap), (txs, derived, assets), (points, selectedRange, costs), sync ->
         WalletDetailUiState(
             wallet = wallet,
+            subtractedFromName = all.firstOrNull { it.id == wallet?.subtractFromWalletId }?.name,
+            separateWalletNames = all.filter { it.subtractFromWalletId == walletId }.map { it.name },
             deleted = wallet == null,
             currency = cur,
             value = snap.totalValue,
@@ -169,6 +175,11 @@ internal class WalletDetailViewModel(
 
     fun refresh() {
         syncEngine.syncWallet(walletId)
+    }
+
+    /** Counts this address in the larger wallet again. */
+    fun stopSubtracting() {
+        viewModelScope.launch { walletRepository.setSubtractFrom(walletId, null) }
     }
 
     fun rename(name: String) {

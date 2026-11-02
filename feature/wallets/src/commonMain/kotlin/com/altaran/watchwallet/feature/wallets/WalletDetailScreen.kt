@@ -89,6 +89,7 @@ internal fun WalletDetailRoute(
         onRefresh = viewModel::refresh,
         onRangeChange = viewModel::setRange,
         onRename = viewModel::rename,
+        onStopSubtracting = viewModel::stopSubtracting,
         onSetCost = viewModel::setCost,
         onDelete = {
             viewModel.delete()
@@ -112,6 +113,7 @@ internal fun WalletDetailScreen(
     onDelete: () -> Unit,
     onOpenHolding: (String) -> Unit,
     onSetCost: (TxView, Double?) -> Unit = { _, _ -> },
+    onStopSubtracting: () -> Unit = {},
 ) {
     // Only the key is saved (a TxView is not saveable); the view is rebuilt from the state.
     var selectedTxKey by rememberSaveable { mutableStateOf<String?>(null) }
@@ -161,6 +163,12 @@ internal fun WalletDetailScreen(
                                 uriHandler.openUri(url)
                             })
                         }
+                        if (state.subtractedFromName != null) {
+                            DropdownMenuItem(text = { Text(stringResource(Res.string.detail_stop_subtract)) }, onClick = {
+                                menuOpen = false
+                                onStopSubtracting()
+                            })
+                        }
                         DropdownMenuItem(text = { Text(stringResource(Res.string.detail_delete)) }, onClick = {
                             menuOpen = false
                             deleteOpen = true
@@ -184,6 +192,7 @@ internal fun WalletDetailScreen(
                         }
                         ActiveChains(state, chain)
                         wallet?.target?.let { WalletAddress(it, state.derivedAddresses) }
+                        OverlapHint(state)
                         if (state.failed) {
                             Text(stringResource(Res.string.wallets_sync_failed), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
                         }
@@ -328,6 +337,22 @@ private fun androidx.compose.foundation.lazy.LazyListScope.addresses(state: Wall
             )
         }
     }
+}
+
+/** Explains why the balance differs from what the chain reports for the whole key or address. */
+@Composable
+private fun OverlapHint(state: WalletDetailUiState) {
+    val text = when {
+        state.subtractedFromName != null -> stringResource(Res.string.detail_subtracted_from, state.subtractedFromName.orEmpty())
+        state.separateWalletNames.isNotEmpty() -> stringResource(Res.string.detail_contains_tracked, state.separateWalletNames.joinToString(", "))
+        else -> return
+    }
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+    )
 }
 
 @Composable

@@ -35,4 +35,7 @@
     <string name="detail_stake_key_hint">স্টেক কী দিয়ে পেমেন্ট গ্রহণ করা যায় না। আপনার ওয়ালেট অ্যাপ থেকে একটি পেমেন্ট ঠিকানা ব্যবহার করুন।</string>
     <string name="wallets_ungrouped">অন্যান্য ওয়ালেট</string>
     <string name="wallets_syncing">সিঙ্ক হচ্ছে</string>
+    <string name="detail_subtracted_from">দুবার গণনা এড়াতে %1$s থেকে বিয়োগ করা হয়েছে।</string>
+    <string name="detail_contains_tracked">আলাদাভাবে ট্র্যাক করা ঠিকানা বাদে: %1$s।</string>
+    <string name="detail_stop_subtract">বিয়োগ করা বন্ধ করুন</string>
 </resources>

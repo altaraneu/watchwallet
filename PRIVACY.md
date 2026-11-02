@@ -81,7 +81,7 @@ which address or transaction you looked at. Explorers used:
 - Bitcoin `mempool.space`; Litecoin `litecoinspace.org`; Dogecoin and Bitcoin Cash `blockchair.com`
 - EVM networks: `etherscan.io`, `bscscan.com`, `arbiscan.io`, `optimistic.etherscan.io`,
   `basescan.org`, `polygonscan.com`, `snowtrace.io`, `explorer.zksync.io`, `lineascan.build`,
-  `scrollscan.com`, `explorer.mantle.xyz`, `gnosisscan.io`, `cronoscan.com`, `sonicscan.org`,
+  `scrollscan.com`, `explorer.optimism.io`, `explorer.mantle.xyz`, `gnosisscan.io`, `cronoscan.com`, `sonicscan.org`,
   `celoscan.io`, `etc.blockscout.com`, `hyperevmscan.io`, `berascan.com`, `seitrace.com`,
   `uniscan.xyz`, `blastscan.io`
 - Solana `solscan.io`; XRP `livenet.xrpl.org`; Tron `tronscan.org`; TON `tonviewer.com`;

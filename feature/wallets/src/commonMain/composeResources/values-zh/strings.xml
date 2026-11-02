@@ -35,4 +35,7 @@
     <string name="detail_stake_key_hint">质押密钥无法接收付款。请使用钱包应用中的收款地址。</string>
     <string name="wallets_ungrouped">其他钱包</string>
     <string name="wallets_syncing">正在同步</string>
+    <string name="detail_subtracted_from">已从 %1$s 中扣除，以免重复计算。</string>
+    <string name="detail_contains_tracked">不含单独跟踪的地址：%1$s。</string>
+    <string name="detail_stop_subtract">停止扣除</string>
 </resources>

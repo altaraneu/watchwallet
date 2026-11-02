@@ -35,4 +35,7 @@
     <string name="detail_stake_key_hint">Una clave de staking no puede recibir pagos. Usa una dirección de pago de tu app de billetera.</string>
     <string name="wallets_ungrouped">Otras billeteras</string>
     <string name="wallets_syncing">Sincronizando</string>
+    <string name="detail_subtracted_from">Se resta de %1$s para no contarla dos veces.</string>
+    <string name="detail_contains_tracked">Sin las direcciones seguidas por separado: %1$s.</string>
+    <string name="detail_stop_subtract">Dejar de restar</string>
 </resources>

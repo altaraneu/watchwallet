@@ -51,4 +51,8 @@
     <string name="confirm_clear">মুছুন</string>
     <string name="add_wallet_group_label">গ্রুপ (ঐচ্ছিক)</string>
     <string name="add_wallet_group_hint">যেমন সঙ্গী, সঞ্চয়, ব্যবসা</string>
+    <string name="overlap_title">এই ঠিকানাটি ইতিমধ্যে %1$s-এর অংশ</string>
+    <string name="overlap_message">এটি আলাদা ওয়ালেট হিসেবে যোগ হবে। %1$s থেকে বিয়োগ করলে এর ব্যালেন্স দুবার গণনা হবে না এবং দুটি ওয়ালেট আলাদাভাবে দেখতে পারবেন।</string>
+    <string name="overlap_subtract">যোগ ও বিয়োগ করুন</string>
+    <string name="overlap_keep_both">যোগ করে দুটোই গণনা করুন</string>
 </resources>

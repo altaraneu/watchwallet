@@ -51,4 +51,8 @@
     <string name="confirm_clear">Löschen</string>
     <string name="add_wallet_group_label">Gruppe (optional)</string>
     <string name="add_wallet_group_hint">z. B. Partner, Ersparnisse, Geschäft</string>
+    <string name="overlap_title">Diese Adresse gehört bereits zu %1$s</string>
+    <string name="overlap_message">Sie wird als eigene Wallet hinzugefügt. Wenn du sie von %1$s abziehst, wird ihr Guthaben nicht doppelt gezählt und du kannst beide Wallets getrennt verfolgen.</string>
+    <string name="overlap_subtract">Hinzufügen und abziehen</string>
+    <string name="overlap_keep_both">Hinzufügen, beide zählen</string>
 </resources>

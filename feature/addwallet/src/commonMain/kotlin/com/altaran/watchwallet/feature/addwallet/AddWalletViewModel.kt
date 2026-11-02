@@ -34,6 +34,9 @@ sealed interface AddWalletPhase {
     /** The chosen address has never been used: second, stronger warning before saving. */
     data class ConfirmUnused(val preview: CandidatePreview) : AddWalletPhase
 
+    /** The address already belongs to an extended key wallet: subtract it there, or count both? */
+    data class ConfirmOverlap(val preview: CandidatePreview, val defaultName: String) : AddWalletPhase
+
     data object Unrecognized : AddWalletPhase
 
     /** Valid input; the user confirms one preview (pre-selected: the first with activity). */
@@ -182,9 +185,24 @@ internal class AddWalletViewModel(
             _state.update { it.copy(savedWalletId = existing) }
             return
         }
+        if (preview.containingWallet != null) {
+            _state.update { it.copy(phase = AddWalletPhase.ConfirmOverlap(preview, defaultName), autoSave = false) }
+            return
+        }
+        persist(preview, defaultName, subtractFrom = null)
+    }
+
+    /** The user's answer to [AddWalletPhase.ConfirmOverlap]; the wallet is added either way. */
+    fun onResolveOverlap(subtract: Boolean) {
+        val phase = _state.value.phase as? AddWalletPhase.ConfirmOverlap ?: return
+        persist(phase.preview, phase.defaultName, subtractFrom = phase.preview.containingWallet?.id.takeIf { subtract })
+    }
+
+    private fun persist(preview: CandidatePreview, defaultName: String, subtractFrom: Long?) {
+        val current = _state.value
         _state.update { it.copy(saving = true) }
         viewModelScope.launch {
-            val id = service.save(preview.candidate.target, current.name.ifBlank { defaultName }, preview.probe, current.groupName)
+            val id = service.save(preview.candidate.target, current.name.ifBlank { defaultName }, preview.probe, current.groupName, subtractFrom)
             _state.update { it.copy(saving = false, savedWalletId = id) }
         }
     }

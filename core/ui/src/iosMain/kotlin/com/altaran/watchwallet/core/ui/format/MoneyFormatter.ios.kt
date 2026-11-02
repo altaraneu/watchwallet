@@ -22,6 +22,9 @@ private val NO_BREAK_SPACE = Char(0x00A0)
 private val MINUS_SIGN = Char(0x2212)
 
 actual object MoneyFormatter {
+    // No right-to-left translation needs this on iOS yet; the app is not shipped there.
+    actual fun isolated(text: String): String = text
+
     actual fun format(value: Double, currency: QuoteCurrency): String = format(value, currency, currency.displayDecimals)
 
     private fun format(value: Double, currency: QuoteCurrency, decimals: Int): String {

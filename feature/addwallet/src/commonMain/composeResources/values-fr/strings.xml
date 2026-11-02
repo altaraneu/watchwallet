@@ -53,4 +53,8 @@
     <string name="confirm_clear">Effacer</string>
     <string name="add_wallet_group_label">Groupe (facultatif)</string>
     <string name="add_wallet_group_hint">ex. : Conjoint, Épargne, Entreprise</string>
+    <string name="overlap_title">Cette adresse fait déjà partie de %1$s</string>
+    <string name="overlap_message">Elle sera ajoutée comme portefeuille distinct. Si vous la soustrayez de %1$s, son solde ne sera pas compté deux fois et vous pourrez suivre les deux portefeuilles séparément.</string>
+    <string name="overlap_subtract">Ajouter et soustraire</string>
+    <string name="overlap_keep_both">Ajouter et compter les deux</string>
 </resources>

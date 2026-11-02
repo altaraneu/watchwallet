@@ -196,7 +196,7 @@ fun TransactionRow(tx: TxView, onClick: () -> Unit) {
         }
         Column(horizontalAlignment = Alignment.End) {
             AmountText(
-                signed(tx.amount) + MoneyFormatter.formatCrypto(abs(tx.amount), tx.symbol),
+                MoneyFormatter.isolated(signed(tx.amount) + MoneyFormatter.formatCrypto(abs(tx.amount), tx.symbol)),
                 style = MaterialTheme.typography.titleSmall,
                 color = if (tx.amount > 0) colors.positive else MaterialTheme.colorScheme.onSurface,
             )
@@ -229,7 +229,10 @@ fun TransactionSheet(tx: TxView, onEditCost: () -> Unit, onOpenExplorer: (String
                 if (tx.confirmed) directionLabel(tx.direction) else stringResource(Res.string.tx_label_pending, directionLabel(tx.direction)),
                 style = MaterialTheme.typography.titleLarge,
             )
-            AmountText(signed(tx.amount) + MoneyFormatter.formatCrypto(abs(tx.amount), tx.symbol), style = MaterialTheme.typography.headlineSmall)
+            AmountText(
+                MoneyFormatter.isolated(signed(tx.amount) + MoneyFormatter.formatCrypto(abs(tx.amount), tx.symbol)),
+                style = MaterialTheme.typography.headlineSmall,
+            )
             Text(
                 listOfNotNull(DateFormatter.dateTime(tx.time), tx.walletName, tx.chainName).joinToString(" · "),
                 style = MaterialTheme.typography.bodyMedium,

@@ -53,4 +53,8 @@
     <string name="confirm_clear">Apagar</string>
     <string name="add_wallet_group_label">Grupo (opcional)</string>
     <string name="add_wallet_group_hint">ex.: Parceiro, Poupança, Empresa</string>
+    <string name="overlap_title">Este endereço já faz parte de %1$s</string>
+    <string name="overlap_message">Ele será adicionado como carteira própria. Se você subtraí-lo de %1$s, o saldo não será contado duas vezes e você poderá acompanhar as duas carteiras separadamente.</string>
+    <string name="overlap_subtract">Adicionar e subtrair</string>
+    <string name="overlap_keep_both">Adicionar e contar ambas</string>
 </resources>

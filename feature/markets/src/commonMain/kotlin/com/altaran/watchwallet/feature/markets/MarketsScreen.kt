@@ -394,7 +394,7 @@ private fun formatCryptoChange(value: Double, symbol: String): String {
         value < 0 -> MINUS_SIGN.toString()
         else -> ""
     }
-    return sign + MoneyFormatter.formatCrypto(kotlin.math.abs(value), symbol)
+    return MoneyFormatter.isolated(sign + MoneyFormatter.formatCrypto(kotlin.math.abs(value), symbol))
 }
 
 private fun priceDecimals(price: Double?): Int = when {

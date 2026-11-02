@@ -26,6 +26,8 @@ data class CandidatePreview(
     val failed: Boolean,
     /** Id of the wallet that already tracks this target, if any. */
     val existingWalletId: Long?,
+    /** The extended key wallet that already contains this address, if any. */
+    val containingWallet: com.altaran.watchwallet.core.model.Wallet? = null,
 )
 
 /**
@@ -76,7 +78,8 @@ class AddWalletService(
                 val existing = walletRepository.findExisting(candidate.target)
                 val adapter = registry.adapter(candidate.target)
                 val probe = adapter?.let { withTimeoutOrNull(PROBE_TIMEOUT) { runCatching { it.probe(candidate.target) }.getOrNull() } }
-                CandidatePreview(candidate, probe, failed = probe == null, existingWalletId = existing)
+                val containing = if (existing == null) walletRepository.findContaining(candidate.target) else null
+                CandidatePreview(candidate, probe, failed = probe == null, existingWalletId = existing, containingWallet = containing)
             }
         }.awaitAll()
     }
@@ -86,10 +89,10 @@ class AddWalletService(
      * same key on the sister chains (same coin type, different prefix) is checked as well, and
      * the ones with activity are added as separate wallets named "<name> (<chain>)".
      */
-    suspend fun save(target: WatchTarget, name: String, probe: ProbeResult?, groupName: String? = null): Long {
+    suspend fun save(target: WatchTarget, name: String, probe: ProbeResult?, groupName: String? = null, subtractFrom: Long? = null): Long {
         // A group is a person or purpose ("Partner", "Savings"); created on first use.
         val groupId = groupName?.trim()?.takeIf { it.isNotEmpty() }?.let { walletRepository.findGroup(it) ?: walletRepository.createGroup(it) }
-        val id = walletRepository.addWallet(target, name, probe?.activeChains.orEmpty(), groupId)
+        val id = walletRepository.addWallet(target, name, probe?.activeChains.orEmpty(), groupId, subtractFrom = subtractFrom)
         syncEngine.syncWallet(id)
         if (target is WatchTarget.Address && target.family == ChainFamily.COSMOS) addRelatedCosmos(target, name, groupId)
         return id

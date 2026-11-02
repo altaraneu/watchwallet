@@ -55,4 +55,8 @@
     <!-- Optional group for the new wallet: a person or purpose. -->
     <string name="add_wallet_group_label">Group (optional)</string>
     <string name="add_wallet_group_hint">e.g. Partner, Savings, Business</string>
+    <string name="overlap_title">This address is already part of %1$s</string>
+    <string name="overlap_message">It will be added as its own wallet. If you subtract it from %1$s, its balance is not counted twice and you can follow both wallets separately.</string>
+    <string name="overlap_subtract">Add and subtract</string>
+    <string name="overlap_keep_both">Add and count both</string>
 </resources>

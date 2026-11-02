@@ -35,4 +35,7 @@
     <string name="detail_stake_key_hint">لا يمكن لمفتاح Stake استلام المدفوعات. استخدم عنوان دفع من تطبيق محفظتك.</string>
     <string name="wallets_ungrouped">محافظ أخرى</string>
     <string name="wallets_syncing">جارٍ المزامنة</string>
+    <string name="detail_subtracted_from">يُطرح من %1$s حتى لا يُحتسب مرتين.</string>
+    <string name="detail_contains_tracked">باستثناء العناوين المتابَعة على حدة: %1$s.</string>
+    <string name="detail_stop_subtract">إيقاف الطرح</string>
 </resources>

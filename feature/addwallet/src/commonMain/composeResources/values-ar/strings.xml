@@ -59,4 +59,8 @@
     <string name="confirm_clear">مسح</string>
     <string name="add_wallet_group_label">المجموعة (اختياري)</string>
     <string name="add_wallet_group_hint">مثل: الشريك، المدخرات، العمل</string>
+    <string name="overlap_title">هذا العنوان جزء بالفعل من %1$s</string>
+    <string name="overlap_message">ستتم إضافته كمحفظة مستقلة. إذا طرحته من %1$s فلن يُحتسب رصيده مرتين ويمكنك متابعة المحفظتين كلٍّ على حدة.</string>
+    <string name="overlap_subtract">إضافة وطرح</string>
+    <string name="overlap_keep_both">إضافة واحتساب كليهما</string>
 </resources>

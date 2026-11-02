@@ -35,4 +35,7 @@
     <string name="detail_stake_key_hint">Une clé de staking ne peut pas recevoir de paiements. Utilisez une adresse de paiement de votre application de portefeuille.</string>
     <string name="wallets_ungrouped">Autres portefeuilles</string>
     <string name="wallets_syncing">Synchronisation</string>
+    <string name="detail_subtracted_from">Soustraite de %1$s pour ne pas être comptée deux fois.</string>
+    <string name="detail_contains_tracked">Hors adresses suivies séparément : %1$s.</string>
+    <string name="detail_stop_subtract">Ne plus soustraire</string>
 </resources>

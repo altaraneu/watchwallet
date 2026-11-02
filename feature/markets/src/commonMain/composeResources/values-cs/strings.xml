@@ -40,7 +40,7 @@
     <string name="asset_chart_a11y">Graf ceny %1$s, poslední cena %2$s</string>
     <string name="asset_cost_basis">Pořizovací cena (USD)</string>
     <string name="asset_unrealized">Nerealizovaný zisk/ztráta</string>
-    <string name="asset_cost_incomplete">Některé převody zatím nemají pořizovací cenu; nastavte ji v aktivitě peněženky.</string>
+    <string name="asset_cost_incomplete">Některé převody zatím nemají pořizovací cenu; nastav ji v aktivitě peněženky.</string>
     <string name="asset_in_wallets">Ve tvých peněženkách</string>
     <string name="asset_activity">Aktivita</string>
     <string name="asset_title">%1$s (%2$s)</string>

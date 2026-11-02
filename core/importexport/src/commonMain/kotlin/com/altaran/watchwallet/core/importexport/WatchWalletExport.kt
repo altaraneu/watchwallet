@@ -74,6 +74,8 @@ data class ExportedWallet(
     val gapLimit: Int? = null,
     /** Cost basis entered by the user (automatic values are simply recalculated). */
     val costs: List<ExportedCost> = emptyList(),
+    /** [value] of the extended key wallet this address is subtracted from. */
+    val subtractFrom: String? = null,
 ) {
     fun toTarget(): WatchTarget? {
         val family = ChainFamily.entries.firstOrNull { it.name == family } ?: return null

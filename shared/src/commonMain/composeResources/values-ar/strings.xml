@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="nav_portfolio">المحفظة الاستثمارية</string>
+    <string name="nav_portfolio">الاستثمارات</string>
     <string name="nav_wallets">المحافظ</string>
     <string name="nav_markets">الأسواق</string>
     <string name="nav_settings">الإعدادات</string>

@@ -60,6 +60,7 @@ class MigrationTest {
         val db = Room.databaseBuilder<WatchWalletDatabase>(context, file.absolutePath).buildWatchWalletDatabase()
         val dao = db.walletDao()
         assertEquals(listOf("Savings"), dao.activeWallets().map { it.name })
+        assertEquals(null, dao.activeWallets().single().subtractFromWalletId)
         dao.upsertCostBasis(listOf(TxCostBasisEntity(1, "tx1", "bitcoin:native", 1234.5, userSet = true, updatedAt = 0)))
         assertEquals(1234.5, dao.costBasis().single().valueUsd, 0.0)
         db.close()

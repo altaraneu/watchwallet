@@ -29,6 +29,12 @@ expect object MoneyFormatter {
 
     /** Plain percentage without sign, for example `42 %`. */
     fun formatPercent(fraction: Double): String
+
+    /**
+     * Keeps a formatted amount together in right-to-left languages, where the sign and the
+     * currency would otherwise jump to the wrong side. For amounts built from several parts.
+     */
+    fun isolated(text: String): String
 }
 
 /** Locale-aware date formatting. */

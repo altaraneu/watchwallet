@@ -18,23 +18,36 @@ private val MINUS_SIGN = Char(0x2212)
 
 actual object MoneyFormatter {
     actual fun format(value: Double, currency: QuoteCurrency): String =
-        format(value, currency, Locale.getDefault())
+        isolated(format(value, currency, Locale.getDefault()))
 
     actual fun formatChange(value: Double, currency: QuoteCurrency): String =
-        formatChange(value, currency, Locale.getDefault())
+        isolated(formatChange(value, currency, Locale.getDefault()))
 
     actual fun formatPercentChange(fraction: Double): String =
-        formatPercentChange(fraction, Locale.getDefault())
+        isolated(formatPercentChange(fraction, Locale.getDefault()))
 
     actual fun formatPrice(value: Double, currency: QuoteCurrency): String =
-        format(value, currency, Locale.getDefault(), FormatRules.priceDecimals(value, currency.displayDecimals))
+        isolated(format(value, currency, Locale.getDefault(), FormatRules.priceDecimals(value, currency.displayDecimals)))
 
     actual fun formatCrypto(value: Double, symbol: String, maxDecimals: Int): String =
-        formatCrypto(value, symbol, maxDecimals, Locale.getDefault())
+        isolated(formatCrypto(value, symbol, maxDecimals, Locale.getDefault()))
 
-    actual fun formatPercent(fraction: Double): String = NumberFormat.getPercentInstance(Locale.getDefault()).apply {
-        maximumFractionDigits = if (fraction < 0.1) 1 else 0
-    }.format(fraction)
+    actual fun formatPercent(fraction: Double): String = isolated(
+        NumberFormat.getPercentInstance(Locale.getDefault()).apply {
+            maximumFractionDigits = if (fraction < 0.1) 1 else 0
+        }.format(fraction),
+    )
+
+    actual fun isolated(text: String): String =
+        if (android.text.TextUtils.getLayoutDirectionFromLocale(Locale.getDefault()) == android.view.View.LAYOUT_DIRECTION_RTL) {
+            "$LEFT_TO_RIGHT_ISOLATE$text$POP_DIRECTIONAL_ISOLATE"
+        } else {
+            text
+        }
+
+    // Built from code points: ktlint rewrites unicode escapes.
+    private val LEFT_TO_RIGHT_ISOLATE = Char(0x2066)
+    private val POP_DIRECTIONAL_ISOLATE = Char(0x2069)
 
     internal fun format(value: Double, currency: QuoteCurrency, locale: Locale, decimals: Int = currency.displayDecimals): String =
         when (currency.kind) {

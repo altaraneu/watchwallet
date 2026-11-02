@@ -27,6 +27,7 @@ import kotlinx.coroutines.IO
  * - 2: watch target columns on wallet; asset, wallet_balance, wallet_tx, derived_address,
  *      price_current, price_point, watchlist (additive auto-migration, no data loss)
  * - 3: tx_cost_basis (additive auto-migration, no data loss)
+ * - 4: wallet.subtract_from_wallet_id (additive auto-migration, no data loss)
  */
 @Database(
     entities = [
@@ -41,9 +42,9 @@ import kotlinx.coroutines.IO
         WatchlistEntity::class,
         TxCostBasisEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
 )
 @ConstructedBy(WatchWalletDatabaseConstructor::class)
 abstract class WatchWalletDatabase : RoomDatabase() {

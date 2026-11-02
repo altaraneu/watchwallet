@@ -23,6 +23,8 @@ data class BatchEntry(
     val unsupportedFamily: ChainFamily? = null,
     /** Cost basis entered by the user (JSON backups only). */
     val costs: List<ExportedCost> = emptyList(),
+    /** Value of the wallet this address is subtracted from (JSON backups only). */
+    val subtractFrom: String? = null,
 )
 
 sealed interface BatchResult {
@@ -95,8 +97,19 @@ object BatchParser {
         secretIn(export.groups.map { it.name })?.let { return BatchResult.SecretDetected(it, 0) }
         // Every field on its own, before any entry is built.
         export.wallets.forEachIndexed { i, wallet ->
-            val fields = listOf(wallet.value, wallet.name, wallet.group, wallet.notes, wallet.family, wallet.chain, wallet.kind, wallet.scriptType) +
-                wallet.tags + wallet.costs.map { it.ref }
+            val fields =
+                listOf(
+                    wallet.value,
+                    wallet.name,
+                    wallet.group,
+                    wallet.notes,
+                    wallet.family,
+                    wallet.chain,
+                    wallet.kind,
+                    wallet.scriptType,
+                    wallet.subtractFrom,
+                ) +
+                    wallet.tags + wallet.costs.map { it.ref }
             secretIn(fields)?.let { return BatchResult.SecretDetected(it, i + 1) }
         }
         return fromCheckedExport(export)
@@ -115,6 +128,7 @@ object BatchParser {
                     status = if (target != null) EntryStatus.READY else EntryStatus.INVALID,
                     candidates = listOfNotNull(target),
                     costs = wallet.costs,
+                    subtractFrom = wallet.subtractFrom,
                 )
             },
         ),

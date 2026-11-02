@@ -36,4 +36,7 @@
     <string name="wallets_ungrouped">Other wallets</string>
     <!-- Screen reader label of the progress indicator on a wallet row being refreshed. -->
     <string name="wallets_syncing">Syncing</string>
+    <string name="detail_subtracted_from">Subtracted from %1$s so it is not counted twice.</string>
+    <string name="detail_contains_tracked">Excludes addresses tracked separately: %1$s.</string>
+    <string name="detail_stop_subtract">Stop subtracting</string>
 </resources>

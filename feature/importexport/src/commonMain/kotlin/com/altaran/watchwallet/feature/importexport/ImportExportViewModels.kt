@@ -150,6 +150,7 @@ internal class ImportViewModel(
             suspend fun groupId(name: String?): Long? = name?.let {
                 groupIds.getOrPut(it) { walletRepository.findGroup(it) ?: walletRepository.createGroup(it) }
             }
+            val addedLinks = mutableMapOf<Long, String>()
             phase.rows.forEach { row ->
                 val target = row.entry.candidates.getOrNull(row.chosen)
                 when {
@@ -167,6 +168,7 @@ internal class ImportViewModel(
                             groupId(row.entry.group ?: commonGroup),
                             row.entry.notes,
                         )
+                        row.entry.subtractFrom?.let { addedLinks[walletId] = it }
                         costBasis.restoreUserValues(
                             row.entry.costs.mapNotNull { cost ->
                                 cost.decoded()?.let { (hash, assetId) -> CostKey(walletId, hash, assetId) to cost.valueUsd }
@@ -174,6 +176,12 @@ internal class ImportViewModel(
                         )
                     }.onSuccess { imported++ }.onFailure { failed++ }
                 }
+            }
+            // Links last: the wallet they point to can come later in the file.
+            val all = walletRepository.activeWallets.first()
+            addedLinks.forEach { (walletId, parentValue) ->
+                val parent = all.firstOrNull { wallet -> wallet.target?.let { ExportedWallet.from(it, "", null, null).value } == parentValue }
+                if (parent != null) walletRepository.setSubtractFrom(walletId, parent.id)
             }
             // Probing and the first sync run in the background (bounded parallelism, rate limited).
             syncEngine.syncAll()
@@ -279,12 +287,16 @@ internal class ExportViewModel(
         val groups = walletRepository.groups.first()
         val groupNames = groups.associate { it.id to it.name }
         val userCosts = costBasis.userValues()
-        val wallets = walletRepository.activeWallets.first()
+        val allWallets = walletRepository.activeWallets.first()
+        val wallets = allWallets
             .filter { state.groupId == null || it.groupId == state.groupId }
             .mapNotNull { wallet ->
                 wallet.target?.let { target ->
                     ExportedWallet.from(target, wallet.name, wallet.groupId?.let(groupNames::get), wallet.notes).copy(
                         costs = userCosts.filterKeys { it.walletId == wallet.id }.map { (key, value) -> ExportedCost.of(key.hash, key.assetId, value) },
+                        subtractFrom = allWallets.firstOrNull { it.id == wallet.subtractFromWalletId }?.target?.let {
+                            ExportedWallet.from(it, "", null, null).value
+                        },
                     )
                 }
             }

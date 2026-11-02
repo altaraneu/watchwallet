@@ -68,6 +68,8 @@ data class Wallet(
     /** Networks with activity (EVM: chain ids the address is used on). */
     val activeChains: List<ChainId> = emptyList(),
     val lastSyncedAt: Instant? = null,
+    /** This address is subtracted from that wallet, which also contains it. */
+    val subtractFromWalletId: Long? = null,
 )
 
 data class WalletGroup(

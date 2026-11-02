@@ -55,4 +55,8 @@
     <string name="confirm_clear">Smazat</string>
     <string name="add_wallet_group_label">Skupina (nepovinné)</string>
     <string name="add_wallet_group_hint">např. Partnerka, Úspory, Firma</string>
+    <string name="overlap_title">Tato adresa už patří do peněženky %1$s</string>
+    <string name="overlap_message">Přidá se jako samostatná peněženka. Když ji od peněženky %1$s odečteš, její zůstatek se nezapočítá dvakrát a obě peněženky můžeš sledovat zvlášť.</string>
+    <string name="overlap_subtract">Přidat a odečíst</string>
+    <string name="overlap_keep_both">Přidat a počítat obě</string>
 </resources>

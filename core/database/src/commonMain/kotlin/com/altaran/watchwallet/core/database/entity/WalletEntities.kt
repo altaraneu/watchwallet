@@ -51,6 +51,11 @@ data class WalletEntity(
     @ColumnInfo(name = "active_chains", defaultValue = "") val activeChains: String = "",
     @ColumnInfo(name = "last_synced_at") val lastSyncedAt: Long? = null,
     @ColumnInfo(name = "history_truncated", defaultValue = "0") val historyTruncated: Boolean = false,
+    /**
+     * Schema v4: this address also belongs to that extended key wallet; its balance and
+     * transactions are subtracted there so they are not counted twice.
+     */
+    @ColumnInfo(name = "subtract_from_wallet_id") val subtractFromWalletId: Long? = null,
 )
 
 /** Asset metadata shared by all wallets (coins and tokens). */
