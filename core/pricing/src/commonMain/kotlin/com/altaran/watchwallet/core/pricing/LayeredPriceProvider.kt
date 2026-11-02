@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -37,6 +38,11 @@ class LayeredPriceProvider(
     private val marketRows = HashMap<String, MarketRow>()
     private val marketRowsLock = Mutex()
     private val marketsFlight = SingleFlight<String, List<MarketInfo>>()
+    private val trustLock = Mutex()
+    private var lastCrossCheck: Instant? = null
+
+    /** Price ids whose exchange price is far from the rest of the market. */
+    private val distrustedUntil = HashMap<String, Instant>()
 
     override suspend fun current(priceIds: Collection<String>, currency: String): Map<String, CurrentPrice> {
         val result = HashMap<String, CurrentPrice>()
@@ -48,15 +54,17 @@ class LayeredPriceProvider(
     override suspend fun currentInBatches(priceIds: Collection<String>, currency: String, onBatch: suspend (Map<String, CurrentPrice>) -> Unit) {
         val ids = priceIds.distinct()
         val symbols = ids.associateWith { KnownAssets.symbolOf(it) }.filterValues { it != null }.mapValues { it.value!! }
-        val fromExchange = runCatching { exchangeCurrent(symbols, currency) }.getOrElse { e ->
+        val distrusted = trustLock.withLock { distrustedUntil.filterValues { now() < it }.keys }
+        val trusted = symbols.filterKeys { it !in distrusted }
+        val fromExchange = runCatching { exchangeCurrent(trusted, currency) }.getOrElse { e ->
             if (e is CancellationException) throw e
             emptyMap()
         }
         if (fromExchange.isNotEmpty()) onBatch(fromExchange)
         val rest = ids.filter { it !in fromExchange }
-        if (rest.isEmpty()) return
         try {
-            fallback.currentInBatches(rest, currency, onBatch)
+            if (rest.isNotEmpty()) fallback.currentInBatches(rest, currency, onBatch)
+            crossCheck(fromExchange, currency, onBatch)
         } catch (e: CancellationException) {
             throw e
         } catch (
@@ -64,6 +72,31 @@ class LayeredPriceProvider(
         ) {
             // Stored prices stay; the next refresh tries again.
         }
+    }
+
+    /**
+     * An exchange can keep trading far from the rest of the market (after a hack, say), which no
+     * status shows. Now and then its prices are compared with the fallback's in one request; assets
+     * clearly apart take the fallback's price, and stay with it for a while.
+     */
+    private suspend fun crossCheck(fromExchange: Map<String, CurrentPrice>, currency: String, onBatch: suspend (Map<String, CurrentPrice>) -> Unit) {
+        val time = now()
+        val checkable = fromExchange.filterKeys { KnownAssets.coinIdOf(it) !in STABLE_COINS && KnownAssets.coinIdOf(it) != null }
+        val due = trustLock.withLock {
+            val isDue = checkable.isNotEmpty() && lastCrossCheck?.let { time - it < CROSS_CHECK_INTERVAL } != true
+            if (isDue) lastCrossCheck = time
+            isDue
+        }
+        if (!due) return
+        val reference = fallback.current(checkable.keys.mapNotNull(KnownAssets::coinIdOf).distinct(), currency)
+        val outliers = checkable.mapNotNull { (id, price) ->
+            val other = reference[KnownAssets.coinIdOf(id)]?.takeIf { it.price > 0 } ?: return@mapNotNull null
+            val apart = kotlin.math.abs(price.price - other.price) / other.price > MAX_SOURCE_DIFFERENCE
+            if (apart) id to CurrentPrice(id, currency, other.price, other.change24hPercent) else null
+        }.toMap()
+        if (outliers.isEmpty()) return
+        trustLock.withLock { outliers.keys.forEach { distrustedUntil[it] = time + DISTRUST_PERIOD } }
+        onBatch(outliers)
     }
 
     override suspend fun history(priceId: String, currency: String, days: Int?): List<PricePoint> {
@@ -177,6 +210,10 @@ class LayeredPriceProvider(
     private companion object {
         val MARKETS_TIMEOUT = 6.seconds
         val MARKETS_FRESH = 30.seconds
+        val CROSS_CHECK_INTERVAL = 5.minutes
+        val DISTRUST_PERIOD = 30.minutes
+        const val MAX_SOURCE_DIFFERENCE = 0.1
+        val STABLE_COINS = setOf("tether", "usd-coin")
         const val PERCENT = 100.0
 
         /** Hourly exchange candles cover at most 1000 hours (about 41 days). */

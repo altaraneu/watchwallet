@@ -19,6 +19,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
@@ -26,11 +27,17 @@ import kotlin.time.Instant
  * Keyless exchange market data (Binance public API, with its official market-data mirror as a
  * fallback host). Only base symbols are sent, never anything about the user's wallets.
  * Stablecoins are priced at 1 USD.
+ *
+ * An exchange can answer HTTP 200 with frozen data, for example when it halts trading after a hack.
+ * Such symbols are left out, so the next source prices them. A symbol counts as frozen when its
+ * status is not `TRADING`, its 24 h ticker is old or has no trades, or its last trade id did not
+ * change for [FROZEN_AFTER]; candles count as frozen when the newest is much too old.
  */
 class ExchangePrices(
     private val http: HttpClient,
     private val hosts: List<String> = DEFAULT_HOSTS,
     private val health: HostHealth = HostHealth(),
+    private val now: () -> Instant = { Clock.System.now() },
 ) {
     private val throttle = Throttle(maxConcurrent = 4, minInterval = 50.milliseconds)
 
@@ -73,8 +80,65 @@ class ExchangePrices(
                 }.awaitAll().fold(emptyMap<String, ExchangeTicker>()) { acc, map -> acc + map }
             }
         }
-        result += batch
+        val halted = haltedSymbols(batch.keys)
+        result += batch.filterKeys { it !in halted }
         return result
+    }
+
+    private class Status(val at: Instant, val halted: Set<String>, val known: Set<String>)
+
+    /** Symbols the exchange itself reports as not trading. One request every few minutes. */
+    private var status: Status? = null
+    private val statusLock = Mutex()
+
+    private suspend fun haltedSymbols(symbols: Set<String>): Set<String> = statusLock.withLock {
+        if (symbols.isEmpty()) return@withLock emptySet()
+        val known = status?.takeIf { now() - it.at < STATUS_FRESH && symbols.all { symbol -> symbol in it.known } }
+        (known ?: fetchStatus(symbols))?.halted.orEmpty()
+    }
+
+    /** Only a check on top of the prices: its failure says nothing about them, or about the host. */
+    private suspend fun fetchStatus(symbols: Set<String>): Status? {
+        val host = hosts.firstOrNull { !health.isCoolingDown(it) } ?: return status
+        return try {
+            val body: JsonObject = throttle.run {
+                http.get("$host/api/v3/exchangeInfo") {
+                    parameter("symbols", symbols.joinToString(",", "[", "]") { "\"$it$QUOTE\"" })
+                }.body()
+            }
+            val rows = (body["symbols"] as? JsonArray).orEmpty().filterIsInstance<JsonObject>()
+            val halted = rows.filter { it["status"]?.jsonPrimitive?.contentOrNull != TRADING }
+                .mapNotNull { it["symbol"]?.jsonPrimitive?.contentOrNull?.removeSuffix(QUOTE) }.toSet()
+            Status(now(), halted, symbols).also { status = it }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (
+            @Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception,
+        ) {
+            status
+        }
+    }
+
+    private class LastTrade(val id: Long, val since: Instant)
+
+    private val lastTrades = HashMap<String, LastTrade>()
+
+    /** Guarded by [unlistedLock]; requests for several symbols can run in parallel. */
+    private suspend fun isFrozen(symbol: String, row: JsonObject): Boolean {
+        val time = now()
+        val closeTime = row["closeTime"]?.jsonPrimitive?.longOrNull?.let(Instant::fromEpochMilliseconds)
+        if (closeTime != null && time - closeTime > FROZEN_AFTER) return true
+        if (row["count"]?.jsonPrimitive?.longOrNull == 0L) return true
+        val lastId = row["lastId"]?.jsonPrimitive?.longOrNull ?: return false
+        return unlistedLock.withLock {
+            val known = lastTrades[symbol]
+            if (known == null || known.id != lastId) {
+                lastTrades[symbol] = LastTrade(lastId, time)
+                false
+            } else {
+                time - known.since > FROZEN_AFTER
+            }
+        }
     }
 
     /**
@@ -85,7 +149,7 @@ class ExchangePrices(
      */
     suspend fun history(symbol: String, hourly: Boolean, limit: Int, endTime: Instant? = null): List<ExchangeCandle> {
         if (symbol in STABLECOINS || isUnlisted(symbol)) return emptyList()
-        val rows: JsonArray = try {
+        val rows = try {
             request("api/v3/klines") {
                 parameter("symbol", symbol + QUOTE)
                 parameter("interval", if (hourly) "1h" else "1d")
@@ -98,15 +162,18 @@ class ExchangePrices(
             return emptyList()
         }
         val intervalMs = if (hourly) HOUR_MS else DAY_MS
-        val now = Clock.System.now().toEpochMilliseconds()
-        return rows.mapNotNull { row ->
+        val time = now().toEpochMilliseconds()
+        val candles = rows.mapNotNull { row ->
             val cells = row as? JsonArray ?: return@mapNotNull null
             val openTime = cells.getOrNull(0)?.jsonPrimitive?.longOrNull ?: return@mapNotNull null
             val close = cells.getOrNull(4)?.jsonPrimitive?.contentOrNull?.toDoubleOrNull() ?: return@mapNotNull null
             val closeTime = openTime + intervalMs
-            if (closeTime > now) return@mapNotNull null
+            if (closeTime > time) return@mapNotNull null
             ExchangeCandle(Instant.fromEpochMilliseconds(closeTime), close)
         }
+        // The newest closed candle of a live market is at most one interval old.
+        val frozen = endTime == null && candles.isNotEmpty() && time - candles.last().time.toEpochMilliseconds() > FROZEN_CANDLE_INTERVALS * intervalMs
+        return if (frozen) emptyList() else candles
     }
 
     private suspend fun fetchTickers(symbols: List<String>): Map<String, ExchangeTicker> {
@@ -118,6 +185,7 @@ class ExchangePrices(
         return rows.mapNotNull { row ->
             val obj = row as? JsonObject ?: return@mapNotNull null
             val pair = obj["symbol"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+            if (isFrozen(pair.removeSuffix(QUOTE), obj)) return@mapNotNull null
             val last = obj["lastPrice"]?.jsonPrimitive?.contentOrNull?.toDoubleOrNull() ?: return@mapNotNull null
             val open = obj["openPrice"]?.jsonPrimitive?.contentOrNull?.toDoubleOrNull()
             val change = open?.takeIf { it > 0 }?.let { (last - it) / it * PERCENT }
@@ -155,6 +223,10 @@ class ExchangePrices(
         private const val DAY_MS = 24 * HOUR_MS
         private const val PERCENT = 100.0
         private const val QUOTE = "USDT"
+        private const val TRADING = "TRADING"
+        private const val FROZEN_CANDLE_INTERVALS = 4
+        private val FROZEN_AFTER = 15.minutes
+        private val STATUS_FRESH = 10.minutes
         val DEFAULT_HOSTS = listOf("https://api.binance.com", "https://data-api.binance.vision")
         private val STABLECOINS = setOf("USDT", "USDC")
     }
