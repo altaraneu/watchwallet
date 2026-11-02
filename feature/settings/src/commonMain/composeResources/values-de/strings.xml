@@ -74,4 +74,5 @@
     <string name="settings_delete_all_cancel">Abbrechen</string>
     <string name="settings_remote_icons">Coin-Icons herunterladen</string>
     <string name="settings_remote_icons_summary">Logos von Coins und Token aus dem Trust Wallet Assets-Repository auf GitHub, auf dem Gerät zwischengespeichert. Verrät nur, welche Coins angezeigt werden, niemals deine Adressen.</string>
+    <string name="settings_privacy_policy">Datenschutzerklärung</string>
 </resources>

@@ -56,6 +56,7 @@ import com.altaran.watchwallet.feature.settings.generated.resources.settings_lan
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_language_system
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_license
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_license_summary
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_privacy_policy
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_remote_icons
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_remote_icons_summary
 import com.altaran.watchwallet.feature.settings.generated.resources.settings_section_about
@@ -229,6 +230,10 @@ internal fun SettingsScreen(
             )
 
             SectionHeader(stringResource(Res.string.settings_section_about))
+            SettingsItem(
+                title = stringResource(Res.string.settings_privacy_policy),
+                onClick = { uriHandler.openUri(uiState.appInfo.sourceCodeUrl + "/blob/main/PRIVACY.md") },
+            )
             SettingsItem(
                 title = stringResource(Res.string.settings_source_code),
                 summary = uiState.appInfo.sourceCodeUrl,

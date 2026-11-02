@@ -82,4 +82,5 @@
     <string name="settings_remote_icons">Download coin icons</string>
     <!-- Explains what is sent: only which coin/token logo is needed, never addresses. -->
     <string name="settings_remote_icons_summary">Logos of coins and tokens from the Trust Wallet assets repository on GitHub, cached on the device. Reveals only which coins are shown, never your addresses.</string>
+    <string name="settings_privacy_policy">Privacy policy</string>
 </resources>

@@ -128,7 +128,13 @@ fun ValueChartSection(
             secondaryLine = secondaryLine,
         )
         PerformanceLine(header, crosshair, points, formatChange)
-        LoadingHint(visible = LocalPriceHistoryLoading.current && points != null)
+        // Older prices keep arriving quietly: the hint is only for the first moments of a range.
+        var hintAllowed by remember(range) { mutableStateOf(true) }
+        LaunchedEffect(range) {
+            kotlinx.coroutines.delay(LOADING_HINT_MS)
+            hintAllowed = false
+        }
+        LoadingHint(visible = hintAllowed && LocalPriceHistoryLoading.current && points != null)
         ChartBody(
             points = points,
             inRange = inRange,
@@ -208,6 +214,8 @@ private fun chartSummary(range: String, first: Double, last: Double, format: (Do
     } else {
         stringResource(Res.string.chart_a11y_summary, range, format(first), format(last), formatChange(last - first))
     }
+
+private const val LOADING_HINT_MS = 15_000L
 
 /** Shown while price history downloads: the chart may still be incomplete. */
 @Composable

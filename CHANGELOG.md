@@ -46,6 +46,7 @@ All notable changes to this project are documented here. The format follows
 - Group field when adding a wallet; Add wallet in the Portfolio top bar.
 - Wallet detail shows the address with copy and QR code, for example to receive a payment.
 - JSON backups include notes and the cost basis entered by the user.
+- Settings links to the privacy policy; failed price history requests wait before retrying and the chart loading hint stops after 15 seconds.
 - An address that already belongs to an extended key wallet can be subtracted from it, so it is
   not counted twice while both wallets can be followed separately.
 - Google Play installs ask for a rating every 20 to 30 launches, until "I already did".

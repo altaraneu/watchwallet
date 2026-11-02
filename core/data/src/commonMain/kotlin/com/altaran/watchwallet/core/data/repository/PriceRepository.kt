@@ -45,6 +45,9 @@ class PriceRepository(
     val historyLoading: Flow<Boolean> = historyRequests.map { it > 0 }.distinctUntilChanged()
     private val lastHistoryFetch = mutableMapOf<String, Instant>()
 
+    /** Failed requests wait before the next try: an asset without history must not retry forever. */
+    private val failedHistoryFetch = mutableMapOf<String, Instant>()
+
     /**
      * `priceId|currency` keys for which the source has no older daily prices (for example an asset
      * listed after the first transaction); not asked again in this session. Only accessed while
@@ -104,6 +107,8 @@ class PriceRepository(
         priceIds.forEach { priceId ->
             val key = "$priceId|$code|$hourly"
             if (isFresh(key, maxAge)) return@forEach
+            val failedAt = failedHistoryFetch[key]
+            if (failedAt != null && Clock.System.now() - failedAt < HISTORY_RETRY_DELAY) return@forEach
             historyRequests.update { it + 1 }
             try {
                 val points = provider.history(priceId, code, days)
@@ -114,7 +119,8 @@ class PriceRepository(
             } catch (
                 @Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception,
             ) {
-                // Missing history only leaves a gap in the chart; it is retried on the next request.
+                // Missing history only leaves a gap in the chart; it is retried after a while.
+                failedHistoryFetch[key] = Clock.System.now()
             } finally {
                 historyRequests.update { it - 1 }
             }
@@ -175,6 +181,8 @@ class PriceRepository(
         lastHistoryFetch[key]?.let { Clock.System.now() - it < maxAge } == true
 
     companion object {
+        private val HISTORY_RETRY_DELAY = 30.minutes
+
         private const val HOURLY_DAYS = 7
 
         /** Each page is about 2.7 years of daily prices. */

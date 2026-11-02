@@ -82,4 +82,5 @@
     <string name="settings_delete_all_cancel">إلغاء</string>
     <string name="settings_remote_icons">تنزيل أيقونات العملات</string>
     <string name="settings_remote_icons_summary">شعارات العملات والتوكنات من مستودع أصول Trust Wallet على GitHub، وتُخزَّن مؤقتًا على الجهاز. لا يكشف ذلك إلا عن العملات المعروضة، ولا يكشف عناوينك أبدًا.</string>
+    <string name="settings_privacy_policy">سياسة الخصوصية</string>
 </resources>

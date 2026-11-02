@@ -2,7 +2,7 @@
 <p><b>Private by design</b></p>
 <ul>
 <li>No accounts, no backend, no analytics, no ads, no Google Play Services.</li>
-<li>All data stays on your device; cloud backup is disabled.</li>
+<li>Wallets, labels and settings stay on your device and cloud backup is disabled; addresses go directly to public blockchain services to read balances.</li>
 <li>Every network endpoint is documented; optional Tor / SOCKS5 proxy and your own Bitcoin server.</li>
 <li>Extended public keys never leave the device: addresses are derived locally.</li>
 </ul>
@@ -13,5 +13,5 @@
 <li>Portfolio value over time, allocation, per-asset charts with live candlesticks.</li>
 <li>Groups (for example one portfolio per family member), discreet mode, app lock.</li>
 <li>Batch import from text or CSV, encrypted JSON backup, CSV export.</li>
-<li>Prices in CZK, EUR, USD and more; English and Czech.</li>
+<li>Prices in CZK, EUR, USD and more; 13 languages.</li>
 </ul>

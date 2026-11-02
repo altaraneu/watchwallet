@@ -81,4 +81,5 @@
     <string name="settings_delete_all_cancel">Zrušit</string>
     <string name="settings_remote_icons">Stahovat ikony mincí</string>
     <string name="settings_remote_icons_summary">Loga mincí a tokenů z repozitáře Trust Wallet na GitHubu, uložená v zařízení. Prozradí jen to, které mince se zobrazují, nikdy tvoje adresy.</string>
+    <string name="settings_privacy_policy">Zásady ochrany soukromí</string>
 </resources>

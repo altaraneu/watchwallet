@@ -2,7 +2,7 @@
 <p><b>Soukromí od základu</b></p>
 <ul>
 <li>Žádné účty, žádný server, žádná analytika, reklamy ani Google Play Services.</li>
-<li>Všechna data zůstávají v telefonu; cloudová záloha je vypnutá.</li>
+<li>Peněženky, popisky a nastavení zůstávají v telefonu a cloudová záloha je vypnutá; adresy jdou přímo veřejným blockchainovým službám kvůli načtení zůstatků.</li>
 <li>Každá síťová služba je zdokumentovaná; volitelně Tor / SOCKS5 proxy a vlastní Bitcoin server.</li>
 <li>Rozšířené veřejné klíče nikdy neopustí zařízení: adresy se odvozují lokálně.</li>
 </ul>
@@ -13,5 +13,5 @@
 <li>Vývoj hodnoty portfolia, rozložení aktiv, grafy jednotlivých aktiv s živými svíčkami.</li>
 <li>Skupiny (třeba portfolio pro každého člena rodiny), diskrétní režim, zámek aplikace.</li>
 <li>Hromadný import z textu nebo CSV, šifrovaná JSON záloha, export do CSV.</li>
-<li>Ceny v CZK, EUR, USD a dalších měnách; angličtina a čeština.</li>
+<li>Ceny v CZK, EUR, USD a dalších měnách; 13 jazyků.</li>
 </ul>

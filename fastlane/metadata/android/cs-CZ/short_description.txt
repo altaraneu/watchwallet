@@ -1,1 +1,1 @@
-Krypto portfolio jen pro sledování: libovolná peněženka přes veřejné adresy, bez klíčů
+Krypto portfolio jen ke sledování: veřejné adresy, žádné klíče

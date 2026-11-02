@@ -74,4 +74,5 @@
     <string name="settings_delete_all_cancel">रद्द करें</string>
     <string name="settings_remote_icons">कॉइन आइकन डाउनलोड करें</string>
     <string name="settings_remote_icons_summary">GitHub पर Trust Wallet एसेट रिपॉज़िटरी से कॉइन और टोकन के लोगो, जो डिवाइस पर कैश होते हैं। इससे सिर्फ़ यह पता चलता है कि कौन से कॉइन दिखाए जा रहे हैं, आपके पते कभी नहीं।</string>
+    <string name="settings_privacy_policy">निजता नीति</string>
 </resources>

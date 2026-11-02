@@ -72,4 +72,5 @@
     <string name="settings_delete_all_cancel">取消</string>
     <string name="settings_remote_icons">下载币种图标</string>
     <string name="settings_remote_icons_summary">币种和代币的徽标来自 GitHub 上的 Trust Wallet 资产仓库,并缓存在设备上。只会透露显示了哪些币种,绝不会透露您的地址。</string>
+    <string name="settings_privacy_policy">隐私政策</string>
 </resources>
