@@ -133,6 +133,7 @@ class CardanoAdapter(
 
     override val family = ChainFamily.CARDANO
     override val chains = listOf(CardanoChain.CHAIN)
+    override val supportsHistoryContinuation = true
 
     override suspend fun probe(target: WatchTarget): ProbeResult = chainCall("Koios") {
         val address = address(target)
@@ -145,42 +146,26 @@ class CardanoAdapter(
         )
     }
 
-    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("Koios") {
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = sync(target, knownTransactions, false)
+
+    /**
+     * Every transaction costs part of a `tx_info` call, so a first sync loads only the newest ones;
+     * with [continueHistory] each later sync adds a chunk of whatever is missing (from the top, so
+     * new transactions come first). The list of hashes is walked past the stored ones: it is cheap,
+     * and it finds any gap, wherever one may be.
+     */
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, continueHistory: Boolean): SyncResult = chainCall("Koios") {
         val address = address(target)
         val state = state(address)
             ?: return@chainCall SyncResult(listOf(amountOf(CardanoChain.ADA, BigInteger.ZERO)), emptyList())
         val stake = CardanoAddresses.isStakeAddress(address)
-
-        val hashes = mutableListOf<String>()
-        val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES
-        var truncated = true
-        paging@ for (page in 0 until maxPages) {
-            val rows = if (stake) {
-                post("account_txs", buildJsonObject { put("_stake_address", address) }, page)
-            } else {
-                post(
-                    "address_txs",
-                    buildJsonObject {
-                        put("_addresses", JsonArray(listOf(JsonPrimitive(address))))
-                    },
-                    page,
-                )
-            }.asList
-            for (row in rows) {
-                val hash = row.str("tx_hash") ?: continue
-                if (hash in knownTransactions) {
-                    truncated = false
-                    break@paging
-                }
-                hashes += hash
-            }
-            if (rows.size < PAGE_SIZE) {
-                truncated = false
-                break
-            }
+        val (hashes, truncated) = if (continueHistory && knownTransactions.isNotEmpty()) {
+            missingHashes(address, stake, knownTransactions)
+        } else {
+            newHashes(address, stake, knownTransactions)
         }
         val assets = state.balances.associate { (it.asset.contract ?: "") to it.asset }
-        val transactions = hashes.distinct().chunked(TX_INFO_BATCH).flatMap { batch ->
+        val transactions = hashes.chunked(TX_INFO_BATCH).flatMap { batch ->
             val body = buildJsonObject {
                 put("_tx_hashes", JsonArray(batch.map { JsonPrimitive(it) }))
                 put("_inputs", true)
@@ -196,6 +181,40 @@ class CardanoAdapter(
             activeChains = listOf(CardanoChain.ID),
             historyTruncated = truncated,
         )
+    }
+
+    private suspend fun transactionPage(address: String, stake: Boolean, page: Int, pageSize: Int): List<JsonElement> = if (stake) {
+        post("account_txs", buildJsonObject { put("_stake_address", address) }, page, pageSize)
+    } else {
+        post("address_txs", buildJsonObject { put("_addresses", JsonArray(listOf(JsonPrimitive(address)))) }, page, pageSize)
+    }.asList
+
+    /** Newest hashes down to a known one; truncated when the page limit comes first. */
+    private suspend fun newHashes(address: String, stake: Boolean, known: Set<String>): Pair<List<String>, Boolean> {
+        val hashes = mutableListOf<String>()
+        val maxPages = if (known.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES
+        for (page in 0 until maxPages) {
+            val rows = transactionPage(address, stake, page, PAGE_SIZE)
+            for (row in rows) {
+                val hash = row.str("tx_hash") ?: continue
+                if (hash in known) return hashes.distinct() to false
+                hashes += hash
+            }
+            if (rows.size < PAGE_SIZE) return hashes.distinct() to false
+        }
+        return hashes.distinct() to true
+    }
+
+    /** The next chunk of hashes not stored yet, newest first. Done once the list ended without more. */
+    private suspend fun missingHashes(address: String, stake: Boolean, known: Set<String>): Pair<List<String>, Boolean> {
+        val missing = LinkedHashSet<String>()
+        for (page in 0 until MAX_SCAN_PAGES) {
+            val rows = transactionPage(address, stake, page, SCAN_PAGE_SIZE)
+            rows.mapNotNull { it.str("tx_hash") }.filterTo(missing) { it !in known }
+            if (missing.size > CONTINUATION_CHUNK) return missing.take(CONTINUATION_CHUNK) to true
+            if (rows.size < SCAN_PAGE_SIZE) return missing.toList() to false
+        }
+        return missing.toList() to true
     }
 
     /**
@@ -245,16 +264,17 @@ class CardanoAdapter(
         return sums.values.filter { !it.second.isZero() }.map { amountOf(it.first, it.second) }
     }
 
-    private suspend fun post(endpoint: String, body: JsonElement, page: Int?): JsonElement =
+    private suspend fun post(endpoint: String, body: JsonElement, page: Int?, pageSize: Int = PAGE_SIZE): JsonElement =
         withRateLimitBackoff(RATE_LIMIT_RETRIES) {
             throttle.run {
                 http.post("$base/$endpoint") {
                     contentType(ContentType.Application.Json)
                     setBody(body)
                     if (page != null) {
-                        parameter("order", "block_height.desc")
-                        parameter("limit", PAGE_SIZE)
-                        parameter("offset", page * PAGE_SIZE)
+                        // The hash keeps the order within a block stable across pages.
+                        parameter("order", "block_height.desc,tx_hash.asc")
+                        parameter("limit", pageSize)
+                        parameter("offset", page * pageSize)
                     }
                 }.body<JsonElement>()
             }
@@ -264,6 +284,11 @@ class CardanoAdapter(
         const val PAGE_SIZE = 100
         const val FIRST_SYNC_PAGES = 2
         const val MAX_PAGES = 20
+
+        /** The largest page Koios serves (checked 2026-11: a limit of 2000 returns 1000 rows). */
+        const val SCAN_PAGE_SIZE = 1000
+        const val MAX_SCAN_PAGES = 100
+        const val CONTINUATION_CHUNK = 200
         const val TX_INFO_BATCH = 20
         const val RATE_LIMIT_RETRIES = 3
     }

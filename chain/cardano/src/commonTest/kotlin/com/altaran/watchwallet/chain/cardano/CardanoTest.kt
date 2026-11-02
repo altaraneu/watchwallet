@@ -49,6 +49,93 @@ class CardanoTest {
 
     private val hunt = "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535"
 
+    /** A stake key with [total] transactions, numbered newest first; every request is recorded. */
+    private class Paged(val stake: String, val total: Int) {
+        val infoRequests = mutableListOf<List<String>>()
+        var lastHistoryLimit: Int? = null
+
+        val engine = MockEngine { request ->
+            val json = headersOf(HttpHeaders.ContentType, "application/json")
+            when (request.url.encodedPath.substringAfterLast('/')) {
+                "account_info" -> {
+                    respond("""[{"total_balance":"5"}]""", HttpStatusCode.OK, json)
+                }
+
+                "account_assets", "account_addresses" -> {
+                    respond("[]", HttpStatusCode.OK, json)
+                }
+
+                "account_txs" -> {
+                    val limit = request.url.parameters["limit"]!!.toInt()
+                    val offset = request.url.parameters["offset"]!!.toInt()
+                    lastHistoryLimit = limit
+                    val rows = (offset until minOf(offset + limit, total)).joinToString(",") { """{"tx_hash":"t$it"}""" }
+                    respond("[$rows]", HttpStatusCode.OK, json)
+                }
+
+                "tx_info" -> {
+                    val body = request.body.toByteArray().decodeToString()
+                    val hashes = Regex("t[0-9]+").findAll(body).map { it.value }.toList()
+                    infoRequests += hashes
+                    val rows = hashes.joinToString(",") { hash ->
+                        """{"tx_hash":"$hash","tx_timestamp":1700000000,"fee":"1","inputs":[],"withdrawals":[],
+                            "outputs":[{"payment_addr":{"bech32":"a"},"stake_addr":"$stake","value":"5","asset_list":[]}]}"""
+                    }
+                    respond("[$rows]", HttpStatusCode.OK, json)
+                }
+
+                else -> {
+                    error("Unexpected ${request.url}")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun historyIsContinuedWithoutGaps() = runTest {
+        val total = 650
+        val chain = Paged(stake, total)
+        val adapter = CardanoAdapter(createHttpClient(engine = chain.engine), "https://koios.test/api/v1")
+        val target = assertNotNull(CardanoAddresses.parse(stake))
+        assertTrue(adapter.supportsHistoryContinuation)
+
+        val first = adapter.sync(target, emptySet())
+        assertTrue(first.historyTruncated, "two pages on the first sync")
+        val known = first.transactions.map { it.hash }.toMutableSet()
+        assertEquals(200, known.size)
+
+        var syncs = 0
+        var truncated = true
+        while (truncated) {
+            val next = adapter.sync(target, known, continueHistory = true)
+            assertEquals(1000, chain.lastHistoryLimit, "hashes are walked in the largest pages")
+            known += next.transactions.map { it.hash }
+            truncated = next.historyTruncated
+            assertTrue(++syncs < 10, "must finish")
+        }
+        assertEquals((0 until total).map { "t$it" }.toSet(), known, "no gap")
+        assertEquals(3, syncs, "450 missing at 200 per sync")
+    }
+
+    @Test
+    fun aGapInTheMiddleIsFoundAndNewTransactionsComeFirst() = runTest {
+        val chain = Paged(stake, 300)
+        val adapter = CardanoAdapter(createHttpClient(engine = chain.engine), "https://koios.test/api/v1")
+        val known = (0 until 300).map { "t$it" }.toSet() - setOf("t0", "t150")
+        val next = adapter.sync(assertNotNull(CardanoAddresses.parse(stake)), known, continueHistory = true)
+        assertEquals(listOf("t0", "t150"), next.transactions.map { it.hash })
+        assertTrue(!next.historyTruncated)
+    }
+
+    @Test
+    fun aRoutineSyncStopsAtTheKnownTransactions() = runTest {
+        val chain = Paged(stake, 300)
+        val adapter = CardanoAdapter(createHttpClient(engine = chain.engine), "https://koios.test/api/v1")
+        val next = adapter.sync(assertNotNull(CardanoAddresses.parse(stake)), setOf("t2"))
+        assertEquals(setOf("t0", "t1"), next.transactions.map { it.hash }.toSet())
+        assertTrue(!next.historyTruncated)
+    }
+
     @Test
     fun stakeTargetSync() = runTest {
         val engine = MockEngine { request ->
