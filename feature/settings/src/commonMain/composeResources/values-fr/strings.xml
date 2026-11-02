@@ -51,6 +51,8 @@
     <string name="settings_proxy_port">Port</string>
     <string name="settings_esplora">Serveur Bitcoin (Esplora)</string>
     <string name="settings_esplora_hint">URL de base de votre propre serveur REST Esplora / electrs, par exemple https://my-node.local/api. Laissez vide pour utiliser mempool.space.</string>
+    <string name="settings_endpoints_auto">Mettre à jour la liste des serveurs automatiquement</string>
+    <string name="settings_endpoints_auto_summary">Recherche chaque jour une liste signée de serveurs publics. Désactivé : uniquement les serveurs intégrés.</string>
     <string name="settings_default_server">Par défaut (mempool.space)</string>
     <string name="settings_coingecko_key">Clé API CoinGecko</string>
     <string name="settings_coingecko_hint">Clé de démo gratuite facultative pour des limites de requêtes de prix plus élevées et un historique des prix plus long.</string>

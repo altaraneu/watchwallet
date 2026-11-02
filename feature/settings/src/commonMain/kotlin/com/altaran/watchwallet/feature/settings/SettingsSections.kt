@@ -105,6 +105,12 @@ internal fun AdvancedSettingsSections(
         summary = network.esploraUrl ?: stringResource(Res.string.settings_default_server),
         onClick = { dialog = NetworkDialog.ESPLORA },
     )
+    SettingsSwitchItem(
+        title = stringResource(Res.string.settings_endpoints_auto),
+        summary = stringResource(Res.string.settings_endpoints_auto_summary),
+        checked = network.autoUpdateEndpoints,
+        onCheckedChange = { enabled -> onNetworkChange(network.copy(autoUpdateEndpoints = enabled)) },
+    )
     SettingsItem(
         title = stringResource(Res.string.settings_coingecko_key),
         summary = if (network.coinGeckoApiKey.isNullOrBlank()) stringResource(Res.string.settings_not_set) else "••••••",

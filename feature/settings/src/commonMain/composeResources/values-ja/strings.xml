@@ -49,6 +49,8 @@
     <string name="settings_proxy_port">ポート</string>
     <string name="settings_esplora">ビットコインサーバー (Esplora)</string>
     <string name="settings_esplora_hint">ご自身の Esplora / electrs REST サーバーのベース URL(例:https://my-node.local/api)。空欄の場合は mempool.space を使用します。</string>
+    <string name="settings_endpoints_auto">サーバーリストを自動更新</string>
+    <string name="settings_endpoints_auto_summary">署名済みの公開サーバーリストを1日1回確認します。オフの場合はアプリに組み込まれたサーバーのみを使用します。</string>
     <string name="settings_default_server">デフォルト (mempool.space)</string>
     <string name="settings_coingecko_key">CoinGecko API キー</string>
     <string name="settings_coingecko_hint">任意の無料デモキー。価格リクエストの上限が上がり、より長い価格履歴を取得できます。</string>

@@ -50,6 +50,8 @@
     <string name="settings_proxy_port">Port</string>
     <string name="settings_esplora">Bitcoin-Server (Esplora)</string>
     <string name="settings_esplora_hint">Basis-URL deines eigenen Esplora- / electrs-REST-Servers, zum Beispiel https://my-node.local/api. Leer lassen für mempool.space.</string>
+    <string name="settings_endpoints_auto">Serverliste automatisch aktualisieren</string>
+    <string name="settings_endpoints_auto_summary">Prüft täglich auf eine signierte Liste öffentlicher Server. Aus: nur die in der App enthaltenen Server.</string>
     <string name="settings_default_server">Standard (mempool.space)</string>
     <string name="settings_coingecko_key">CoinGecko-API-Schlüssel</string>
     <string name="settings_coingecko_hint">Optionaler kostenloser Demo-Schlüssel für höhere Limits bei Preisabfragen und einen längeren Preisverlauf.</string>

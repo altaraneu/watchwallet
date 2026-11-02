@@ -50,6 +50,8 @@
     <string name="settings_proxy_port">পোর্ট</string>
     <string name="settings_esplora">Bitcoin সার্ভার (Esplora)</string>
     <string name="settings_esplora_hint">আপনার নিজের Esplora / electrs REST সার্ভারের বেস URL, যেমন https://my-node.local/api। mempool.space-এর জন্য খালি রাখুন।</string>
+    <string name="settings_endpoints_auto">সার্ভার তালিকা স্বয়ংক্রিয়ভাবে আপডেট করুন</string>
+    <string name="settings_endpoints_auto_summary">প্রতিদিন স্বাক্ষরিত পাবলিক সার্ভার তালিকা পরীক্ষা করে। বন্ধ থাকলে: শুধু অ্যাপে অন্তর্ভুক্ত সার্ভার।</string>
     <string name="settings_default_server">ডিফল্ট (mempool.space)</string>
     <string name="settings_coingecko_key">CoinGecko API কি</string>
     <string name="settings_coingecko_hint">দামের অনুরোধের উচ্চতর সীমা ও দীর্ঘতর দামের ইতিহাসের জন্য ঐচ্ছিক বিনামূল্যের ডেমো কি।</string>

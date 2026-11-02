@@ -49,6 +49,8 @@
     <string name="settings_proxy_port">端口</string>
     <string name="settings_esplora">比特币服务器 (Esplora)</string>
     <string name="settings_esplora_hint">您自己的 Esplora / electrs REST 服务器的基础 URL,例如 https://my-node.local/api。留空则使用 mempool.space。</string>
+    <string name="settings_endpoints_auto">自动更新服务器列表</string>
+    <string name="settings_endpoints_auto_summary">每天检查一次已签名的公共服务器列表。关闭时仅使用应用内置的服务器。</string>
     <string name="settings_default_server">默认 (mempool.space)</string>
     <string name="settings_coingecko_key">CoinGecko API 密钥</string>
     <string name="settings_coingecko_hint">可选的免费演示密钥,可提高价格请求上限并获得更长的历史价格。</string>
