@@ -123,6 +123,18 @@ wrong password or a modified file. Salt, IV and parameters are stored in the fil
 ciphertext (format `watchwallet-encrypted`, version 1). The password is not stored anywhere; a
 lost password cannot be recovered. CSV and text exports are not encrypted.
 
+## Deleting your data
+
+WatchWallet (developer: Altaran) has no accounts and no server. The developer holds no data about you. Everything the app stores is on your device.
+
+To delete your data:
+
+- **One wallet:** open the wallet, tap the menu at the top, choose **Delete**.
+- **Everything:** **Settings → Delete all wallets**. This removes all wallets, their history, groups and cost basis. Settings and the watchlist stay.
+- **All app data:** uninstall the app, or clear its storage in Android settings.
+
+What stays elsewhere: backups you exported are your own files, delete them yourself. Public blockchain data can't be deleted by anyone. The third-party services listed in this policy receive your addresses when the app loads balances. The developer doesn't control their logs, so ask them directly if you need to.
+
 ## Contact
 
 Questions: open an issue on <https://github.com/altaraneu/watchwallet>.
