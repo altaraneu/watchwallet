@@ -38,3 +38,14 @@ class Throttle(
         block()
     }
 }
+
+/** One [Throttle] per host: a slow or rate-limited API never delays requests to another one. */
+class HostThrottles(private val maxConcurrent: Int, private val minInterval: Duration) {
+    private val throttles = HashMap<String, Throttle>()
+    private val lock = Mutex()
+
+    suspend fun <T> run(host: String, block: suspend () -> T): T {
+        val throttle = lock.withLock { throttles.getOrPut(host) { Throttle(maxConcurrent, minInterval) } }
+        return throttle.run(block)
+    }
+}

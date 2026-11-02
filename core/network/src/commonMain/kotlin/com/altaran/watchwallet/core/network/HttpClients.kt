@@ -3,7 +3,10 @@ package com.altaran.watchwallet.core.network
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.network.sockets.ConnectTimeoutException
+import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -32,13 +35,51 @@ expect fun createPlatformEngine(proxy: ProxyConfig?): HttpClientEngine
  */
 expect val proxySupported: Boolean
 
-private const val CONNECT_TIMEOUT_MS = 15_000L
-private const val REQUEST_TIMEOUT_MS = 45_000L
-private const val MAX_RETRIES = 3
+private const val CONNECT_TIMEOUT_MS = 8_000L
+
+/** Deadline of one request or page. Paging through a long history has no overall limit here. */
+private const val REQUEST_TIMEOUT_MS = 20_000L
+
+/**
+ * When to repeat a failed request. One retry with a short pause: connection errors and 5xx may be
+ * momentary, a client error will not change, and a host that is down must fail fast so callers can
+ * fail over. Timeouts already used up the deadline and are not repeated.
+ */
+object HttpRetryPolicy {
+    const val MAX_RETRIES = 1
+    private const val BACKOFF_MS = 500L
+    private const val RATE_LIMIT_BACKOFF_MS = 2_000L
+    private const val MAX_RETRY_AFTER_SECONDS = 10L
+    private const val HTTP_TOO_MANY_REQUESTS = 429
+
+    fun shouldRetry(status: Int, retryAfter: String?): Boolean = when (status) {
+        // Waiting longer than the cap would stall a sync; the next sync tries again.
+        HTTP_TOO_MANY_REQUESTS -> (retryAfter?.trim()?.toLongOrNull() ?: 0L) <= MAX_RETRY_AFTER_SECONDS
+        in 500..599 -> true
+        else -> false
+    }
+
+    fun shouldRetry(cause: Throwable): Boolean = when (cause) {
+        is kotlinx.coroutines.CancellationException,
+        is HttpRequestTimeoutException,
+        is ConnectTimeoutException,
+        is SocketTimeoutException,
+        -> false
+
+        else -> true
+    }
+
+    fun delayMillis(status: Int?, retryAfter: String?): Long {
+        if (status != HTTP_TOO_MANY_REQUESTS) return BACKOFF_MS
+        val seconds = retryAfter?.trim()?.toLongOrNull() ?: return RATE_LIMIT_BACKOFF_MS
+        return seconds.coerceIn(0, MAX_RETRY_AFTER_SECONDS) * 1_000
+    }
+}
 
 /**
  * Creates the app's HTTP client. No cookies, no analytics headers, no custom user agent that
- * identifies the user. Retries transient failures and HTTP 429 with exponential backoff.
+ * identifies the user. Redirects are not followed: an API moving elsewhere must never send an
+ * address to a host that is not listed in `PRIVACY.md`; the request fails over instead.
  */
 fun createHttpClient(
     proxy: ProxyConfig? = null,
@@ -46,6 +87,7 @@ fun createHttpClient(
     configure: HttpClientConfig<*>.() -> Unit = {},
 ): HttpClient = HttpClient(engine) {
     expectSuccess = true
+    followRedirects = false
     install(ContentNegotiation) {
         json(NetworkJson)
         // Some public APIs answer JSON with a text/plain content type.
@@ -56,10 +98,12 @@ fun createHttpClient(
         requestTimeoutMillis = REQUEST_TIMEOUT_MS
     }
     install(HttpRequestRetry) {
-        maxRetries = MAX_RETRIES
-        retryIf { _, response -> response.status.value == 429 || response.status.value in 500..599 }
-        retryOnExceptionIf { _, cause -> cause !is kotlinx.coroutines.CancellationException }
-        exponentialDelay(base = 2.0, maxDelayMs = 20_000, randomizationMs = 1_000)
+        maxRetries = HttpRetryPolicy.MAX_RETRIES
+        retryIf { _, response -> HttpRetryPolicy.shouldRetry(response.status.value, response.headers[HttpHeaders.RetryAfter]) }
+        retryOnExceptionIf { _, cause -> HttpRetryPolicy.shouldRetry(cause) }
+        delayMillis(respectRetryAfterHeader = false) {
+            HttpRetryPolicy.delayMillis(response?.status?.value, response?.headers?.get(HttpHeaders.RetryAfter))
+        }
     }
     install(io.ktor.client.plugins.websocket.WebSockets) {
         pingIntervalMillis = 20_000
