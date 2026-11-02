@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Server list updates: public blockchain servers can change without a new release, through a data
+  file signed with BIP-340 Schnorr in the public repository. Data only, https only, known API types
+  only; bundled servers always work offline and a custom server always wins. Can be turned off in
+  Settings → Network. See `docs/endpoints-config.md`.
+- `scripts/sign_endpoints.py` to sign and verify that file.
+
 ## [1.0.0] - 2026-11-02
 
 ### Added

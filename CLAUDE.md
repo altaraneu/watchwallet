@@ -9,7 +9,10 @@ throughout so an iOS app can be added cheaply later. Read this before changing c
    secret-detection guard (`:core:security`, milestone 2) runs before any classification,
    network request or persistence of user input.
 2. **Private.** No analytics, ads, tracking, Firebase or Google Play Services. No backend.
-   Every network endpoint must be listed in `PRIVACY.md` in the same change that adds it.
+   Every network endpoint must be listed in `PRIVACY.md` in the same change that adds it. The one
+   exception: the signed server list (`docs/endpoints-config.md`) can change blockchain servers
+   without a build; `PRIVACY.md` describes that file and points to it, and its hosts stay listed
+   in this repository (`config/endpoints.source.json`).
    Never log addresses or balances in release builds.
 3. **English only** in code, comments, KDoc, commits, PRs, docs and logs. User-facing text
    exists only in translation resources.
@@ -33,6 +36,7 @@ chain adapters ← network. Screens never call the network directly.
 :core:data           Repositories + platform service interfaces               [android + ios]
 :core:designsystem   Theme, colors, icons (WwIcon), shared components         [android + ios]
 :core:ui             Locale-aware formatting, clipboard helpers               [android + ios]
+:core:endpoints      Bundled server list, signed remote overlay               [jvm + ios]
 :feature:*           One module per screen/flow                               [android + ios]
 build-logic/         Convention plugins (watchwallet.*) – all module config lives here
 ```
@@ -101,7 +105,10 @@ Room is the source of truth. Rules:
 3. Add detection rules and table-driven tests (valid, invalid, wrong checksum, wrong network,
    overlapping formats) to `:core:classifier`.
 4. Add secret formats of that chain to `:core:security` with tests.
-5. Register the adapter in Koin; document new endpoints in `PRIVACY.md`.
+5. Add its servers to `BundledEndpoints` (and a new protocol id, if any) and to
+   `config/endpoints.source.json`; never put server URLs in the adapter. Pass them through its
+   constructor from the `EndpointCatalog` when registering it in Koin. Document new endpoints in
+   `PRIVACY.md`.
 6. Mocked HTTP responses in tests; no live network in unit tests.
 
 ## Build, test, verify
