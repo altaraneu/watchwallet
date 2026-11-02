@@ -34,6 +34,14 @@ interface PriceProvider {
     suspend fun current(priceIds: Collection<String>, currency: String): Map<String, CurrentPrice>
 
     /**
+     * Like [current], but hands over what is known as soon as it is known: a slow long tail of
+     * tokens must not hold back the prices of everything else.
+     */
+    suspend fun currentInBatches(priceIds: Collection<String>, currency: String, onBatch: suspend (Map<String, CurrentPrice>) -> Unit) {
+        onBatch(current(priceIds, currency))
+    }
+
+    /**
      * Price history. `days = null` asks for the longest history the provider offers; points are
      * daily for long ranges and hourly for ranges up to 90 days.
      */

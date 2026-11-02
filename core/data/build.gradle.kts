@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.watchwallet.kmp.android.library)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -42,6 +43,12 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.secp256k1.kmp.jni.android)
+        }
+        getByName("androidHostTest").dependencies {
+            implementation(libs.ktor.client.mock)
+            // Desktop natives of the bundled SQLite (the Android artifact only ships .so files).
+            implementation(libs.androidx.sqlite.bundled.jvm)
+            implementation(libs.androidx.room.runtime)
         }
     }
 }

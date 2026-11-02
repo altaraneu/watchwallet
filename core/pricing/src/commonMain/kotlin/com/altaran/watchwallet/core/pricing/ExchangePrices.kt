@@ -1,5 +1,6 @@
 package com.altaran.watchwallet.core.pricing
 
+import com.altaran.watchwallet.core.network.HostHealth
 import com.altaran.watchwallet.core.network.Throttle
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -29,6 +30,7 @@ import kotlin.time.Instant
 class ExchangePrices(
     private val http: HttpClient,
     private val hosts: List<String> = DEFAULT_HOSTS,
+    private val health: HostHealth = HostHealth(),
 ) {
     private val throttle = Throttle(maxConcurrent = 4, minInterval = 50.milliseconds)
 
@@ -125,26 +127,23 @@ class ExchangePrices(
 
     /**
      * GET on the first host that answers. An invalid-symbol rejection (HTTP 400) is the same on
-     * every host and is rethrown as the [ResponseException] at once; other failures try the next
-     * host and end in [PriceDataException].
+     * every host and is rethrown as the [ResponseException] at once; other failures (including a
+     * regional block such as HTTP 451) try the next host, are remembered for later calls and end in
+     * [PriceDataException].
      */
-    private suspend fun request(path: String, block: io.ktor.client.request.HttpRequestBuilder.() -> Unit): JsonArray {
-        var last: Exception? = null
-        for (host in hosts) {
-            try {
-                return throttle.run { http.get("$host/$path", block).body() }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: ResponseException) {
-                if (e.isInvalidSymbol()) throw e
-                last = e
-            } catch (
-                @Suppress("TooGenericExceptionCaught") e: Exception,
-            ) {
-                last = e
-            }
+    private suspend fun request(path: String, block: io.ktor.client.request.HttpRequestBuilder.() -> Unit): JsonArray = try {
+        health.firstAvailable(hosts, { (it as? ResponseException)?.isInvalidSymbol() != true }) { host ->
+            throttle.run { http.get("$host/$path", block).body() }
         }
-        throw PriceDataException("Exchange data unavailable", last)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: ResponseException) {
+        if (e.isInvalidSymbol()) throw e
+        throw PriceDataException("Exchange data unavailable", e)
+    } catch (
+        @Suppress("TooGenericExceptionCaught") e: Exception,
+    ) {
+        throw PriceDataException("Exchange data unavailable", e)
     }
 
     private fun ResponseException.isInvalidSymbol(): Boolean = response.status.value == HTTP_BAD_REQUEST

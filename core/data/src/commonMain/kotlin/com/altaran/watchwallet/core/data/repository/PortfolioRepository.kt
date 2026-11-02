@@ -265,12 +265,12 @@ class PortfolioRepository(
     }
 
     /**
-     * Fetches history needed to draw [range] for [priceIds] (everything visible), then for assets
-     * that are charted although no longer held (they still shape past values).
+     * Fetches history needed to draw [range] for [priceIds] (everything visible). Assets charted
+     * although no longer held still shape past values, but they wait in the background.
      */
     suspend fun ensureHistory(currency: QuoteCurrency, range: ChartRange, priceIds: Collection<String>) {
-        val past = chartInputs(currency, null).first().priceIds.filter { it !in priceIds }
-        priceRepository.ensureHistory(priceIds.toList() + past, currency, range)
+        priceRepository.ensureHistoryInBackground(chartInputs(currency, null).first().priceIds.filter { it !in priceIds }, currency)
+        priceRepository.ensureHistory(priceIds, currency, range)
     }
 
     private fun buildHistories(

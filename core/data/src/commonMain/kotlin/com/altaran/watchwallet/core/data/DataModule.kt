@@ -23,6 +23,7 @@ import com.altaran.watchwallet.chain.ton.TonAdapter
 import com.altaran.watchwallet.chain.tron.TronAdapter
 import com.altaran.watchwallet.chain.xrp.XrpAdapter
 import com.altaran.watchwallet.core.data.chain.ChainRegistry
+import com.altaran.watchwallet.core.data.platform.SyncLog
 import com.altaran.watchwallet.core.data.repository.DefaultSettingsRepository
 import com.altaran.watchwallet.core.data.repository.DefaultWalletRepository
 import com.altaran.watchwallet.core.data.repository.MarketDataRepository
@@ -30,7 +31,9 @@ import com.altaran.watchwallet.core.data.repository.PortfolioRepository
 import com.altaran.watchwallet.core.data.repository.PriceRepository
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.repository.WalletRepository
+import com.altaran.watchwallet.core.data.sync.DataStoreWalletSyncStateStore
 import com.altaran.watchwallet.core.data.sync.SyncEngine
+import com.altaran.watchwallet.core.data.sync.WalletSyncStateStore
 import com.altaran.watchwallet.core.database.databaseModule
 import com.altaran.watchwallet.core.datastore.SettingsDataSource
 import com.altaran.watchwallet.core.datastore.dataStoreModule
@@ -101,7 +104,8 @@ val dataModule: Module = module {
     single { PriceRepository(get(), get(), get(), get()) }
     single { PortfolioRepository(get(), get()) }
     single { com.altaran.watchwallet.core.data.repository.CostBasisRepository(get(), get()) }
-    single { SyncEngine(get(), get(), get()) }
+    single<WalletSyncStateStore> { DataStoreWalletSyncStateStore(get()) }
+    single { SyncEngine(get(), get(), get<PriceRepository>(), get(), getOrNull<SyncLog>() ?: SyncLog.None) }
     single { AddWalletService(get(), get(), get()) }
     single { DemoWallets(get(), get()) }
 }

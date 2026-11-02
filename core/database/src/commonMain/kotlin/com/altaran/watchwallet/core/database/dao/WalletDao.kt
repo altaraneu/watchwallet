@@ -39,6 +39,10 @@ abstract class WalletDao {
     @Query("SELECT * FROM wallet WHERE archived = 0 ORDER BY sort_order, id")
     abstract suspend fun activeWallets(): List<WalletEntity>
 
+    /** Archived wallets included. */
+    @Query("SELECT id FROM wallet")
+    abstract suspend fun allWalletIds(): List<Long>
+
     @Query("SELECT * FROM wallet WHERE id = :id")
     abstract fun observeWallet(id: Long): Flow<WalletEntity?>
 
@@ -249,4 +253,57 @@ abstract class WalletDao {
         }
         markSynced(walletId, activeChains, syncedAt, truncated)
     }
+
+    @Query("DELETE FROM wallet_balance WHERE wallet_id = :walletId AND asset_id IN (:assetIds)")
+    protected abstract suspend fun clearBalancesOfAssets(walletId: Long, assetIds: List<String>)
+
+    @Query("DELETE FROM wallet_tx WHERE wallet_id = :walletId AND chain_id = :chainId AND confirmed = 0")
+    protected abstract suspend fun clearPendingOfChain(walletId: Long, chainId: String)
+
+    @Query("UPDATE wallet SET active_chains = :activeChains WHERE id = :walletId")
+    protected abstract suspend fun setActiveChains(walletId: Long, activeChains: String)
+
+    /**
+     * Stores what is known so far about one chain of a wallet, atomically. Other chains are not
+     * touched, so the guarantees of [storeSync] hold per chain: stored balances are replaced only by
+     * what was really fetched, pending rows only when the history was fetched, and confirmed rows
+     * are never overwritten.
+     *
+     * @param balancesComplete [balances] are all balances of the chain; otherwise only the assets in
+     * [refreshedAssets] change (with a zero amount they are simply not in [balances] any more).
+     * @param historyFetched pending rows of the chain are replaced by [transactions].
+     * @param active new activity status of the chain, `null` to leave it.
+     */
+    @Transaction
+    open suspend fun storeSyncPart(
+        walletId: Long,
+        chainId: String,
+        assets: List<AssetEntity>,
+        balances: List<WalletBalanceEntity>,
+        refreshedAssets: List<String>,
+        balancesComplete: Boolean,
+        transactions: List<WalletTxEntity>,
+        historyFetched: Boolean,
+        active: Boolean?,
+    ) {
+        insertAssetsIfMissing(assets)
+        assets.forEach { refreshAssetMetadata(it.id, it.symbol, it.name, it.decimals, it.priceId, it.isSpam) }
+        if (balancesComplete) {
+            clearBalancesOfChains(walletId, listOf(chainId))
+        } else if (refreshedAssets.isNotEmpty()) {
+            clearBalancesOfAssets(walletId, refreshedAssets)
+        }
+        insertBalances(balances)
+        if (historyFetched) clearPendingOfChain(walletId, chainId)
+        insertNewTransactions(transactions)
+        if (active != null) {
+            val current = wallet(walletId)?.activeChains.orEmpty().split(',').filter { it.isNotBlank() }
+            val updated = if (active) (current + chainId).distinct() else current - chainId
+            if (updated != current) setActiveChains(walletId, updated.joinToString(","))
+        }
+    }
+
+    /** Ends a sync whose results were stored with [storeSyncPart]. */
+    @Query("UPDATE wallet SET last_synced_at = :syncedAt, history_truncated = :truncated WHERE id = :walletId")
+    abstract suspend fun finishSync(walletId: Long, syncedAt: Long, truncated: Boolean)
 }

@@ -44,9 +44,14 @@ class ExchangePricesTest {
                 respond("""[{"symbol":"BTCUSDT","lastPrice":"100000.0","openPrice":"98000.0"}]""", HttpStatusCode.OK, json)
             }
         }
-        val exchange = ExchangePrices(createHttpClient(engine = engine), hosts = listOf("https://ex.test"))
+        var time = kotlin.time.Instant.fromEpochSeconds(1_000)
+        val health = com.altaran.watchwallet.core.network.HostHealth { time }
+        val exchange = ExchangePrices(createHttpClient(engine = engine), hosts = listOf("https://ex.test"), health = health)
         assertFailsWith<PriceDataException> { exchange.tickers(setOf("BTC")) }
         fail = false
+        // The host is left alone for a while, but the symbol is asked for again after that.
+        assertFailsWith<PriceDataException> { exchange.tickers(setOf("BTC")) }
+        time += kotlin.time.Duration.parse("31m")
         assertEquals(100_000.0, exchange.tickers(setOf("BTC")).getValue("BTC").priceUsd)
     }
 

@@ -12,6 +12,7 @@ import com.altaran.watchwallet.core.designsystem.chart.ChartPoint
 import com.altaran.watchwallet.core.model.ChartRange
 import com.altaran.watchwallet.core.model.QuoteCurrency
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -92,7 +93,7 @@ class PortfolioViewModel(
         viewModelScope.launch {
             combine(currency, range, snapshot) { c, r, snap -> Triple(c, r, snap.holdings.historyPriceIds()) }
                 .distinctUntilChanged()
-                .collect { (c, r, ids) -> portfolioRepository.ensureHistory(c, r, ids) }
+                .collectLatest { (c, r, ids) -> portfolioRepository.ensureHistory(c, r, ids) }
         }
     }
 

@@ -28,6 +28,7 @@ import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -145,14 +146,17 @@ class KrakenMarketData(
     }
 }
 
-/** Reference FX rates (European Central Bank via the open Frankfurter API). Only currency codes are sent. */
+/**
+ * Reference FX rates (European Central Bank via the open Frankfurter API). Only currency codes are
+ * sent. Concurrent requests for a rate wait for one fetch, and a rate that cannot be refreshed
+ * stays in use for a day: it changes little, and prices are worth more than a fresh rate.
+ */
 class FxRates(
     private val http: HttpClient,
-    private val urls: List<String> = listOf("https://api.frankfurter.dev/v1/latest", "https://api.frankfurter.app/latest"),
+    private val urls: List<String> = listOf("https://api.frankfurter.dev/v1/latest"),
 ) {
-    private class Cached(val rate: Double, val fetchedAt: Instant)
+    private class Cached(val rate: Double, val fetchedAt: Instant, val triedAt: Instant)
 
-    /** Rates by `from>to`; guarded by [cacheLock] (rates are requested from parallel coroutines). */
     private val cache = HashMap<String, Cached>()
     private val cacheLock = Mutex()
 
@@ -160,8 +164,22 @@ class FxRates(
     suspend fun rate(from: String, to: String): Double {
         if (from == to) return 1.0
         val key = "$from>$to"
-        val now = Clock.System.now()
-        cacheLock.withLock { cache[key] }?.takeIf { now - it.fetchedAt < TTL }?.let { return it.rate }
+        return cacheLock.withLock {
+            val now = Clock.System.now()
+            val cached = cache[key]
+            if (cached != null && (now - cached.fetchedAt < TTL || now - cached.triedAt < RETRY)) return@withLock cached.rate
+            val rate = fetch(from, to)
+            if (rate != null) {
+                cache[key] = Cached(rate, now, now)
+                return@withLock rate
+            }
+            if (cached == null || now - cached.fetchedAt >= MAX_AGE) throw PriceDataException("FX rate $from→$to unavailable")
+            cache[key] = Cached(cached.rate, cached.fetchedAt, now)
+            cached.rate
+        }
+    }
+
+    private suspend fun fetch(from: String, to: String): Double? {
         for (url in urls) {
             val rate = try {
                 val body: JsonObject = http.get(url) {
@@ -178,16 +196,15 @@ class FxRates(
             ) {
                 null
             }
-            if (rate != null) {
-                cacheLock.withLock { cache[key] = Cached(rate, now) }
-                return rate
-            }
+            if (rate != null) return rate
         }
-        throw PriceDataException("FX rate $from→$to unavailable")
+        return null
     }
 
     private companion object {
         /** ECB reference rates change once per working day. */
         val TTL = 1.hours
+        val RETRY = 2.minutes
+        val MAX_AGE = 24.hours
     }
 }

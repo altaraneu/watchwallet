@@ -1,10 +1,14 @@
 package com.altaran.watchwallet.core.pricing
 
+import com.altaran.watchwallet.core.network.SingleFlight
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -25,26 +29,41 @@ class LayeredPriceProvider(
     private val fallback: PriceProvider,
     private val exchange: ExchangePrices,
     private val fx: FxRates,
+    private val now: () -> Instant = { Clock.System.now() },
 ) : PriceProvider {
-    private val marketsCache = HashMap<String, List<MarketInfo>>()
+    private class MarketRow(val info: MarketInfo, val at: Instant)
+
+    /** Last rows by `currency|id`; fresh ones spare a request when another screen asks the same. */
+    private val marketRows = HashMap<String, MarketRow>()
+    private val marketRowsLock = Mutex()
+    private val marketsFlight = SingleFlight<String, List<MarketInfo>>()
 
     override suspend fun current(priceIds: Collection<String>, currency: String): Map<String, CurrentPrice> {
+        val result = HashMap<String, CurrentPrice>()
+        currentInBatches(priceIds, currency) { result += it }
+        return result
+    }
+
+    /** Exchange prices first, at once; a failing source only leaves its assets without an update. */
+    override suspend fun currentInBatches(priceIds: Collection<String>, currency: String, onBatch: suspend (Map<String, CurrentPrice>) -> Unit) {
         val ids = priceIds.distinct()
         val symbols = ids.associateWith { KnownAssets.symbolOf(it) }.filterValues { it != null }.mapValues { it.value!! }
-        val result = HashMap<String, CurrentPrice>()
         val fromExchange = runCatching { exchangeCurrent(symbols, currency) }.getOrElse { e ->
             if (e is CancellationException) throw e
             emptyMap()
         }
-        result += fromExchange
-        val rest = ids.filter { it !in result }
-        if (rest.isNotEmpty()) {
-            result += runCatching { fallback.current(rest, currency) }.getOrElse { e ->
-                if (e is CancellationException) throw e
-                emptyMap()
-            }
+        if (fromExchange.isNotEmpty()) onBatch(fromExchange)
+        val rest = ids.filter { it !in fromExchange }
+        if (rest.isEmpty()) return
+        try {
+            fallback.currentInBatches(rest, currency, onBatch)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (
+            @Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception,
+        ) {
+            // Stored prices stay; the next refresh tries again.
         }
-        return result
     }
 
     override suspend fun history(priceId: String, currency: String, days: Int?): List<PricePoint> {
@@ -59,17 +78,24 @@ class LayeredPriceProvider(
         return fallback.history(priceId, currency, days)
     }
 
+    /** Screens asking at the same time, or moments apart, share one request. */
     override suspend fun markets(coinIds: Collection<String>, currency: String): List<MarketInfo> {
-        val key = currency + "|" + coinIds.sorted().joinToString(",")
+        val ids = coinIds.distinct().sorted()
+        val cached = marketRowsLock.withLock { ids.mapNotNull { id -> marketRows["$currency|$id"] } }
+        if (cached.size == ids.size && cached.all { now() - it.at < MARKETS_FRESH }) return cached.map { it.info }
+        return marketsFlight.run(currency + "|" + ids.joinToString(",")) { loadMarkets(ids, currency, cached) }
+    }
+
+    private suspend fun loadMarkets(ids: List<String>, currency: String, cached: List<MarketRow>): List<MarketInfo> {
         // CoinGecko has names and market caps but is often slow; do not let it block the list.
-        val rich = withTimeoutOrNull(MARKETS_TIMEOUT) { runCatching { fallback.markets(coinIds, currency) }.getOrNull() }
-        if (!rich.isNullOrEmpty()) {
-            marketsCache[key] = rich
-            return rich
+        val rich = withTimeoutOrNull(MARKETS_TIMEOUT) { runCatching { fallback.markets(ids, currency) }.getOrNull() }
+        val rows = rich?.takeIf { it.isNotEmpty() } ?: runCatching { exchangeMarkets(ids, currency) }.getOrDefault(emptyList())
+        if (rows.isEmpty()) {
+            return cached.map { it.info }.ifEmpty { throw PriceDataException("No market data source available") }
         }
-        val fromExchange = runCatching { exchangeMarkets(coinIds, currency) }.getOrDefault(emptyList())
-        if (fromExchange.isNotEmpty()) return fromExchange
-        return marketsCache[key] ?: throw PriceDataException("No market data source available")
+        val at = now()
+        marketRowsLock.withLock { rows.forEach { marketRows["$currency|${it.priceId}"] = MarketRow(it, at) } }
+        return rows
     }
 
     override suspend fun search(query: String): List<CoinSearchResult> = fallback.search(query)
@@ -150,6 +176,7 @@ class LayeredPriceProvider(
 
     private companion object {
         val MARKETS_TIMEOUT = 6.seconds
+        val MARKETS_FRESH = 30.seconds
         const val PERCENT = 100.0
 
         /** Hourly exchange candles cover at most 1000 hours (about 41 days). */

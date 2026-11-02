@@ -53,7 +53,7 @@ class CostBasisRepository(
         val assets = walletDao.observeAssets().first().associateBy { it.id }
         val priceIds = missing.mapNotNull { assets[it.assetId]?.priceId }.distinct()
         if (priceIds.isEmpty()) return@withLock
-        priceRepository.ensureHistory(priceIds, QuoteCurrency.USD, ChartRange.ALL)
+        priceRepository.ensureHistory(priceIds, QuoteCurrency.USD, ChartRange.ALL, awaitBackfill = true)
         val history = priceRepository.history(priceIds, QuoteCurrency.USD).first()
         val now = Clock.System.now().toEpochMilliseconds()
         val rows = missing.mapNotNull { tx ->

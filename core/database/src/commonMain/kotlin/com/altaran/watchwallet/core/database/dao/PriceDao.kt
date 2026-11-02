@@ -30,6 +30,9 @@ interface PriceDao {
     @Query("SELECT MIN(time) FROM price_point WHERE price_id = :priceId AND currency = :currency")
     suspend fun earliestPointTime(priceId: String, currency: String): Long?
 
+    @Query("SELECT COUNT(*) FROM price_point WHERE price_id = :priceId AND currency = :currency AND time >= :from")
+    suspend fun pointCountSince(priceId: String, currency: String, from: Long): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPoints(points: List<PricePointEntity>)
 

@@ -3,6 +3,7 @@ package com.altaran.watchwallet.core.pricing
 import com.altaran.watchwallet.core.network.Throttle
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -17,6 +18,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 @Serializable
@@ -64,42 +66,71 @@ class CoinGeckoProvider(
 
     /** Tokens CoinGecko has no price for (mostly spam), with the time to ask again. */
     private val noPriceUntil = HashMap<String, Instant>()
+
+    /** Long-tail tokens priced recently (`id|currency`): the rate limit is too low to ask every minute. */
+    private val tokenFreshUntil = HashMap<String, Instant>()
     private val noPriceLock = Mutex()
 
     override suspend fun current(priceIds: Collection<String>, currency: String): Map<String, CurrentPrice> {
+        val result = HashMap<String, CurrentPrice>()
+        currentInBatches(priceIds, currency) { result += it }
+        return result
+    }
+
+    override suspend fun currentInBatches(priceIds: Collection<String>, currency: String, onBatch: suspend (Map<String, CurrentPrice>) -> Unit) {
         val (tokens, coins) = priceIds.distinct().partition { it.startsWith(TOKEN_PREFIX) }
-        val result = mutableMapOf<String, CurrentPrice>()
+        var coinFailure: PriceDataException? = null
         coins.chunked(MAX_IDS_PER_CALL).forEach { chunk ->
-            val body: JsonObject = call("simple/price") {
-                parameter("ids", chunk.joinToString(","))
-                parameter("vs_currencies", currency)
-                parameter("include_24hr_change", "true")
+            try {
+                val body: JsonObject = call("simple/price") {
+                    parameter("ids", chunk.joinToString(","))
+                    parameter("vs_currencies", currency)
+                    parameter("include_24hr_change", "true")
+                }
+                onBatch(chunk.mapNotNull { id -> parsePrice(body[id] as? JsonObject, id, currency)?.let { id to it } }.toMap())
+            } catch (e: PriceDataException) {
+                coinFailure = e
             }
-            chunk.forEach { id -> parsePrice(body[id] as? JsonObject, id, currency)?.let { result[id] = it } }
         }
-        // The keyless API accepts a single contract per token price request (2026); those calls go
-        // through the background lane, and tokens without a price are not asked again for a while.
+        // Tokens are not given up because coins failed; a rate limit stops them by itself.
+        tokenPrices(tokens, currency, onBatch)
+        coinFailure?.let { throw it }
+    }
+
+    /**
+     * The keyless API accepts a single contract per token price request (checked 2026-11), so those
+     * calls go through the background lane. Tokens priced a moment ago keep their stored price, and
+     * tokens without a price are not asked again for a while. A failed request says nothing about
+     * the token and is simply tried again next time.
+     */
+    private suspend fun tokenPrices(tokens: List<String>, currency: String, onBatch: suspend (Map<String, CurrentPrice>) -> Unit) {
         val keyless = apiKey() == null
         val now = Clock.System.now()
-        val pending = noPriceLock.withLock { tokens.filter { id -> noPriceUntil[id]?.let { now < it } != true } }
+        val pending = noPriceLock.withLock {
+            tokens.filter { id -> noPriceUntil[id]?.let { now < it } != true && tokenFreshUntil["$id|$currency"]?.let { now < it } != true }
+        }
         pending.groupBy { it.removePrefix(TOKEN_PREFIX).substringBefore(':') }.forEach { (platform, ids) ->
             ids.chunked(if (keyless) 1 else MAX_IDS_PER_CALL).forEach { chunk ->
                 val contracts = chunk.map { it.substringAfterLast(':') }
-                val body: JsonObject = runCatching {
-                    call<JsonObject>("simple/token_price/$platform", if (keyless) background else interactive) {
+                val body: JsonObject = try {
+                    call("simple/token_price/$platform", if (keyless) background else interactive) {
                         parameter("contract_addresses", contracts.joinToString(","))
                         parameter("vs_currencies", currency)
                         parameter("include_24hr_change", "true")
                     }
-                }.getOrElse { JsonObject(emptyMap()) }
-                chunk.forEach { id ->
-                    val contract = id.substringAfterLast(':')
-                    val price = parsePrice(body[contract] as? JsonObject, id, currency)
-                    if (price != null) result[id] = price else noPriceLock.withLock { noPriceUntil[id] = now + NO_PRICE_RETRY }
+                } catch (e: PriceDataException) {
+                    if ((e.cause as? ResponseException)?.response?.status?.value == HTTP_TOO_MANY_REQUESTS) return
+                    return@forEach
                 }
+                val prices = chunk.mapNotNull { id -> parsePrice(body[id.substringAfterLast(':')] as? JsonObject, id, currency)?.let { id to it } }.toMap()
+                noPriceLock.withLock {
+                    chunk.forEach { id ->
+                        if (id in prices) tokenFreshUntil["$id|$currency"] = now + TOKEN_PRICE_TTL else noPriceUntil[id] = now + NO_PRICE_RETRY
+                    }
+                }
+                if (prices.isNotEmpty()) onBatch(prices)
             }
         }
-        return result
     }
 
     override suspend fun history(priceId: String, currency: String, days: Int?): List<PricePoint> {
@@ -177,6 +208,8 @@ class CoinGeckoProvider(
         private const val TOKEN_PREFIX = "token:"
         private const val MAX_IDS_PER_CALL = 100
         private val NO_PRICE_RETRY = 12.hours
+        private val TOKEN_PRICE_TTL = 10.minutes
+        private const val HTTP_TOO_MANY_REQUESTS = 429
         private const val MAX_KEYLESS_DAYS = 365
         private const val HOURLY_MAX_DAYS = 90
         private const val MAX_SEARCH_RESULTS = 25

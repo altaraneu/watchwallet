@@ -12,6 +12,7 @@ import com.altaran.watchwallet.core.model.QuoteCurrency
 import com.altaran.watchwallet.core.model.ThemeMode
 import com.altaran.watchwallet.core.model.UserSettings
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /**
@@ -109,8 +110,25 @@ class SettingsDataSource(
 
     suspend fun setNextRatePrompt(launch: Int) = edit { it[Keys.RATE_PROMPT_NEXT] = launch }
 
+    /** Opaque sync bookkeeping of a wallet, `null` before its first sync. Local only, no user data. */
+    suspend fun walletSyncState(walletId: Long): String? = dataStore.data.first()[syncStateKey(walletId)]
+
+    suspend fun setWalletSyncState(walletId: Long, state: String) = edit { it[syncStateKey(walletId)] = state }
+
+    /** Forgets the bookkeeping of wallets that no longer exist. */
+    suspend fun retainWalletSyncStates(walletIds: Set<Long>) = edit { prefs ->
+        val keep = walletIds.map { syncStateKey(it).name }.toSet()
+        prefs.asMap().keys.filter { it.name.startsWith(SYNC_STATE_PREFIX) && it.name !in keep }.forEach { prefs.remove(it) }
+    }
+
+    private fun syncStateKey(walletId: Long) = stringPreferencesKey("$SYNC_STATE_PREFIX$walletId")
+
     private suspend fun edit(block: (MutablePreferences) -> Unit) {
         dataStore.edit { block(it) }
+    }
+
+    private companion object {
+        const val SYNC_STATE_PREFIX = "wallet_sync_state_"
     }
 
     private object Keys {

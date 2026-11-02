@@ -5,6 +5,7 @@ import androidx.glance.appwidget.updateAll
 import com.altaran.watchwallet.core.data.platform.AppInfo
 import com.altaran.watchwallet.core.data.platform.AppLanguageController
 import com.altaran.watchwallet.core.data.platform.AppRestarter
+import com.altaran.watchwallet.core.data.platform.SyncLog
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.designsystem.theme.isDynamicColorSupported
@@ -75,6 +76,7 @@ class WatchWalletApplication : Application() {
     private val androidPlatformModule = module {
         single<AppLanguageController> { AndroidAppLanguageController(BuildConfig.SUPPORTED_LANGUAGES) }
         single<AppRestarter> { AndroidAppRestarter(this@WatchWalletApplication) }
+        single<SyncLog> { if (BuildConfig.DEBUG) SyncLog { android.util.Log.d("WWSync", it) } else SyncLog.None }
         single {
             AppInfo(
                 versionName = BuildConfig.VERSION_NAME,

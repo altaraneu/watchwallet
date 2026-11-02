@@ -22,15 +22,16 @@ one is rejected, is not stored anywhere (including logs) and is never sent over 
 ## Network endpoints
 
 All requests are plain HTTPS GET/POST calls without cookies, accounts or tracking headers.
-Responses are not cached on disk by the HTTP client.
+Responses are not cached on disk by the HTTP client. Redirects are not followed, so a service
+moving elsewhere cannot lead the app to a host that is not listed here.
 
 ### Blockchain data (sends the individual addresses you track)
 
 | Service | Used for | Data sent |
 |---|---|---|
 | `mempool.space/api` (Esplora), fallback `blockstream.info/api` when it fails | Bitcoin balances and history | Individual Bitcoin addresses. For an xpub, the addresses derived **on the device** are queried one by one with random timing; the xpub itself is never sent. |
-| Public JSON-RPC nodes per EVM network (`*.publicnode.com`, `mainnet.era.zksync.io`, `rpc.linea.build`, `rpc.scroll.io`, `rpc.mantle.xyz`, `rpc.gnosischain.com`, `evm.cronos.org`, `rpc.soniclabs.com`, `forno.celo.org`, `etc.etcdesktop.com`, `rpc.hyperliquid.xyz`, `rpc.berachain.com`, `evm-rpc.sei-apis.com`, `mainnet.unichain.org`, `rpc.blast.io`) | Native balance and activity check on each EVM network | The EVM address |
-| Blockscout instances (`eth.`, `base.`, `optimism.`, `arbitrum.`, `polygon.`, `gnosis.`, `zksync.`, `scroll.`, `celo.`, `etc.`, `unichain.blockscout.com`, `explorer.mantle.xyz`) | Token balances and transaction history | The EVM address |
+| Public JSON-RPC nodes per EVM network (`*.publicnode.com`, `mainnet.era.zksync.io`, `rpc.linea.build`, `rpc.scroll.io`, `rpc.mantle.xyz`, `rpc.gnosischain.com`, `evm.cronos.org`, `rpc.soniclabs.com`, `forno.celo.org`, `etc.etcdesktop.com`, `rpc.hyperliquid.xyz`, `rpc.berachain.com`, `evm-rpc.sei-apis.com`, `mainnet.unichain.org`, `rpc.blast.io`); when one fails, the alternative of that network (`eth.drpc.org`, `polygon.drpc.org`, `zksync.drpc.org`, `hyperliquid.drpc.org`, `bsc-dataseed.binance.org`, `arb1.arbitrum.io`, `mainnet.optimism.io`, `mainnet.base.org`, `api.avax.network`, or `*.publicnode.com`) | Native balance and activity check on the EVM networks where the wallet is active; all networks on the first sync, once a day and on a manual refresh | The EVM address |
+| Blockscout instances (`eth.`, `base.`, `arbitrum.`, `polygon.`, `zksync.`, `celo.`, `etc.`, `unichain.blockscout.com`, `explorer.optimism.io`, `gnosisscan.io`, `scrollscan.com`, `explorer.mantle.xyz`) | Token balances and transaction history | The EVM address |
 
 | `litecoinspace.org/api` (Esplora) | Litecoin balances and history | Individual Litecoin addresses (xpub-derived addresses one by one) |
 | `dogecoin.atomicwallet.io`, `blockbook.bch.zelcore.io` (public Blockbook instances, address endpoint only) | Dogecoin and Bitcoin Cash | Individual addresses; the xpub endpoint is never used |
@@ -58,7 +59,7 @@ Responses are not cached on disk by the HTTP client.
 | `raw.githubusercontent.com` (Trust Wallet assets repository) | Coin and token logos, cached on the device; can be turned off in Settings → Privacy | Which coin or token logo is needed (coin name or token contract), never your addresses |
 | `api.binance.com`, fallback `data-api.binance.vision` (public market data, no account) | Current prices and price history of well-known coins and tokens (tried before CoinGecko) | Coin symbols only (for example `BTCUSDT`); candle charts also open a WebSocket to `stream.binance.com` for the viewed pair |
 | `api.kraken.com`, `ws.kraken.com` | Candlestick charts and live price updates | Trading pair (for example `BTC/EUR`) and candle interval |
-| `api.frankfurter.dev` (fallback `api.frankfurter.app`) | ECB reference exchange rates for currencies Kraken does not quote (CZK, PLN…) | Currency codes |
+| `api.frankfurter.dev` | ECB reference exchange rates for currencies Kraken does not quote (CZK, PLN…) | Currency codes |
 
 ### Your own server and proxy
 

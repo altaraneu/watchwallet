@@ -1,0 +1,288 @@
+package com.altaran.watchwallet.core.data.sync
+
+import androidx.room.Room
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.altaran.watchwallet.chain.api.AssetAmount
+import com.altaran.watchwallet.chain.api.ChainAdapter
+import com.altaran.watchwallet.chain.api.ChainDataException
+import com.altaran.watchwallet.chain.api.ChainTransaction
+import com.altaran.watchwallet.chain.api.ProbeResult
+import com.altaran.watchwallet.chain.api.SyncOptions
+import com.altaran.watchwallet.chain.api.SyncPart
+import com.altaran.watchwallet.chain.api.SyncPartSink
+import com.altaran.watchwallet.chain.api.SyncResult
+import com.altaran.watchwallet.core.data.chain.ChainRegistry
+import com.altaran.watchwallet.core.database.WatchWalletDatabase
+import com.altaran.watchwallet.core.database.entity.WalletEntity
+import com.altaran.watchwallet.core.model.Asset
+import com.altaran.watchwallet.core.model.AssetId
+import com.altaran.watchwallet.core.model.Chain
+import com.altaran.watchwallet.core.model.ChainFamily
+import com.altaran.watchwallet.core.model.ChainId
+import com.altaran.watchwallet.core.model.TokenAmount
+import com.altaran.watchwallet.core.model.WatchTarget
+import com.ionspin.kotlin.bignum.integer.BigInteger
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
+import kotlin.time.Instant
+
+private val NET_A = ChainId.evm(1)
+private val NET_B = ChainId.evm(2)
+
+private fun native(chain: ChainId) = Asset(AssetId.native(chain), chain, "N${chain.value}", "Native", 18, null)
+
+private fun token(chain: ChainId, contract: String) = Asset(AssetId.token(chain, contract), chain, "TOK", "Token", 18, null, contract)
+
+private fun amount(asset: Asset, raw: Long) = AssetAmount(asset, TokenAmount(BigInteger.fromLong(raw), asset.decimals))
+
+private fun tx(chain: ChainId, hash: String, delta: Long = 1, confirmed: Boolean = true) =
+    ChainTransaction(chain, hash, Instant.fromEpochSeconds(1_000), native(chain), BigInteger.fromLong(delta), null, false, confirmed)
+
+private fun chain(id: ChainId) = Chain(id, ChainFamily.EVM, id.value, "N", 18, null, "", "", 0)
+
+/** An adapter scripted per test. */
+private class FakeAdapter(private val script: suspend (Set<String>, SyncOptions, SyncPartSink) -> SyncResult) : ChainAdapter {
+    var lastOptions: SyncOptions? = null
+    override val family = ChainFamily.EVM
+    override val chains = listOf(chain(NET_A), chain(NET_B))
+    override val supportsHistoryContinuation = true
+
+    override suspend fun probe(target: WatchTarget) = ProbeResult(false, emptyList(), emptyList(), null)
+
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>) = error("the engine uses the sink")
+
+    override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>, options: SyncOptions, sink: SyncPartSink): SyncResult {
+        lastOptions = options
+        return script(knownTransactions, options, sink)
+    }
+}
+
+private class MemoryStates : WalletSyncStateStore {
+    val states = HashMap<Long, WalletSyncState>()
+    var retained: Set<Long>? = null
+
+    override suspend fun load(walletId: Long) = states[walletId] ?: WalletSyncState()
+
+    override suspend fun save(walletId: Long, state: WalletSyncState) {
+        states[walletId] = state
+    }
+
+    override suspend fun retain(walletIds: Set<Long>) {
+        retained = walletIds
+    }
+}
+
+/** SDK 34: newer Robolectric SDKs fail to start on this JDK (see MigrationTest). */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class SyncEngineTest {
+    private val db = Room.inMemoryDatabaseBuilder<WatchWalletDatabase>(RuntimeEnvironment.getApplication())
+        .setDriver(BundledSQLiteDriver())
+        .build()
+    private val dao = db.walletDao()
+    private val states = MemoryStates()
+
+    @After
+    fun close() = db.close()
+
+    private suspend fun wallet(activeChains: String = "", truncated: Boolean = false): Long = dao.insert(
+        WalletEntity(
+            name = "W",
+            emoji = null,
+            groupId = null,
+            notes = null,
+            sortOrder = 0,
+            archived = false,
+            createdAtEpochMs = 0,
+            family = "EVM",
+            chainId = NET_A.value,
+            targetKind = "ADDRESS",
+            targetValue = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+            activeChains = activeChains,
+            historyTruncated = truncated,
+        ),
+    )
+
+    private fun engine(adapter: ChainAdapter, prices: CurrentPriceRefresher = CurrentPriceRefresher { }) =
+        SyncEngine(dao, ChainRegistry(listOf(adapter)), prices, states)
+
+    private suspend fun balances(): Map<String, String> = dao.observeAllBalances().first().associate { it.id to it.raw }
+
+    private suspend fun hashes(id: Long): Set<String> = dao.observeTransactions(id).first().map { it.hash }.toSet()
+
+    @Test
+    fun partsAppearWhileASlowNetworkIsStillRunning() = runBlocking {
+        val id = wallet()
+        val seenBalances = CompletableDeferred<Map<String, String>>()
+        val adapter = FakeAdapter { _, _, sink ->
+            sink.store(SyncPart(NET_A, listOf(amount(native(NET_A), 5)), balancesComplete = true, active = true))
+            seenBalances.complete(balances())
+            SyncResult(emptyList(), emptyList(), storedProgressively = true)
+        }
+        engine(adapter).syncWallet(id).join()
+        assertEquals(mapOf(AssetId.native(NET_A).value to "5"), seenBalances.await())
+        assertEquals(NET_A.value, dao.wallet(id)?.activeChains)
+    }
+
+    @Test
+    fun aFailedNetworkKeepsItsBalancesAndHistory() = runBlocking {
+        val id = wallet("${NET_A.value},${NET_B.value}")
+        val tokenB = token(NET_B, "0xb")
+        // Both networks are stored once.
+        val first = FakeAdapter { _, _, sink ->
+            sink.store(SyncPart(NET_A, listOf(amount(native(NET_A), 1)), balancesComplete = true, transactions = listOf(tx(NET_A, "a1")), historyFetched = true))
+            sink.store(SyncPart(NET_B, listOf(amount(native(NET_B), 2), amount(tokenB, 3)), balancesComplete = true, transactions = listOf(tx(NET_B, "b1")), historyFetched = true))
+            SyncResult(emptyList(), emptyList(), storedProgressively = true)
+        }
+        engine(first).syncWallet(id).join()
+        // B fails now: no part for it.
+        val second = FakeAdapter { _, _, sink ->
+            sink.store(SyncPart(NET_A, listOf(amount(native(NET_A), 9)), balancesComplete = true))
+            SyncResult(emptyList(), emptyList(), storedProgressively = true, failedChains = listOf(NET_B))
+        }
+        val engine = engine(second)
+        engine.syncWallet(id).join()
+
+        assertEquals(mapOf(AssetId.native(NET_A).value to "9", AssetId.native(NET_B).value to "2", tokenB.id.value to "3"), balances())
+        assertEquals(setOf("a1", "b1"), hashes(id))
+        assertEquals("${NET_A.value},${NET_B.value}", dao.wallet(id)?.activeChains)
+        assertNull(engine.state.value.errors[id])
+        assertEquals(setOf(NET_B.value), engine.state.value.partialFailures[id])
+    }
+
+    @Test
+    fun aPartialBalanceUpdateKeepsTokensAndDropsAnEmptyNativeBalance() = runBlocking {
+        val id = wallet(NET_A.value)
+        val tokenA = token(NET_A, "0xa")
+        val first = FakeAdapter { _, _, sink ->
+            sink.store(SyncPart(NET_A, listOf(amount(native(NET_A), 1), amount(tokenA, 3)), balancesComplete = true))
+            SyncResult(emptyList(), emptyList(), storedProgressively = true)
+        }
+        engine(first).syncWallet(id).join()
+        val second = FakeAdapter { _, _, sink ->
+            sink.store(SyncPart(NET_A, listOf(amount(native(NET_A), 0)), balancesComplete = false, active = true))
+            SyncResult(emptyList(), emptyList(), storedProgressively = true, failedChains = listOf(NET_A), allChainsFailed = true)
+        }
+        val engine = engine(second)
+        engine.syncWallet(id).join()
+        assertEquals(mapOf(tokenA.id.value to "3"), balances())
+        assertNotNull("the wallet shows as failed", engine.state.value.errors[id])
+        assertFalse(id in engine.state.value.partialFailures)
+    }
+
+    @Test
+    fun pendingRowsAreReplacedPerChainOnlyWhenHistoryWasFetched() = runBlocking {
+        val id = wallet()
+        val first = FakeAdapter { _, _, sink ->
+            sink.store(SyncPart(NET_A, transactions = listOf(tx(NET_A, "pa", confirmed = false)), historyFetched = true))
+            sink.store(SyncPart(NET_B, transactions = listOf(tx(NET_B, "pb", confirmed = false)), historyFetched = true))
+            SyncResult(emptyList(), emptyList(), storedProgressively = true)
+        }
+        engine(first).syncWallet(id).join()
+        val second = FakeAdapter { _, _, sink ->
+            sink.store(SyncPart(NET_A, transactions = listOf(tx(NET_A, "ca")), historyFetched = true))
+            // Only balances for B: its pending row must stay.
+            sink.store(SyncPart(NET_B, listOf(amount(native(NET_B), 1)), balancesComplete = true))
+            SyncResult(emptyList(), emptyList(), storedProgressively = true)
+        }
+        engine(second).syncWallet(id).join()
+        assertEquals(setOf("ca", "pb"), hashes(id))
+    }
+
+    @Test
+    fun confirmedRowsAreNeverOverwritten() = runBlocking {
+        val id = wallet()
+        val first = FakeAdapter { _, _, sink ->
+            sink.store(SyncPart(NET_A, transactions = listOf(tx(NET_A, "x", delta = 7)), historyFetched = true))
+            SyncResult(emptyList(), emptyList(), storedProgressively = true)
+        }
+        engine(first).syncWallet(id).join()
+        val second = FakeAdapter { _, _, sink ->
+            sink.store(SyncPart(NET_A, transactions = listOf(tx(NET_A, "x", delta = 1)), historyFetched = true))
+            SyncResult(emptyList(), emptyList(), storedProgressively = true)
+        }
+        engine(second).syncWallet(id).join()
+        assertEquals("7", dao.observeTransactions(id).first().single().delta)
+    }
+
+    @Test
+    fun aFailingSyncKeepsPartsAlreadyStoredAndReportsTheError() = runBlocking {
+        val id = wallet()
+        val adapter = FakeAdapter { _, _, sink ->
+            sink.store(SyncPart(NET_A, listOf(amount(native(NET_A), 4)), balancesComplete = true))
+            throw ChainDataException("down")
+        }
+        val engine = engine(adapter)
+        engine.syncWallet(id).join()
+        assertEquals("4", balances()[AssetId.native(NET_A).value])
+        assertEquals("down", engine.state.value.errors[id])
+        assertNull("not synced as a whole", dao.wallet(id)?.lastSyncedAt)
+    }
+
+    @Test
+    fun stateAndDiscoveryTimeAreRememberedAndPassedOn() = runBlocking {
+        val id = wallet(NET_A.value, truncated = true)
+        val first = FakeAdapter { _, options, sink ->
+            assertNull(options.lastDiscoveryAt)
+            assertTrue(options.continueHistory)
+            assertEquals(setOf(NET_A), options.activeChains)
+            sink.store(SyncPart(NET_A, state = "s1"))
+            SyncResult(emptyList(), emptyList(), historyTruncated = false, storedProgressively = true, discoveryCompleted = true)
+        }
+        engine(first).syncAll(manual = true).join()
+        assertEquals(true, first.lastOptions?.manual)
+        assertFalse("continuation finished", dao.wallet(id)?.historyTruncated == true)
+        assertEquals(setOf(id), states.retained)
+
+        val second = FakeAdapter { _, options, _ ->
+            assertNotNull(options.lastDiscoveryAt)
+            assertEquals(mapOf(NET_A to "s1"), options.chainState)
+            SyncResult(emptyList(), emptyList(), storedProgressively = true)
+        }
+        engine(second).syncWallet(id).join()
+        assertNotNull("the discovery time stays", states.states[id]?.discoveredAt)
+    }
+
+    @Test
+    fun anAdapterWithoutProgressStillStoresEverythingAtOnce() = runBlocking {
+        val id = wallet()
+        val adapter = object : ChainAdapter {
+            override val family = ChainFamily.EVM
+            override val chains = listOf(chain(NET_A))
+
+            override suspend fun probe(target: WatchTarget) = ProbeResult(false, emptyList(), emptyList(), null)
+
+            override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>) =
+                SyncResult(listOf(amount(native(NET_A), 6)), listOf(tx(NET_A, "w")), activeChains = listOf(NET_A))
+        }
+        engine(adapter).syncWallet(id).join()
+        assertEquals("6", balances()[AssetId.native(NET_A).value])
+        assertEquals(setOf("w"), hashes(id))
+        assertEquals(NET_A.value, dao.wallet(id)?.activeChains)
+    }
+
+    @Test
+    fun pricesDoNotWaitForWallets() = runBlocking {
+        wallet()
+        val pricesAsked = CompletableDeferred<Unit>()
+        val adapter = FakeAdapter { _, _, _ ->
+            // A wallet that only finishes once prices were requested: with the old order this hangs.
+            pricesAsked.await()
+            SyncResult(emptyList(), emptyList(), storedProgressively = true)
+        }
+        engine(adapter, CurrentPriceRefresher { pricesAsked.complete(Unit) }).syncAll().join()
+        assertTrue(pricesAsked.isCompleted)
+    }
+}

@@ -35,3 +35,15 @@ data class AppInfo(
 fun interface AppRestarter {
     fun restart()
 }
+
+/**
+ * Timing log of syncs, for measuring on a device. Only debug builds provide one. Messages never
+ * contain addresses or amounts (wallet ids and chain ids such as `evm:1` are fine).
+ */
+fun interface SyncLog {
+    fun log(message: String)
+
+    companion object {
+        val None = SyncLog { }
+    }
+}
