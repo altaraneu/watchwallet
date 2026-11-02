@@ -14,4 +14,9 @@
     <string name="rate_action">Оценить</string>
     <string name="rate_already">Уже оценил(а)</string>
     <string name="rate_later">Не сейчас</string>
+    <string name="endpoints_changed_title">Серверы блокчейна изменились</string>
+    <string name="endpoints_changed_message">Теперь отслеживаемые адреса отправляются на серверы из текущего списка. В разделе «Настройки → Сеть» можно их просмотреть или использовать только серверы, встроенные в приложение.</string>
+    <string name="endpoints_changed_added">Новые: %1$s</string>
+    <string name="endpoints_changed_removed">Больше не используются: %1$s</string>
+    <string name="endpoints_changed_ok">Понятно</string>
 </resources>

@@ -15,4 +15,13 @@
     <string name="rate_action">Rate</string>
     <string name="rate_already">I already did</string>
     <string name="rate_later">Not now</string>
+    <!-- Dialog shown once after the list of blockchain servers changed -->
+    <string name="endpoints_changed_title">Blockchain servers changed</string>
+    <string name="endpoints_changed_message">From now on, the addresses you track go to the servers in the current list. You can review them, or use only the servers built into the app, in Settings → Network.</string>
+    <!-- %1$s: comma-separated host names -->
+    <string name="endpoints_changed_added">New: %1$s</string>
+    <!-- %1$s: comma-separated host names -->
+    <string name="endpoints_changed_removed">No longer used: %1$s</string>
+    <!-- Confirms having read the notice -->
+    <string name="endpoints_changed_ok">Got it</string>
 </resources>

@@ -14,4 +14,9 @@
     <string name="rate_action">Avaliar</string>
     <string name="rate_already">Já avaliei</string>
     <string name="rate_later">Agora não</string>
+    <string name="endpoints_changed_title">Os servidores de blockchain mudaram</string>
+    <string name="endpoints_changed_message">A partir de agora, os endereços que você acompanha vão para os servidores da lista atual. Você pode revisá-los, ou usar só os servidores incluídos no app, em Configurações → Rede.</string>
+    <string name="endpoints_changed_added">Novos: %1$s</string>
+    <string name="endpoints_changed_removed">Não usados mais: %1$s</string>
+    <string name="endpoints_changed_ok">Entendi</string>
 </resources>

@@ -84,6 +84,12 @@ class PriceRepository(
      */
     private val noOlderHistory = HashSet<String>()
 
+    /** Stored prices were removed: what this session remembers having fetched is no longer true. */
+    suspend fun forgetFetchedHistory() = stateLock.withLock {
+        lastHistoryFetch.clear()
+        noOlderHistory.clear()
+    }
+
     fun currentPrices(currency: QuoteCurrency): Flow<Map<String, CurrentPrice>> =
         priceDao.observeCurrent(currency.code.lowercase()).map { rows ->
             rows.associate { it.priceId to CurrentPrice(it.priceId, it.currency, it.price, it.change24h) }

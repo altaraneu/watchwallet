@@ -14,4 +14,9 @@
     <string name="rate_action">रेट करें</string>
     <string name="rate_already">मैं कर चुका हूँ</string>
     <string name="rate_later">अभी नहीं</string>
+    <string name="endpoints_changed_title">ब्लॉकचेन सर्वर बदल गए</string>
+    <string name="endpoints_changed_message">अब से आपके ट्रैक किए गए पते मौजूदा सूची के सर्वरों को जाएंगे। आप सेटिंग्स → नेटवर्क में उन्हें देख सकते हैं, या केवल ऐप में शामिल सर्वरों का उपयोग कर सकते हैं।</string>
+    <string name="endpoints_changed_added">नए: %1$s</string>
+    <string name="endpoints_changed_removed">अब उपयोग में नहीं: %1$s</string>
+    <string name="endpoints_changed_ok">समझ गया</string>
 </resources>

@@ -11,11 +11,15 @@ import com.altaran.watchwallet.core.model.Wallet
 import com.altaran.watchwallet.core.model.WalletTransaction
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.security.SecretGuard
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.withContext
 import kotlin.time.Clock
 
 /** A wallet balance row with the asset's visibility decision already applied. */
@@ -68,8 +72,12 @@ interface WalletRepository {
     suspend fun setAssetVisibility(asset: Asset, visible: Boolean?)
 }
 
+/**
+ * @param afterDelete runs after a wallet is gone, to clear what the database delete cannot reach.
+ */
 internal class DefaultWalletRepository(
     private val walletDao: WalletDao,
+    private val afterDelete: suspend () -> Unit = {},
 ) : WalletRepository {
     override val activeWallets: Flow<List<Wallet>> =
         walletDao.observeActiveWallets().map { wallets -> wallets.map(WalletEntity::toModel) }
@@ -191,13 +199,30 @@ internal class DefaultWalletRepository(
         walletDao.rename(id, name.trim())
     }
 
-    override suspend fun delete(id: Long) = walletDao.delete(id)
+    override suspend fun delete(id: Long) {
+        walletDao.delete(id)
+        finishDeletion()
+    }
 
-    override suspend fun deleteAll() = walletDao.deleteAllWallets()
+    override suspend fun deleteAll() {
+        walletDao.deleteAllWallets()
+        finishDeletion()
+    }
+
+    /** The screen that asked is usually leaving, which must not stop this. A failure changes nothing visible. */
+    private suspend fun finishDeletion() = withContext(NonCancellable) {
+        runCatching { afterDelete() }
+        Unit
+    }
 
     override suspend fun setAssetVisibility(asset: Asset, visible: Boolean?) =
         walletDao.setAssetVisibility(asset.id.value, visible)
 }
+
+/** Emits whenever the number went down, that is when a wallet was removed. */
+fun Flow<Int>.decreases(): Flow<Unit> = runningFold(null as Pair<Int?, Int>?) { previous, count -> previous?.second to count }
+    .filter { step -> step != null && (step.first ?: step.second) > step.second }
+    .map { }
 
 /** Defense in depth: never persist free text or targets that look like key material. */
 private fun requireNoSecret(value: String) {

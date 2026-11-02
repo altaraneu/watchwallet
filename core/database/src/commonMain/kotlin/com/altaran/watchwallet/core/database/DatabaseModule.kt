@@ -11,4 +11,8 @@ val databaseModule: Module = module {
     single { get<WatchWalletDatabase>().walletDao() }
     single { get<WatchWalletDatabase>().priceDao() }
     single { get<WatchWalletDatabase>().priceDetailDao() }
+    single {
+        val database = get<WatchWalletDatabase>()
+        DeletedDataScrubber { database.scrubDeletedData() }
+    }
 }

@@ -5,12 +5,17 @@ import androidx.lifecycle.viewModelScope
 import com.altaran.watchwallet.core.data.platform.AppInfo
 import com.altaran.watchwallet.core.data.repository.PriceRepository
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
+import com.altaran.watchwallet.core.data.repository.WalletRepository
+import com.altaran.watchwallet.core.data.repository.decreases
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.endpoints.EndpointConfigUpdater
+import com.altaran.watchwallet.core.endpoints.EndpointHostChange
+import com.altaran.watchwallet.core.endpoints.EndpointHostNotice
 import com.altaran.watchwallet.core.model.UserSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -40,7 +45,12 @@ class AppViewModel(
     private val priceRepository: PriceRepository,
     private val appInfo: AppInfo,
     private val endpointUpdater: EndpointConfigUpdater,
+    private val endpointHostNotice: EndpointHostNotice,
+    walletRepository: WalletRepository,
 ) : ViewModel() {
+    /** A wallet was removed; the screens clear what is cached outside the database. */
+    val walletRemoved: Flow<Unit> = walletRepository.activeWalletCount.decreases()
+
     /** Chart history is downloading (shown as a hint on charts). */
     val priceHistoryLoading: StateFlow<Boolean> =
         priceRepository.historyLoading.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
@@ -58,6 +68,16 @@ class AppViewModel(
     fun dismissDonateReminder(forever: Boolean) {
         _showDonateReminder.value = false
         if (forever) viewModelScope.launch { settingsRepository.disableDonateReminder() }
+    }
+
+    private val _endpointHostChange = MutableStateFlow<EndpointHostChange?>(null)
+
+    /** The servers that receive the user's addresses changed since they last saw them. */
+    val endpointHostChange: StateFlow<EndpointHostChange?> = _endpointHostChange.asStateFlow()
+
+    fun acknowledgeEndpointHostChange() {
+        _endpointHostChange.value = null
+        viewModelScope.launch { endpointHostNotice.acknowledge() }
     }
 
     private val _showRatePrompt = MutableStateFlow(false)
@@ -89,6 +109,7 @@ class AppViewModel(
                 scheduleRatePrompt(launches)
             }
         }
+        viewModelScope.launch { _endpointHostChange.value = endpointHostNotice.pending() }
         syncEngine.syncAll()
         // Nothing waits for this; a new server list applies at the next app start.
         viewModelScope.launch(Dispatchers.Default) { endpointUpdater.updateIfDue() }

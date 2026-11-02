@@ -14,4 +14,9 @@
     <string name="rate_action">Beri nilai</string>
     <string name="rate_already">Sudah</string>
     <string name="rate_later">Nanti saja</string>
+    <string name="endpoints_changed_title">Server blockchain berubah</string>
+    <string name="endpoints_changed_message">Mulai sekarang, alamat yang Anda pantau dikirim ke server dalam daftar saat ini. Anda dapat meninjaunya, atau hanya memakai server bawaan aplikasi, di Pengaturan → Jaringan.</string>
+    <string name="endpoints_changed_added">Baru: %1$s</string>
+    <string name="endpoints_changed_removed">Tidak lagi digunakan: %1$s</string>
+    <string name="endpoints_changed_ok">Mengerti</string>
 </resources>
