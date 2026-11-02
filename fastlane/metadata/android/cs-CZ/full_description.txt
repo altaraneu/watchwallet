@@ -1,4 +1,4 @@
-<p>WatchWallet sleduje zůstatky, historii transakcí a hodnotu tvého krypto portfolia pouze pomocí <b>veřejných adres a rozšířených veřejných klíčů</b>. Nikdy nechce, nepřijímá ani neukládá seed frázi či privátní klíč a nic neumí odeslat.</p>
+<p>WatchWallet sleduje zůstatky, historii transakcí a hodnotu tvého krypto portfolia pouze pomocí <b>veřejných adres a rozšířených veřejných klíčů</b>. Nikdy nechce seed frázi ani privátní klíč a nic neumí odeslat. Vstup, který na ně vypadá, odmítne a vymaže; několik formátů ale od adresy rozeznat nejde, třeba klíč Solany v base58 nebo klíč zadaný v oddělené cestě pro Sui a Aptos.</p>
 <p><b>Soukromí od základu</b></p>
 <ul>
 <li>Žádné účty, žádný server, žádná analytika, reklamy ani Google Play Services.</li>

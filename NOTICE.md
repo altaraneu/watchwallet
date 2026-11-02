@@ -24,6 +24,13 @@ v5.2.1, Apache License 2.0 (`core/chart/.../files/chart/LIGHTWEIGHT-CHARTS-LICEN
 
 The TradingView attribution logo with a link to tradingview.com is shown on every chart.
 
+## BIP-39 word lists
+
+`core/security/.../Bip39Wordlists.kt` holds the official word lists of
+[BIP-39](https://github.com/bitcoin/bips/tree/master/bip-0039), MIT License, Copyright (c) 2013 Marek
+Palatinus, Pavol Rusnak, Aaron Voisine and Sean Bowe. They are used only to recognise and reject
+seed phrases.
+
 ## Libraries
 
 See `gradle/libs.versions.toml` for all dependencies; each is distributed under its own
