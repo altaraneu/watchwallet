@@ -13,6 +13,7 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+*.key
 
 # IDE
 .idea/
@@ -24,6 +25,9 @@ keystore.properties
 xcuserdata/
 DerivedData/
 *.xcuserstate
+
+# Python
+__pycache__/
 
 # OS
 .DS_Store

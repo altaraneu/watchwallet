@@ -1,0 +1,394 @@
+{
+  "_comment": "Unsigned source of config/endpoints.json. See docs/endpoints-config.md. Bump version on every change.",
+  "version": 1,
+  "expires_in_days": 180,
+  "endpoints": [
+    {
+      "chain": "bitcoin",
+      "protocol": "esplora",
+      "urls": [
+        "https://mempool.space/api",
+        "https://blockstream.info/api"
+      ]
+    },
+    {
+      "chain": "litecoin",
+      "protocol": "esplora",
+      "urls": [
+        "https://litecoinspace.org/api"
+      ]
+    },
+    {
+      "chain": "dogecoin",
+      "protocol": "blockbook",
+      "urls": [
+        "https://dogecoin.atomicwallet.io"
+      ]
+    },
+    {
+      "chain": "bitcoincash",
+      "protocol": "blockbook",
+      "urls": [
+        "https://blockbook.bch.zelcore.io"
+      ]
+    },
+    {
+      "chain": "solana",
+      "protocol": "solana-rpc",
+      "urls": [
+        "https://api.mainnet-beta.solana.com"
+      ]
+    },
+    {
+      "chain": "xrp",
+      "protocol": "xrpl",
+      "urls": [
+        "https://xrplcluster.com",
+        "https://s1.ripple.com:51234"
+      ]
+    },
+    {
+      "chain": "tron",
+      "protocol": "trongrid",
+      "urls": [
+        "https://api.trongrid.io"
+      ]
+    },
+    {
+      "chain": "ton",
+      "protocol": "toncenter",
+      "urls": [
+        "https://toncenter.com/api/v3"
+      ]
+    },
+    {
+      "chain": "cardano",
+      "protocol": "koios",
+      "urls": [
+        "https://api.koios.rest/api/v1"
+      ]
+    },
+    {
+      "chain": "cosmos",
+      "protocol": "cosmos-rest",
+      "urls": [
+        "https://rest.cosmos.directory"
+      ]
+    },
+    {
+      "chain": "polkadot",
+      "protocol": "substrate-rpc",
+      "urls": [
+        "https://rpc.polkadot.io"
+      ]
+    },
+    {
+      "chain": "polkadot",
+      "protocol": "substrate-asset-hub-rpc",
+      "urls": [
+        "https://polkadot-asset-hub-rpc.polkadot.io"
+      ]
+    },
+    {
+      "chain": "kusama",
+      "protocol": "substrate-rpc",
+      "urls": [
+        "https://kusama-rpc.polkadot.io"
+      ]
+    },
+    {
+      "chain": "kusama",
+      "protocol": "substrate-asset-hub-rpc",
+      "urls": [
+        "https://kusama-asset-hub-rpc.polkadot.io"
+      ]
+    },
+    {
+      "chain": "stellar",
+      "protocol": "horizon",
+      "urls": [
+        "https://horizon.stellar.org"
+      ]
+    },
+    {
+      "chain": "sui",
+      "protocol": "sui-graphql",
+      "urls": [
+        "https://graphql.mainnet.sui.io/graphql"
+      ]
+    },
+    {
+      "chain": "aptos",
+      "protocol": "aptos-rest",
+      "urls": [
+        "https://api.mainnet.aptoslabs.com/v1"
+      ]
+    },
+    {
+      "chain": "near",
+      "protocol": "near-rpc",
+      "urls": [
+        "https://rpc.mainnet.near.org"
+      ]
+    },
+    {
+      "chain": "hedera",
+      "protocol": "hedera-mirror",
+      "urls": [
+        "https://mainnet-public.mirrornode.hedera.com/api/v1"
+      ]
+    },
+    {
+      "chain": "algorand",
+      "protocol": "algorand-indexer",
+      "urls": [
+        "https://mainnet-idx.algonode.cloud"
+      ]
+    },
+    {
+      "chain": "tezos",
+      "protocol": "tzkt",
+      "urls": [
+        "https://api.tzkt.io/v1"
+      ]
+    },
+    {
+      "chain": "kaspa",
+      "protocol": "kaspa-rest",
+      "urls": [
+        "https://api.kaspa.org"
+      ]
+    },
+    {
+      "chain": "evm:1",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://ethereum-rpc.publicnode.com"
+      ]
+    },
+    {
+      "chain": "evm:1",
+      "protocol": "blockscout",
+      "urls": [
+        "https://eth.blockscout.com"
+      ]
+    },
+    {
+      "chain": "evm:56",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://bsc-rpc.publicnode.com"
+      ]
+    },
+    {
+      "chain": "evm:42161",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://arbitrum-one-rpc.publicnode.com"
+      ]
+    },
+    {
+      "chain": "evm:42161",
+      "protocol": "blockscout",
+      "urls": [
+        "https://arbitrum.blockscout.com"
+      ]
+    },
+    {
+      "chain": "evm:10",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://optimism-rpc.publicnode.com"
+      ]
+    },
+    {
+      "chain": "evm:10",
+      "protocol": "blockscout",
+      "urls": [
+        "https://optimism.blockscout.com"
+      ]
+    },
+    {
+      "chain": "evm:8453",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://base-rpc.publicnode.com"
+      ]
+    },
+    {
+      "chain": "evm:8453",
+      "protocol": "blockscout",
+      "urls": [
+        "https://base.blockscout.com"
+      ]
+    },
+    {
+      "chain": "evm:137",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://polygon-bor-rpc.publicnode.com"
+      ]
+    },
+    {
+      "chain": "evm:137",
+      "protocol": "blockscout",
+      "urls": [
+        "https://polygon.blockscout.com"
+      ]
+    },
+    {
+      "chain": "evm:43114",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://avalanche-c-chain-rpc.publicnode.com"
+      ]
+    },
+    {
+      "chain": "evm:324",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://mainnet.era.zksync.io"
+      ]
+    },
+    {
+      "chain": "evm:324",
+      "protocol": "blockscout",
+      "urls": [
+        "https://zksync.blockscout.com"
+      ]
+    },
+    {
+      "chain": "evm:59144",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://rpc.linea.build"
+      ]
+    },
+    {
+      "chain": "evm:534352",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://rpc.scroll.io"
+      ]
+    },
+    {
+      "chain": "evm:534352",
+      "protocol": "blockscout",
+      "urls": [
+        "https://scroll.blockscout.com"
+      ]
+    },
+    {
+      "chain": "evm:5000",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://rpc.mantle.xyz"
+      ]
+    },
+    {
+      "chain": "evm:5000",
+      "protocol": "blockscout",
+      "urls": [
+        "https://explorer.mantle.xyz"
+      ]
+    },
+    {
+      "chain": "evm:100",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://rpc.gnosischain.com"
+      ]
+    },
+    {
+      "chain": "evm:100",
+      "protocol": "blockscout",
+      "urls": [
+        "https://gnosis.blockscout.com"
+      ]
+    },
+    {
+      "chain": "evm:25",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://evm.cronos.org"
+      ]
+    },
+    {
+      "chain": "evm:146",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://rpc.soniclabs.com"
+      ]
+    },
+    {
+      "chain": "evm:42220",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://forno.celo.org"
+      ]
+    },
+    {
+      "chain": "evm:42220",
+      "protocol": "blockscout",
+      "urls": [
+        "https://celo.blockscout.com"
+      ]
+    },
+    {
+      "chain": "evm:61",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://etc.etcdesktop.com"
+      ]
+    },
+    {
+      "chain": "evm:61",
+      "protocol": "blockscout",
+      "urls": [
+        "https://etc.blockscout.com"
+      ]
+    },
+    {
+      "chain": "evm:999",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://rpc.hyperliquid.xyz/evm"
+      ]
+    },
+    {
+      "chain": "evm:80094",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://rpc.berachain.com"
+      ]
+    },
+    {
+      "chain": "evm:1329",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://evm-rpc.sei-apis.com"
+      ]
+    },
+    {
+      "chain": "evm:130",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://mainnet.unichain.org"
+      ]
+    },
+    {
+      "chain": "evm:130",
+      "protocol": "blockscout",
+      "urls": [
+        "https://unichain.blockscout.com"
+      ]
+    },
+    {
+      "chain": "evm:81457",
+      "protocol": "evm-rpc",
+      "urls": [
+        "https://rpc.blast.io"
+      ]
+    }
+  ]
+}
