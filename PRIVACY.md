@@ -56,9 +56,9 @@ Responses are not cached on disk by the HTTP client.
 |---|---|---|
 | `api.coingecko.com` | Current prices, price history, market overview | Coin ids (for example `bitcoin`), token contract addresses (public token identifiers, not your address), selected currency |
 | `raw.githubusercontent.com` (Trust Wallet assets repository) | Coin and token logos, cached on the device; can be turned off in Settings → Privacy | Which coin or token logo is needed (coin name or token contract), never your addresses |
-| `api.binance.com`, fallback `data-api.binance.vision` (public market data, no account) | Current prices and price history of well-known coins and tokens (tried before CoinGecko) | Coin symbols only (for example `BTCUSDT`); candle charts also open a WebSocket to `stream.binance.com` for the viewed pair |
-| `api.kraken.com`, `ws.kraken.com` | Candlestick charts and live price updates | Trading pair (for example `BTC/EUR`) and candle interval |
-| `api.frankfurter.dev` (fallback `api.frankfurter.app`) | ECB reference exchange rates for currencies Kraken does not quote (CZK, PLN…) | Currency codes |
+| `api.binance.com`, fallback `data-api.binance.vision` (public market data, no account) | Current prices and price history of well-known coins and tokens (tried before CoinGecko), minute and hourly prices for the part of a value chart on screen, candle charts of pairs listed there | Coin symbols only (for example `BTCUSDT`) and the requested time span, which shows which period you are looking at, not what you hold beyond the coins asked for; candle charts also open a WebSocket to `stream.binance.com` for the viewed pair |
+| `api.kraken.com`, `ws.kraken.com` | Candlestick charts and live price updates of pairs Binance does not list (for example Tether) or quoted in BTC or ETH | Trading pair (for example `BTC/EUR`) and candle interval |
+| `api.frankfurter.dev` (fallback `api.frankfurter.app`) | ECB reference exchange rates for currencies the exchanges do not quote (CZK, PLN…) | Currency codes |
 
 ### Your own server and proxy
 

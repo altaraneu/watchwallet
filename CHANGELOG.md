@@ -6,6 +6,31 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Value charts refine like a map: they draw at once from stored prices, then load better prices
+  only for the visible window (one bar per minute for views up to 8 hours, per hour up to 14 days,
+  per day beyond). Zoom in as far as single minutes, also far in the past. New 1H range.
+- Candle charts follow the zoom with the candle width, and load older candles when panning back.
+  Kraken pairs (for example Tether) serve 720 candles per interval: at that limit the chart moves
+  to a coarser interval, which reaches further back.
+- While a past point is selected, the header also shows the current value.
+
+### Changed
+- Zoom and pan light the matching range chip (none when no chip fits); tapping a chip goes to its
+  range, also after moving away from the selected one.
+- The chart header and line colour describe what is visible; the chart stays readable while prices
+  arrive, without a progress bar.
+- Removed the data source note under the candle chart; sources are listed in `PRIVACY.md`.
+
+### Fixed
+- The crosshair stays on the selected point through pan, zoom and refreshes, and its line and axis
+  label show that point's value.
+- The value series ends at the present even when no price changed for a while.
+- The chart no longer moves vertically when the deposits line or the candle details appear.
+- Price axis ticks follow the visible range, so stablecoins and very cheap coins get readable ticks.
+- Price changes of cheap coins show enough decimals instead of `-0.00`.
+- The price in the Market section follows the live price.
+
 ## [1.0.0] - 2026-11-02
 
 ### Added
