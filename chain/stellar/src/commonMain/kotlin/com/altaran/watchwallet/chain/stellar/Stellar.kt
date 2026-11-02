@@ -20,6 +20,8 @@ import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.parseDecimalUnits
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -55,8 +57,6 @@ object StellarChain {
     )
 
     val XLM: Asset = nativeAsset(CHAIN, name = "Stellar Lumens")
-
-    const val DEFAULT_HORIZON_URL = "https://horizon.stellar.org"
 
     /** Base reserve per ledger entry in stroops (0.5 XLM, protocol constant since 2019). */
     const val BASE_RESERVE_STROOPS = 5_000_000L
@@ -117,7 +117,7 @@ object StellarAddresses {
  */
 class StellarAdapter(
     private val http: HttpClient,
-    horizonUrl: String = StellarChain.DEFAULT_HORIZON_URL,
+    horizonUrl: String = BundledEndpoints.first(StellarChain.ID, EndpointProtocol.HORIZON),
 ) : ChainAdapter {
     private val base = horizonUrl.trimEnd('/')
     private val throttle = Throttle(maxConcurrent = 3, minInterval = 100.milliseconds, maxJitter = 80.milliseconds)

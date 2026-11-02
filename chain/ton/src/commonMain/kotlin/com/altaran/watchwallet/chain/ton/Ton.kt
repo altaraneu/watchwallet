@@ -24,6 +24,8 @@ import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.chain.common.tokenPriceId
 import com.altaran.watchwallet.chain.common.withRateLimitBackoff
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -62,7 +64,6 @@ object TonChain {
 
     val TON: Asset = nativeAsset(CHAIN, name = "Toncoin")
 
-    const val DEFAULT_API_URL = "https://toncenter.com/api/v3"
     const val COINGECKO_PLATFORM = "the-open-network"
 
     /** Jettons without a `decimals` field in their metadata use 9 (TEP-64 default). */
@@ -141,7 +142,7 @@ internal object TonJettons {
  */
 class TonAdapter(
     private val http: HttpClient,
-    apiUrl: String = TonChain.DEFAULT_API_URL,
+    apiUrl: String = BundledEndpoints.first(TonChain.ID, EndpointProtocol.TONCENTER),
     minInterval: Duration = 1_100.milliseconds,
 ) : ChainAdapter {
     private val base = apiUrl.trimEnd('/')

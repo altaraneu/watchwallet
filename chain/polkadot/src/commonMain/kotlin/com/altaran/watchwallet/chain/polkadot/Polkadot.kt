@@ -10,6 +10,9 @@ import com.altaran.watchwallet.chain.common.JsonRpcClient
 import com.altaran.watchwallet.chain.common.amountOf
 import com.altaran.watchwallet.chain.common.chainCall
 import com.altaran.watchwallet.chain.common.content
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointCatalog
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.Chain
@@ -67,8 +70,8 @@ object PolkadotChains {
         "DOT",
         10,
         "polkadot",
-        "https://rpc.polkadot.io",
-        "https://polkadot-asset-hub-rpc.polkadot.io",
+        BundledEndpoints.first(ChainId("polkadot"), EndpointProtocol.SUBSTRATE_RPC),
+        BundledEndpoints.first(ChainId("polkadot"), EndpointProtocol.SUBSTRATE_ASSET_HUB_RPC),
         "https://assethub-polkadot.subscan.io",
         0xFFE6007A,
     )
@@ -79,12 +82,20 @@ object PolkadotChains {
         "KSM",
         12,
         "kusama",
-        "https://kusama-rpc.polkadot.io",
-        "https://kusama-asset-hub-rpc.polkadot.io",
+        BundledEndpoints.first(ChainId("kusama"), EndpointProtocol.SUBSTRATE_RPC),
+        BundledEndpoints.first(ChainId("kusama"), EndpointProtocol.SUBSTRATE_ASSET_HUB_RPC),
         "https://assethub-kusama.subscan.io",
         0xFF000000,
     )
     val ALL = listOf(POLKADOT, KUSAMA)
+
+    /** [ALL] with the servers of [endpoints]. Each client talks to one server, so the first URL counts. */
+    fun withEndpoints(endpoints: EndpointCatalog): List<PolkadotNetwork> = ALL.map { network ->
+        network.copy(
+            rpcUrl = endpoints.first(network.id, EndpointProtocol.SUBSTRATE_RPC),
+            assetHubRpcUrl = endpoints.first(network.id, EndpointProtocol.SUBSTRATE_ASSET_HUB_RPC),
+        )
+    }
 
     /** The generic Substrate prefix (`5…`), valid on every network after re-encoding. */
     const val GENERIC_PREFIX = 42

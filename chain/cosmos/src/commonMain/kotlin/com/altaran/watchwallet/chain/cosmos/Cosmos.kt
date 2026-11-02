@@ -18,6 +18,8 @@ import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.chain.common.withRateLimitBackoff
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.Chain
@@ -142,8 +144,6 @@ object CosmosChains {
     fun byHrp(hrp: String): CosmosNetwork? = ALL.firstOrNull { it.hrp == hrp }
 
     fun byId(id: ChainId): CosmosNetwork? = ALL.firstOrNull { it.id == id }
-
-    const val DEFAULT_REST_URL = "https://rest.cosmos.directory"
 }
 
 /** Bech32 account addresses of the supported Cosmos chains (20-byte keys, 32-byte module/ICA accounts). */
@@ -177,7 +177,7 @@ object CosmosAddresses {
  */
 class CosmosAdapter(
     private val http: HttpClient,
-    private val restUrl: String = CosmosChains.DEFAULT_REST_URL,
+    private val restUrl: String = BundledEndpoints.first(BundledEndpoints.COSMOS, EndpointProtocol.COSMOS_REST),
     networks: List<CosmosNetwork> = CosmosChains.ALL,
 ) : ChainAdapter {
     private val throttle = Throttle(maxConcurrent = 2, minInterval = 200.milliseconds, maxJitter = 100.milliseconds)

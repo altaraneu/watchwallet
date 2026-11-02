@@ -22,6 +22,8 @@ import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.chain.common.tokenPriceId
 import com.altaran.watchwallet.chain.common.withRateLimitBackoff
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -56,7 +58,6 @@ object TronChain {
 
     val TRX: Asset = nativeAsset(CHAIN, name = "TRON")
 
-    const val DEFAULT_API_URL = "https://api.trongrid.io"
     const val COINGECKO_PLATFORM = "tron"
     const val USDT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
 }
@@ -114,7 +115,7 @@ internal object TronTokens {
  */
 class TronAdapter(
     private val http: HttpClient,
-    apiUrl: String = TronChain.DEFAULT_API_URL,
+    apiUrl: String = BundledEndpoints.first(TronChain.ID, EndpointProtocol.TRONGRID),
 ) : ChainAdapter {
     private val base = apiUrl.trimEnd('/')
 

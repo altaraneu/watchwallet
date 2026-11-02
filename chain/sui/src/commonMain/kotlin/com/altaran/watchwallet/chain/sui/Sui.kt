@@ -24,7 +24,6 @@ object SuiChain {
 
     val SUI: Asset = nativeAsset(CHAIN)
 
-    const val DEFAULT_GRAPHQL_URL = "https://graphql.mainnet.sui.io/graphql"
     const val SUI_COIN_TYPE = "0x2::sui::SUI"
     const val COINGECKO_PLATFORM = "sui"
 }

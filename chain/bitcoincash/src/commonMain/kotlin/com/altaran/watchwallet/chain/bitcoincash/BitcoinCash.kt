@@ -6,6 +6,8 @@ import com.altaran.watchwallet.chain.common.CashAddrCodec
 import com.altaran.watchwallet.chain.common.UtxoAdapter
 import com.altaran.watchwallet.chain.common.derivePublicKeyHash
 import com.altaran.watchwallet.chain.common.parseExtendedPublicKey
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.Chain
@@ -41,8 +43,6 @@ object BitcoinCashChain {
         decimals = 8,
         priceId = "bitcoin-cash",
     )
-
-    const val DEFAULT_BLOCKBOOK_URL = "https://blockbook.bch.zelcore.io"
 }
 
 /**
@@ -125,7 +125,7 @@ object BitcoinCashAddresses {
 /** Bitcoin Cash via Blockbook (address endpoint only; extended keys are expanded on the device). */
 class BitcoinCashAdapter(
     http: HttpClient,
-    blockbookUrl: String = BitcoinCashChain.DEFAULT_BLOCKBOOK_URL,
+    blockbookUrl: String = BundledEndpoints.first(BitcoinCashChain.ID, EndpointProtocol.BLOCKBOOK),
 ) : UtxoAdapter(
         chain = BitcoinCashChain.CHAIN,
         asset = BitcoinCashChain.BCH,

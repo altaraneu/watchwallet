@@ -15,6 +15,8 @@ import com.altaran.watchwallet.chain.common.long
 import com.altaran.watchwallet.chain.common.nativeAsset
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.utxoChainTransaction
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -44,8 +46,6 @@ object KaspaChain {
     )
 
     val KAS: Asset = nativeAsset(CHAIN)
-
-    const val DEFAULT_API_URL = "https://api.kaspa.org"
 }
 
 /**
@@ -80,7 +80,7 @@ object KaspaAddresses {
  */
 class KaspaAdapter(
     private val http: HttpClient,
-    apiUrl: String = KaspaChain.DEFAULT_API_URL,
+    apiUrl: String = BundledEndpoints.first(KaspaChain.ID, EndpointProtocol.KASPA_REST),
 ) : ChainAdapter {
     private val base = apiUrl.trimEnd('/')
     private val throttle = Throttle(maxConcurrent = 2, minInterval = 150.milliseconds, maxJitter = 100.milliseconds)

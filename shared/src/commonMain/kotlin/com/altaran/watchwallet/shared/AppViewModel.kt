@@ -6,7 +6,9 @@ import com.altaran.watchwallet.core.data.platform.AppInfo
 import com.altaran.watchwallet.core.data.repository.PriceRepository
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.sync.SyncEngine
+import com.altaran.watchwallet.core.endpoints.EndpointConfigUpdater
 import com.altaran.watchwallet.core.model.UserSettings
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +39,7 @@ class AppViewModel(
     syncEngine: SyncEngine,
     private val priceRepository: PriceRepository,
     private val appInfo: AppInfo,
+    private val endpointUpdater: EndpointConfigUpdater,
 ) : ViewModel() {
     /** Chart history is downloading (shown as a hint on charts). */
     val priceHistoryLoading: StateFlow<Boolean> =
@@ -87,6 +90,8 @@ class AppViewModel(
             }
         }
         syncEngine.syncAll()
+        // Nothing waits for this; a new server list applies at the next app start.
+        viewModelScope.launch(Dispatchers.Default) { endpointUpdater.updateIfDue() }
         viewModelScope.launch {
             settingsRepository.settings
                 .map { it.quoteCurrency }

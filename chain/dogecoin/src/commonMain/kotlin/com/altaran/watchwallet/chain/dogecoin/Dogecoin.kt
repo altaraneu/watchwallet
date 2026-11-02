@@ -5,6 +5,8 @@ import com.altaran.watchwallet.chain.common.BlockbookBackend
 import com.altaran.watchwallet.chain.common.UtxoAdapter
 import com.altaran.watchwallet.chain.common.derivePublicKeyHash
 import com.altaran.watchwallet.chain.common.parseExtendedPublicKey
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.Chain
@@ -40,8 +42,6 @@ object DogecoinChain {
         decimals = 8,
         priceId = "dogecoin",
     )
-
-    const val DEFAULT_BLOCKBOOK_URL = "https://dogecoin.atomicwallet.io"
 }
 
 /** Dogecoin mainnet addresses (`D…` P2PKH, `9…`/`A…` P2SH) and `dgub`/`xpub` account keys (BIP44 coin 3). */
@@ -89,7 +89,7 @@ object DogecoinAddresses {
 /** Dogecoin via Blockbook (address endpoint only; extended keys are expanded on the device). */
 class DogecoinAdapter(
     http: HttpClient,
-    blockbookUrl: String = DogecoinChain.DEFAULT_BLOCKBOOK_URL,
+    blockbookUrl: String = BundledEndpoints.first(DogecoinChain.ID, EndpointProtocol.BLOCKBOOK),
 ) : UtxoAdapter(
         chain = DogecoinChain.CHAIN,
         asset = DogecoinChain.DOGE,

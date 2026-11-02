@@ -1,39 +1,63 @@
 package com.altaran.watchwallet.core.data
 
 import com.altaran.watchwallet.chain.algorand.AlgorandAdapter
+import com.altaran.watchwallet.chain.algorand.AlgorandChain
 import com.altaran.watchwallet.chain.api.ChainAdapter
 import com.altaran.watchwallet.chain.aptos.AptosAdapter
+import com.altaran.watchwallet.chain.aptos.AptosChain
 import com.altaran.watchwallet.chain.bitcoin.BitcoinAdapter
-import com.altaran.watchwallet.chain.bitcoin.BitcoinChain
 import com.altaran.watchwallet.chain.bitcoincash.BitcoinCashAdapter
+import com.altaran.watchwallet.chain.bitcoincash.BitcoinCashChain
 import com.altaran.watchwallet.chain.cardano.CardanoAdapter
+import com.altaran.watchwallet.chain.cardano.CardanoChain
 import com.altaran.watchwallet.chain.cosmos.CosmosAdapter
 import com.altaran.watchwallet.chain.dogecoin.DogecoinAdapter
+import com.altaran.watchwallet.chain.dogecoin.DogecoinChain
 import com.altaran.watchwallet.chain.evm.EvmAdapter
+import com.altaran.watchwallet.chain.evm.EvmNetworks
 import com.altaran.watchwallet.chain.hedera.HederaAdapter
+import com.altaran.watchwallet.chain.hedera.HederaChain
 import com.altaran.watchwallet.chain.kaspa.KaspaAdapter
+import com.altaran.watchwallet.chain.kaspa.KaspaChain
 import com.altaran.watchwallet.chain.litecoin.LitecoinAdapter
+import com.altaran.watchwallet.chain.litecoin.LitecoinChain
 import com.altaran.watchwallet.chain.near.NearAdapter
+import com.altaran.watchwallet.chain.near.NearChain
 import com.altaran.watchwallet.chain.polkadot.PolkadotAdapter
+import com.altaran.watchwallet.chain.polkadot.PolkadotChains
 import com.altaran.watchwallet.chain.solana.SolanaAdapter
+import com.altaran.watchwallet.chain.solana.SolanaChain
 import com.altaran.watchwallet.chain.stellar.StellarAdapter
+import com.altaran.watchwallet.chain.stellar.StellarChain
 import com.altaran.watchwallet.chain.sui.SuiAdapter
+import com.altaran.watchwallet.chain.sui.SuiChain
 import com.altaran.watchwallet.chain.tezos.TezosAdapter
+import com.altaran.watchwallet.chain.tezos.TezosChain
 import com.altaran.watchwallet.chain.ton.TonAdapter
+import com.altaran.watchwallet.chain.ton.TonChain
 import com.altaran.watchwallet.chain.tron.TronAdapter
+import com.altaran.watchwallet.chain.tron.TronChain
 import com.altaran.watchwallet.chain.xrp.XrpAdapter
+import com.altaran.watchwallet.chain.xrp.XrpChain
 import com.altaran.watchwallet.core.data.chain.ChainRegistry
+import com.altaran.watchwallet.core.data.platform.AppInfo
 import com.altaran.watchwallet.core.data.repository.DefaultSettingsRepository
 import com.altaran.watchwallet.core.data.repository.DefaultWalletRepository
 import com.altaran.watchwallet.core.data.repository.MarketDataRepository
 import com.altaran.watchwallet.core.data.repository.PortfolioRepository
 import com.altaran.watchwallet.core.data.repository.PriceRepository
+import com.altaran.watchwallet.core.data.repository.SettingsEndpointConfigStore
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.repository.WalletRepository
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.database.databaseModule
 import com.altaran.watchwallet.core.datastore.SettingsDataSource
 import com.altaran.watchwallet.core.datastore.dataStoreModule
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointCatalog
+import com.altaran.watchwallet.core.endpoints.EndpointConfigUpdater
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
+import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.NetworkSettings
 import com.altaran.watchwallet.core.network.ProxyConfig
 import com.altaran.watchwallet.core.network.createHttpClient
@@ -49,6 +73,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import kotlin.time.Clock
 
 val dataModule: Module = module {
     includes(dataStoreModule, databaseModule)
@@ -59,30 +84,44 @@ val dataModule: Module = module {
         val network = get<NetworkSettings>()
         createHttpClient(proxy = if (network.proxyEnabled) ProxyConfig(network.proxyHost, network.proxyPort) else null)
     }
-    single<List<ChainAdapter>> {
+    // Read once at startup too: a newly downloaded server list applies at the next app start.
+    single<EndpointCatalog> {
         val network = get<NetworkSettings>()
+        val stored = runBlocking { get<SettingsDataSource>().endpointConfig.first() }
+        EndpointCatalog.resolve(stored, network.autoUpdateEndpoints, network.esploraUrl, Clock.System.now().epochSeconds)
+    }
+    single {
+        val debug = get<AppInfo>().isDebug
+        EndpointConfigUpdater(
+            http = get(),
+            store = SettingsEndpointConfigStore(get()),
+            debugLog = { message -> if (debug) println("WatchWallet: $message") },
+        )
+    }
+    single<List<ChainAdapter>> {
+        val endpoints = get<EndpointCatalog>()
         listOf<ChainAdapter>(
-            // A custom server is used alone; the defaults fall back to each other.
-            BitcoinAdapter(get(), network.esploraUrl?.let(::listOf) ?: BitcoinChain.DEFAULT_ESPLORA_URLS),
-            EvmAdapter(get()),
-            LitecoinAdapter(get()),
-            DogecoinAdapter(get()),
-            BitcoinCashAdapter(get()),
-            SolanaAdapter(get()),
-            XrpAdapter(get()),
-            TronAdapter(get()),
-            TonAdapter(get()),
-            CardanoAdapter(get()),
-            CosmosAdapter(get()),
-            PolkadotAdapter(get()),
-            StellarAdapter(get()),
-            SuiAdapter(get()),
-            AptosAdapter(get()),
-            NearAdapter(get()),
-            HederaAdapter(get()),
-            AlgorandAdapter(get()),
-            TezosAdapter(get()),
-            KaspaAdapter(get()),
+            // A custom server is used alone (see EndpointCatalog); the defaults fall back to each other.
+            BitcoinAdapter(get(), endpoints.urls(ChainId.BITCOIN, EndpointProtocol.ESPLORA)),
+            EvmAdapter(get(), EvmNetworks.withEndpoints(endpoints)),
+            LitecoinAdapter(get(), endpoints.first(LitecoinChain.ID, EndpointProtocol.ESPLORA)),
+            DogecoinAdapter(get(), endpoints.first(DogecoinChain.ID, EndpointProtocol.BLOCKBOOK)),
+            BitcoinCashAdapter(get(), endpoints.first(BitcoinCashChain.ID, EndpointProtocol.BLOCKBOOK)),
+            SolanaAdapter(get(), endpoints.urls(SolanaChain.ID, EndpointProtocol.SOLANA_RPC)),
+            XrpAdapter(get(), endpoints.urls(XrpChain.ID, EndpointProtocol.XRPL)),
+            TronAdapter(get(), endpoints.first(TronChain.ID, EndpointProtocol.TRONGRID)),
+            TonAdapter(get(), endpoints.first(TonChain.ID, EndpointProtocol.TONCENTER)),
+            CardanoAdapter(get(), endpoints.first(CardanoChain.ID, EndpointProtocol.KOIOS)),
+            CosmosAdapter(get(), endpoints.first(BundledEndpoints.COSMOS, EndpointProtocol.COSMOS_REST)),
+            PolkadotAdapter(get(), PolkadotChains.withEndpoints(endpoints)),
+            StellarAdapter(get(), endpoints.first(StellarChain.ID, EndpointProtocol.HORIZON)),
+            SuiAdapter(get(), endpoints.first(SuiChain.ID, EndpointProtocol.SUI_GRAPHQL)),
+            AptosAdapter(get(), endpoints.first(AptosChain.ID, EndpointProtocol.APTOS_REST)),
+            NearAdapter(get(), endpoints.urls(NearChain.ID, EndpointProtocol.NEAR_RPC)),
+            HederaAdapter(get(), endpoints.first(HederaChain.ID, EndpointProtocol.HEDERA_MIRROR)),
+            AlgorandAdapter(get(), endpoints.first(AlgorandChain.ID, EndpointProtocol.ALGORAND_INDEXER)),
+            TezosAdapter(get(), endpoints.first(TezosChain.ID, EndpointProtocol.TZKT)),
+            KaspaAdapter(get(), endpoints.first(KaspaChain.ID, EndpointProtocol.KASPA_REST)),
         )
     }
     single { ChainRegistry(get()) }

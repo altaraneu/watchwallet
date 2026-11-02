@@ -17,6 +17,8 @@ import com.altaran.watchwallet.chain.common.nativeAsset
 import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -49,8 +51,6 @@ object TezosChain {
     )
 
     val XTZ: Asset = nativeAsset(CHAIN, name = "Tezos")
-
-    const val DEFAULT_TZKT_URL = "https://api.tzkt.io/v1"
 }
 
 /** Tezos addresses: Base58Check of a 3-byte prefix + 20-byte hash (`tz1`–`tz4` accounts, `KT1` contracts). */
@@ -83,7 +83,7 @@ object TezosAddresses {
  */
 class TezosAdapter(
     private val http: HttpClient,
-    tzktUrl: String = TezosChain.DEFAULT_TZKT_URL,
+    tzktUrl: String = BundledEndpoints.first(TezosChain.ID, EndpointProtocol.TZKT),
 ) : ChainAdapter {
     private val base = tzktUrl.trimEnd('/')
     private val throttle = Throttle(maxConcurrent = 3, minInterval = 100.milliseconds, maxJitter = 80.milliseconds)

@@ -19,6 +19,8 @@ import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.chain.common.tokenPriceId
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -53,7 +55,6 @@ object AlgorandChain {
 
     val ALGO: Asset = nativeAsset(CHAIN)
 
-    const val DEFAULT_INDEXER_URL = "https://mainnet-idx.algonode.cloud"
     const val COINGECKO_PLATFORM = "algorand"
 }
 
@@ -87,7 +88,7 @@ object AlgorandAddresses {
  */
 class AlgorandAdapter(
     private val http: HttpClient,
-    indexerUrl: String = AlgorandChain.DEFAULT_INDEXER_URL,
+    indexerUrl: String = BundledEndpoints.first(AlgorandChain.ID, EndpointProtocol.ALGORAND_INDEXER),
 ) : ChainAdapter {
     private val base = indexerUrl.trimEnd('/')
     private val throttle = Throttle(maxConcurrent = 3, minInterval = 100.milliseconds, maxJitter = 80.milliseconds)

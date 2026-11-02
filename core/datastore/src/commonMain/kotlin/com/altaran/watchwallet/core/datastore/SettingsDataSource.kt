@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.altaran.watchwallet.core.model.NetworkSettings
 import com.altaran.watchwallet.core.model.QuoteCurrency
@@ -43,6 +44,7 @@ class SettingsDataSource(
                 proxyPort = prefs[Keys.PROXY_PORT] ?: NetworkSettings().proxyPort,
                 esploraUrl = prefs[Keys.ESPLORA_URL]?.takeIf { it.isNotBlank() },
                 coinGeckoApiKey = prefs[Keys.COINGECKO_KEY]?.takeIf { it.isNotBlank() },
+                autoUpdateEndpoints = prefs[Keys.ENDPOINTS_AUTO_UPDATE] ?: true,
             ),
         )
     }
@@ -84,7 +86,18 @@ class SettingsDataSource(
         it[Keys.PROXY_PORT] = network.proxyPort
         it[Keys.ESPLORA_URL] = network.esploraUrl.orEmpty()
         it[Keys.COINGECKO_KEY] = network.coinGeckoApiKey.orEmpty()
+        it[Keys.ENDPOINTS_AUTO_UPDATE] = network.autoUpdateEndpoints
     }
+
+    /** The verified signed server list, exactly as downloaded (see `:core:endpoints`). */
+    val endpointConfig: Flow<String?> = dataStore.data.map { it[Keys.ENDPOINTS_CONFIG] }
+
+    suspend fun setEndpointConfig(envelope: String) = edit { it[Keys.ENDPOINTS_CONFIG] = envelope }
+
+    /** When the server list was last requested, in epoch seconds. */
+    val endpointConfigLastCheck: Flow<Long?> = dataStore.data.map { it[Keys.ENDPOINTS_LAST_CHECK] }
+
+    suspend fun setEndpointConfigLastCheck(seconds: Long) = edit { it[Keys.ENDPOINTS_LAST_CHECK] = seconds }
 
     /** Counts app launches (local only) and returns the new count. */
     suspend fun recordLaunch(): Int {
@@ -128,6 +141,9 @@ class SettingsDataSource(
         val PROXY_PORT = intPreferencesKey("proxy_port")
         val ESPLORA_URL = stringPreferencesKey("esplora_url")
         val COINGECKO_KEY = stringPreferencesKey("coingecko_api_key")
+        val ENDPOINTS_AUTO_UPDATE = booleanPreferencesKey("endpoints_auto_update")
+        val ENDPOINTS_CONFIG = stringPreferencesKey("endpoints_config")
+        val ENDPOINTS_LAST_CHECK = longPreferencesKey("endpoints_last_check")
         val LAUNCH_COUNT = intPreferencesKey("launch_count")
         val RATE_PROMPT_OFF = booleanPreferencesKey("rate_prompt_off")
         val RATE_PROMPT_NEXT = intPreferencesKey("rate_prompt_next")

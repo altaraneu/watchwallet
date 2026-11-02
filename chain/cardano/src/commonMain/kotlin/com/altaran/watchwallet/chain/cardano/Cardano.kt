@@ -22,6 +22,8 @@ import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.chain.common.tokenPriceId
 import com.altaran.watchwallet.chain.common.withRateLimitBackoff
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -64,7 +66,6 @@ object CardanoChain {
 
     val ADA: Asset = nativeAsset(CHAIN)
 
-    const val DEFAULT_API_URL = "https://api.koios.rest/api/v1"
     const val COINGECKO_PLATFORM = "cardano"
 }
 
@@ -126,7 +127,7 @@ object CardanoAddresses {
  */
 class CardanoAdapter(
     private val http: HttpClient,
-    apiUrl: String = CardanoChain.DEFAULT_API_URL,
+    apiUrl: String = BundledEndpoints.first(CardanoChain.ID, EndpointProtocol.KOIOS),
 ) : ChainAdapter {
     private val base = apiUrl.trimEnd('/')
     private val throttle = Throttle(maxConcurrent = 2, minInterval = 250.milliseconds, maxJitter = 100.milliseconds)
