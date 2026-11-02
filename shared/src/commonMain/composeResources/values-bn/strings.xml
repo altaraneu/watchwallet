@@ -9,4 +9,9 @@
     <string name="donate_reminder_support">সমর্থন করুন</string>
     <string name="donate_reminder_later">এখন নয়</string>
     <string name="donate_reminder_never">আর জিজ্ঞাসা করবেন না</string>
+    <string name="rate_title">WatchWallet কি আপনার ভালো লাগছে?</string>
+    <string name="rate_message">অনুগ্রহ করে Google Play-তে রেটিং দিন। তারায় ট্যাপ করলে রেটিং পেজ খুলবে, সেখানে আপনি নিজেই রেটিং বেছে নেবেন।</string>
+    <string name="rate_action">রেটিং দিন</string>
+    <string name="rate_already">আগেই দিয়েছি</string>
+    <string name="rate_later">এখন নয়</string>
 </resources>

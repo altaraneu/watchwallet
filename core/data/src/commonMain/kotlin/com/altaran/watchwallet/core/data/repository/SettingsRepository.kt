@@ -29,6 +29,14 @@ interface SettingsRepository {
     val donateReminderDisabled: Flow<Boolean>
 
     suspend fun disableDonateReminder()
+
+    val ratePromptDisabled: Flow<Boolean>
+
+    suspend fun disableRatePrompt()
+
+    val nextRatePrompt: Flow<Int?>
+
+    suspend fun setNextRatePrompt(launch: Int)
 }
 
 internal class DefaultSettingsRepository(
@@ -50,4 +58,8 @@ internal class DefaultSettingsRepository(
     override suspend fun recordLaunch(): Int = dataSource.recordLaunch()
     override val donateReminderDisabled: Flow<Boolean> = dataSource.donateReminderDisabled
     override suspend fun disableDonateReminder() = dataSource.disableDonateReminder()
+    override val ratePromptDisabled: Flow<Boolean> = dataSource.ratePromptDisabled
+    override suspend fun disableRatePrompt() = dataSource.disableRatePrompt()
+    override val nextRatePrompt: Flow<Int?> = dataSource.nextRatePrompt
+    override suspend fun setNextRatePrompt(launch: Int) = dataSource.setNextRatePrompt(launch)
 }

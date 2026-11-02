@@ -93,6 +93,12 @@ which address or transaction you looked at. Explorers used:
 The About section in Settings links to `www.tradingview.com` (chart library attribution) and the
 project repository on `github.com`; these, too, open only on tap in your browser.
 
+## Rating prompt
+
+Apps installed from Google Play occasionally offer to rate WatchWallet. Only a tap opens
+`play.google.com`, in the Play Store app or your browser. The app uses no Google Play Services
+and learns nothing about your rating.
+
 ## Charts
 
 Charts are rendered by TradingView Lightweight Charts, bundled inside the app. The chart view

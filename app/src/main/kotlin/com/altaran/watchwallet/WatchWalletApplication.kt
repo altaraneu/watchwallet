@@ -61,6 +61,17 @@ class WatchWalletApplication : Application() {
         }
     }
 
+    /** Reads only who installed this app; works without Google Play Services. */
+    private fun isInstalledFromPlay(): Boolean = runCatching {
+        val installer = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            packageManager.getInstallSourceInfo(packageName).installingPackageName
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.getInstallerPackageName(packageName)
+        }
+        installer == "com.android.vending"
+    }.getOrDefault(false)
+
     private val androidPlatformModule = module {
         single<AppLanguageController> { AndroidAppLanguageController(BuildConfig.SUPPORTED_LANGUAGES) }
         single<AppRestarter> { AndroidAppRestarter(this@WatchWalletApplication) }
@@ -71,6 +82,7 @@ class WatchWalletApplication : Application() {
                 sourceCodeUrl = BuildConfig.SOURCE_CODE_URL,
                 isDynamicColorAvailable = isDynamicColorSupported,
                 isDebug = BuildConfig.DEBUG,
+                canAskForRating = BuildConfig.DEBUG || isInstalledFromPlay(),
                 isAppLockAvailable = isAppLockAvailable(this@WatchWalletApplication),
             )
         }

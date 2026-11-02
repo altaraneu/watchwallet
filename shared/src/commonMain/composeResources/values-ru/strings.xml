@@ -9,4 +9,9 @@
     <string name="donate_reminder_support">Поддержать</string>
     <string name="donate_reminder_later">Не сейчас</string>
     <string name="donate_reminder_never">Больше не спрашивать</string>
+    <string name="rate_title">Нравится WatchWallet?</string>
+    <string name="rate_message">Пожалуйста, оцените приложение в Google Play. Нажмите на звёзды, чтобы открыть страницу оценки, где вы сами выберете оценку.</string>
+    <string name="rate_action">Оценить</string>
+    <string name="rate_already">Уже оценил(а)</string>
+    <string name="rate_later">Не сейчас</string>
 </resources>

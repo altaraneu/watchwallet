@@ -10,4 +10,9 @@
     <string name="donate_reminder_support">Support</string>
     <string name="donate_reminder_later">Not now</string>
     <string name="donate_reminder_never">Don’t ask again</string>
+    <string name="rate_title">Do you like WatchWallet?</string>
+    <string name="rate_message">Please rate it on Google Play. Tapping the stars opens the rating page, where you choose the rating yourself.</string>
+    <string name="rate_action">Rate</string>
+    <string name="rate_already">I already did</string>
+    <string name="rate_later">Not now</string>
 </resources>

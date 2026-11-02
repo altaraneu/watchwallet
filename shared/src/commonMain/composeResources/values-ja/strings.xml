@@ -9,4 +9,9 @@
     <string name="donate_reminder_support">支援する</string>
     <string name="donate_reminder_later">今はしない</string>
     <string name="donate_reminder_never">今後表示しない</string>
+    <string name="rate_title">WatchWallet は気に入りましたか?</string>
+    <string name="rate_message">Google Play での評価にご協力ください。星をタップすると評価ページが開き、評価はご自身で選べます。</string>
+    <string name="rate_action">評価する</string>
+    <string name="rate_already">評価済み</string>
+    <string name="rate_later">後で</string>
 </resources>

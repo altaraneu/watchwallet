@@ -9,4 +9,9 @@
     <string name="donate_reminder_support">Soutenir</string>
     <string name="donate_reminder_later">Pas maintenant</string>
     <string name="donate_reminder_never">Ne plus demander</string>
+    <string name="rate_title">Vous aimez WatchWallet ?</string>
+    <string name="rate_message">Merci de noter l’application sur Google Play. Touchez les étoiles pour ouvrir la page de notation, où vous choisissez vous-même votre note.</string>
+    <string name="rate_action">Noter</string>
+    <string name="rate_already">C’est déjà fait</string>
+    <string name="rate_later">Pas maintenant</string>
 </resources>

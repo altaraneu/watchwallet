@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.watchwallet.android.application)
 }
@@ -34,6 +36,21 @@ android {
         buildConfigField("String", "SOURCE_CODE_URL", "\"https://github.com/altaraneu/watchwallet\"")
     }
 
+    // The upload key stays outside the repository; without it release builds are simply unsigned
+    // (F-Droid signs its own builds).
+    val keystoreFile = rootProject.file("keystore.properties")
+    val uploadSigning = if (keystoreFile.exists()) {
+        val keystore = Properties().apply { keystoreFile.inputStream().use { load(it) } }
+        signingConfigs.create("upload") {
+            storeFile = file(keystore.getProperty("storeFile"))
+            storePassword = keystore.getProperty("storePassword")
+            keyAlias = keystore.getProperty("keyAlias")
+            keyPassword = keystore.getProperty("keyPassword")
+        }
+    } else {
+        null
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
@@ -42,6 +59,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = uploadSigning
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

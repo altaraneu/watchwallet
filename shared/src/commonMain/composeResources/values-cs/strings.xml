@@ -9,4 +9,9 @@
     <string name="donate_reminder_support">Podpořit</string>
     <string name="donate_reminder_later">Teď ne</string>
     <string name="donate_reminder_never">Už nepřipomínat</string>
+    <string name="rate_title">Líbí se ti WatchWallet?</string>
+    <string name="rate_message">Ohodnoť ho prosím na Google Play. Klepnutím na hvězdičky otevřeš stránku hodnocení, kde hodnocení zvolíš sám.</string>
+    <string name="rate_action">Ohodnotit</string>
+    <string name="rate_already">Už jsem hodnotil</string>
+    <string name="rate_later">Teď ne</string>
 </resources>

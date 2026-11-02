@@ -9,4 +9,9 @@
     <string name="donate_reminder_support">ادعم</string>
     <string name="donate_reminder_later">ليس الآن</string>
     <string name="donate_reminder_never">عدم السؤال مرة أخرى</string>
+    <string name="rate_title">هل يعجبك WatchWallet؟</string>
+    <string name="rate_message">يُرجى تقييمه على Google Play. يؤدي النقر على النجوم إلى فتح صفحة التقييم حيث تختار تقييمك بنفسك.</string>
+    <string name="rate_action">تقييم</string>
+    <string name="rate_already">قيّمته بالفعل</string>
+    <string name="rate_later">ليس الآن</string>
 </resources>

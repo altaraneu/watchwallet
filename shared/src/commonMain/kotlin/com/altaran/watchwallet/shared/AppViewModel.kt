@@ -2,6 +2,7 @@ package com.altaran.watchwallet.shared
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.altaran.watchwallet.core.data.platform.AppInfo
 import com.altaran.watchwallet.core.data.repository.PriceRepository
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.sync.SyncEngine
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 sealed interface AppUiState {
     data object Loading : AppUiState
@@ -34,6 +36,7 @@ class AppViewModel(
     private val settingsRepository: SettingsRepository,
     syncEngine: SyncEngine,
     private val priceRepository: PriceRepository,
+    private val appInfo: AppInfo,
 ) : ViewModel() {
     /** Chart history is downloading (shown as a hint on charts). */
     val priceHistoryLoading: StateFlow<Boolean> =
@@ -54,11 +57,33 @@ class AppViewModel(
         if (forever) viewModelScope.launch { settingsRepository.disableDonateReminder() }
     }
 
+    private val _showRatePrompt = MutableStateFlow(false)
+
+    /** Asks for a rating on Google Play every 20 to 30 launches, until the user says they did. */
+    val showRatePrompt: StateFlow<Boolean> = _showRatePrompt.asStateFlow()
+
+    fun dismissRatePrompt(alreadyRated: Boolean) {
+        _showRatePrompt.value = false
+        if (alreadyRated) viewModelScope.launch { settingsRepository.disableRatePrompt() }
+    }
+
+    /** One dialog per launch: a rating that is due waits while the donation reminder shows. */
+    private suspend fun scheduleRatePrompt(launches: Int) {
+        if (!appInfo.canAskForRating || settingsRepository.ratePromptDisabled.first()) return
+        val next = settingsRepository.nextRatePrompt.first()
+        if (next != null && launches >= next) _showRatePrompt.value = true
+        if (next == null || launches >= next) {
+            settingsRepository.setNextRatePrompt(launches + Random.nextInt(RATE_PROMPT_MIN_LAUNCHES, RATE_PROMPT_MAX_LAUNCHES + 1))
+        }
+    }
+
     init {
         viewModelScope.launch {
             val launches = settingsRepository.recordLaunch()
             if (launches in DONATE_REMINDER_LAUNCHES && !settingsRepository.donateReminderDisabled.first()) {
                 _showDonateReminder.value = true
+            } else {
+                scheduleRatePrompt(launches)
             }
         }
         syncEngine.syncAll()
@@ -94,5 +119,7 @@ class AppViewModel(
     private companion object {
         const val PRICE_REFRESH_MS = 60_000L
         val DONATE_REMINDER_LAUNCHES = setOf(5, 10, 30)
+        const val RATE_PROMPT_MIN_LAUNCHES = 20
+        const val RATE_PROMPT_MAX_LAUNCHES = 30
     }
 }

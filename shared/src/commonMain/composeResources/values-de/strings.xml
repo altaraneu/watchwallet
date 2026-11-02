@@ -9,4 +9,9 @@
     <string name="donate_reminder_support">Unterstützen</string>
     <string name="donate_reminder_later">Nicht jetzt</string>
     <string name="donate_reminder_never">Nicht mehr fragen</string>
+    <string name="rate_title">Gefällt dir WatchWallet?</string>
+    <string name="rate_message">Bitte bewerte die App bei Google Play. Ein Tipp auf die Sterne öffnet die Bewertungsseite, dort wählst du deine Bewertung selbst.</string>
+    <string name="rate_action">Bewerten</string>
+    <string name="rate_already">Schon erledigt</string>
+    <string name="rate_later">Nicht jetzt</string>
 </resources>

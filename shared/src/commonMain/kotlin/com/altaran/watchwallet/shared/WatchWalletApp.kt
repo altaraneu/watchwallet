@@ -1,12 +1,17 @@
 package com.altaran.watchwallet.shared
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -16,6 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -66,6 +73,11 @@ import com.altaran.watchwallet.shared.generated.resources.nav_markets
 import com.altaran.watchwallet.shared.generated.resources.nav_portfolio
 import com.altaran.watchwallet.shared.generated.resources.nav_settings
 import com.altaran.watchwallet.shared.generated.resources.nav_wallets
+import com.altaran.watchwallet.shared.generated.resources.rate_action
+import com.altaran.watchwallet.shared.generated.resources.rate_already
+import com.altaran.watchwallet.shared.generated.resources.rate_later
+import com.altaran.watchwallet.shared.generated.resources.rate_message
+import com.altaran.watchwallet.shared.generated.resources.rate_title
 import io.ktor.client.HttpClient
 import okio.FileSystem
 import org.jetbrains.compose.resources.StringResource
@@ -122,6 +134,18 @@ fun WatchWalletApp(viewModel: AppViewModel) {
                     onNever = { viewModel.dismissDonateReminder(forever = true) },
                 )
             }
+            val showRatePrompt by viewModel.showRatePrompt.collectAsStateWithLifecycle()
+            if (showRatePrompt) {
+                val uriHandler = LocalUriHandler.current
+                RatePromptDialog(
+                    onRate = {
+                        viewModel.dismissRatePrompt(alreadyRated = false)
+                        runCatching { uriHandler.openUri(PLAY_STORE_URL) }
+                    },
+                    onLater = { viewModel.dismissRatePrompt(alreadyRated = false) },
+                    onAlreadyRated = { viewModel.dismissRatePrompt(alreadyRated = true) },
+                )
+            }
         }
     }
 }
@@ -143,6 +167,35 @@ private fun DonateReminderDialog(onSupport: () -> Unit, onLater: () -> Unit, onN
     )
 }
 
+/** The rating itself is always chosen on Google Play; an app cannot submit one. */
+@Composable
+private fun RatePromptDialog(onRate: () -> Unit, onLater: () -> Unit, onAlreadyRated: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onLater,
+        title = { Text(stringResource(Res.string.rate_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    Char(0x2605).toString().repeat(RATE_STARS),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable(onClickLabel = stringResource(Res.string.rate_action), onClick = onRate),
+                )
+                Text(stringResource(Res.string.rate_message))
+            }
+        },
+        confirmButton = { TextButton(onClick = onRate) { Text(stringResource(Res.string.rate_action)) } },
+        dismissButton = {
+            FlowRow {
+                TextButton(onClick = onAlreadyRated) { Text(stringResource(Res.string.rate_already)) }
+                TextButton(onClick = onLater) { Text(stringResource(Res.string.rate_later)) }
+            }
+        },
+    )
+}
+
+private const val RATE_STARS = 5
+private const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.altaran.watchwallet"
 private const val ICON_CACHE_BYTES = 30L * 1024 * 1024
 
 private enum class TopLevelDestination(

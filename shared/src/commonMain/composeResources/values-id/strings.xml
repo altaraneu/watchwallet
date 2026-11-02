@@ -9,4 +9,9 @@
     <string name="donate_reminder_support">Dukung</string>
     <string name="donate_reminder_later">Jangan sekarang</string>
     <string name="donate_reminder_never">Jangan tanya lagi</string>
+    <string name="rate_title">Suka WatchWallet?</string>
+    <string name="rate_message">Silakan beri nilai di Google Play. Mengetuk bintang akan membuka halaman penilaian, tempat Anda memilih nilai sendiri.</string>
+    <string name="rate_action">Beri nilai</string>
+    <string name="rate_already">Sudah</string>
+    <string name="rate_later">Nanti saja</string>
 </resources>

@@ -9,4 +9,9 @@
     <string name="donate_reminder_support">支持</string>
     <string name="donate_reminder_later">以后再说</string>
     <string name="donate_reminder_never">不再询问</string>
+    <string name="rate_title">喜欢 WatchWallet 吗?</string>
+    <string name="rate_message">请在 Google Play 上为它评分。点按星星会打开评分页面,由你自行选择评分。</string>
+    <string name="rate_action">去评分</string>
+    <string name="rate_already">我已评分</string>
+    <string name="rate_later">以后再说</string>
 </resources>

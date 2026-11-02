@@ -100,6 +100,15 @@ class SettingsDataSource(
 
     suspend fun disableDonateReminder() = edit { it[Keys.DONATE_REMINDER_OFF] = true }
 
+    val ratePromptDisabled: Flow<Boolean> = dataStore.data.map { it[Keys.RATE_PROMPT_OFF] ?: false }
+
+    suspend fun disableRatePrompt() = edit { it[Keys.RATE_PROMPT_OFF] = true }
+
+    /** The launch count at which to ask for a rating, `null` before it has been scheduled. */
+    val nextRatePrompt: Flow<Int?> = dataStore.data.map { it[Keys.RATE_PROMPT_NEXT] }
+
+    suspend fun setNextRatePrompt(launch: Int) = edit { it[Keys.RATE_PROMPT_NEXT] = launch }
+
     private suspend fun edit(block: (MutablePreferences) -> Unit) {
         dataStore.edit { block(it) }
     }
@@ -120,6 +129,8 @@ class SettingsDataSource(
         val ESPLORA_URL = stringPreferencesKey("esplora_url")
         val COINGECKO_KEY = stringPreferencesKey("coingecko_api_key")
         val LAUNCH_COUNT = intPreferencesKey("launch_count")
+        val RATE_PROMPT_OFF = booleanPreferencesKey("rate_prompt_off")
+        val RATE_PROMPT_NEXT = intPreferencesKey("rate_prompt_next")
         val DONATE_REMINDER_OFF = booleanPreferencesKey("donate_reminder_off")
     }
 }

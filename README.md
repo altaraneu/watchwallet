@@ -79,8 +79,8 @@ WatchWallet is free and has no ads or tracking. If you find it useful, you can d
 are the **only** donation addresses; the app shows exactly the same ones
 (`feature/donate/.../DonationAddresses.kt`):
 
-- **BTC:** `<BTC_ADDRESS>`
-- **ETH:** `<ETH_ADDRESS>`
+- **BTC:** `bc1q474j9j3uc4kk48uphhvwd284v9jzmkkpf0e583`
+- **ETH:** `0x45A92396902ED0F49ae39f2F94c3f8f084501656`
 
 ## Contributing and translations
 

@@ -25,6 +25,8 @@ data class AppInfo(
     val isDynamicColorAvailable: Boolean,
     /** Debug builds show developer tools (demo data). */
     val isDebug: Boolean = false,
+    /** Installed from Google Play, so asking for a rating there makes sense (not on F-Droid). */
+    val canAskForRating: Boolean = false,
     /** Biometrics or a device credential are set up, so the app lock can be offered. */
     val isAppLockAvailable: Boolean = false,
 )
