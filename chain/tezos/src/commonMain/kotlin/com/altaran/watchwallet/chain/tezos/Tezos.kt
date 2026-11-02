@@ -27,6 +27,7 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.pathSegment
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -95,7 +96,7 @@ class TezosAdapter(
 
     override suspend fun probe(target: WatchTarget): ProbeResult = chainCall("TzKT") {
         val address = address(target)
-        val account = get("$base/accounts/$address")
+        val account = get("$base/accounts/${pathSegment(address)}")
         val active = account.str("type") != "empty"
         val balances = if (active) {
             listOf(amountOf(TezosChain.XTZ, requireBigInteger(account.str("balance"), "TzKT balance"))) + tokens(address).amounts
@@ -112,7 +113,7 @@ class TezosAdapter(
 
     override suspend fun sync(target: WatchTarget, knownTransactions: Set<String>): SyncResult = chainCall("TzKT") {
         val address = address(target)
-        val account = get("$base/accounts/$address")
+        val account = get("$base/accounts/${pathSegment(address)}")
         if (account.str("type") == "empty") {
             return@chainCall SyncResult(listOf(amountOf(TezosChain.XTZ, BigInteger.ZERO)), emptyList())
         }
@@ -125,7 +126,7 @@ class TezosAdapter(
         var pages = 0
         var truncated = false
         paging@ while (true) {
-            val page = get("$base/accounts/$address/operations") {
+            val page = get("$base/accounts/${pathSegment(address)}/operations") {
                 parameter("type", "transaction,origination,delegation,reveal")
                 parameter("limit", PAGE_SIZE)
                 parameter("sort", 1)

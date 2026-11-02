@@ -29,6 +29,7 @@ import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.TokenAmount
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.pathSegment
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -142,11 +143,11 @@ class StellarAdapter(
         val assets = balances.associate { (it.asset.contract ?: "native") to it.asset }
         val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES
 
-        val payments = records("$base/accounts/$address/payments", maxPages) {
+        val payments = records("$base/accounts/${pathSegment(address)}/payments", maxPages) {
             it.str("transaction_hash") in
                 knownTransactions
         }
-        val txs = records("$base/accounts/$address/transactions", maxPages) { it.str("hash") in knownTransactions }
+        val txs = records("$base/accounts/${pathSegment(address)}/transactions", maxPages) { it.str("hash") in knownTransactions }
 
         val sums = LinkedHashMap<Pair<String, String>, Entry>()
         fun add(
@@ -208,7 +209,7 @@ class StellarAdapter(
     private fun address(target: WatchTarget): String =
         (target as? WatchTarget.Address)?.address ?: throw ChainDataException("Stellar supports addresses only")
 
-    private suspend fun account(address: String): JsonElement? = notFoundAsNull { get("$base/accounts/$address") }
+    private suspend fun account(address: String): JsonElement? = notFoundAsNull { get("$base/accounts/${pathSegment(address)}") }
 
     private fun balances(account: JsonElement): List<AssetAmount> {
         val result = mutableListOf<AssetAmount>()

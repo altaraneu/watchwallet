@@ -86,4 +86,11 @@
     <string name="settings_remote_icons_summary">شعارات العملات والتوكنات من مستودع أصول Trust Wallet على GitHub، وتُخزَّن مؤقتًا على الجهاز. لا يكشف ذلك إلا عن العملات المعروضة، ولا يكشف عناوينك أبدًا.</string>
     <string name="settings_privacy_policy">سياسة الخصوصية</string>
     <string name="settings_esplora_invalid">أدخل عنوان https:// كاملًا. يعمل http:// العادي فقط مع عناوين .onion وlocalhost وعناوين شبكتك الخاصة.</string>
+    <string name="settings_endpoints_list">قائمة الخوادم</string>
+    <string name="settings_endpoints_bundled">مضمّنة في التطبيق، الإصدار %1$s</string>
+    <string name="settings_endpoints_remote">قائمة موقّعة، الإصدار %1$s، وُقّعت في %2$s، صالحة حتى %3$s</string>
+    <string name="settings_endpoints_remote_undated">قائمة موقّعة، الإصدار %1$s، صالحة حتى %2$s</string>
+    <string name="settings_endpoints_hosts_title">خوادم البلوكتشين المستخدمة</string>
+    <string name="settings_endpoints_hosts_hint">تتلقى هذه الخوادم العناوين التي تتابعها وتعرض لك ما تبلّغ عنه. تُطبَّق القائمة الجديدة عند تشغيل التطبيق التالي.</string>
+    <string name="settings_endpoints_hosts_close">إغلاق</string>
 </resources>

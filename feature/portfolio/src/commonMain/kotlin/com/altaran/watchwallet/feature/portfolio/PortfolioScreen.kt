@@ -51,9 +51,11 @@ import com.altaran.watchwallet.core.data.repository.Holding
 import com.altaran.watchwallet.core.designsystem.chart.AllocationPalette
 import com.altaran.watchwallet.core.designsystem.chart.DonutChart
 import com.altaran.watchwallet.core.designsystem.chart.DonutSlice
+import com.altaran.watchwallet.core.designsystem.component.AmountText
 import com.altaran.watchwallet.core.designsystem.component.AssetRow
 import com.altaran.watchwallet.core.designsystem.component.CryptoIcons
 import com.altaran.watchwallet.core.designsystem.component.EmptyState
+import com.altaran.watchwallet.core.designsystem.component.LocalDiscreetMode
 import com.altaran.watchwallet.core.designsystem.component.SectionHeader
 import com.altaran.watchwallet.core.designsystem.component.SkeletonBlock
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
@@ -278,14 +280,16 @@ private fun HiddenAssetRow(hidden: HiddenAsset, onShow: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(hidden.symbol, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                stringResource(
-                    if (hidden.isSpam) Res.string.portfolio_hidden_reason_spam else Res.string.portfolio_hidden_reason_other,
-                    MoneyFormatter.formatCrypto(hidden.amount, hidden.symbol),
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            val reason = stringResource(
+                if (hidden.isSpam) Res.string.portfolio_hidden_reason_spam else Res.string.portfolio_hidden_reason_other,
+                MoneyFormatter.formatCrypto(hidden.amount, hidden.symbol),
             )
+            if (LocalDiscreetMode.current) {
+                // AmountText hides it; the sentence would not fit its single line anyway.
+                AmountText(reason, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                Text(reason, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         TextButton(onClick = onShow) { Text(stringResource(Res.string.portfolio_show_asset)) }
     }
@@ -329,7 +333,7 @@ private fun Allocation(holdings: List<Holding>, total: Double) {
                     Box(Modifier.size(10.dp).clip(CircleShape).background(AllocationPalette[i % AllocationPalette.size]))
                     Spacer(Modifier.width(8.dp))
                     Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(72.dp))
-                    Text(MoneyFormatter.formatPercent(value / total), style = MaterialTheme.typography.bodyMedium)
+                    AmountText(MoneyFormatter.formatPercent(value / total), style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }

@@ -1,6 +1,7 @@
 package com.altaran.watchwallet.chain.common
 
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.pathSegment
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -51,7 +52,7 @@ class BlockbookBackend(
 
     override suspend fun address(address: String): UtxoAddressInfo {
         val info: BlockbookAddress = throttle.run {
-            http.get("$base/api/v2/address/$address") { parameter("details", "basic") }.body()
+            http.get("$base/api/v2/address/${pathSegment(address)}") { parameter("details", "basic") }.body()
         }
         val balance = (info.balance.toLongOrNull() ?: 0L) + (info.unconfirmedBalance.toLongOrNull() ?: 0L)
         return UtxoAddressInfo(txCount = info.txs + info.unconfirmedTxs, balance = balance)
@@ -61,7 +62,7 @@ class BlockbookBackend(
         val collected = mutableListOf<UtxoTx>()
         for (page in 1..maxPages) {
             val info: BlockbookAddress = throttle.run {
-                http.get("$base/api/v2/address/$address") {
+                http.get("$base/api/v2/address/${pathSegment(address)}") {
                     parameter("details", "txs")
                     parameter("page", page)
                     parameter("pageSize", PAGE_SIZE)

@@ -14,4 +14,9 @@
     <string name="rate_action">Ohodnotit</string>
     <string name="rate_already">Už jsem hodnotil</string>
     <string name="rate_later">Teď ne</string>
+    <string name="endpoints_changed_title">Blockchainové servery se změnily</string>
+    <string name="endpoints_changed_message">Od této chvíle jdou sledované adresy na servery z aktuálního seznamu. Můžeš si je prohlédnout nebo používat jen servery vestavěné v aplikaci v Nastavení → Síť.</string>
+    <string name="endpoints_changed_added">Nové: %1$s</string>
+    <string name="endpoints_changed_removed">Už se nepoužívají: %1$s</string>
+    <string name="endpoints_changed_ok">Rozumím</string>
 </resources>

@@ -32,7 +32,7 @@
     <string name="detail_show_qr">QR コードを表示</string>
     <string name="detail_qr_description">このアドレスの QR コード</string>
     <string name="detail_address_evm_hint">同じアドレスがすべての EVM ネットワークで使えます。送金元が正しいネットワークを使っていることを確認してください。</string>
-    <string name="detail_address_cardano_hint">このウォレットのアドレスの 1 つです。</string>
+    <string name="detail_address_cardano_hint">サーバーがこのウォレットのアドレスとして報告したものです。アプリでは完全に確認できません。支払いを依頼する前に、ウォレットアプリと照合してください。</string>
     <string name="detail_stake_key">ステークキー</string>
     <string name="detail_stake_key_hint">ステークキーでは支払いを受け取れません。ウォレットアプリの支払いアドレスを使用してください。</string>
     <string name="wallets_ungrouped">その他のウォレット</string>

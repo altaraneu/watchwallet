@@ -30,11 +30,13 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.pathSegment
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.http.encodeURLParameter
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlin.time.Clock
@@ -148,7 +150,7 @@ class TronAdapter(
             ?: return@chainCall SyncResult(listOf(amountOf(TronChain.TRX, BigInteger.ZERO)), emptyList())
         val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES
 
-        val trc20 = pages("$base/v1/accounts/$address/transactions/trc20", maxPages) {
+        val trc20 = pages("$base/v1/accounts/${pathSegment(address)}/transactions/trc20", maxPages) {
             it.str("transaction_id") in
                 knownTransactions
         }
@@ -162,7 +164,7 @@ class TronAdapter(
         val balances = balances(account, seenTokens + tokensWithoutRecentTransfer(account, seenTokens))
         val heldContracts = balances.mapNotNull { it.asset.contract }.toSet()
 
-        val trx = pages("$base/v1/accounts/$address/transactions", maxPages) { it.str("txID") in knownTransactions }
+        val trx = pages("$base/v1/accounts/${pathSegment(address)}/transactions", maxPages) { it.str("txID") in knownTransactions }
         val transactions = trx.items.mapNotNull { parseTrxTransaction(it, address) } +
             trc20.items.mapNotNull { item ->
                 val contract = item.at("token_info").str("address") ?: return@mapNotNull null
@@ -184,7 +186,7 @@ class TronAdapter(
 
     /** Account object, or `null` when the address was never activated. */
     private suspend fun account(address: String): JsonElement? {
-        val response = get("$base/v1/accounts/$address")
+        val response = get("$base/v1/accounts/${pathSegment(address)}")
         // A refused request also has empty data; it must not read as a never activated account.
         if (response.str("success") == "false") throw ChainDataException("TronGrid refused the request")
         return response.arr("data").firstOrNull()
@@ -239,7 +241,7 @@ class TronAdapter(
 
     private suspend fun trc10Asset(id: String): Asset? {
         // A failed lookup fails the sync (stored balances are kept) instead of dropping the token.
-        val info = notFoundAsNull { get("$base/wallet/getassetissuebyid?value=$id") } ?: return null
+        val info = notFoundAsNull { get("$base/wallet/getassetissuebyid?value=${id.encodeURLParameter()}") } ?: return null
         val precision = info.str("precision")?.toIntOrNull() ?: 0
         val name = info.str("name")?.let { hexText(it) }
         val symbol = info.str("abbr")?.let { hexText(it) } ?: name

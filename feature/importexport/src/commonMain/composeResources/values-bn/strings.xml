@@ -49,4 +49,9 @@
     <string name="import_confirm_accept">বুঝেছি, এটি একটি পাবলিক ঠিকানা</string>
     <string name="import_confirm_cancel">এখন নয়</string>
     <string name="import_secret_hex_hint">0x এবং ৬৪টি হেক্সাডেসিমেল অক্ষরের মানও প্রত্যাখ্যান করা হয়, কারণ প্রাইভেট কী দেখতে একই রকম। Sui ও Aptos ঠিকানা ওয়ালেট যোগ করার স্ক্রিনে যোগ করুন, অথবা JSON ব্যাকআপ থেকে ফিরিয়ে আনুন।</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">কমপক্ষে %1$d অক্ষর।</item>
+    </plurals>
+    <string name="export_password_confirm">পাসওয়ার্ড আবার লিখুন</string>
+    <string name="export_password_mismatch">পাসওয়ার্ড দুটি মিলছে না।</string>
 </resources>

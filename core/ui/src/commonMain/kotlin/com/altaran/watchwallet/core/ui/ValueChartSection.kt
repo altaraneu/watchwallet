@@ -388,12 +388,16 @@ private fun PerformanceLine(header: HeaderValues, crosshair: CrosshairValue?, po
     val reserve = remember(points) { points?.any { kotlin.math.abs(it.flow) >= MIN_FLOW } == true }
     if (!reserve) return
     val text = performanceText(header, crosshair, points, formatChange)
-    Text(
-        text.orEmpty(),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 16.dp),
-    )
+    if (text == null) {
+        Text("", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 16.dp))
+    } else {
+        AmountText(
+            text,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
+    }
 }
 
 @Composable

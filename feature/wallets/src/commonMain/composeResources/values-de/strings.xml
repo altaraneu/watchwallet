@@ -32,7 +32,7 @@
     <string name="detail_show_qr">QR-Code anzeigen</string>
     <string name="detail_qr_description">QR-Code dieser Adresse</string>
     <string name="detail_address_evm_hint">Dieselbe Adresse funktioniert in jedem EVM-Netzwerk. Achte darauf, dass der Absender das richtige Netzwerk verwendet.</string>
-    <string name="detail_address_cardano_hint">Eine der Adressen dieser Wallet.</string>
+    <string name="detail_address_cardano_hint">Von einem Server als Adresse dieser Wallet gemeldet; die App kann sie nicht vollständig prüfen. Vergleiche sie mit deiner Wallet-App, bevor du jemanden bittest, dorthin zu zahlen.</string>
     <string name="detail_stake_key">Stake-Key</string>
     <string name="detail_stake_key_hint">Ein Stake-Key kann keine Zahlungen empfangen. Verwende eine Zahlungsadresse aus deiner Wallet-App.</string>
     <string name="wallets_ungrouped">Weitere Wallets</string>

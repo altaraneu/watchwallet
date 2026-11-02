@@ -78,4 +78,11 @@
     <string name="settings_remote_icons_summary">GitHub-এ Trust Wallet অ্যাসেট রিপোজিটরি থেকে কয়েন ও টোকেনের লোগো, ডিভাইসে ক্যাশ করা হয়। এতে শুধু কোন কয়েনগুলো দেখানো হচ্ছে তা প্রকাশ পায়, আপনার ঠিকানা কখনোই নয়।</string>
     <string name="settings_privacy_policy">গোপনীয়তা নীতি</string>
     <string name="settings_esplora_invalid">সম্পূর্ণ https:// ঠিকানা লিখুন। সাধারণ http:// শুধু .onion ঠিকানা, localhost এবং আপনার নিজের নেটওয়ার্কের ঠিকানায় কাজ করে।</string>
+    <string name="settings_endpoints_list">সার্ভার তালিকা</string>
+    <string name="settings_endpoints_bundled">অ্যাপে অন্তর্ভুক্ত, সংস্করণ %1$s</string>
+    <string name="settings_endpoints_remote">স্বাক্ষরিত তালিকা, সংস্করণ %1$s, স্বাক্ষরের তারিখ %2$s, %3$s পর্যন্ত বৈধ</string>
+    <string name="settings_endpoints_remote_undated">স্বাক্ষরিত তালিকা, সংস্করণ %1$s, %2$s পর্যন্ত বৈধ</string>
+    <string name="settings_endpoints_hosts_title">ব্যবহৃত ব্লকচেইন সার্ভার</string>
+    <string name="settings_endpoints_hosts_hint">এই সার্ভারগুলো আপনার ট্র্যাক করা ঠিকানা পায় এবং তারা যা জানায় তা-ই আপনি দেখেন। নতুন তালিকা অ্যাপের পরবর্তী চালুতে কার্যকর হয়।</string>
+    <string name="settings_endpoints_hosts_close">বন্ধ করুন</string>
 </resources>

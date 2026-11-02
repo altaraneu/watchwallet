@@ -48,4 +48,9 @@
     <string name="import_confirm_accept">我明白,这是公开地址</string>
     <string name="import_confirm_cancel">暂不</string>
     <string name="import_secret_hex_hint">0x 加 64 个十六进制字符的值也会被拒绝,因为私钥看起来一样。请在添加钱包页面添加 Sui 和 Aptos 地址,或从 JSON 备份恢复。</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">至少 %1$d 个字符。</item>
+    </plurals>
+    <string name="export_password_confirm">再次输入密码</string>
+    <string name="export_password_mismatch">两次输入的密码不一致。</string>
 </resources>

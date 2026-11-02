@@ -53,4 +53,9 @@
     <string name="import_confirm_accept">أفهم ذلك، هذا عنوان عام</string>
     <string name="import_confirm_cancel">ليس الآن</string>
     <string name="import_secret_hex_hint">تُرفض أيضًا القيمة المكونة من 0x و64 محرفًا سداسيًا عشريًا لأن المفتاح الخاص يبدو مثلها. أضف عناوين Sui وAptos من شاشة إضافة محفظة أو استعدها من نسخة JSON احتياطية.</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">‏%1$d حرفًا على الأقل.</item>
+    </plurals>
+    <string name="export_password_confirm">أعد كتابة كلمة المرور</string>
+    <string name="export_password_mismatch">كلمتا المرور غير متطابقتين.</string>
 </resources>

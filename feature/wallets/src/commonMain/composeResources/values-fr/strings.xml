@@ -32,7 +32,7 @@
     <string name="detail_show_qr">Afficher le code QR</string>
     <string name="detail_qr_description">Code QR de cette adresse</string>
     <string name="detail_address_evm_hint">La même adresse fonctionne sur tous les réseaux EVM. Vérifiez que l’expéditeur utilise le bon réseau.</string>
-    <string name="detail_address_cardano_hint">L’une des adresses de ce portefeuille.</string>
+    <string name="detail_address_cardano_hint">Indiquée par un serveur comme adresse de ce portefeuille ; l’application ne peut pas la vérifier entièrement. Comparez-la avec votre application de portefeuille avant de demander à quelqu’un d’y payer.</string>
     <string name="detail_stake_key">Clé de staking</string>
     <string name="detail_stake_key_hint">Une clé de staking ne peut pas recevoir de paiements. Utilisez une adresse de paiement de votre application de portefeuille.</string>
     <string name="wallets_ungrouped">Autres portefeuilles</string>

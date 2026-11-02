@@ -14,4 +14,9 @@
     <string name="rate_action">রেটিং দিন</string>
     <string name="rate_already">আগেই দিয়েছি</string>
     <string name="rate_later">এখন নয়</string>
+    <string name="endpoints_changed_title">ব্লকচেইন সার্ভার বদলেছে</string>
+    <string name="endpoints_changed_message">এখন থেকে আপনার ট্র্যাক করা ঠিকানাগুলো বর্তমান তালিকার সার্ভারে যাবে। সেটিংস → নেটওয়ার্ক থেকে সেগুলো দেখতে পারেন, অথবা শুধু অ্যাপে অন্তর্ভুক্ত সার্ভার ব্যবহার করতে পারেন।</string>
+    <string name="endpoints_changed_added">নতুন: %1$s</string>
+    <string name="endpoints_changed_removed">আর ব্যবহৃত নয়: %1$s</string>
+    <string name="endpoints_changed_ok">বুঝেছি</string>
 </resources>

@@ -50,4 +50,9 @@
     <string name="import_confirm_accept">J’ai compris, c’est une adresse publique</string>
     <string name="import_confirm_cancel">Pas maintenant</string>
     <string name="import_secret_hex_hint">Une valeur de 0x et 64 caractères hexadécimaux est aussi refusée, car une clé privée a le même aspect. Ajoutez les adresses Sui et Aptos depuis l’écran d’ajout de portefeuille, ou restaurez-les depuis une sauvegarde JSON.</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">Au moins %1$d caractères.</item>
+    </plurals>
+    <string name="export_password_confirm">Répétez le mot de passe</string>
+    <string name="export_password_mismatch">Les mots de passe ne correspondent pas.</string>
 </resources>

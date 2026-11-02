@@ -43,6 +43,9 @@ object BundledEndpoints {
     /** The Cosmos adapter uses one REST gateway for all its chains, so it has one shared entry. */
     val COSMOS: ChainId = ChainId("cosmos")
 
+    /** `version` in `config/endpoints.source.json` that these entries correspond to. */
+    const val VERSION = 1L
+
     val ENTRIES: List<EndpointEntry> = listOf(
         EndpointEntry("bitcoin", EndpointProtocol.ESPLORA, listOf("https://mempool.space/api", "https://blockstream.info/api")),
         EndpointEntry("litecoin", EndpointProtocol.ESPLORA, listOf("https://litecoinspace.org/api")),

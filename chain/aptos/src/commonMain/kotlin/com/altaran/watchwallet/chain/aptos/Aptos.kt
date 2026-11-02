@@ -27,6 +27,7 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.pathSegment
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -163,7 +164,7 @@ class AptosAdapter(
     private suspend fun window(address: String, start: Long, end: Long): List<JsonElement> {
         val rows = mutableListOf<JsonElement>()
         while (start + rows.size < end) {
-            val part = get("$base/accounts/$address/transactions") {
+            val part = get("$base/accounts/${pathSegment(address)}/transactions") {
                 parameter("start", start + rows.size)
                 parameter("limit", end - start - rows.size)
             }.requireList("Aptos transactions")
@@ -177,7 +178,7 @@ class AptosAdapter(
         (target as? WatchTarget.Address)?.address?.let { AptosAddresses.normalize(it) }
             ?: throw ChainDataException("Aptos supports addresses only")
 
-    private suspend fun account(address: String): JsonElement? = notFoundAsNull { get("$base/accounts/$address") }
+    private suspend fun account(address: String): JsonElement? = notFoundAsNull { get("$base/accounts/${pathSegment(address)}") }
 
     /** APT balance via the `0x1::coin::balance` view (covers coin + paired fungible asset). */
     private suspend fun balance(address: String): BigInteger {

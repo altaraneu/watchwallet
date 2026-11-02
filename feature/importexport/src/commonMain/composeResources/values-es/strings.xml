@@ -50,4 +50,9 @@
     <string name="import_confirm_accept">Entendido, es una dirección pública</string>
     <string name="import_confirm_cancel">Ahora no</string>
     <string name="import_secret_hex_hint">También se rechaza un valor de 0x y 64 caracteres hexadecimales, porque una clave privada tiene el mismo aspecto. Añade las direcciones de Sui y Aptos en la pantalla de añadir monedero o restáuralas desde una copia JSON.</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">Al menos %1$d caracteres.</item>
+    </plurals>
+    <string name="export_password_confirm">Repite la contraseña</string>
+    <string name="export_password_mismatch">Las contraseñas no coinciden.</string>
 </resources>

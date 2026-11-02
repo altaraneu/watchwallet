@@ -30,6 +30,7 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.pathSegment
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -262,21 +263,21 @@ class CosmosAdapter(
 
     private suspend fun balances(network: CosmosNetwork, address: String): List<AssetAmount> {
         val base = base(network)
-        val bank = get("$base/cosmos/bank/v1beta1/balances/$address") { parameter("pagination.limit", 500) }
+        val bank = get("$base/cosmos/bank/v1beta1/balances/${pathSegment(address)}") { parameter("pagination.limit", 500) }
         val liquid = bank.arr("balances").firstOrNull { it.str("denom") == network.denom }?.str("amount")
         val delegations =
-            get("$base/cosmos/staking/v1beta1/delegations/$address") { parameter("pagination.limit", 500) }
+            get("$base/cosmos/staking/v1beta1/delegations/${pathSegment(address)}") { parameter("pagination.limit", 500) }
         var staked = delegations.arr("delegation_responses")
             .filter { it.at("balance").str("denom") == network.denom }
             .fold(BigInteger.ZERO) { sum, it -> sum + parseBigInteger(it.at("balance").str("amount")) }
-        val unbonding = get("$base/cosmos/staking/v1beta1/delegators/$address/unbonding_delegations")
+        val unbonding = get("$base/cosmos/staking/v1beta1/delegators/${pathSegment(address)}/unbonding_delegations")
         unbonding.arr("unbonding_responses").forEach { response ->
             response.arr("entries").forEach { staked += parseBigInteger(it.str("balance")) }
         }
         // Pending rewards are owned too (claimable any time); the API reports decimal amounts.
         // Only "not found" means no rewards: other failures fail the sync instead of silently
         // lowering the stored staked balance.
-        val rewards = notFoundAsNull { get("$base/cosmos/distribution/v1beta1/delegators/$address/rewards") }
+        val rewards = notFoundAsNull { get("$base/cosmos/distribution/v1beta1/delegators/${pathSegment(address)}/rewards") }
         rewards?.arr("total")?.firstOrNull { it.str("denom") == network.denom }?.str("amount")?.substringBefore('.')?.let {
             staked += parseBigInteger(it)
         }
@@ -286,7 +287,7 @@ class CosmosAdapter(
     }
 
     private suspend fun accountExists(network: CosmosNetwork, address: String): Boolean = try {
-        get("${base(network)}/cosmos/auth/v1beta1/accounts/$address")
+        get("${base(network)}/cosmos/auth/v1beta1/accounts/${pathSegment(address)}")
         true
     } catch (e: CancellationException) {
         throw e
@@ -303,6 +304,8 @@ class CosmosAdapter(
      * newest page is read, so a full page without a known transaction means older ones are missing.
      */
     private suspend fun history(network: CosmosNetwork, address: String, known: Set<String>): History {
+        // It goes into the quotes of an event query, where a quote would end the value.
+        if (!address.all(Char::isLetterOrDigit)) throw ChainDataException("Not a Cosmos address")
         val responses = LinkedHashMap<String, JsonElement>()
         var truncated = false
         for (query in listOf("message.sender='$address'", "transfer.recipient='$address'")) {

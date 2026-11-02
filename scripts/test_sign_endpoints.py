@@ -12,8 +12,11 @@ import io
 import json
 import sys
 import tempfile
+import time
 import unittest
+import urllib.error
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -64,13 +67,27 @@ class Tool(unittest.TestCase):
         self.source = self.dir / "source.json"
         self.source.write_text(json.dumps(SOURCE), encoding="utf-8")
         self.output = self.dir / "endpoints.json"
+        self.published = {}
+        self.fetched = []
 
     def run_tool(self, *extra, key=None, pubkey=TEST_PUB):
         args = ["--key", str(key or self.key), "--source", str(self.source), "--output", str(self.output), "--pubkey", pubkey, *extra]
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-            code = tool.main(args)
+            code = tool.main(args, fetch=self.fetch)
         return code, out.getvalue() + err.getvalue()
+
+    def fetch(self, url):
+        """Stands in for the network: nothing is published unless a test says so."""
+        self.fetched.append(url)
+        answer = self.published.get(url)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+    def signed_file(self, version):
+        payload = tool.build_payload({**SOURCE, "version": version}, int(time.time()))
+        return tool.build_envelope(payload, bytes.fromhex(TEST_SECRET), bytes(32))
 
     def test_sign_then_check(self):
         self.assertEqual((0, True), (self.run_tool()[0], self.output.exists()))
@@ -116,6 +133,84 @@ class Tool(unittest.TestCase):
         code, message = self.run_tool()
         self.assertEqual(1, code)
         self.assertIn("Bump", message)
+
+    def test_compares_with_both_published_mirrors(self):
+        self.assertEqual(0, self.run_tool()[0])
+        self.assertEqual(list(tool.PUBLISHED_URLS), self.fetched)
+
+    def test_refuses_version_not_above_the_published_one_without_a_local_file(self):
+        for mirror in tool.PUBLISHED_URLS:
+            with self.subTest(mirror=mirror):
+                self.published = {mirror: self.signed_file(SOURCE["version"])}
+                code, message = self.run_tool()
+                self.assertEqual(1, code)
+                self.assertIn("Bump", message)
+                self.assertFalse(self.output.exists())
+
+    def test_signs_above_the_published_version(self):
+        self.published = {tool.PUBLISHED_URLS[0]: self.signed_file(SOURCE["version"] - 1)}
+        self.assertEqual(0, self.run_tool()[0])
+        self.assertTrue(self.output.exists())
+
+    def test_refuses_when_no_mirror_can_be_read(self):
+        self.published = {url: tool.EndpointsError("down") for url in tool.PUBLISHED_URLS}
+        code, message = self.run_tool()
+        self.assertEqual(1, code)
+        self.assertIn("--offline", message)
+        self.assertFalse(self.output.exists())
+
+    def test_one_readable_mirror_is_enough(self):
+        self.published = {tool.PUBLISHED_URLS[0]: tool.EndpointsError("down")}
+        code, message = self.run_tool()
+        self.assertEqual(0, code)
+        self.assertIn("Warning", message)
+
+    def test_offline_skips_the_comparison(self):
+        self.published = {url: tool.EndpointsError("down") for url in tool.PUBLISHED_URLS}
+        self.assertEqual(0, self.run_tool("--offline")[0])
+        self.assertEqual([], self.fetched)
+
+    def test_published_file_with_a_bad_signature_does_not_count(self):
+        forged = json.loads(self.signed_file(99))
+        forged["signature"] = "00" * 64
+        self.published = {tool.PUBLISHED_URLS[0]: json.dumps(forged).encode()}
+        code, message = self.run_tool()
+        self.assertEqual(0, code)
+        self.assertIn("no file signed", message)
+
+    def test_download_treats_a_missing_file_as_not_published(self):
+        def not_found(request, timeout):
+            raise urllib.error.HTTPError(request.full_url, 404, "Not Found", None, None)
+
+        with mock.patch("urllib.request.urlopen", not_found):
+            self.assertIsNone(tool.download("https://a.test/endpoints.json"))
+
+    def test_download_reports_other_failures(self):
+        def refused(request, timeout):
+            raise urllib.error.URLError("refused")
+
+        with mock.patch("urllib.request.urlopen", refused), self.assertRaises(tool.EndpointsError):
+            tool.download("https://a.test/endpoints.json")
+
+    def test_refuses_an_expiry_apps_would_ignore(self):
+        self.source.write_text(json.dumps({**SOURCE, "expires_in_days": tool.MAX_VALIDITY_DAYS + 1}), encoding="utf-8")
+        code, message = self.run_tool()
+        self.assertEqual(1, code)
+        self.assertIn("expires_in_days", message)
+        self.assertFalse(self.output.exists())
+
+    def test_check_rejects_an_expiry_apps_would_ignore(self):
+        payload = json.dumps(
+            {"format": 1, "version": 2, "expires": int(time.time()) + (tool.MAX_VALIDITY_DAYS + 1) * tool.SECONDS_PER_DAY, "endpoints": SOURCE["endpoints"]}
+        ).encode()
+        self.output.write_bytes(tool.build_envelope(payload, bytes.fromhex(TEST_SECRET), bytes(32)))
+        code, message = self.run_tool("--check")
+        self.assertEqual(1, code)
+        self.assertIn("ignore", message)
+
+    def test_payload_says_when_it_was_signed(self):
+        decoded = json.loads(tool.build_payload(SOURCE, 1_000))
+        self.assertEqual(1_000, decoded["signed"])
 
     def test_refuses_non_https_and_query_urls(self):
         for url in ("http://a.test", "https://user:pw@a.test", "https://a.test/?key=1"):

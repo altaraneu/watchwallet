@@ -48,4 +48,9 @@
     <string name="import_confirm_accept">理解しました。これは公開アドレスです</string>
     <string name="import_confirm_cancel">今はしない</string>
     <string name="import_secret_hex_hint">0x と 16 進数 64 文字の値も、秘密鍵と同じ形式のため拒否されます。Sui と Aptos のアドレスはウォレット追加画面で追加するか、JSON バックアップから復元してください。</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">%1$d文字以上。</item>
+    </plurals>
+    <string name="export_password_confirm">パスワードを再入力</string>
+    <string name="export_password_mismatch">パスワードが一致しません。</string>
 </resources>

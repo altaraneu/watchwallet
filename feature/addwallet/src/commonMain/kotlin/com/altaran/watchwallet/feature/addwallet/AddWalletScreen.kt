@@ -54,6 +54,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.altaran.watchwallet.core.data.CandidatePreview
+import com.altaran.watchwallet.core.designsystem.component.AmountText
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -381,7 +382,9 @@ private fun PreviewCard(
             }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(targetDescription(preview.candidate.target), style = MaterialTheme.typography.titleMedium)
-                Text(previewSummary(preview, chainName), style = MaterialTheme.typography.bodyMedium, color = summaryColor(preview))
+                val summary = previewSummary(preview, chainName)
+                if (summary.isNotEmpty()) Text(summary, style = MaterialTheme.typography.bodyMedium, color = summaryColor(preview))
+                previewAmounts(preview).forEach { AmountText(it, style = MaterialTheme.typography.bodyMedium, color = summaryColor(preview)) }
             }
         }
     }
@@ -403,10 +406,15 @@ private fun previewSummary(preview: CandidatePreview, chainName: (com.altaran.wa
     } else {
         probe.transactionCount?.let { parts += pluralStringResource(Res.plurals.add_wallet_transactions, it, it) }
     }
-    probe.balances.filter { !it.amount.isZero }.groupBy { it.asset.symbol }.forEach { (symbol, list) ->
-        parts += MoneyFormatter.formatCrypto(list.sumOf { it.amount.toDouble() }, symbol)
-    }
     return parts.joinToString(" · ")
+}
+
+/** Separate from the summary, so that discreet mode can hide them. */
+private fun previewAmounts(preview: CandidatePreview): List<String> {
+    val probe = preview.probe?.takeIf { it.hasActivity && preview.existingWalletId == null } ?: return emptyList()
+    return probe.balances.filter { !it.amount.isZero }.groupBy { it.asset.symbol }.map { (symbol, list) ->
+        MoneyFormatter.formatCrypto(list.sumOf { it.amount.toDouble() }, symbol)
+    }
 }
 
 @Composable

@@ -49,4 +49,9 @@
     <string name="import_confirm_accept">Verstanden, das ist eine öffentliche Adresse</string>
     <string name="import_confirm_cancel">Nicht jetzt</string>
     <string name="import_secret_hex_hint">Auch ein Wert aus 0x und 64 Hexadezimalzeichen wird abgelehnt, weil ein privater Schlüssel genauso aussieht. Füge Sui- und Aptos-Adressen unter „Wallet hinzufügen“ hinzu oder stelle sie aus einer JSON-Sicherung wieder her.</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">Mindestens %1$d Zeichen.</item>
+    </plurals>
+    <string name="export_password_confirm">Passwort wiederholen</string>
+    <string name="export_password_mismatch">Die Passwörter stimmen nicht überein.</string>
 </resources>

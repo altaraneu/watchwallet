@@ -8,6 +8,9 @@ installed. See docs/endpoints-config.md.
     python scripts/sign_endpoints.py            # sign with the default key file
     python scripts/sign_endpoints.py --check    # verify config/endpoints.json, needs no key
 
+Signing first downloads the published file, because apps reject a version that is not above the one
+they already have, and the copy in a working tree can be older (--offline skips this).
+
 The private key is never printed, logged or written anywhere by this tool. Error messages do not
 quote the key file. This is a plain big-integer implementation without side-channel protection:
 run it only on a trusted machine, never on a shared server or in CI.
@@ -23,6 +26,8 @@ import os
 import re
 import sys
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -36,7 +41,15 @@ DEFAULT_OUTPUT = REPO / "config" / "endpoints.json"
 PAYLOAD_FORMAT = 1
 # Same limit as the app (EndpointFileVerifier.MAX_ENVELOPE_BYTES).
 MAX_ENVELOPE_BYTES = 256 * 1024
+# Same limit as the app (EndpointFile.MAX_VALIDITY_SECONDS): it ignores a file expiring later.
+MAX_VALIDITY_DAYS = 200
 SECONDS_PER_DAY = 86_400
+# The two URLs apps download from (EndpointConfigUpdater.DEFAULT_URLS).
+PUBLISHED_URLS = (
+    "https://raw.githubusercontent.com/altaraneu/watchwallet/main/config/endpoints.json",
+    "https://cdn.jsdelivr.net/gh/altaraneu/watchwallet@main/config/endpoints.json",
+)
+DOWNLOAD_TIMEOUT_SECONDS = 20
 URL_PATTERN = re.compile(r"https://[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[A-Za-z0-9._~/%-]*)?")
 
 # secp256k1 domain parameters.
@@ -184,10 +197,13 @@ def build_payload(source: dict, now: int) -> bytes:
         raise EndpointsError("'version' must be a positive integer.")
     if not isinstance(days, int) or days < 1:
         raise EndpointsError("'expires_in_days' must be a positive integer.")
+    if days > MAX_VALIDITY_DAYS:
+        raise EndpointsError(f"'expires_in_days' is {days}, but apps ignore a file expiring more than {MAX_VALIDITY_DAYS} days ahead.")
     validate_endpoints(source.get("endpoints"))
     payload = {
         "format": PAYLOAD_FORMAT,
         "version": version,
+        "signed": now,
         "expires": now + days * SECONDS_PER_DAY,
         "endpoints": source["endpoints"],
     }
@@ -225,19 +241,64 @@ def read_json(path: Path) -> dict:
         raise EndpointsError(f"Cannot read {path}: {error}") from None
 
 
-def existing_version(path: Path, pub_hex: str) -> int:
-    """Version of an already published file; only a signature we trust counts."""
-    if not path.exists():
-        return 0
+def trusted_version(data: bytes, pub_hex: str) -> int:
+    """Version in a signed file; only a signature we trust counts."""
     try:
-        return int(open_envelope(path.read_bytes(), pub_hex).get("version", 0))
+        return int(open_envelope(data, pub_hex).get("version", 0))
     except EndpointsError:
         return 0
+
+
+def existing_version(path: Path, pub_hex: str) -> int:
+    """Version of the signed file in this working tree."""
+    return trusted_version(path.read_bytes(), pub_hex) if path.exists() else 0
+
+
+def download(url: str) -> bytes | None:
+    """The body of [url], at most one byte over the limit; `None` when it does not exist yet."""
+    request = urllib.request.Request(url, headers={"User-Agent": "watchwallet-sign-endpoints"})
+    try:
+        with urllib.request.urlopen(request, timeout=DOWNLOAD_TIMEOUT_SECONDS) as response:
+            return response.read(MAX_ENVELOPE_BYTES + 1)
+    except urllib.error.HTTPError as error:
+        if error.code == 404:
+            return None
+        raise EndpointsError(f"{url} answered HTTP {error.code}.") from None
+    except OSError as error:
+        raise EndpointsError(f"Cannot reach {url}: {error}") from None
+
+
+def published_version(fetch, urls, pub_hex: str) -> int:
+    """The highest version apps can already have, over all mirrors.
+
+    One mirror answering is enough, as they serve the same repository. With none answering the
+    version is unknown, and guessing could publish a file every app rejects.
+    """
+    highest = 0
+    reached = 0
+    for url in urls:
+        try:
+            data = fetch(url)
+        except EndpointsError as error:
+            print(f"Warning: {error}", file=sys.stderr)
+            continue
+        reached += 1
+        if data is None:
+            continue
+        version = trusted_version(data, pub_hex)
+        if version == 0:
+            print(f"Warning: {url} holds no file signed with the expected key.", file=sys.stderr)
+        highest = max(highest, version)
+    if reached == 0:
+        raise EndpointsError("Could not read the published file to compare versions. Try again, or use --offline if you know it.")
+    return highest
 
 
 def sign(args: argparse.Namespace) -> int:
     source = read_json(args.source)
     previous = existing_version(args.output, args.pubkey)
+    if not args.offline:
+        previous = max(previous, published_version(args.fetch, PUBLISHED_URLS, args.pubkey))
     if source.get("version", 0) <= previous:
         raise EndpointsError(f"Bump 'version' in {args.source}: apps reject anything not above {previous}.")
     secret = load_secret(args.key, args.pubkey)
@@ -260,6 +321,8 @@ def check(args: argparse.Namespace) -> int:
         raise EndpointsError(f"Unknown format {payload.get('format')}.")
     if payload.get("expires", 0) <= time.time():
         raise EndpointsError(f"Valid signature, but it expired on {format_time(payload['expires'])}.")
+    if payload["expires"] - time.time() > MAX_VALIDITY_DAYS * SECONDS_PER_DAY:
+        raise EndpointsError(f"Valid signature, but apps ignore a file expiring more than {MAX_VALIDITY_DAYS} days ahead.")
     source = read_json(args.source)
     if source.get("endpoints") != payload["endpoints"] or source.get("version") != payload["version"]:
         raise EndpointsError(f"Valid signature, but {args.output} does not match {args.source}. Sign again.")
@@ -271,14 +334,16 @@ def format_time(seconds: int) -> str:
     return time.strftime("%Y-%m-%d", time.gmtime(seconds))
 
 
-def main(argv=None) -> int:
+def main(argv=None, fetch=download) -> int:
     parser = argparse.ArgumentParser(description="Sign or verify the remote server list.")
     parser.add_argument("--check", action="store_true", help="verify the output file instead of signing; needs no key")
     parser.add_argument("--key", type=Path, default=DEFAULT_KEY_FILE, help="private key file (default: %(default)s)")
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE, help="unsigned source (default: %(default)s)")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="signed file (default: %(default)s)")
     parser.add_argument("--pubkey", default=PINNED_PUBLIC_KEY, help="expected x-only public key in hex (default: the one pinned in the app)")
+    parser.add_argument("--offline", action="store_true", help="do not compare with the published file; only if you know its version")
     args = parser.parse_args(argv)
+    args.fetch = fetch
     if not re.fullmatch(r"[0-9a-f]{64}", args.pubkey):
         print("--pubkey must be 64 lowercase hex characters.", file=sys.stderr)
         return 2

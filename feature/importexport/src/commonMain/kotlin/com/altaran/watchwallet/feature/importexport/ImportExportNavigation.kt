@@ -2,7 +2,10 @@ package com.altaran.watchwallet.feature.importexport
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.altaran.watchwallet.core.data.repository.CostBasisRepository
+import com.altaran.watchwallet.core.data.repository.PortfolioRepository
 import kotlinx.serialization.Serializable
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -37,5 +40,9 @@ fun NavGraphBuilder.importExportScreens(onNavigateUp: () -> Unit, onImportDone: 
 val importExportModule = module {
     single { PendingImport() }
     viewModelOf(::ImportViewModel)
-    viewModelOf(::ExportViewModel)
+    viewModel {
+        val portfolio = get<PortfolioRepository>()
+        val costBasis = get<CostBasisRepository>()
+        ExportViewModel(get(), portfolio::walletValues, get(), costBasis::userValues)
+    }
 }

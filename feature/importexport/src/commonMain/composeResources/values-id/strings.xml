@@ -48,4 +48,9 @@
     <string name="import_confirm_accept">Saya mengerti, ini alamat publik</string>
     <string name="import_confirm_cancel">Jangan sekarang</string>
     <string name="import_secret_hex_hint">Nilai 0x dan 64 karakter heksadesimal juga ditolak karena kunci pribadi terlihat sama. Tambahkan alamat Sui dan Aptos di layar Tambah dompet, atau pulihkan dari cadangan JSON.</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">Minimal %1$d karakter.</item>
+    </plurals>
+    <string name="export_password_confirm">Ulangi kata sandi</string>
+    <string name="export_password_mismatch">Kata sandi tidak cocok.</string>
 </resources>

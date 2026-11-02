@@ -78,7 +78,7 @@ expect object WatchWalletDatabaseConstructor : RoomDatabaseConstructor<WatchWall
  *   Every schema change ships an explicit, tested migration.
  */
 internal fun RoomDatabase.Builder<WatchWalletDatabase>.buildWatchWalletDatabase(): WatchWalletDatabase =
-    setDriver(BundledSQLiteDriver())
+    setDriver(SecureDeleteDriver(BundledSQLiteDriver()))
         .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()

@@ -25,10 +25,12 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.pathSegment
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.http.encodeURLParameter
 import kotlinx.serialization.json.JsonElement
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
@@ -127,7 +129,7 @@ class HederaAdapter(
         val maxPages = if (knownTransactions.isEmpty()) FIRST_SYNC_PAGES else MAX_PAGES
 
         val transactions = mutableListOf<ChainTransaction>()
-        var url: String? = "$base/transactions?account.id=$id&order=desc&limit=$PAGE_SIZE"
+        var url: String? = "$base/transactions?account.id=${id.encodeURLParameter()}&order=desc&limit=$PAGE_SIZE"
         var pages = 0
         var truncated = false
         paging@ while (url != null) {
@@ -137,7 +139,7 @@ class HederaAdapter(
                 if (hash in knownTransactions) break@paging
                 transactions += parseHederaTransaction(tx, id) { tokenId -> token(tokenId) }
             }
-            url = page.at("links").str("next")?.let { origin + it }
+            url = page.at("links").str("next")?.takeIf { it.startsWith("/") }?.let { origin + it }
             if (url != null && ++pages >= maxPages) {
                 truncated = true
                 break
@@ -151,7 +153,7 @@ class HederaAdapter(
         (target as? WatchTarget.Address)?.address ?: throw ChainDataException("Hedera supports account ids only")
 
     private suspend fun account(id: String): JsonElement? = notFoundAsNull {
-        get("$base/accounts/$id?transactions=false")
+        get("$base/accounts/${pathSegment(id)}?transactions=false")
     }
 
     /** Associated tokens without a balance must not use up the limit before real holdings. */
@@ -170,7 +172,7 @@ class HederaAdapter(
 
     /** Fungible HTS token metadata (cached); `null` for NFTs or unknown tokens. */
     private suspend fun token(tokenId: String): Asset? = tokenCache.getOrPut(tokenId) {
-        val info = notFoundAsNull { get("$base/tokens/$tokenId") }
+        val info = notFoundAsNull { get("$base/tokens/${pathSegment(tokenId)}") }
         if (info == null || info.str("type") == "NON_FUNGIBLE_UNIQUE") {
             null
         } else {

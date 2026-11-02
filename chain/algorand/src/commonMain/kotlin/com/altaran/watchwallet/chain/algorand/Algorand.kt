@@ -28,6 +28,7 @@ import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.pathSegment
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -123,7 +124,7 @@ class AlgorandAdapter(
         var pages = 0
         var truncated = false
         paging@ while (true) {
-            val page = get("$base/v2/accounts/$address/transactions") {
+            val page = get("$base/v2/accounts/${pathSegment(address)}/transactions") {
                 parameter("limit", PAGE_SIZE)
                 next?.let { parameter("next", it) }
             }
@@ -150,7 +151,7 @@ class AlgorandAdapter(
 
     /** `null` only when the account does not exist; an answer without the account is a failure. */
     private suspend fun account(address: String): JsonElement? = notFoundAsNull {
-        get("$base/v2/accounts/$address")
+        get("$base/v2/accounts/${pathSegment(address)}")
     }?.let { it.at("account") ?: throw ChainDataException("Algorand account: malformed answer") }
 
     /** Opt-ins without a balance must not use up the limit before real holdings. */
@@ -169,7 +170,7 @@ class AlgorandAdapter(
 
     /** ASA metadata (cached); `null` when the asset is unknown or deleted. */
     private suspend fun asa(assetId: String): Asset? = assetCache.getOrPut(assetId) {
-        val params = notFoundAsNull { get("$base/v2/assets/$assetId") }.at("asset", "params")
+        val params = notFoundAsNull { get("$base/v2/assets/${pathSegment(assetId)}") }.at("asset", "params")
         val decimals = params.str("decimals")?.toIntOrNull()
         if (params == null || decimals == null) {
             null

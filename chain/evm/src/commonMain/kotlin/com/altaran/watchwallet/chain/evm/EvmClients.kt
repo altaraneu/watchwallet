@@ -2,6 +2,7 @@ package com.altaran.watchwallet.chain.evm
 
 import com.altaran.watchwallet.core.network.HostHealth
 import com.altaran.watchwallet.core.network.HostThrottles
+import com.altaran.watchwallet.core.network.pathSegment
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -183,19 +184,19 @@ internal class BlockscoutClient(private val http: HttpClient, private val health
     private val throttles = HostThrottles(maxConcurrent = 4, minInterval = 150.milliseconds)
 
     suspend fun counters(hosts: List<String>, address: String): BsCounters =
-        request(hosts) { base -> http.get("$base/api/v2/addresses/$address/counters").body() }
+        request(hosts) { base -> http.get("$base/api/v2/addresses/${pathSegment(address)}/counters").body() }
 
     suspend fun tokenBalances(hosts: List<String>, address: String): List<BsTokenBalance> =
-        request(hosts) { base -> http.get("$base/api/v2/addresses/$address/token-balances").body() }
+        request(hosts) { base -> http.get("$base/api/v2/addresses/${pathSegment(address)}/token-balances").body() }
 
     suspend fun transactions(hosts: List<String>, address: String, next: JsonObject?): BsPage<BsTransaction> =
-        page(hosts, "api/v2/addresses/$address/transactions", next)
+        page(hosts, "api/v2/addresses/${pathSegment(address)}/transactions", next)
 
     suspend fun internalTransactions(hosts: List<String>, address: String, next: JsonObject?): BsPage<BsInternalTransaction> =
-        page(hosts, "api/v2/addresses/$address/internal-transactions", next)
+        page(hosts, "api/v2/addresses/${pathSegment(address)}/internal-transactions", next)
 
     suspend fun tokenTransfers(hosts: List<String>, address: String, next: JsonObject?): BsPage<BsTokenTransfer> =
-        page(hosts, "api/v2/addresses/$address/token-transfers", next, mapOf("type" to "ERC-20"))
+        page(hosts, "api/v2/addresses/${pathSegment(address)}/token-transfers", next, mapOf("type" to "ERC-20"))
 
     private suspend fun <T> request(hosts: List<String>, block: suspend (String) -> T): T =
         health.firstAvailable(hosts) { base -> throttles.run(base) { block(base) } }

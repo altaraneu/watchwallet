@@ -2,16 +2,24 @@ package com.altaran.watchwallet.feature.importexport
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 
 // TODO(iOS): UIDocumentPickerViewController and UIActivityViewController.
 @Composable
-internal actual fun rememberDocumentActions(): DocumentActions = remember {
-    object : DocumentActions {
-        override fun openText(onResult: (String?) -> Unit) = onResult(null)
+internal actual fun rememberDocumentActions(takeSaveContent: () -> String?, onSaveFinished: (SaveOutcome) -> Unit): DocumentActions {
+    val finished = rememberUpdatedState(onSaveFinished)
+    val take = rememberUpdatedState(takeSaveContent)
+    return remember {
+        object : DocumentActions {
+            override fun openText(onResult: (String?) -> Unit) = onResult(null)
 
-        override fun saveText(fileName: String, mimeType: String, content: String, onResult: (Boolean) -> Unit) = onResult(false)
+            override fun createDocument(fileName: String, mimeType: String) {
+                take.value()
+                finished.value(SaveOutcome.FAILED)
+            }
 
-        override fun shareText(content: String) = Unit
+            override fun share(fileName: String, mimeType: String, content: String): Boolean = false
+        }
     }
 }
 

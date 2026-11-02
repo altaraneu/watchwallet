@@ -34,7 +34,11 @@ class EndpointConfigUpdaterTest {
     private val requests = mutableListOf<String>()
 
     /** Answers from [responses] by URL; a URL without an answer fails like an unreachable host. */
-    private fun updater(store: FakeStore, responses: Map<String, String>): EndpointConfigUpdater {
+    private fun updater(
+        store: FakeStore,
+        responses: Map<String, String>,
+        verifier: EndpointFileVerifier = com.altaran.watchwallet.core.endpoints.verifier,
+    ): EndpointConfigUpdater {
         val engine = MockEngine { request ->
             val url = request.url.toString()
             requests += url
@@ -158,6 +162,67 @@ class EndpointConfigUpdaterTest {
         val store = FakeStore()
         assertEquals(EndpointUpdateResult.FAILED, updater(store, mapOf(PRIMARY to signed(expires = NOW))).updateIfDue())
         assertNull(store.envelope)
+    }
+
+    @Test
+    fun fileExpiringTooFarAheadIsRejected() = runTest {
+        val store = FakeStore()
+        val tooLong = signed(expires = NOW + EndpointFile.MAX_VALIDITY_SECONDS + 1)
+        assertEquals(EndpointUpdateResult.FAILED, updater(store, mapOf(PRIMARY to tooLong)).updateIfDue())
+        assertNull(store.envelope)
+    }
+
+    @Test
+    fun fileAtTheValidityLimitIsAccepted() = runTest {
+        val store = FakeStore()
+        val longest = signed(expires = NOW + EndpointFile.MAX_VALIDITY_SECONDS)
+        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to longest)).updateIfDue())
+    }
+
+    /** What the recovery key is for: a stolen key's file cannot block it with a huge version. */
+    @Test
+    fun recoveryFileBeatsAHigherVersionOfTheNormalKey() = runTest {
+        val store = FakeStore(envelope = signed(version = Long.MAX_VALUE))
+        val rescue = signedByRecovery(version = 2)
+        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to rescue), recoverableVerifier).updateIfDue())
+        assertEquals(rescue, store.envelope)
+    }
+
+    @Test
+    fun recoveryFileOfTheSameVersionStillReplacesTheNormalOne() = runTest {
+        val store = FakeStore(envelope = signed(version = 5))
+        val rescue = signedByRecovery(version = 5)
+        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to rescue), recoverableVerifier).updateIfDue())
+        assertEquals(rescue, store.envelope)
+    }
+
+    @Test
+    fun afterRecoveryTheNormalKeyIsNoLongerAccepted() = runTest {
+        val rescue = signedByRecovery(version = 2)
+        val store = FakeStore(envelope = rescue)
+        val stolen = signed(version = 99)
+        assertEquals(EndpointUpdateResult.FAILED, updater(store, mapOf(PRIMARY to stolen), recoverableVerifier).updateIfDue())
+        assertEquals(rescue, store.envelope)
+    }
+
+    @Test
+    fun recoveryFilesAreVersionedAmongThemselves() = runTest {
+        val store = FakeStore(envelope = signedByRecovery(version = 5))
+        assertEquals(EndpointUpdateResult.FAILED, updater(store, mapOf(PRIMARY to signedByRecovery(version = 4)), recoverableVerifier).updateIfDue())
+        store.lastCheck = null
+        assertEquals(EndpointUpdateResult.UNCHANGED, updater(store, mapOf(PRIMARY to signedByRecovery(version = 5)), recoverableVerifier).updateIfDue())
+        store.lastCheck = null
+        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to signedByRecovery(version = 6)), recoverableVerifier).updateIfDue())
+    }
+
+    /** A release ends the recovery phase by raising the floor above the recovery file. */
+    @Test
+    fun aHigherFloorDropsTheRecoveryFileSoTheNormalKeyWorksAgain() = runTest {
+        val floored = EndpointFileVerifier(TestKeys.PUBLIC, TestKeys.OTHER_PUBLIC, minVersion = 3)
+        val store = FakeStore(envelope = signedByRecovery(version = 2))
+        val next = signed(version = 3)
+        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to next), floored).updateIfDue())
+        assertEquals(next, store.envelope)
     }
 
     @Test

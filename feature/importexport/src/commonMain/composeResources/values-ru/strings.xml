@@ -51,4 +51,9 @@
     <string name="import_confirm_accept">Понятно, это публичный адрес</string>
     <string name="import_confirm_cancel">Не сейчас</string>
     <string name="import_secret_hex_hint">Значение из 0x и 64 шестнадцатеричных символов тоже отклоняется, потому что приватный ключ выглядит так же. Добавляйте адреса Sui и Aptos на экране добавления кошелька или восстанавливайте их из резервной копии JSON.</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">Не менее %1$d символов.</item>
+    </plurals>
+    <string name="export_password_confirm">Повторите пароль</string>
+    <string name="export_password_mismatch">Пароли не совпадают.</string>
 </resources>

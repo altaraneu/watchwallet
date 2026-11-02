@@ -64,10 +64,13 @@ abstract class WalletDao {
     @Update
     abstract suspend fun update(wallet: WalletEntity)
 
-    /** The wallet that derives [address] from its extended key, if any. */
+    /**
+     * The wallet that derives [address] from its extended key, if any. Stake wallets are left out:
+     * their row is what a server reported, and a balance must not be subtracted on that basis.
+     */
     @Query(
         """SELECT w.* FROM wallet w JOIN derived_address d ON d.wallet_id = w.id
-           WHERE w.family = :family AND d.address = :address LIMIT 1""",
+           WHERE w.family = :family AND d.address = :address AND w.target_kind = 'XPUB' LIMIT 1""",
     )
     abstract suspend fun findByDerivedAddress(family: String, address: String): WalletEntity?
 
@@ -78,7 +81,46 @@ abstract class WalletDao {
     abstract suspend fun rename(id: Long, name: String)
 
     @Query("DELETE FROM wallet WHERE id = :id")
-    abstract suspend fun delete(id: Long)
+    protected abstract suspend fun deleteWalletRow(id: Long)
+
+    /** Removes a wallet with its cached chain data, and what only that wallet needed, in one transaction. */
+    @Transaction
+    open suspend fun delete(id: Long) {
+        deleteWalletRow(id)
+        deleteUnusedAssetsAndPrices()
+    }
+
+    /** A token or a price nobody needs any more still tells which coins were held; both are re-fetched. */
+    private suspend fun deleteUnusedAssetsAndPrices() {
+        deleteUnusedAssets()
+        deleteUnusedCurrentPrices()
+        deleteUnusedPricePoints()
+        deleteUnusedPriceDetails()
+    }
+
+    @Query(
+        """DELETE FROM asset WHERE id NOT IN (SELECT asset_id FROM wallet_balance)
+           AND id NOT IN (SELECT asset_id FROM wallet_tx) AND id NOT IN (SELECT asset_id FROM tx_cost_basis)""",
+    )
+    protected abstract suspend fun deleteUnusedAssets()
+
+    @Query(
+        """DELETE FROM price_current WHERE price_id NOT IN (SELECT price_id FROM asset WHERE price_id IS NOT NULL)
+           AND price_id NOT IN (SELECT price_id FROM watchlist)""",
+    )
+    protected abstract suspend fun deleteUnusedCurrentPrices()
+
+    @Query(
+        """DELETE FROM price_point WHERE price_id NOT IN (SELECT price_id FROM asset WHERE price_id IS NOT NULL)
+           AND price_id NOT IN (SELECT price_id FROM watchlist)""",
+    )
+    protected abstract suspend fun deleteUnusedPricePoints()
+
+    @Query(
+        """DELETE FROM price_detail WHERE price_id NOT IN (SELECT price_id FROM asset WHERE price_id IS NOT NULL)
+           AND price_id NOT IN (SELECT price_id FROM watchlist)""",
+    )
+    protected abstract suspend fun deleteUnusedPriceDetails()
 
     @Query("SELECT * FROM tx_cost_basis")
     abstract fun observeCostBasis(): Flow<List<TxCostBasisEntity>>
@@ -127,6 +169,7 @@ abstract class WalletDao {
         deleteAllCostBasis()
         deleteAllWalletRows()
         deleteAllGroups()
+        deleteUnusedAssetsAndPrices()
     }
 
     @Query("SELECT * FROM wallet_group ORDER BY sort_order, id")

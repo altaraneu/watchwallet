@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
@@ -33,6 +36,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.compose.LocalPlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.disk.DiskCache
 import coil3.network.ktor3.KtorNetworkFetcherFactory
@@ -41,6 +46,7 @@ import com.altaran.watchwallet.core.designsystem.component.LocalRemoteIcons
 import com.altaran.watchwallet.core.designsystem.icon.WwIcon
 import com.altaran.watchwallet.core.designsystem.icon.painter
 import com.altaran.watchwallet.core.designsystem.theme.WatchWalletTheme
+import com.altaran.watchwallet.core.endpoints.EndpointHostChange
 import com.altaran.watchwallet.core.model.ThemeMode
 import com.altaran.watchwallet.core.ui.LocalPriceHistoryLoading
 import com.altaran.watchwallet.feature.addwallet.AddWalletRoute
@@ -69,6 +75,11 @@ import com.altaran.watchwallet.shared.generated.resources.donate_reminder_messag
 import com.altaran.watchwallet.shared.generated.resources.donate_reminder_never
 import com.altaran.watchwallet.shared.generated.resources.donate_reminder_support
 import com.altaran.watchwallet.shared.generated.resources.donate_reminder_title
+import com.altaran.watchwallet.shared.generated.resources.endpoints_changed_added
+import com.altaran.watchwallet.shared.generated.resources.endpoints_changed_message
+import com.altaran.watchwallet.shared.generated.resources.endpoints_changed_ok
+import com.altaran.watchwallet.shared.generated.resources.endpoints_changed_removed
+import com.altaran.watchwallet.shared.generated.resources.endpoints_changed_title
 import com.altaran.watchwallet.shared.generated.resources.nav_markets
 import com.altaran.watchwallet.shared.generated.resources.nav_portfolio
 import com.altaran.watchwallet.shared.generated.resources.nav_settings
@@ -116,6 +127,15 @@ fun WatchWalletApp(viewModel: AppViewModel) {
                 }
                 .build()
         }
+        // Cached logos show which coins were held. The next look at a held coin fetches its logo again.
+        val platformContext = LocalPlatformContext.current
+        LaunchedEffect(viewModel) {
+            viewModel.walletRemoved.collect {
+                val images = SingletonImageLoader.get(platformContext)
+                images.memoryCache?.clear()
+                images.diskCache?.clear()
+            }
+        }
         CompositionLocalProvider(
             LocalDiscreetMode provides settings.discreetMode,
             LocalPriceHistoryLoading provides historyLoading,
@@ -123,8 +143,10 @@ fun WatchWalletApp(viewModel: AppViewModel) {
         ) {
             val navController = rememberNavController()
             AppScaffold(navController)
+            val hostChange by viewModel.endpointHostChange.collectAsStateWithLifecycle()
+            hostChange?.let { EndpointHostsChangedDialog(it, onDismiss = viewModel::acknowledgeEndpointHostChange) }
             val showReminder by viewModel.showDonateReminder.collectAsStateWithLifecycle()
-            if (showReminder) {
+            if (showReminder && hostChange == null) {
                 DonateReminderDialog(
                     onSupport = {
                         viewModel.dismissDonateReminder(forever = false)
@@ -135,7 +157,7 @@ fun WatchWalletApp(viewModel: AppViewModel) {
                 )
             }
             val showRatePrompt by viewModel.showRatePrompt.collectAsStateWithLifecycle()
-            if (showRatePrompt) {
+            if (showRatePrompt && hostChange == null) {
                 val uriHandler = LocalUriHandler.current
                 RatePromptDialog(
                     onRate = {
@@ -148,6 +170,23 @@ fun WatchWalletApp(viewModel: AppViewModel) {
             }
         }
     }
+}
+
+/** Who receives the user's addresses is theirs to know: shown once, and it goes first. */
+@Composable
+private fun EndpointHostsChangedDialog(change: EndpointHostChange, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.endpoints_changed_title)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(Res.string.endpoints_changed_message))
+                if (change.added.isNotEmpty()) Text(stringResource(Res.string.endpoints_changed_added, change.added.joinToString(", ")))
+                if (change.removed.isNotEmpty()) Text(stringResource(Res.string.endpoints_changed_removed, change.removed.joinToString(", ")))
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.endpoints_changed_ok)) } },
+    )
 }
 
 /** Shown on the 5th, 10th and 30th launch; "Don't ask again" turns it off for good. */

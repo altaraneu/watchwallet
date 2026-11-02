@@ -50,4 +50,9 @@
     <string name="import_confirm_accept">Compreendo, é um endereço público</string>
     <string name="import_confirm_cancel">Agora não</string>
     <string name="import_secret_hex_hint">Um valor de 0x e 64 caracteres hexadecimais também é recusado, porque uma chave privada tem o mesmo aspeto. Adicione endereços Sui e Aptos no ecrã de adicionar carteira, ou restaure-os de uma cópia JSON.</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">Pelo menos %1$d caracteres.</item>
+    </plurals>
+    <string name="export_password_confirm">Repita a senha</string>
+    <string name="export_password_mismatch">As senhas não coincidem.</string>
 </resources>

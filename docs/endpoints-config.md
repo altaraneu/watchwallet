@@ -26,6 +26,11 @@ An entry replaces the bundled URLs for that pair; pairs not in the file stay as 
 custom Bitcoin server always wins. With "Update server list automatically" off (Settings → Network)
 the app makes no request and uses bundled servers only.
 
+**The toggle is on by default.** This is the project owner's decision: a dead or misbehaving public
+server should not need a new release to be replaced. What it costs is described under "Key
+compromised". Settings → Network shows the list in force (version, signing date, expiry) and every
+host in use, and the app says once when the hosts change.
+
 | Protocol | Chains | URLs used |
 |---|---|---|
 | `esplora` | `bitcoin` | all, in order |
@@ -57,7 +62,8 @@ Trust Wallet logos, block explorer links and the two download URLs of the file i
 ## Change servers
 
 1. Edit `config/endpoints.source.json` and raise `version`. Make the same change in
-   `BundledEndpoints.kt`, so the next release ships it (a test fails while the two differ). A server
+   `BundledEndpoints.kt`, including `VERSION`, so the next release ships it (a test fails while the
+   two differ). A server
    you add sees the addresses of every user, so vet it first, and add its host to the tables in
    `PRIVACY.md` in the same commit (a test checks that too).
 2. Sign on your own machine:
@@ -66,22 +72,23 @@ Trust Wallet logos, block explorer links and the two download URLs of the file i
    ```
    The key is read from `~/.watchwallet-signing/endpoints-signing.key` (or `--key <path>`). The tool
    refuses a key that does not match the public key pinned in the app, and a `version` that is not
-   above the published one.
+   above the one in the working tree or at either download URL. With neither URL reachable it stops;
+   `--offline` skips the comparison, for when you know the published version.
 3. Verify: `python scripts/sign_endpoints.py --check` (needs no key).
 4. Commit `endpoints.source.json` and `endpoints.json` and push to `main`.
 
 Apps fetch the file at most once a day at app start and apply it at the **next** app start. The
 jsDelivr fallback may lag behind GitHub by some hours.
 
-**Re-sign before expiry.** `expires_in_days` (180) sets the expiry when signing. Raise `version` and
-sign again well before that date, even if nothing changed.
+**Re-sign before expiry.** `expires_in_days` (180, at most 200) sets the expiry when signing. Raise
+`version` and sign again well before that date, even if nothing changed.
 
 ## How it is verified
 
 The envelope is `{"payload":"<base64>","signature":"<hex>"}`. The signature is BIP-340 Schnorr over
 secp256k1 of SHA-256 of the decoded payload bytes, so JSON formatting cannot affect it. The payload
-is `{"format":1,"version":N,"expires":<epoch seconds>,"endpoints":[...]}` and is not parsed before
-the signature is checked. The whole file may have at most 256 KB; a larger download is cut off at
+is `{"format":1,"version":N,"signed":<epoch seconds>,"expires":<epoch seconds>,"endpoints":[...]}` and
+is not parsed before the signature is checked. The whole file may have at most 256 KB; a larger download is cut off at
 that limit. A file failing any check is discarded and only noted in the debug log.
 
 The verified file is stored as downloaded in the settings DataStore and verified again at each start.
@@ -89,7 +96,9 @@ The verified file is stored as downloaded in the settings DataStore and verified
 ## Replay protection and expiry
 
 `version` must never go down: a lower version than the stored one is rejected, and so is an expired
-file. The same version changes nothing.
+file, or one expiring more than 200 days ahead (`EndpointFile.MAX_VALIDITY_SECONDS`). The same version
+changes nothing. `EndpointFileVerifier.MIN_ACCEPTED_VERSION` is a floor per build: raise it in a
+release to drop every older file, including one stored on the device.
 
 **After expiry the app goes back to the bundled defaults instead of keeping the last valid list.**
 Expiry exists for the case where updates stop reaching a device: a mirror or network blocks them, or
@@ -101,8 +110,8 @@ file stays stored, without being applied, so its `version` still rejects older f
 newer valid file arrives it applies again.
 
 Limits: expiry depends on the device clock, so someone who controls the clock can stretch it, and a
-fresh install has no stored version, so it accepts any unexpired signed file. That is why expiry
-stays short (180 days) and why old signed files should not name servers that later went bad: raise
+fresh install only has the floor of its build, so it accepts any unexpired signed file above that.
+That is why expiry stays short (180 days) and why old signed files should not name servers that later went bad: raise
 `version` and re-sign promptly when one does.
 
 ## Key management
@@ -128,19 +137,55 @@ the old key, which also resets its stored `version`.
 
 ### Key compromised
 
-An attacker with the key can point the servers of every app with the toggle on at their own hosts
-and so learn which addresses users track. They cannot run code, reach keys (the app has none) or
-change balances beyond what a dishonest server can already report. They would still need GitHub or
-jsDelivr to serve their file at the two URLs the app fetches, for example through access to this
-repository.
+An attacker with the key can point every server of every app with the toggle on, which is the
+default, at their own hosts. They would still need GitHub or jsDelivr to serve their file at the two
+URLs the app fetches, for example through access to this repository. From the next app start their
+servers:
 
-1. Rotate at once as under "Key lost" and release. Old builds cannot be fixed remotely.
+- learn every tracked address, with the IP address of each device (or its proxy), and can link the
+  addresses of one extended key, because the app asks about them from one IP address close together;
+- can show false balances, transactions and token names, so the portfolio can show anything. Do not
+  rely on it for a decision, for example to confirm a payment arrived, while this may be going on;
+- can answer wrongly or not at all, which looks like a dead server.
+
+They cannot run code, reach keys (the app has none) or sign anything. Receive addresses the user
+entered or the app derived on the device are out of their reach. **The exception is a Cardano stake
+wallet:** the address it shows comes from the server. The app checks that the address carries the
+wallet's stake key, but it cannot check the payment part without the wallet's keys, so a dishonest
+server can name an address with its own payment key and the wallet's stake part, and a payment sent
+there goes to that server's owner.
+
+Prices, logos and the two download URLs are not in the list. The hosts in force are visible in
+Settings → Network and the app announces a change once, which is detection, not prevention: the
+addresses have already been sent by the time it appears.
+
+1. Rotate at once as under "Key lost" and release. If a recovery key is pinned, use it first, see
+   below. Old builds without one cannot be fixed remotely.
 2. Check `git log config/` and revoke repository access if the repository was affected.
 3. Publish a security advisory that tells users to update, and meanwhile to turn off "Update server
    list automatically" and restart the app, which goes back to bundled servers immediately.
 
 A file signed with a stolen key can also carry a huge `version`, which would make old builds reject
 any later file signed by you. New builds reset this through rotation.
+
+### Recovery key
+
+**Not set up yet. The project owner has to do this before a release:** generate a second key on an
+offline machine, keep it offline and apart from the normal key, and enter its x-only public key as
+`EndpointFileVerifier.RECOVERY_PUBLIC_KEY`. Only builds containing it benefit, so it has to ship
+before it is ever needed.
+
+A file signed with the recovery key beats any file of the normal key whatever the version, so a
+stolen key's huge `version` cannot block it. Once a device has stored such a file, it refuses files
+of the normal key.
+
+1. Sign with `python scripts/sign_endpoints.py --key <recovery key> --pubkey <its public key> --offline`
+   and publish it. Use low `version` numbers for recovery files; they are compared among themselves.
+2. Rotate the normal key and release a build with the new key and a `MIN_ACCEPTED_VERSION` above the
+   recovery file. That drops the recovery file and hands over to the new key.
+
+The recovery file is subject to the same 200-day limit. The tool's version comparison uses the key
+given in `--pubkey`, so `--offline` avoids a warning about the file signed by the other key.
 
 ## F-Droid
 

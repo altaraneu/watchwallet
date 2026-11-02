@@ -32,7 +32,7 @@
     <string name="detail_show_qr">Mostrar código QR</string>
     <string name="detail_qr_description">Código QR de esta dirección</string>
     <string name="detail_address_evm_hint">La misma dirección funciona en todas las redes EVM. Comprueba que el remitente use la red correcta.</string>
-    <string name="detail_address_cardano_hint">Una de las direcciones de esta billetera.</string>
+    <string name="detail_address_cardano_hint">Un servidor la indica como dirección de esta cartera; la app no puede comprobarla del todo. Compárala con tu app de cartera antes de pedir a alguien que pague a ella.</string>
     <string name="detail_stake_key">Clave de staking</string>
     <string name="detail_stake_key_hint">Una clave de staking no puede recibir pagos. Usa una dirección de pago de tu app de billetera.</string>
     <string name="wallets_ungrouped">Otras billeteras</string>

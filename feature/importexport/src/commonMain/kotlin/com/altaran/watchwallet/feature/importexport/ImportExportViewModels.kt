@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.altaran.watchwallet.core.data.repository.CostBasisRepository
 import com.altaran.watchwallet.core.data.repository.CostKey
-import com.altaran.watchwallet.core.data.repository.PortfolioRepository
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.repository.WalletRepository
 import com.altaran.watchwallet.core.data.sync.SyncEngine
@@ -19,6 +18,7 @@ import com.altaran.watchwallet.core.importexport.ExportedWallet
 import com.altaran.watchwallet.core.importexport.TransactionRow
 import com.altaran.watchwallet.core.importexport.WatchWalletExport
 import com.altaran.watchwallet.core.model.AssetId
+import com.altaran.watchwallet.core.model.QuoteCurrency
 import com.altaran.watchwallet.core.model.TokenAmount
 import com.altaran.watchwallet.core.model.WalletGroup
 import com.altaran.watchwallet.core.model.WatchTarget
@@ -26,6 +26,7 @@ import com.altaran.watchwallet.core.security.SecretGuard
 import com.altaran.watchwallet.core.security.SecretKind
 import com.altaran.watchwallet.core.security.SecretRejectedException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -266,27 +267,55 @@ data class ExportUiState(
     val format: ExportFormatOption = ExportFormatOption.JSON,
     val includeValues: Boolean = false,
     val password: String = "",
+    val passwordConfirmation: String = "",
     val walletCount: Int = 0,
     val message: ExportMessage? = null,
     /** The export is being built (and encrypted) in the background. */
     val busy: Boolean = false,
     /** A finished export waiting for the screen to save or share it. */
     val prepared: PreparedExport? = null,
-)
+) {
+    /** Why the password keeps the export from starting; only the encrypted format has one. */
+    val passwordProblem: PasswordProblem?
+        get() = if (format == ExportFormatOption.JSON && ExportCrypto.isSupported) passwordProblem(password, passwordConfirmation) else null
+}
 
 enum class ExportMessage { SAVED, SAVE_FAILED }
+
+enum class PasswordProblem { TOO_SHORT, MISMATCH }
+
+/** Long enough to resist offline guessing of a stolen backup; the key derivation only slows that down. */
+const val MIN_EXPORT_PASSWORD_LENGTH = 12
+
+/** A lost password cannot be recovered, so a typo must not reach the file. Empty = no encryption. */
+fun passwordProblem(password: String, confirmation: String): PasswordProblem? = when {
+    password.isEmpty() -> if (confirmation.isEmpty()) null else PasswordProblem.MISMATCH
+    password.length < MIN_EXPORT_PASSWORD_LENGTH -> PasswordProblem.TOO_SHORT
+    password != confirmation -> PasswordProblem.MISMATCH
+    else -> null
+}
 
 /** A built export; [share] = share sheet, otherwise save to a file. */
 data class PreparedExport(val content: String, val fileName: String, val mimeType: String, val share: Boolean)
 
+/**
+ * @param walletValuesIn current value per wallet id, for the CSV export with values.
+ * @param userCosts the cost basis the user entered, for the JSON backup.
+ */
 internal class ExportViewModel(
     private val walletRepository: WalletRepository,
-    private val portfolioRepository: PortfolioRepository,
+    private val walletValuesIn: (QuoteCurrency) -> Flow<Map<Long, Double>>,
     private val settingsRepository: SettingsRepository,
-    private val costBasis: CostBasisRepository,
+    private val userCosts: suspend () -> Map<CostKey, Double>,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ExportUiState())
     val state: StateFlow<ExportUiState> = _state.asStateFlow()
+
+    /**
+     * The file being saved while the system file picker is open. Lives here and not in the screen,
+     * which is recreated when the device rotates behind the picker.
+     */
+    private var pendingSave: String? = null
 
     val groups: StateFlow<List<WalletGroup>> = walletRepository.groups.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
@@ -303,6 +332,7 @@ internal class ExportViewModel(
     fun setFormat(format: ExportFormatOption) = _state.update { it.copy(format = format) }
     fun setIncludeValues(value: Boolean) = _state.update { it.copy(includeValues = value) }
     fun setPassword(value: String) = _state.update { it.copy(password = value) }
+    fun setPasswordConfirmation(value: String) = _state.update { it.copy(passwordConfirmation = value) }
     fun showMessage(message: ExportMessage?) = _state.update { it.copy(message = message) }
 
     /**
@@ -310,15 +340,17 @@ internal class ExportViewModel(
      * and calls [onPreparedHandled]. The password is cleared from the state afterwards.
      */
     fun prepare(share: Boolean) {
-        if (_state.value.busy) return
+        if (_state.value.busy || _state.value.passwordProblem != null) return
         val format = _state.value.format
         _state.update { it.copy(busy = true, message = null, prepared = null) }
         viewModelScope.launch {
             val built = runCatching { build() }.getOrNull()
+            pendingSave = built?.first?.takeUnless { share }
             _state.update { state ->
                 state.copy(
                     busy = false,
                     password = "",
+                    passwordConfirmation = "",
                     prepared = built?.let { (content, name) -> PreparedExport(content, name, mimeType(format), share) },
                     message = if (built == null) ExportMessage.SAVE_FAILED else state.message,
                 )
@@ -327,6 +359,18 @@ internal class ExportViewModel(
     }
 
     fun onPreparedHandled() = _state.update { it.copy(prepared = null) }
+
+    /** Hands the file content to the platform once, when the user has chosen where to save it. */
+    fun takePendingSave(): String? = pendingSave.also { pendingSave = null }
+
+    /** A cancelled picker is not a failure, and whatever was shown before no longer applies. */
+    fun onSaveFinished(outcome: SaveOutcome) = showMessage(
+        when (outcome) {
+            SaveOutcome.SAVED -> ExportMessage.SAVED
+            SaveOutcome.FAILED -> ExportMessage.SAVE_FAILED
+            SaveOutcome.CANCELLED -> null
+        },
+    )
 
     private fun mimeType(format: ExportFormatOption): String = when (format) {
         ExportFormatOption.JSON -> "application/json"
@@ -339,14 +383,14 @@ internal class ExportViewModel(
         val state = _state.value
         val groups = walletRepository.groups.first()
         val groupNames = groups.associate { it.id to it.name }
-        val userCosts = costBasis.userValues()
+        val costs = userCosts()
         val allWallets = walletRepository.activeWallets.first()
         val wallets = allWallets
             .filter { state.groupId == null || it.groupId == state.groupId }
             .mapNotNull { wallet ->
                 wallet.target?.let { target ->
                     ExportedWallet.from(target, wallet.name, wallet.groupId?.let(groupNames::get), wallet.notes).copy(
-                        costs = userCosts.filterKeys { it.walletId == wallet.id }.map { (key, value) -> ExportedCost.of(key.hash, key.assetId, value) },
+                        costs = costs.filterKeys { it.walletId == wallet.id }.map { (key, value) -> ExportedCost.of(key.hash, key.assetId, value) },
                         subtractFrom = allWallets.firstOrNull { it.id == wallet.subtractFromWalletId }?.target?.let {
                             ExportedWallet.from(it, "", null, null).value
                         },
@@ -409,7 +453,7 @@ internal class ExportViewModel(
 
     private suspend fun walletValues(): Map<String, String> {
         val currency = settingsRepository.settings.first().quoteCurrency
-        val values = portfolioRepository.walletValues(currency).first()
+        val values = walletValuesIn(currency).first()
         return walletRepository.activeWallets.first().mapNotNull { wallet ->
             val target = wallet.target ?: return@mapNotNull null
             val key = when (target) {

@@ -76,4 +76,11 @@
     <string name="settings_remote_icons_summary">Logo koin dan token dari repositori aset Trust Wallet di GitHub, di-cache di perangkat. Hanya mengungkap koin yang ditampilkan, tidak pernah alamat Anda.</string>
     <string name="settings_privacy_policy">Kebijakan privasi</string>
     <string name="settings_esplora_invalid">Masukkan alamat https:// lengkap. http:// biasa hanya berfungsi untuk alamat .onion, localhost, dan alamat di jaringan Anda sendiri.</string>
+    <string name="settings_endpoints_list">Daftar server</string>
+    <string name="settings_endpoints_bundled">Bawaan aplikasi, versi %1$s</string>
+    <string name="settings_endpoints_remote">Daftar bertanda tangan, versi %1$s, ditandatangani %2$s, berlaku hingga %3$s</string>
+    <string name="settings_endpoints_remote_undated">Daftar bertanda tangan, versi %1$s, berlaku hingga %2$s</string>
+    <string name="settings_endpoints_hosts_title">Server blockchain yang digunakan</string>
+    <string name="settings_endpoints_hosts_hint">Server ini menerima alamat yang Anda pantau, dan Anda melihat apa yang mereka laporkan. Daftar baru berlaku saat aplikasi dimulai berikutnya.</string>
+    <string name="settings_endpoints_hosts_close">Tutup</string>
 </resources>

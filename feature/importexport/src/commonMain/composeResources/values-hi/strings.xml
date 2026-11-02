@@ -49,4 +49,9 @@
     <string name="import_confirm_accept">मैं समझता/समझती हूँ, यह सार्वजनिक पता है</string>
     <string name="import_confirm_cancel">अभी नहीं</string>
     <string name="import_secret_hex_hint">0x और 64 हेक्साडेसिमल अक्षरों वाला मान भी अस्वीकार होता है, क्योंकि निजी कुंजी भी ऐसी ही दिखती है। Sui और Aptos पते वॉलेट जोड़ें स्क्रीन पर जोड़ें या JSON बैकअप से पुनर्स्थापित करें।</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">कम से कम %1$d अक्षर।</item>
+    </plurals>
+    <string name="export_password_confirm">पासवर्ड दोबारा लिखें</string>
+    <string name="export_password_mismatch">पासवर्ड मेल नहीं खाते।</string>
 </resources>

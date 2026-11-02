@@ -78,4 +78,11 @@
     <string name="settings_remote_icons_summary">Logos von Coins und Token aus dem Trust Wallet Assets-Repository auf GitHub, auf dem Gerät zwischengespeichert. Verrät nur, welche Coins angezeigt werden, niemals deine Adressen.</string>
     <string name="settings_privacy_policy">Datenschutzerklärung</string>
     <string name="settings_esplora_invalid">Gib eine vollständige https://-Adresse ein. Einfaches http:// funktioniert nur für .onion-Adressen, localhost und Adressen im eigenen Netzwerk.</string>
+    <string name="settings_endpoints_list">Serverliste</string>
+    <string name="settings_endpoints_bundled">In der App enthalten, Version %1$s</string>
+    <string name="settings_endpoints_remote">Signierte Liste, Version %1$s, signiert am %2$s, gültig bis %3$s</string>
+    <string name="settings_endpoints_remote_undated">Signierte Liste, Version %1$s, gültig bis %2$s</string>
+    <string name="settings_endpoints_hosts_title">Verwendete Blockchain-Server</string>
+    <string name="settings_endpoints_hosts_hint">Diese Server erhalten die von dir beobachteten Adressen, und du siehst, was sie melden. Eine neue Liste gilt ab dem nächsten App-Start.</string>
+    <string name="settings_endpoints_hosts_close">Schließen</string>
 </resources>

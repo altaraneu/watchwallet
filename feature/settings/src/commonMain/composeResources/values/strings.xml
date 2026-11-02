@@ -86,4 +86,15 @@
     <string name="settings_remote_icons_summary">Logos of coins and tokens from the Trust Wallet assets repository on GitHub, cached on the device. Reveals only which coins are shown, never your addresses.</string>
     <string name="settings_privacy_policy">Privacy policy</string>
     <string name="settings_esplora_invalid">Enter a full https:// address. Plain http:// works only for .onion addresses, localhost and addresses on your own network.</string>
+    <!-- Settings row: the list of blockchain servers the app uses -->
+    <string name="settings_endpoints_list">Server list</string>
+    <!-- %1$s: version number of the server list built into the app -->
+    <string name="settings_endpoints_bundled">Built into the app, version %1$s</string>
+    <!-- %1$s: version, %2$s: date the list was signed, %3$s: date it expires -->
+    <string name="settings_endpoints_remote">Signed list, version %1$s, signed %2$s, valid until %3$s</string>
+    <!-- %1$s: version, %2$s: date the list expires -->
+    <string name="settings_endpoints_remote_undated">Signed list, version %1$s, valid until %2$s</string>
+    <string name="settings_endpoints_hosts_title">Blockchain servers in use</string>
+    <string name="settings_endpoints_hosts_hint">These servers receive the addresses you track, and show you what they report. A new list applies at the next app start.</string>
+    <string name="settings_endpoints_hosts_close">Close</string>
 </resources>

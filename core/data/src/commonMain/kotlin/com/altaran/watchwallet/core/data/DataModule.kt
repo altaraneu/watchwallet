@@ -54,12 +54,14 @@ import com.altaran.watchwallet.core.data.repository.WalletRepository
 import com.altaran.watchwallet.core.data.sync.DataStoreWalletSyncStateStore
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.data.sync.WalletSyncStateStore
+import com.altaran.watchwallet.core.database.DeletedDataScrubber
 import com.altaran.watchwallet.core.database.databaseModule
 import com.altaran.watchwallet.core.datastore.SettingsDataSource
 import com.altaran.watchwallet.core.datastore.dataStoreModule
 import com.altaran.watchwallet.core.endpoints.BundledEndpoints
 import com.altaran.watchwallet.core.endpoints.EndpointCatalog
 import com.altaran.watchwallet.core.endpoints.EndpointConfigUpdater
+import com.altaran.watchwallet.core.endpoints.EndpointHostNotice
 import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.NetworkSettings
@@ -97,6 +99,7 @@ val dataModule: Module = module {
         val customServer = network.esploraUrl?.let(com.altaran.watchwallet.core.common.CustomServerUrl::validate)
         EndpointCatalog.resolve(stored, network.autoUpdateEndpoints, customServer, Clock.System.now().epochSeconds)
     }
+    single { EndpointHostNotice(get(), SettingsEndpointConfigStore(get())) }
     single {
         val debug = get<AppInfo>().isDebug
         EndpointConfigUpdater(
@@ -144,7 +147,13 @@ val dataModule: Module = module {
     single { MarketDataRepository(get(), get(), get()) }
 
     single<SettingsRepository> { DefaultSettingsRepository(get()) }
-    single<WalletRepository> { DefaultWalletRepository(get()) }
+    single<WalletRepository> {
+        val scope = this
+        DefaultWalletRepository(get()) {
+            scope.get<PriceRepository>().forgetFetchedHistory()
+            scope.get<DeletedDataScrubber>().scrub()
+        }
+    }
     single { PriceRepository(get(), get(), get(), get(), coinGecko = get()) }
     single { com.altaran.watchwallet.core.data.repository.PriceDetailRepository(get(), get()) }
     single { PortfolioRepository(get(), get(), get()) }

@@ -80,4 +80,11 @@
     <string name="settings_remote_icons_summary">Logos des cryptos et des jetons issus du dépôt d’actifs de Trust Wallet sur GitHub, mis en cache sur l’appareil. Révèle seulement les cryptos affichées, jamais vos adresses.</string>
     <string name="settings_privacy_policy">Politique de confidentialité</string>
     <string name="settings_esplora_invalid">Saisissez une adresse https:// complète. Le http:// simple ne fonctionne que pour les adresses .onion, localhost et les adresses de votre propre réseau.</string>
+    <string name="settings_endpoints_list">Liste des serveurs</string>
+    <string name="settings_endpoints_bundled">Intégrée à l’application, version %1$s</string>
+    <string name="settings_endpoints_remote">Liste signée, version %1$s, signée le %2$s, valable jusqu’au %3$s</string>
+    <string name="settings_endpoints_remote_undated">Liste signée, version %1$s, valable jusqu’au %2$s</string>
+    <string name="settings_endpoints_hosts_title">Serveurs blockchain utilisés</string>
+    <string name="settings_endpoints_hosts_hint">Ces serveurs reçoivent les adresses que vous suivez, et vous voyez ce qu’ils indiquent. Une nouvelle liste s’applique au prochain démarrage de l’application.</string>
+    <string name="settings_endpoints_hosts_close">Fermer</string>
 </resources>

@@ -103,8 +103,19 @@ contains only chain names, API types and https addresses of servers, never code.
 only with a valid signature of the project's key, and only for API types it already knows. Once
 applied, the addresses you track go to the servers it names instead of those in the table above,
 for the same purpose and with the same data. The history of the list is public in this repository.
-If the list expires, the app returns to its built-in servers. Details:
-[`docs/endpoints-config.md`](docs/endpoints-config.md).
+If the list expires, the app returns to its built-in servers; it ignores a list valid for more than
+200 days. Details: [`docs/endpoints-config.md`](docs/endpoints-config.md).
+
+**What you are trusting.** This is on by default, because the project owner decided that replacing a
+dead server should not need an app update. It means you trust the project's signing key. If that key
+were stolen and the thief could also publish the file (for example through access to this
+repository), then from your next app start their servers would learn every address you track
+together with your IP address, and could show you false balances, transactions and token names.
+They could not run code or reach any key. Addresses you entered or the app derived on your device
+stay as they are; the address shown for a Cardano stake wallet comes from the server, and the app can
+check only its stake part, so compare it with your wallet before you ask anyone to pay to it.
+Settings → Network shows the list version, its dates and every host in use, and the app tells you once
+when the hosts change; by then your addresses may already have been sent to them.
 
 To turn this off, disable **Update server list automatically** in Settings → Network and restart the
 app: it then makes no such request and uses only the built-in servers.
@@ -167,8 +178,10 @@ dots instead of amounts.
 Exports are created only on your request and delivered through the Android share sheet or the
 system file picker; the app never uploads them anywhere. Formats:
 
-- **Backup (JSON):** wallets (addresses or extended public keys), names, groups, tags and notes.
-  Never balances or key material.
+- **Backup (JSON):** wallets (addresses or extended public keys), names, groups, tags and notes, the
+  cost basis you entered with the transaction hash and asset it belongs to, and which wallets are
+  subtracted from which. So it shows which transactions you own and what you paid. Never balances or
+  key material.
 - **CSV / addresses only:** the same wallets as a table or plain list; CSV can optionally include
   current values. A CSV or list with Sui or Aptos addresses cannot be imported again, because those
   addresses look like private keys there; use the JSON backup for them.
@@ -182,15 +195,21 @@ wrong password or a modified file. Salt, IV and parameters are stored in the fil
 ciphertext (format `watchwallet-encrypted`, version 1). The password is not stored anywhere; a
 lost password cannot be recovered. CSV and text exports are not encrypted.
 
+**Sharing.** Through the share sheet, an export goes to the app you choose as text, or as a file if it
+is large. That file stays in the app's private cache for about an hour and is deleted the next time
+you open or use the export screen after that; Android may also clear it earlier.
+
 ## Deleting your data
 
 WatchWallet (developer: Altaran) has no accounts and no server. The developer holds no data about you. Everything the app stores is on your device.
 
 To delete your data:
 
-- **One wallet:** open the wallet, tap the menu at the top, choose **Delete**.
-- **Everything:** **Settings → Delete all wallets**. This removes all wallets, their history, groups and cost basis. Settings and the watchlist stay.
+- **One wallet:** open the wallet, tap the menu at the top, choose **Delete**. This also removes its history and cost basis, the tokens and prices only it used, and the cached coin logos.
+- **Everything:** **Settings → Delete all wallets**. This removes all wallets, their history, groups and cost basis, and the tokens, prices and logos that only they used. Settings and the watchlist with its prices stay.
 - **All app data:** uninstall the app, or clear its storage in Android settings.
+
+What a deletion cannot promise: the app overwrites deleted database content and compacts the database afterwards, but flash storage may keep old copies of data where no app can reach them. A short list of which coins got their prices from CoinGecko stays in the settings until the app is uninstalled or its storage is cleared. Cached logos are removed while the app is running; if it is closed at that moment, they remain until Android clears the cache.
 
 What stays elsewhere: backups you exported are your own files, delete them yourself. Public blockchain data can't be deleted by anyone. The third-party services listed in this policy receive your addresses when the app loads balances. The developer doesn't control their logs, so ask them directly if you need to.
 

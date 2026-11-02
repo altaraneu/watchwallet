@@ -37,6 +37,12 @@ import com.altaran.watchwallet.core.model.WatchTarget
 object ChainParsers {
     private val SCHEMES = listOf("litecoin:", "dogecoin:", "solana:", "ripple:", "xrpl:", "tron:", "ton://transfer/", "ton:")
 
+    /**
+     * [candidate] when it is proven to be a Cardano payment address of [stakeAddress]. Stored rows
+     * came from a server, so anything offered for receiving money is checked again when shown.
+     */
+    fun cardanoPaymentAddress(candidate: String, stakeAddress: String): String? = CardanoAddresses.ownedPaymentAddress(candidate, stakeAddress)
+
     /** All interpretations of [raw] as an address or extended key of a non-Bitcoin, non-EVM chain. */
     fun parse(raw: String): List<WatchTarget> {
         val input = strip(raw.trim())

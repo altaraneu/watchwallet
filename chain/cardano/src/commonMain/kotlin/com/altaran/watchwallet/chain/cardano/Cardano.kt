@@ -114,6 +114,16 @@ object CardanoAddresses {
         val header = ((if (scriptStake) 0xF0 else 0xE0) or MAINNET).toByte()
         return Bech32Codec.encodeBytes("stake", byteArrayOf(header) + bytes.copyOfRange(1 + HASH, 1 + 2 * HASH))
     }
+
+    /**
+     * [candidate] in canonical form when it is a valid payment address whose stake part is
+     * [stakeAddress]. This binds it to the wallet's stake key only: the payment part cannot be
+     * checked without the wallet's keys, so it says nothing about who holds the payment key.
+     */
+    fun ownedPaymentAddress(candidate: String, stakeAddress: String): String? {
+        val parsed = parse(candidate)?.address ?: return null
+        return parsed.takeIf { stakeAddressOf(it) == stakeAddress.trim().lowercase() }
+    }
 }
 
 /**
@@ -220,7 +230,9 @@ class CardanoAdapter(
 
     /**
      * A stake key cannot receive payments, so a stake wallet reports one of its payment addresses.
-     * Only a convenience: failing to get it must not fail the balance sync.
+     * The app offers it for receiving money, and a server can answer anything, so only an address
+     * proven to carry this stake key counts. Only a convenience: failing to get it must not fail
+     * the balance sync.
      */
     private suspend fun paymentAddress(stake: String): List<DerivedAddress> = runCatching {
         val body = buildJsonObject {
@@ -228,8 +240,10 @@ class CardanoAdapter(
             put("_first_only", true)
         }
         val row = post("account_addresses", body, null).asList.firstOrNull() as? JsonObject
-        val first = (row?.get("addresses") as? JsonArray)?.firstOrNull() as? JsonPrimitive
-        listOfNotNull(first?.content?.let { DerivedAddress(it, false, 0, true) })
+        val owned = (row?.get("addresses") as? JsonArray).orEmpty().firstNotNullOfOrNull { candidate ->
+            (candidate as? JsonPrimitive)?.takeIf { it.isString }?.let { CardanoAddresses.ownedPaymentAddress(it.content, stake) }
+        }
+        listOfNotNull(owned?.let { DerivedAddress(it, false, 0, true) })
     }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrDefault(emptyList())
 
     private class State(val balances: List<AssetAmount>)

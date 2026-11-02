@@ -121,6 +121,55 @@ class EndpointFileVerifierTest {
         assertEquals(listOf(entry()), file.entries)
     }
 
+    @Test
+    fun aLowVersionIsRefusedByTheFloorOfThisBuild() {
+        val floored = EndpointFileVerifier(TestKeys.PUBLIC, recoveryKeyHex = null, minVersion = 10)
+        assertEquals(EndpointRejection.STALE_VERSION, assertIs<EndpointFileResult.Rejected>(floored.open(signed(version = 9))).reason)
+        assertEquals(10, assertIs<EndpointFileResult.Valid>(floored.open(signed(version = 10))).file.version)
+    }
+
+    @Test
+    fun theFloorAlsoAppliesToTheRecoveryKey() {
+        val floored = EndpointFileVerifier(TestKeys.PUBLIC, TestKeys.OTHER_PUBLIC, minVersion = 10)
+        assertEquals(EndpointRejection.STALE_VERSION, assertIs<EndpointFileResult.Rejected>(floored.open(signedByRecovery(version = 9))).reason)
+    }
+
+    @Test
+    fun theBuildsVersionFloorIsAtLeastOne() {
+        assertEquals(true, EndpointFileVerifier.MIN_ACCEPTED_VERSION >= 1)
+    }
+
+    @Test
+    fun aPinnedRecoveryKeyOpensItsFiles() {
+        val file = assertIs<EndpointFileResult.Valid>(recoverableVerifier.open(signedByRecovery())).file
+        assertEquals(true, file.signedByRecoveryKey)
+        assertEquals(false, assertIs<EndpointFileResult.Valid>(recoverableVerifier.open(signed())).file.signedByRecoveryKey)
+    }
+
+    @Test
+    fun aRecoverySignatureCountsOnlyWhereTheKeyIsPinned() {
+        assertEquals(EndpointRejection.BAD_SIGNATURE, rejection(signedByRecovery()))
+    }
+
+    @Test
+    fun aThirdKeyIsRefusedEvenWithARecoveryKeyPinned() {
+        val other = EndpointFileVerifier(TestKeys.PUBLIC, recoveryKeyHex = TestKeys.PUBLIC)
+        assertEquals(EndpointRejection.BAD_SIGNATURE, assertIs<EndpointFileResult.Rejected>(other.open(signedByRecovery())).reason)
+    }
+
+    @Test
+    fun aMalformedRecoveryKeyVerifiesNothing() {
+        val broken = EndpointFileVerifier(TestKeys.PUBLIC, recoveryKeyHex = "abcd")
+        assertEquals(EndpointRejection.BAD_SIGNATURE, assertIs<EndpointFileResult.Rejected>(broken.open(signedByRecovery())).reason)
+    }
+
+    @Test
+    fun theSigningDateIsReadWhenPresent() {
+        val text = payload().replace("\"format\":1,", "\"format\":1,\"signed\":1700000000,")
+        assertEquals(1_700_000_000, assertIs<EndpointFileResult.Valid>(verifier.open(envelope(text))).file.signedAtSeconds)
+        assertEquals(null, assertIs<EndpointFileResult.Valid>(verifier.open(signed())).file.signedAtSeconds)
+    }
+
     private companion object {
         // python scripts/sign_endpoints.py with the BIP-340 test key and a far-future expiry.
         const val PYTHON_ENVELOPE =

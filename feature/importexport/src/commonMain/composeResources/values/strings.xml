@@ -55,4 +55,11 @@
     <string name="import_confirm_accept">I understand, this is a public address</string>
     <string name="import_confirm_cancel">Not now</string>
     <string name="import_secret_hex_hint">A value of 0x and 64 hexadecimal characters is refused too, because a private key looks the same. Add Sui and Aptos addresses on the Add wallet screen, or restore them from a JSON backup.</string>
+    <!-- %1$d: minimum number of characters of the backup password -->
+    <plurals name="export_password_min_length">
+        <item quantity="other">At least %1$d characters.</item>
+    </plurals>
+    <!-- Label of the field where the backup password is typed a second time -->
+    <string name="export_password_confirm">Repeat password</string>
+    <string name="export_password_mismatch">The passwords do not match.</string>
 </resources>
