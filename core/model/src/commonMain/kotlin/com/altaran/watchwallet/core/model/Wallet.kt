@@ -70,6 +70,8 @@ data class Wallet(
     val lastSyncedAt: Instant? = null,
     /** This address is subtracted from that wallet, which also contains it. */
     val subtractFromWalletId: Long? = null,
+    /** Older transactions are missing, so balances can be older than the known history. */
+    val historyTruncated: Boolean = false,
 )
 
 data class WalletGroup(

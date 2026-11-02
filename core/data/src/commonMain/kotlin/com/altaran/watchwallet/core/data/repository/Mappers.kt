@@ -32,6 +32,7 @@ internal fun WalletEntity.toModel(): Wallet = Wallet(
     activeChains = activeChains.split(',').filter { it.isNotBlank() }.map(::ChainId),
     lastSyncedAt = lastSyncedAt?.let(Instant::fromEpochMilliseconds),
     subtractFromWalletId = subtractFromWalletId,
+    historyTruncated = historyTruncated,
 )
 
 internal fun WalletEntity.toTarget(): WatchTarget? {

@@ -25,6 +25,8 @@ data class AssetHistory(
     val prices: List<TimedPrice>,
     /** Latest price, used for the final sample so the chart ends at the live value. */
     val currentPrice: Double?,
+    /** The balance did not exist up to this time; `null` = as old as the rebuilt history says. */
+    val startsAt: Instant? = null,
 )
 
 /**
@@ -78,7 +80,8 @@ object Timeline {
                 running -= deltaValues[index]
                 index++
             }
-            result[i] = running.coerceAtLeast(0.0)
+            val notYet = history.startsAt != null && sample <= history.startsAt && i != samples.lastIndex
+            result[i] = if (notYet) 0.0 else running.coerceAtLeast(0.0)
         }
         return result.asList()
     }

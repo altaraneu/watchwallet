@@ -6,6 +6,32 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- Much faster EVM refresh: only networks where the wallet is active are refreshed; all networks are
+  searched on the first sync, once a day and on a manual refresh.
+- Balances of each EVM network appear as soon as they are known, before its history, and a slow or
+  failing network no longer delays the others. A network that fails keeps its last known data; a
+  blocked token indexer no longer holds back the native balance.
+- A refresh skips the history of an EVM network when its balances and counters did not change.
+- Requests fail fast: 20 s deadline, one quick retry, no retry of client errors, `Retry-After`
+  honoured up to 10 s. Failing hosts are remembered for the session. EVM networks can fall back to
+  a second RPC host.
+- Current prices appear from the local cache and refresh at app start without waiting for wallets;
+  known assets update first, long-tail tokens as they arrive. Screens share price requests. Older
+  chart history loads in the background.
+
+### Fixed
+- Older history of EVM wallets and Cardano stake and payment addresses is now fetched in chunks after
+  the first sync instead of staying cut off.
+- Redirects are no longer followed, so addresses cannot reach hosts missing from the privacy policy;
+  Optimism, Gnosis and Scroll now use the instances their old addresses redirected to.
+- A failed CoinGecko token request no longer hides that token's price for 12 hours.
+- Value charts no longer project balances without transactions (staked coins, rewards) over the
+  time before they existed: stake moves count as a pair, and such balances start at the wallet's
+  first transaction on that chain. Wallets with cut-off history keep the old projection.
+- Prices no longer follow an exchange that halted trading or froze; such assets use the next source,
+  and so do assets priced more than 10 % away from it.
+
 ## [1.0.0] - 2026-11-02
 
 ### Added

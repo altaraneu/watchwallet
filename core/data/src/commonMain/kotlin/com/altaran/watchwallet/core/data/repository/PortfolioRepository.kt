@@ -6,8 +6,6 @@ import com.altaran.watchwallet.core.model.ChartRange
 import com.altaran.watchwallet.core.model.QuoteCurrency
 import com.altaran.watchwallet.core.model.WalletTransaction
 import com.altaran.watchwallet.core.pricing.CurrentPrice
-import com.altaran.watchwallet.core.timeline.AssetHistory
-import com.altaran.watchwallet.core.timeline.TimedDelta
 import com.altaran.watchwallet.core.timeline.TimedPrice
 import com.altaran.watchwallet.core.timeline.TimedValue
 import com.altaran.watchwallet.core.timeline.Timeline
@@ -23,7 +21,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlin.math.pow
 import kotlin.time.Clock
 
 /** One asset aggregated across wallets and chains (ETH on Ethereum + Base = one ETH holding). */
@@ -122,10 +119,10 @@ class PortfolioRepository(
                 inputs,
                 priceRepository.history(priceIds, currency).onStart { emit(emptyMap()) },
             ) { input, history ->
-                val histories = buildHistories(input.rows, input.transactions, history, input.prices)
-                val first = input.transactions.minOfOrNull { it.timestamp }
+                val histories = buildHistories(input.rows, input.transactions, history, input.prices, input.wallets)
+                val first = (input.transactions.map { it.timestamp } + histories.mapNotNull { it.startsAt }).minOrNull()
                 val (samples, rangeStart) = displaySamples(range, first)
-                val flows = cumulativeFlows(input.transactions, input.rows, history, samples)
+                val flows = cumulativeFlows(input.transactions, input.rows, history, input.wallets, samples)
                 val values = Timeline.portfolio(histories, samples).mapIndexed { i, point -> point.copy(flow = flows[i]) }
                 displayDownsample(values, rangeStart)
             }.conflate()
@@ -146,9 +143,10 @@ class PortfolioRepository(
         priceRepository.currentPrices(currency),
         walletRepository.allTransactions,
         walletRepository.assets,
-    ) { balances, prices, transactions, assets ->
+        walletRepository.activeWallets,
+    ) { balances, prices, transactions, assets, wallets ->
         val scopedTxs = transactions.filter { walletIds == null || it.walletId in walletIds }
-        ChartInputs(chartRows(balances, prices, scopedTxs, assets, walletIds), scopedTxs, prices)
+        ChartInputs(chartRows(balances, prices, scopedTxs, assets, walletIds), scopedTxs, prices, wallets.associateBy { it.id })
     }
 
     private fun chartRows(
@@ -194,40 +192,6 @@ class PortfolioRepository(
         return Timeline.downsample(older, maxPoints = OLDER_POINTS) + Timeline.downsample(inRange)
     }
 
-    /**
-     * Net deposits up to each sample: incoming transfers add their value at that time, outgoing
-     * ones subtract it (fees excluded: they are a cost, not a withdrawal). Transfers between the
-     * user's own wallets cancel out. Only charted assets are counted.
-     */
-    private fun cumulativeFlows(
-        transactions: List<WalletTransaction>,
-        rows: List<ChartRow>,
-        history: Map<String, List<TimedPrice>>,
-        samples: List<kotlin.time.Instant>,
-    ): DoubleArray {
-        // Exactly the (wallet, asset) pairs that are charted, so values and flows stay consistent.
-        val assets = rows.associate { (it.walletId to it.asset.id) to it.asset }
-        val events = transactions.filter { it.confirmed && it.direction != com.altaran.watchwallet.core.model.TxDirection.SELF }.mapNotNull { tx ->
-            val asset = assets[tx.walletId to tx.assetId] ?: return@mapNotNull null
-            val prices = history[asset.priceId ?: return@mapNotNull null].orEmpty()
-            val price = Timeline.priceAt(prices, tx.timestamp) ?: return@mapNotNull null
-            val scale = 10.0.pow(asset.decimals)
-            val fee = tx.fee?.takeIf { tx.delta.isNegative }?.doubleValue(exactRequired = false) ?: 0.0
-            tx.timestamp to (tx.delta.doubleValue(exactRequired = false) + fee) / scale * price
-        }.sortedBy { it.first }
-        val result = DoubleArray(samples.size)
-        var running = 0.0
-        var index = 0
-        samples.forEachIndexed { i, sample ->
-            while (index < events.size && events[index].first <= sample) {
-                running += events[index].second
-                index++
-            }
-            result[i] = running
-        }
-        return result
-    }
-
     /** Balance and value history of one holding (by [Holding.key]). */
     fun holdingSeries(currency: QuoteCurrency, holdingKey: String, range: ChartRange): Flow<HoldingSeries> {
         val inputs = chartInputs(currency, null)
@@ -242,11 +206,11 @@ class PortfolioRepository(
             ) { input, history ->
                 val rows = input.rows.filter { keyOf(it.asset) == holdingKey }
                 val txs = input.transactions
-                val histories = buildHistories(rows, txs, history, input.prices)
+                val histories = buildHistories(rows, txs, history, input.prices, input.wallets)
                 val assetIds = rows.map { it.asset.id }.toSet()
                 val (samples, rangeStart) = displaySamples(
                     range,
-                    txs.filter { it.assetId in assetIds }.minOfOrNull { it.timestamp },
+                    (txs.filter { it.assetId in assetIds }.map { it.timestamp } + histories.mapNotNull { it.startsAt }).minOrNull(),
                 )
                 // Balances of each asset once (not once per sample), then summed per sample.
                 val perAsset = histories.map { Timeline.balances(it, samples) }
@@ -271,24 +235,6 @@ class PortfolioRepository(
     suspend fun ensureHistory(currency: QuoteCurrency, range: ChartRange, priceIds: Collection<String>) {
         priceRepository.ensureHistoryInBackground(chartInputs(currency, null).first().priceIds.filter { it !in priceIds }, currency)
         priceRepository.ensureHistory(priceIds, currency, range)
-    }
-
-    private fun buildHistories(
-        rows: List<ChartRow>,
-        transactions: List<WalletTransaction>,
-        history: Map<String, List<TimedPrice>>,
-        prices: Map<String, CurrentPrice>,
-    ): List<AssetHistory> {
-        val txByWalletAsset = transactions.groupBy { it.walletId to it.assetId }
-        return rows.map { row ->
-            AssetHistory(
-                currentBalance = row.balance,
-                decimals = row.decimals,
-                deltas = txByWalletAsset[row.walletId to row.asset.id].orEmpty().map { TimedDelta(it.timestamp, it.delta) },
-                prices = row.asset.priceId?.let { history[it] }.orEmpty(),
-                currentPrice = row.asset.priceId?.let { prices[it]?.price },
-            )
-        }
     }
 
     private fun aggregate(rows: List<BalanceRow>, prices: Map<String, CurrentPrice>): List<Holding> =
@@ -349,6 +295,7 @@ internal class ChartInputs(
     /** Transactions of the wallets in scope. */
     val transactions: List<WalletTransaction>,
     val prices: Map<String, CurrentPrice>,
+    val wallets: Map<Long, com.altaran.watchwallet.core.model.Wallet>,
 ) {
     val priceIds: List<String> = rows.mapNotNull { it.asset.priceId }.distinct().sorted()
 }
