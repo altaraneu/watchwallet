@@ -45,4 +45,9 @@
     <string name="export_share">Sdílet</string>
     <string name="export_saved">Uloženo</string>
     <string name="export_save_failed">Soubor se nepodařilo uložit</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">Alespoň %1$d znaků.</item>
+    </plurals>
+    <string name="export_password_confirm">Zopakuj heslo</string>
+    <string name="export_password_mismatch">Hesla se neshodují.</string>
 </resources>

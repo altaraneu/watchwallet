@@ -42,4 +42,9 @@
     <string name="export_share">共有</string>
     <string name="export_saved">保存しました</string>
     <string name="export_save_failed">ファイルを保存できませんでした</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">%1$d文字以上。</item>
+    </plurals>
+    <string name="export_password_confirm">パスワードを再入力</string>
+    <string name="export_password_mismatch">パスワードが一致しません。</string>
 </resources>

@@ -42,4 +42,9 @@
     <string name="export_share">分享</string>
     <string name="export_saved">已保存</string>
     <string name="export_save_failed">无法保存文件</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">至少 %1$d 个字符。</item>
+    </plurals>
+    <string name="export_password_confirm">再次输入密码</string>
+    <string name="export_password_mismatch">两次输入的密码不一致。</string>
 </resources>

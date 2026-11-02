@@ -43,4 +43,9 @@
     <string name="export_share">साझा करें</string>
     <string name="export_saved">सहेजा गया</string>
     <string name="export_save_failed">फ़ाइल सहेजी नहीं जा सकी</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">कम से कम %1$d अक्षर।</item>
+    </plurals>
+    <string name="export_password_confirm">पासवर्ड दोबारा लिखें</string>
+    <string name="export_password_mismatch">पासवर्ड मेल नहीं खाते।</string>
 </resources>

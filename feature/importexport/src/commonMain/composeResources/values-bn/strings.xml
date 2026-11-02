@@ -43,4 +43,9 @@
     <string name="export_share">শেয়ার করুন</string>
     <string name="export_saved">সংরক্ষিত</string>
     <string name="export_save_failed">ফাইল সংরক্ষণ করা যায়নি</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">কমপক্ষে %1$d অক্ষর।</item>
+    </plurals>
+    <string name="export_password_confirm">পাসওয়ার্ড আবার লিখুন</string>
+    <string name="export_password_mismatch">পাসওয়ার্ড দুটি মিলছে না।</string>
 </resources>

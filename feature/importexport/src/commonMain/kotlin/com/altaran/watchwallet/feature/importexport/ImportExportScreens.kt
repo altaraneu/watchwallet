@@ -267,17 +267,15 @@ private fun PreviewList(phase: ImportPhase.Preview, groupName: String, viewModel
 @Composable
 internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val documents = rememberDocumentActions()
+    val documents = rememberDocumentActions(viewModel::takePendingSave, viewModel::onSaveFinished)
     // The view model builds (and encrypts) in the background; the platform action runs here.
     LaunchedEffect(state.prepared) {
         val prepared = state.prepared ?: return@LaunchedEffect
         viewModel.onPreparedHandled()
-        if (prepared.share) {
-            documents.shareText(prepared.content)
-        } else {
-            documents.saveText(prepared.fileName, prepared.mimeType, prepared.content) { ok ->
-                viewModel.showMessage(if (ok) ExportMessage.SAVED else ExportMessage.SAVE_FAILED)
-            }
+        if (!prepared.share) {
+            documents.createDocument(prepared.fileName, prepared.mimeType)
+        } else if (!documents.share(prepared.fileName, prepared.mimeType, prepared.content)) {
+            viewModel.showMessage(ExportMessage.SAVE_FAILED)
         }
     }
     ScreenScaffold(stringResource(Res.string.export_title), onNavigateUp) { modifier ->
@@ -312,19 +310,7 @@ internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = 
                 }
             }
             when (state.format) {
-                ExportFormatOption.JSON -> if (ExportCrypto.isSupported) {
-                    OutlinedTextField(
-                        value = state.password,
-                        onValueChange = viewModel::setPassword,
-                        label = { Text(stringResource(Res.string.export_password)) },
-                        supportingText = { Text(stringResource(Res.string.export_password_hint)) },
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
-                        singleLine = true,
-                        enabled = !state.busy,
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    )
-                }
+                ExportFormatOption.JSON -> if (ExportCrypto.isSupported) ExportPasswordFields(state, viewModel)
 
                 ExportFormatOption.CSV -> SettingsSwitchItem(
                     title = stringResource(Res.string.export_include_values),
@@ -353,7 +339,7 @@ internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = 
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val canExport = state.walletCount > 0 && !state.busy
+                val canExport = state.walletCount > 0 && !state.busy && state.passwordProblem == null
                 Button(onClick = { viewModel.prepare(share = false) }, enabled = canExport) { Text(stringResource(Res.string.export_save)) }
                 OutlinedButton(onClick = { viewModel.prepare(share = true) }, enabled = canExport) {
                     Text(stringResource(Res.string.export_share))
@@ -362,5 +348,42 @@ internal fun ExportRoute(onNavigateUp: () -> Unit, viewModel: ExportViewModel = 
             }
             Spacer(Modifier.width(1.dp))
         }
+    }
+}
+
+@Composable
+private fun ExportPasswordFields(state: ExportUiState, viewModel: ExportViewModel) {
+    OutlinedTextField(
+        value = state.password,
+        onValueChange = viewModel::setPassword,
+        label = { Text(stringResource(Res.string.export_password)) },
+        supportingText = {
+            Column {
+                Text(stringResource(Res.string.export_password_hint))
+                Text(pluralStringResource(Res.plurals.export_password_min_length, MIN_EXPORT_PASSWORD_LENGTH, MIN_EXPORT_PASSWORD_LENGTH))
+            }
+        },
+        isError = state.passwordProblem == PasswordProblem.TOO_SHORT,
+        visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
+        singleLine = true,
+        enabled = !state.busy,
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 16.dp, end = 16.dp),
+    )
+    // Not while the first field is still empty: without a password the backup is simply not encrypted.
+    if (state.password.isNotEmpty() || state.passwordConfirmation.isNotEmpty()) {
+        val mismatch = state.passwordProblem == PasswordProblem.MISMATCH && state.passwordConfirmation.isNotEmpty()
+        OutlinedTextField(
+            value = state.passwordConfirmation,
+            onValueChange = viewModel::setPasswordConfirmation,
+            label = { Text(stringResource(Res.string.export_password_confirm)) },
+            supportingText = if (mismatch) ({ Text(stringResource(Res.string.export_password_mismatch)) }) else null,
+            isError = mismatch,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
+            singleLine = true,
+            enabled = !state.busy,
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, end = 16.dp),
+        )
     }
 }

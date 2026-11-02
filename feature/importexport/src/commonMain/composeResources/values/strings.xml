@@ -49,4 +49,11 @@
     <string name="export_share">Share</string>
     <string name="export_saved">Saved</string>
     <string name="export_save_failed">Could not save the file</string>
+    <!-- %1$d: minimum number of characters of the backup password -->
+    <plurals name="export_password_min_length">
+        <item quantity="other">At least %1$d characters.</item>
+    </plurals>
+    <!-- Label of the field where the backup password is typed a second time -->
+    <string name="export_password_confirm">Repeat password</string>
+    <string name="export_password_mismatch">The passwords do not match.</string>
 </resources>

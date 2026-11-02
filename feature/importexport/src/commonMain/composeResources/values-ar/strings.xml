@@ -47,4 +47,9 @@
     <string name="export_share">مشاركة</string>
     <string name="export_saved">تم الحفظ</string>
     <string name="export_save_failed">تعذر حفظ الملف</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">‏%1$d حرفًا على الأقل.</item>
+    </plurals>
+    <string name="export_password_confirm">أعد كتابة كلمة المرور</string>
+    <string name="export_password_mismatch">كلمتا المرور غير متطابقتين.</string>
 </resources>

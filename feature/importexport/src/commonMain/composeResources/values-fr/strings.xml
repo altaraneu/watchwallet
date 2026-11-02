@@ -44,4 +44,9 @@
     <string name="export_share">Partager</string>
     <string name="export_saved">Enregistré</string>
     <string name="export_save_failed">Impossible d’enregistrer le fichier</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">Au moins %1$d caractères.</item>
+    </plurals>
+    <string name="export_password_confirm">Répétez le mot de passe</string>
+    <string name="export_password_mismatch">Les mots de passe ne correspondent pas.</string>
 </resources>

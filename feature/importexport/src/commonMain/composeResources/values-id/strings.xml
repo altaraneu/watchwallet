@@ -42,4 +42,9 @@
     <string name="export_share">Bagikan</string>
     <string name="export_saved">Tersimpan</string>
     <string name="export_save_failed">Tidak dapat menyimpan file</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">Minimal %1$d karakter.</item>
+    </plurals>
+    <string name="export_password_confirm">Ulangi kata sandi</string>
+    <string name="export_password_mismatch">Kata sandi tidak cocok.</string>
 </resources>

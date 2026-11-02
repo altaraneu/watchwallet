@@ -44,4 +44,9 @@
     <string name="export_share">Compartilhar</string>
     <string name="export_saved">Salvo</string>
     <string name="export_save_failed">Não foi possível salvar o arquivo</string>
+    <plurals name="export_password_min_length">
+        <item quantity="other">Pelo menos %1$d caracteres.</item>
+    </plurals>
+    <string name="export_password_confirm">Repita a senha</string>
+    <string name="export_password_mismatch">As senhas não coincidem.</string>
 </resources>
