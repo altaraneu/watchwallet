@@ -26,6 +26,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Check strings
         run: python3 scripts/check_strings.py
+      - name: Test the server list signing tool
+        run: python3 scripts/test_sign_endpoints.py
       - name: Build, test and lint
         run: ./gradlew :app:assembleDebug check --continue
       - name: Upload reports

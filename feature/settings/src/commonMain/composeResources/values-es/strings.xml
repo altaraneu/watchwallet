@@ -51,6 +51,8 @@
     <string name="settings_proxy_port">Puerto</string>
     <string name="settings_esplora">Servidor de Bitcoin (Esplora)</string>
     <string name="settings_esplora_hint">URL base de tu propio servidor REST de Esplora / electrs, por ejemplo https://my-node.local/api. Déjalo vacío para usar mempool.space.</string>
+    <string name="settings_endpoints_auto">Actualizar la lista de servidores automáticamente</string>
+    <string name="settings_endpoints_auto_summary">Busca a diario una lista firmada de servidores públicos. Desactivado: solo los servidores incluidos en la app.</string>
     <string name="settings_default_server">Predeterminado (mempool.space)</string>
     <string name="settings_coingecko_key">Clave de API de CoinGecko</string>
     <string name="settings_coingecko_hint">Clave de demostración gratuita opcional para tener límites más altos de consultas de precios y un historial de precios más largo.</string>

@@ -54,6 +54,8 @@
     <string name="settings_proxy_port">المنفذ</string>
     <string name="settings_esplora">خادم Bitcoin (Esplora)</string>
     <string name="settings_esplora_hint">عنوان URL الأساسي لخادم Esplora / electrs REST الخاص بك، مثل https://my-node.local/api. اتركه فارغًا لاستخدام mempool.space.</string>
+    <string name="settings_endpoints_auto">تحديث قائمة الخوادم تلقائيًا</string>
+    <string name="settings_endpoints_auto_summary">يتحقق يوميًا من قائمة موقّعة للخوادم العامة. عند الإيقاف: الخوادم المضمّنة في التطبيق فقط.</string>
     <string name="settings_default_server">الافتراضي (mempool.space)</string>
     <string name="settings_coingecko_key">مفتاح API من CoinGecko</string>
     <string name="settings_coingecko_hint">مفتاح تجريبي مجاني اختياري لرفع حدود طلبات الأسعار وإطالة سجل الأسعار.</string>

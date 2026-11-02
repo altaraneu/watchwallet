@@ -17,6 +17,8 @@ import com.altaran.watchwallet.chain.common.nativeAsset
 import com.altaran.watchwallet.chain.common.notFoundAsNull
 import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.str
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -59,7 +61,6 @@ object AptosChain {
 
     val APT: Asset = nativeAsset(CHAIN)
 
-    const val DEFAULT_API_URL = "https://api.mainnet.aptoslabs.com/v1"
     const val APT_COIN_TYPE = "0x1::aptos_coin::AptosCoin"
 }
 
@@ -91,7 +92,7 @@ object AptosAddresses {
  */
 class AptosAdapter(
     private val http: HttpClient,
-    apiUrl: String = AptosChain.DEFAULT_API_URL,
+    apiUrl: String = BundledEndpoints.first(AptosChain.ID, EndpointProtocol.APTOS_REST),
 ) : ChainAdapter {
     private val base = apiUrl.trimEnd('/')
     private val throttle = Throttle(maxConcurrent = 3, minInterval = 100.milliseconds, maxJitter = 80.milliseconds)

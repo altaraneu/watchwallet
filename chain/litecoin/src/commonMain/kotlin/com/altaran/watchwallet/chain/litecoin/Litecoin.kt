@@ -6,6 +6,8 @@ import com.altaran.watchwallet.chain.common.UtxoAdapter
 import com.altaran.watchwallet.chain.common.derivePublicKeyHash
 import com.altaran.watchwallet.chain.common.p2shP2wpkhScriptHash
 import com.altaran.watchwallet.chain.common.parseExtendedPublicKey
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.Chain
@@ -41,8 +43,6 @@ object LitecoinChain {
         decimals = 8,
         priceId = "litecoin",
     )
-
-    const val DEFAULT_ESPLORA_URL = "https://litecoinspace.org/api"
 }
 
 /**
@@ -134,7 +134,7 @@ object LitecoinAddresses {
 /** Litecoin via Esplora (litecoinspace.org). Extended keys are expanded on the device. */
 class LitecoinAdapter(
     http: HttpClient,
-    esploraUrl: String = LitecoinChain.DEFAULT_ESPLORA_URL,
+    esploraUrl: String = BundledEndpoints.first(LitecoinChain.ID, EndpointProtocol.ESPLORA),
 ) : UtxoAdapter(
         chain = LitecoinChain.CHAIN,
         asset = LitecoinChain.LTC,

@@ -8,6 +8,8 @@ import com.altaran.watchwallet.chain.api.ProbeResult
 import com.altaran.watchwallet.chain.api.SyncResult
 import com.altaran.watchwallet.core.crypto.BitcoinAddresses
 import com.altaran.watchwallet.core.crypto.ExtendedKeys
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.Chain
@@ -48,11 +50,6 @@ object BitcoinChain {
         decimals = 8,
         priceId = "bitcoin",
     )
-
-    const val DEFAULT_ESPLORA_URL = "https://mempool.space/api"
-
-    /** Default instances in order of preference; the second is used when the first fails. */
-    val DEFAULT_ESPLORA_URLS = listOf(DEFAULT_ESPLORA_URL, "https://blockstream.info/api")
 }
 
 /**
@@ -61,7 +58,7 @@ object BitcoinChain {
  */
 class BitcoinAdapter(
     http: HttpClient,
-    esploraUrls: List<String> = BitcoinChain.DEFAULT_ESPLORA_URLS,
+    esploraUrls: List<String> = BundledEndpoints.urls(ChainId.BITCOIN, EndpointProtocol.ESPLORA),
 ) : ChainAdapter {
     constructor(http: HttpClient, esploraUrl: String) : this(http, listOf(esploraUrl))
 

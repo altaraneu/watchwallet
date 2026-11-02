@@ -55,6 +55,8 @@
     <string name="settings_proxy_port">Port</string>
     <string name="settings_esplora">Bitcoin server (Esplora)</string>
     <string name="settings_esplora_hint">Základní URL vlastního Esplora / electrs REST serveru, např. https://muj-uzel.local/api. Prázdné = mempool.space.</string>
+    <string name="settings_endpoints_auto">Automaticky aktualizovat seznam serverů</string>
+    <string name="settings_endpoints_auto_summary">Jednou denně zkontroluje podepsaný seznam veřejných serverů. Vypnuto: jen servery zabudované v aplikaci.</string>
     <string name="settings_default_server">Výchozí (mempool.space)</string>
     <string name="settings_coingecko_key">API klíč CoinGecko</string>
     <string name="settings_coingecko_hint">Volitelný bezplatný demo klíč pro vyšší limity dotazů na ceny a delší historii cen.</string>

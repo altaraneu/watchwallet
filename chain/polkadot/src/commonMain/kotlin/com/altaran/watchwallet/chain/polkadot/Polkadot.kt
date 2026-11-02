@@ -10,6 +10,9 @@ import com.altaran.watchwallet.chain.common.JsonRpcClient
 import com.altaran.watchwallet.chain.common.amountOf
 import com.altaran.watchwallet.chain.common.chainCall
 import com.altaran.watchwallet.chain.common.content
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointCatalog
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.Chain
@@ -42,6 +45,8 @@ data class PolkadotNetwork(
     val assetHubRpcUrl: String,
     val explorer: String,
     val color: Long,
+    val rpcFallbacks: List<String> = emptyList(),
+    val assetHubRpcFallbacks: List<String> = emptyList(),
 ) {
     val chain: Chain
         get() = Chain(
@@ -67,8 +72,8 @@ object PolkadotChains {
         "DOT",
         10,
         "polkadot",
-        "https://rpc.polkadot.io",
-        "https://polkadot-asset-hub-rpc.polkadot.io",
+        BundledEndpoints.first(ChainId("polkadot"), EndpointProtocol.SUBSTRATE_RPC),
+        BundledEndpoints.first(ChainId("polkadot"), EndpointProtocol.SUBSTRATE_ASSET_HUB_RPC),
         "https://assethub-polkadot.subscan.io",
         0xFFE6007A,
     )
@@ -79,12 +84,19 @@ object PolkadotChains {
         "KSM",
         12,
         "kusama",
-        "https://kusama-rpc.polkadot.io",
-        "https://kusama-asset-hub-rpc.polkadot.io",
+        BundledEndpoints.first(ChainId("kusama"), EndpointProtocol.SUBSTRATE_RPC),
+        BundledEndpoints.first(ChainId("kusama"), EndpointProtocol.SUBSTRATE_ASSET_HUB_RPC),
         "https://assethub-kusama.subscan.io",
         0xFF000000,
     )
     val ALL = listOf(POLKADOT, KUSAMA)
+
+    /** [ALL] with the servers of [endpoints], all of them: the clients fail over in order. */
+    fun withEndpoints(endpoints: EndpointCatalog): List<PolkadotNetwork> = ALL.map { network ->
+        val rpc = endpoints.urls(network.id, EndpointProtocol.SUBSTRATE_RPC)
+        val assetHub = endpoints.urls(network.id, EndpointProtocol.SUBSTRATE_ASSET_HUB_RPC)
+        network.copy(rpcUrl = rpc.first(), assetHubRpcUrl = assetHub.first(), rpcFallbacks = rpc.drop(1), assetHubRpcFallbacks = assetHub.drop(1))
+    }
 
     /** The generic Substrate prefix (`5…`), valid on every network after re-encoding. */
     const val GENERIC_PREFIX = 42
@@ -171,8 +183,8 @@ class PolkadotAdapter(
 ) : ChainAdapter {
     private val networks = networks
     private val clients = networks.associate { network ->
-        network.id to listOf(network.assetHubRpcUrl, network.rpcUrl).map { url ->
-            JsonRpcClient(http, listOf(url), Throttle(maxConcurrent = 2, minInterval = 100.milliseconds))
+        network.id to listOf(listOf(network.assetHubRpcUrl) + network.assetHubRpcFallbacks, listOf(network.rpcUrl) + network.rpcFallbacks).map { urls ->
+            JsonRpcClient(http, urls, Throttle(maxConcurrent = 2, minInterval = 100.milliseconds))
         }
     }
 

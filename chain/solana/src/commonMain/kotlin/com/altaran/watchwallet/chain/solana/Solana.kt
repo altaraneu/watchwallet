@@ -23,6 +23,8 @@ import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.chain.common.tokenPriceId
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -63,7 +65,6 @@ object SolanaChain {
 
     const val STAKE_PROGRAM = "Stake11111111111111111111111111111111111111"
 
-    const val DEFAULT_RPC_URL = "https://api.mainnet-beta.solana.com"
     const val TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
     const val TOKEN_2022_PROGRAM = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
 
@@ -114,12 +115,14 @@ internal object SolanaTokens {
  */
 class SolanaAdapter(
     http: HttpClient,
-    rpcUrl: String = SolanaChain.DEFAULT_RPC_URL,
+    rpcUrls: List<String> = BundledEndpoints.urls(SolanaChain.ID, EndpointProtocol.SOLANA_RPC),
 ) : ChainAdapter {
+    constructor(http: HttpClient, rpcUrl: String) : this(http, listOf(rpcUrl))
+
     // The public endpoint allows roughly 100 requests per 10 s per IP and fewer for getTransaction.
     private val rpc = JsonRpcClient(
         http,
-        listOf(rpcUrl),
+        rpcUrls,
         Throttle(maxConcurrent = 2, minInterval = 150.milliseconds, maxJitter = 100.milliseconds),
         rateLimitRetries = 3,
     )

@@ -49,6 +49,8 @@
     <string name="settings_proxy_port">Port</string>
     <string name="settings_esplora">Server Bitcoin (Esplora)</string>
     <string name="settings_esplora_hint">URL dasar server REST Esplora / electrs Anda sendiri, misalnya https://my-node.local/api. Kosongkan untuk menggunakan mempool.space.</string>
+    <string name="settings_endpoints_auto">Perbarui daftar server secara otomatis</string>
+    <string name="settings_endpoints_auto_summary">Memeriksa daftar server publik yang ditandatangani setiap hari. Nonaktif: hanya server bawaan aplikasi.</string>
     <string name="settings_default_server">Default (mempool.space)</string>
     <string name="settings_coingecko_key">Kunci API CoinGecko</string>
     <string name="settings_coingecko_hint">Kunci demo gratis opsional untuk batas permintaan harga yang lebih tinggi dan riwayat harga yang lebih panjang.</string>

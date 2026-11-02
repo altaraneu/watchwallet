@@ -17,6 +17,8 @@ import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.chain.common.tokenPriceId
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -49,7 +51,6 @@ object HederaChain {
 
     val HBAR: Asset = nativeAsset(CHAIN)
 
-    const val DEFAULT_MIRROR_URL = "https://mainnet-public.mirrornode.hedera.com/api/v1"
     const val COINGECKO_PLATFORM = "hedera-hashgraph"
 }
 
@@ -102,7 +103,7 @@ object HederaAddresses {
  */
 class HederaAdapter(
     private val http: HttpClient,
-    mirrorUrl: String = HederaChain.DEFAULT_MIRROR_URL,
+    mirrorUrl: String = BundledEndpoints.first(HederaChain.ID, EndpointProtocol.HEDERA_MIRROR),
 ) : ChainAdapter {
     private val base = mirrorUrl.trimEnd('/')
     private val origin = base.substringBefore("/api/v1")

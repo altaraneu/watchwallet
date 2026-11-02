@@ -11,6 +11,8 @@ import com.altaran.watchwallet.chain.common.chainCall
 import com.altaran.watchwallet.chain.common.nativeAsset
 import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.str
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -40,8 +42,6 @@ object NearChain {
     )
 
     val NEAR: Asset = nativeAsset(CHAIN)
-
-    const val DEFAULT_RPC_URL = "https://rpc.mainnet.near.org"
 }
 
 /**
@@ -88,12 +88,14 @@ object NearAddresses {
  */
 class NearAdapter(
     http: HttpClient,
-    rpcUrl: String = NearChain.DEFAULT_RPC_URL,
+    rpcUrls: List<String> = BundledEndpoints.urls(NearChain.ID, EndpointProtocol.NEAR_RPC),
 ) : ChainAdapter {
+    constructor(http: HttpClient, rpcUrl: String) : this(http, listOf(rpcUrl))
+
     private val rpc =
         JsonRpcClient(
             http,
-            listOf(rpcUrl),
+            rpcUrls,
             Throttle(maxConcurrent = 2, minInterval = 150.milliseconds),
             rateLimitRetries = 2,
         )

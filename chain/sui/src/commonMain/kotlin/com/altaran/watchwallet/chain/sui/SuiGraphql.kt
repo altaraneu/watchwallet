@@ -15,6 +15,8 @@ import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
 import com.altaran.watchwallet.chain.common.tokenPriceId
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.WatchTarget
@@ -43,7 +45,7 @@ import kotlin.time.Instant
  */
 class SuiAdapter(
     private val http: HttpClient,
-    private val graphqlUrl: String = SuiChain.DEFAULT_GRAPHQL_URL,
+    private val graphqlUrl: String = BundledEndpoints.first(SuiChain.ID, EndpointProtocol.SUI_GRAPHQL),
 ) : ChainAdapter {
     private val throttle = Throttle(maxConcurrent = 3, minInterval = 100.milliseconds, maxJitter = 80.milliseconds)
     private val metadataCache = HashMap<String, JsonElement?>()

@@ -14,6 +14,11 @@ All notable changes to this project are documented here. The format follows
   Kraken pairs (for example Tether) serve 720 candles per interval: at that limit the chart moves
   to a coarser interval, which reaches further back.
 - While a past point is selected, the header also shows the current value.
+- Server list updates: public blockchain servers can change without a new release, through a data
+  file signed with BIP-340 Schnorr in the public repository. Data only, https only, known API types
+  only; bundled servers always work offline and a custom server always wins. Can be turned off in
+  Settings → Network. See `docs/endpoints-config.md`.
+- `scripts/sign_endpoints.py` to sign and verify that file.
 
 ### Changed
 - Much faster EVM refresh: only networks where the wallet is active are refreshed; all networks are

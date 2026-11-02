@@ -20,6 +20,8 @@ import com.altaran.watchwallet.chain.common.parseBigInteger
 import com.altaran.watchwallet.chain.common.parseDecimalUnits
 import com.altaran.watchwallet.chain.common.str
 import com.altaran.watchwallet.chain.common.tokenAsset
+import com.altaran.watchwallet.core.endpoints.BundledEndpoints
+import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.Chain
 import com.altaran.watchwallet.core.model.ChainFamily
@@ -63,8 +65,6 @@ object XrpChain {
     )
 
     val XRP: Asset = nativeAsset(CHAIN, name = "XRP")
-
-    val DEFAULT_RPC_URLS = listOf("https://xrplcluster.com", "https://s1.ripple.com:51234")
 
     /** Issued-currency (trust line) amounts are decimals with 15 significant digits. */
     const val TOKEN_DECIMALS = 15
@@ -148,7 +148,7 @@ internal class XrplClient(
  */
 class XrpAdapter(
     http: HttpClient,
-    rpcUrls: List<String> = XrpChain.DEFAULT_RPC_URLS,
+    rpcUrls: List<String> = BundledEndpoints.urls(XrpChain.ID, EndpointProtocol.XRPL),
 ) : ChainAdapter {
     private val client =
         XrplClient(
