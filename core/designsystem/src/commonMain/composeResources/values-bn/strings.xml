@@ -2,6 +2,7 @@
 <resources>
     <string name="amount_hidden">পরিমাণ লুকানো আছে</string>
     <string name="action_cancel">বাতিল</string>
+    <string name="range_1h">1ঘ</string>
     <string name="range_24h">24ঘ</string>
     <string name="range_7d">7দি</string>
     <string name="range_1m">1মা</string>

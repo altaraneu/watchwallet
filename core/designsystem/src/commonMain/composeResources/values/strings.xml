@@ -4,6 +4,7 @@
     <string name="amount_hidden">Amount hidden</string>
     <string name="action_cancel">Cancel</string>
     <!-- Chart range chips. Keep them very short. -->
+    <string name="range_1h">1H</string>
     <string name="range_24h">24H</string>
     <string name="range_7d">7D</string>
     <string name="range_1m">1M</string>

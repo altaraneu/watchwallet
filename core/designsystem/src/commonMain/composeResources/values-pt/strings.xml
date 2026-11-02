@@ -2,6 +2,7 @@
 <resources>
     <string name="amount_hidden">Valor oculto</string>
     <string name="action_cancel">Cancelar</string>
+    <string name="range_1h">1H</string>
     <string name="range_24h">24H</string>
     <string name="range_7d">7D</string>
     <string name="range_1m">1M</string>

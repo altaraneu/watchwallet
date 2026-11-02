@@ -2,6 +2,7 @@
 <resources>
     <string name="amount_hidden">Сумма скрыта</string>
     <string name="action_cancel">Отмена</string>
+    <string name="range_1h">1Ч</string>
     <string name="range_24h">24Ч</string>
     <string name="range_7d">7Д</string>
     <string name="range_1m">1М</string>

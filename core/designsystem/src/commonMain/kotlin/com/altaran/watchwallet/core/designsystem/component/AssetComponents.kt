@@ -29,6 +29,7 @@ import com.altaran.watchwallet.core.designsystem.chart.Sparkline
 import com.altaran.watchwallet.core.designsystem.generated.resources.Res
 import com.altaran.watchwallet.core.designsystem.generated.resources.change_down
 import com.altaran.watchwallet.core.designsystem.generated.resources.change_up
+import com.altaran.watchwallet.core.designsystem.generated.resources.range_1h
 import com.altaran.watchwallet.core.designsystem.generated.resources.range_1m
 import com.altaran.watchwallet.core.designsystem.generated.resources.range_1y
 import com.altaran.watchwallet.core.designsystem.generated.resources.range_24h
@@ -155,10 +156,10 @@ fun AssetRow(
     }
 }
 
-/** Horizontal chips to pick a chart range. */
+/** Horizontal chips to pick a chart range; [selected] is `null` when no chip fits what is shown. */
 @Composable
 fun RangeSelector(
-    selected: ChartRange,
+    selected: ChartRange?,
     onSelect: (ChartRange) -> Unit,
     modifier: Modifier = Modifier,
     ranges: List<ChartRange> = ChartRange.entries,
@@ -183,6 +184,7 @@ fun RangeSelector(
 @Composable
 fun rangeLabel(range: ChartRange): String = stringResource(
     when (range) {
+        ChartRange.H1 -> Res.string.range_1h
         ChartRange.H24 -> Res.string.range_24h
         ChartRange.D7 -> Res.string.range_7d
         ChartRange.M1 -> Res.string.range_1m

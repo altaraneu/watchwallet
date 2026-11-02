@@ -2,6 +2,7 @@
 <resources>
     <string name="amount_hidden">Jumlah disembunyikan</string>
     <string name="action_cancel">Batal</string>
+    <string name="range_1h">1J</string>
     <string name="range_24h">24J</string>
     <string name="range_7d">7H</string>
     <string name="range_1m">1B</string>
