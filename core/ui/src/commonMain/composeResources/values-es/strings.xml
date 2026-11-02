@@ -43,4 +43,5 @@
     <string name="tx_open_explorer">Abrir en el explorador de bloques</string>
     <string name="chart_performance">Sin depósitos ni retiros: %1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
+    <string name="chart_current_value">Ahora: %1$s</string>
 </resources>

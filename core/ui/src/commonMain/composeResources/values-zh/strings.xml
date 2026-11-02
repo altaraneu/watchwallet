@@ -43,4 +43,5 @@
     <string name="tx_open_explorer">在区块浏览器中打开</string>
     <string name="chart_performance">不计充值和提现:%1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
+    <string name="chart_current_value">当前:%1$s</string>
 </resources>

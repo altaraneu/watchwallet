@@ -22,6 +22,12 @@ expect object MoneyFormatter {
     fun formatPrice(value: Double, currency: QuoteCurrency): String
 
     /**
+     * Signed change of a unit price: as many fraction digits as the change itself needs, by the same
+     * rule as [formatPrice], so a tiny move of a stablecoin does not read `-0.00`.
+     */
+    fun formatPriceChange(value: Double, currency: QuoteCurrency): String
+
+    /**
      * Crypto amount with its symbol, for example `0,4213 BTC`. Uses up to [maxDecimals] fraction
      * digits and fewer for large amounts, never scientific notation.
      */

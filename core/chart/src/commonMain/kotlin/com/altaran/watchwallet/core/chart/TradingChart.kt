@@ -47,6 +47,19 @@ sealed interface ChartSeries {
 /** Value under the crosshair, or `null` when the finger is lifted. */
 data class CrosshairValue(val time: Long, val value: Double, val open: Double?, val high: Double?, val low: Double?)
 
+/**
+ * What the chart shows after pan or zoom.
+ *
+ * @property from time (UTC seconds) of the first visible bar.
+ * @property to time (UTC seconds) of the last visible bar.
+ * @property bars number of visible bars.
+ * @property barsBefore number of bars to the left of the view.
+ * @property userMoved the user changed the view since the window was last reset.
+ */
+@Immutable
+@Serializable
+data class ChartView(val from: Long, val to: Long, val bars: Int = 0, val barsBefore: Int = 0, val userMoved: Boolean = false)
+
 /** How prices are labelled on the axis and crosshair (formatted in JS with `Intl.NumberFormat`). */
 @Immutable
 data class ChartNumberFormat(
@@ -65,6 +78,8 @@ data class ChartNumberFormat(
  * - Changing [series] replaces the data; [live] updates (or appends) the last bar without a
  *   full redraw — use it for streaming prices.
  * - [hideValues] (discreet mode) hides the price axis and every numeric label.
+ * - Axis labels show the time of day: the bars of one series can be anything from minutes to days,
+ *   and switching the format while the user zooms would have to recreate the chart.
  */
 @Composable
 fun TradingChart(
@@ -73,13 +88,14 @@ fun TradingChart(
     modifier: Modifier = Modifier,
     height: Dp = 280.dp,
     live: Candle? = null,
-    intraday: Boolean = false,
     logScale: Boolean = false,
     hideValues: Boolean = false,
     markerTimes: List<Long> = emptyList(),
     fitOnDataChange: Boolean = true,
     /** Initially visible number of bars (most recent); 0 = fit all data. */
     visibleBars: Int = 0,
+    /** Initially visible from this time (UTC seconds) to the latest bar; wins over [visibleBars]. */
+    visibleFrom: Long? = null,
     /**
      * Identifies what the data shows (range, interval, mode…). Refreshes with the same key keep
      * the user's pan, zoom and tapped bar; a new key resets the view to [visibleBars].
@@ -87,8 +103,8 @@ fun TradingChart(
     windowKey: String = "",
     lineColor: Color? = null,
     onCrosshair: (CrosshairValue?) -> Unit = {},
-    /** Visible window (UTC seconds of the first and last visible bar) after pan/zoom. */
-    onVisibleRange: (from: Long, to: Long) -> Unit = { _, _ -> },
+    /** Visible window after pan or zoom; reported on every frame of a gesture. */
+    onVisibleRange: (ChartView) -> Unit = {},
     /** Spoken by screen readers instead of the (inaccessible) chart canvas. */
     contentDescription: String? = null,
 ) {
@@ -101,7 +117,7 @@ fun TradingChart(
     val currentOnCrosshair by rememberUpdatedState(onCrosshair)
     val currentOnVisibleRange by rememberUpdatedState(onVisibleRange)
 
-    val initOptions = remember(kind, colors, format, intraday, logScale, hideValues, dark) {
+    val initOptions = remember(kind, colors, format, logScale, hideValues, dark) {
         JSON.encodeToString(
             InitOptions(
                 kind = kind,
@@ -111,7 +127,6 @@ fun TradingChart(
                 suffix = format.suffix,
                 minDecimals = format.minDecimals,
                 maxDecimals = format.maxDecimals,
-                intraday = intraday,
                 logScale = logScale,
                 hideValues = hideValues,
                 colors = colors,
@@ -125,13 +140,13 @@ fun TradingChart(
         controller.run("init($initOptions)")
         controller.reapplyData()
     }
-    LaunchedEffect(series, fitOnDataChange, visibleBars, windowKey) {
+    LaunchedEffect(series, fitOnDataChange, visibleBars, visibleFrom, windowKey) {
         val js = withContext(Dispatchers.Default) {
             val json = when (series) {
                 is ChartSeries.Candles -> JSON.encodeToString(series.candles.distinctBy { it.time }.sortedBy { it.time })
                 is ChartSeries.Area -> JSON.encodeToString(series.points.distinctBy { it.time }.sortedBy { it.time })
             }
-            "setData($json, $fitOnDataChange, $visibleBars, ${JSON.encodeToString(windowKey)})"
+            "setData($json, $fitOnDataChange, $visibleBars, ${JSON.encodeToString(windowKey)}, ${visibleFrom ?: 0})"
         }
         controller.setData(js)
     }
@@ -151,7 +166,7 @@ fun TradingChart(
             html = it,
             controller = controller,
             onCrosshair = { payload -> currentOnCrosshair(payload) },
-            onVisibleRange = { from, to -> currentOnVisibleRange(from, to) },
+            onVisibleRange = { currentOnVisibleRange(it) },
             modifier = modifier.fillMaxWidth().height(height).let { base ->
                 if (contentDescription == null) base else base.clearAndSetSemantics { this.contentDescription = contentDescription }
             },
@@ -196,7 +211,7 @@ internal expect fun ChartWebView(
     html: String,
     controller: ChartController,
     onCrosshair: (CrosshairValue?) -> Unit,
-    onVisibleRange: (Long, Long) -> Unit,
+    onVisibleRange: (ChartView) -> Unit,
     modifier: Modifier,
 )
 
@@ -209,11 +224,8 @@ internal val JSON = Json {
 @Serializable
 internal data class CrosshairPayload(val time: Long, val value: Double, val open: Double? = null, val high: Double? = null, val low: Double? = null)
 
-@Serializable
-internal data class VisibleRangePayload(val from: Long, val to: Long)
-
-internal fun parseVisibleRange(payload: String?): Pair<Long, Long>? =
-    payload?.let { runCatching { JSON.decodeFromString<VisibleRangePayload>(it) }.getOrNull() }?.let { it.from to it.to }
+internal fun parseVisibleRange(payload: String?): ChartView? =
+    payload?.let { runCatching { JSON.decodeFromString<ChartView>(it) }.getOrNull() }
 
 internal fun parseCrosshair(payload: String?): CrosshairValue? {
     if (payload.isNullOrBlank() || payload == "null") return null
@@ -230,7 +242,6 @@ private data class InitOptions(
     val suffix: String?,
     val minDecimals: Int,
     val maxDecimals: Int,
-    val intraday: Boolean,
     val logScale: Boolean,
     val hideValues: Boolean,
     val colors: ChartColors,

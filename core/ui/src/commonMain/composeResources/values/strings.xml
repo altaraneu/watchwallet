@@ -61,4 +61,6 @@
     <string name="chart_performance">Excluding deposits and withdrawals: %1$s</string>
     <!-- A signed change followed by its percentage. %1$s = signed amount, %2$s = signed percent; for example "+120 USD (+4.2 %)". -->
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
+    <!-- Current value, shown while a past point of the chart is selected. -->
+    <string name="chart_current_value">Now: %1$s</string>
 </resources>

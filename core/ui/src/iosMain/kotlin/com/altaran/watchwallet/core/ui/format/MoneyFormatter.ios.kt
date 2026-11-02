@@ -63,6 +63,9 @@ actual object MoneyFormatter {
     actual fun formatPrice(value: Double, currency: QuoteCurrency): String =
         format(value, currency, FormatRules.priceDecimals(value, currency.displayDecimals))
 
+    actual fun formatPriceChange(value: Double, currency: QuoteCurrency): String =
+        signPrefix(value) + format(abs(value), currency, FormatRules.priceDecimals(abs(value), currency.displayDecimals))
+
     actual fun formatCrypto(value: Double, symbol: String, maxDecimals: Int): String {
         val formatter = NSNumberFormatter().apply {
             locale = NSLocale.currentLocale

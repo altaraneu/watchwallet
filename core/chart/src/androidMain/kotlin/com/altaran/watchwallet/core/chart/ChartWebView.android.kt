@@ -32,7 +32,7 @@ internal actual fun ChartWebView(
     html: String,
     controller: ChartController,
     onCrosshair: (CrosshairValue?) -> Unit,
-    onVisibleRange: (Long, Long) -> Unit,
+    onVisibleRange: (ChartView) -> Unit,
     modifier: Modifier,
 ) {
     val callback by rememberUpdatedState(onCrosshair)
@@ -70,7 +70,7 @@ internal actual fun ChartWebView(
 
                         @JavascriptInterface
                         fun onVisibleRange(payload: String?) {
-                            parseVisibleRange(payload)?.let { (from, to) -> main.post { rangeCallback(from, to) } }
+                            parseVisibleRange(payload)?.let { view -> main.post { rangeCallback(view) } }
                         }
                     },
                     "WWBridge",

@@ -43,4 +43,5 @@
     <string name="tx_open_explorer">ब्लॉक एक्सप्लोरर में खोलें</string>
     <string name="chart_performance">जमा और निकासी को छोड़कर: %1$s</string>
     <string name="chart_value_with_percent">%1$s (%2$s)</string>
+    <string name="chart_current_value">अभी: %1$s</string>
 </resources>

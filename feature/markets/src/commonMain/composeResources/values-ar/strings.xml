@@ -26,7 +26,6 @@
     <string name="interval_1d">1ي</string>
     <string name="interval_1w">1أ</string>
     <string name="asset_live_price">سعر %1$s · مباشر</string>
-    <string name="asset_source_kraken">الشموع المباشرة: بيانات السوق العامة من Kraken. تُحوَّل العملات غير EUR وUSD بأسعار الصرف المرجعية للبنك المركزي الأوروبي.</string>
     <string name="asset_visible_range">في النطاق المعروض</string>
     <string name="asset_high">الأعلى</string>
     <string name="asset_low">الأدنى</string>
@@ -45,4 +44,5 @@
     <string name="asset_activity">النشاط</string>
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
+    <string name="asset_current_price">الآن: %1$s</string>
 </resources>

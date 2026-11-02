@@ -26,7 +26,6 @@
     <string name="interval_1d">1日</string>
     <string name="interval_1w">1周</string>
     <string name="asset_live_price">%1$s 价格 · 实时</string>
-    <string name="asset_source_kraken">实时 K 线:Kraken 公开市场数据。EUR/USD 以外的货币按 ECB 参考汇率换算。</string>
     <string name="asset_visible_range">可见范围内</string>
     <string name="asset_high">最高</string>
     <string name="asset_low">最低</string>
@@ -45,4 +44,5 @@
     <string name="asset_activity">活动</string>
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
+    <string name="asset_current_price">当前:%1$s</string>
 </resources>

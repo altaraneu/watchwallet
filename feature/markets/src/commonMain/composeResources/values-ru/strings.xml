@@ -26,7 +26,6 @@
     <string name="interval_1d">1Д</string>
     <string name="interval_1w">1Н</string>
     <string name="asset_live_price">Цена %1$s · в реальном времени</string>
-    <string name="asset_source_kraken">Свечи в реальном времени: публичные рыночные данные Kraken. Валюты, кроме EUR и USD, пересчитаны по справочным курсам ЕЦБ.</string>
     <string name="asset_visible_range">в видимом диапазоне</string>
     <string name="asset_high">Макс.</string>
     <string name="asset_low">Мин.</string>
@@ -45,4 +44,5 @@
     <string name="asset_activity">Активность</string>
     <string name="asset_title">%1$s (%2$s)</string>
     <string name="asset_change_with_percent">%1$s (%2$s)</string>
+    <string name="asset_current_price">Сейчас: %1$s</string>
 </resources>
