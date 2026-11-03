@@ -1,17 +1,41 @@
-<p>WatchWallet tracks balances, transaction history and the value of your crypto portfolio using <b>public addresses and extended public keys only</b>. It never asks for a seed phrase or private key and cannot send anything. Input that looks like one is rejected and cleared; a few formats cannot be told from an address, such as a Solana key in base58 or a key entered in the separate Sui and Aptos route.</p>
-<p><b>Private by design</b></p>
+<p>WatchWallet shows what your crypto is worth and how it has done, all in one place, using <b>public addresses and extended public keys only</b>. It is open source and free, with no ads and no account.</p>
+<p>This is an alpha version. Expect bugs, and do not use it as your only record of your funds. It is not an exchange or a custody service and offers no trading or investment advice.</p>
+<p><b>Watch-only</b></p>
 <ul>
-<li>No accounts, no backend, no analytics, no ads, no Google Play Services.</li>
-<li>Wallets, labels and settings stay on your device and cloud backup is disabled; addresses go directly to public blockchain services to read balances.</li>
-<li>Every network endpoint is documented; optional Tor / SOCKS5 proxy and your own Bitcoin server.</li>
-<li>Extended public keys never leave the device: addresses are derived locally.</li>
+<li>Cannot sign or send transactions.</li>
+<li>Never asks for a seed phrase or private key. Input that looks like one is rejected and cleared, with a warning.</li>
+<li>No check catches everything. A 32-byte Solana key looks the same as an address, and so does a key entered in the separate Sui and Aptos route. Never enter your keys in any app you do not fully trust, this one included.</li>
 </ul>
-<p><b>Features</b></p>
+<p><b>Your portfolio</b></p>
 <ul>
-<li>Paste and done: paste an address, xpub or descriptor and the chain is detected automatically.</li>
-<li>Bitcoin (addresses, xpub/ypub/zpub, descriptors) and Ethereum with 20+ EVM networks and tokens.</li>
-<li>Portfolio value over time, allocation, per-asset charts with live candlesticks.</li>
-<li>Groups (for example one portfolio per family member), discreet mode, app lock.</li>
-<li>Batch import from text or CSV, encrypted JSON backup, CSV export.</li>
-<li>Prices in CZK, EUR, USD and more; 13 languages.</li>
+<li>Total value over time, allocation, and performance excluding deposits and withdrawals.</li>
+<li>Cost basis and unrealized profit or loss, from your transaction history.</li>
+<li>Charts for every coin and wallet, with live candlesticks from 1 minute to 1 week.</li>
+<li>Transaction history, a price watchlist and a home screen widget.</li>
+<li>Groups, for example one portfolio for each family member.</li>
+<li>Prices in CZK, EUR, USD and more. 13 languages.</li>
 </ul>
+<p><b>Adding wallets</b></p>
+<ul>
+<li>Paste or scan an address, xpub/ypub/zpub or output descriptor. The network is detected for you.</li>
+<li>Import many at once from text or CSV.</li>
+<li>Export to CSV, or to a JSON backup with optional encryption.</li>
+</ul>
+<p><b>Supported networks</b></p>
+<ul>
+<li>Bitcoin, Litecoin, Dogecoin, Bitcoin Cash.</li>
+<li>Ethereum and 20 other EVM networks, with tokens: Arbitrum, Optimism, Base, Polygon, BNB Chain, Avalanche and more.</li>
+<li>Solana, XRP, Tron, TON, Cardano, Stellar, Algorand, Tezos, Hedera, NEAR, Kaspa, Sui, Aptos.</li>
+<li>Cosmos Hub, Osmosis, Celestia, Injective, Polkadot, Kusama.</li>
+<li>Not all of them are equally well tested in this alpha.</li>
+</ul>
+<p><b>Privacy</b></p>
+<ul>
+<li>No developer servers, analytics, ads or Google Play Services. Wallets, labels and settings stay on your device, and cloud backup is off.</li>
+<li>To load data, the app contacts public services directly. Blockchain services see the addresses you watch and your IP address. Price services see which coins you hold and your IP address.</li>
+<li>Extended public keys stay on the device: addresses are derived locally. A server can still link addresses it is asked about together.</li>
+<li>Optional Tor / SOCKS5 proxy and your own Bitcoin server, which hide your IP address or the addresses from public services.</li>
+<li>App lock, discreet mode, and screenshots blocked by default.</li>
+</ul>
+<p><b>Open source</b></p>
+<p>The code, the full list of services and the limits of the app are public: github.com/altaraneu/watchwallet</p>

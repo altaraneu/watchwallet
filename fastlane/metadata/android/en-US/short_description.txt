@@ -1,1 +1,1 @@
-Watch-only crypto portfolio: track any wallet with public addresses, no keys
+Track any crypto wallet from public addresses. No keys, no account, no ads.

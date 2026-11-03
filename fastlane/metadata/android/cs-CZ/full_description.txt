@@ -1,17 +1,41 @@
-<p>WatchWallet sleduje zůstatky, historii transakcí a hodnotu tvého krypto portfolia pouze pomocí <b>veřejných adres a rozšířených veřejných klíčů</b>. Nikdy nechce seed frázi ani privátní klíč a nic neumí odeslat. Vstup, který na ně vypadá, odmítne a vymaže; několik formátů ale od adresy rozeznat nejde, třeba klíč Solany v base58 nebo klíč zadaný v oddělené cestě pro Sui a Aptos.</p>
-<p><b>Soukromí od základu</b></p>
+<p>WatchWallet ukazuje, kolik má tvoje krypto hodnotu a jak si vede, všechno na jednom místě a jen pomocí <b>veřejných adres a rozšířených veřejných klíčů</b>. Je open source a zdarma, bez reklam a bez účtu.</p>
+<p>Tohle je alfa verze. Počítej s chybami a nepoužívej ji jako jediný záznam o svých prostředcích. Není to burza ani úschova, nenabízí obchodování ani investiční rady.</p>
+<p><b>Jen ke sledování</b></p>
 <ul>
-<li>Žádné účty, žádný server, žádná analytika, reklamy ani Google Play Services.</li>
-<li>Peněženky, popisky a nastavení zůstávají v telefonu a cloudová záloha je vypnutá; adresy jdou přímo veřejným blockchainovým službám kvůli načtení zůstatků.</li>
-<li>Každá síťová služba je zdokumentovaná; volitelně Tor / SOCKS5 proxy a vlastní Bitcoin server.</li>
-<li>Rozšířené veřejné klíče nikdy neopustí zařízení: adresy se odvozují lokálně.</li>
+<li>Neumí podepisovat ani odesílat transakce.</li>
+<li>Nikdy nechce seed frázi ani privátní klíč. Vstup, který na ně vypadá, odmítne a vymaže a zobrazí varování.</li>
+<li>Žádná kontrola nezachytí všechno. 32bajtový klíč Solany vypadá stejně jako adresa a stejně tak klíč zadaný v oddělené cestě pro Sui a Aptos. Klíče nezadávej do žádné aplikace, které plně nedůvěřuješ, ani do téhle.</li>
 </ul>
-<p><b>Funkce</b></p>
+<p><b>Tvoje portfolio</b></p>
 <ul>
-<li>Vlož a hotovo: vlož adresu, xpub nebo deskriptor a blockchain se rozpozná sám.</li>
-<li>Bitcoin (adresy, xpub/ypub/zpub, deskriptory) a Ethereum s více než 20 EVM sítěmi a tokeny.</li>
-<li>Vývoj hodnoty portfolia, rozložení aktiv, grafy jednotlivých aktiv s živými svíčkami.</li>
-<li>Skupiny (třeba portfolio pro každého člena rodiny), diskrétní režim, zámek aplikace.</li>
-<li>Hromadný import z textu nebo CSV, šifrovaná JSON záloha, export do CSV.</li>
-<li>Ceny v CZK, EUR, USD a dalších měnách; 13 jazyků.</li>
+<li>Vývoj celkové hodnoty, rozložení aktiv a výkon bez vkladů a výběrů.</li>
+<li>Pořizovací cena a nerealizovaný zisk nebo ztráta podle historie transakcí.</li>
+<li>Grafy každé mince i peněženky, živé svíčky od 1 minuty po 1 týden.</li>
+<li>Historie transakcí, sledované ceny a widget na plochu.</li>
+<li>Skupiny, třeba portfolio pro každého člena rodiny.</li>
+<li>Ceny v CZK, EUR, USD a dalších měnách. 13 jazyků.</li>
 </ul>
+<p><b>Přidávání peněženek</b></p>
+<ul>
+<li>Vlož nebo naskenuj adresu, xpub/ypub/zpub nebo deskriptor. Síť se rozpozná sama.</li>
+<li>Hromadný import z textu nebo CSV.</li>
+<li>Export do CSV nebo do JSON zálohy s volitelným šifrováním.</li>
+</ul>
+<p><b>Podporované sítě</b></p>
+<ul>
+<li>Bitcoin, Litecoin, Dogecoin, Bitcoin Cash.</li>
+<li>Ethereum a 20 dalších EVM sítí s tokeny: Arbitrum, Optimism, Base, Polygon, BNB Chain, Avalanche a další.</li>
+<li>Solana, XRP, Tron, TON, Cardano, Stellar, Algorand, Tezos, Hedera, NEAR, Kaspa, Sui, Aptos.</li>
+<li>Cosmos Hub, Osmosis, Celestia, Injective, Polkadot, Kusama.</li>
+<li>V této alfě nejsou všechny stejně dobře otestované.</li>
+</ul>
+<p><b>Soukromí</b></p>
+<ul>
+<li>Žádné servery vývojáře, analytika, reklamy ani Google Play Services. Peněženky, popisky a nastavení zůstávají v telefonu a cloudová záloha je vypnutá.</li>
+<li>Pro načtení dat se aplikace obrací přímo na veřejné služby. Blockchainové služby vidí sledované adresy a tvou IP adresu. Cenové služby vidí, jaké mince držíš, a tvou IP adresu.</li>
+<li>Rozšířené veřejné klíče zůstávají v telefonu, adresy se odvozují lokálně. Server ale může adresy, na které se ho aplikace ptá, propojit.</li>
+<li>Volitelně Tor / SOCKS5 proxy a vlastní Bitcoin server, které skryjí IP adresu nebo adresy před veřejnými službami.</li>
+<li>Zámek aplikace, diskrétní režim a ve výchozím stavu blokované snímky obrazovky.</li>
+</ul>
+<p><b>Open source</b></p>
+<p>Kód, úplný seznam služeb i limity aplikace jsou veřejné: github.com/altaraneu/watchwallet</p>
