@@ -92,8 +92,8 @@ that Play Console generates and the public CI build from the tag have the same d
 assets. Of 24 native libraries 16 are identical, and 8 have the same loaded code and differ in stripped
 debug data. Permissions are the same, and Play's manifest only adds four entries of its own. Resources
 were not compared, as Play rewrites them. That is the owner's comparison, not an independent one:
-anyone can repeat it on their own device with `scripts/compare_play_apk.py`. Dependency checksums are not pinned either:
-`gradle/verification-metadata.xml` is not committed yet. See
+anyone can repeat it on their own device with `scripts/compare_play_apk.py`. Dependency checksums are pinned in
+`gradle/verification-metadata.xml` from the release after v1.1.0. See
 [docs/reproducible-builds.md](docs/reproducible-builds.md). A build verified across machines and F-Droid
 are the planned ways to close this gap.
 

@@ -119,16 +119,16 @@ dependencies are honest, and the prebuilt native libraries in particular are not
 
 ## Dependency verification
 
-`gradle/verification-metadata.xml` is **not committed yet.** To record SHA-256 of every dependency it
-has to be written from the platforms that build:
+`gradle/verification-metadata.xml` holds the SHA-256 of every dependency, written after tag `v1.1.0` by
+`.github/workflows/dependency-metadata.yml`, so `v1.1.0` itself was built without it. To regenerate, run that
+workflow, review the result and commit it. It has to come from the platforms that build:
 
 - Some artifacts exist per OS, for example `kotlin-native-prebuilt-<version>-windows-x86_64.zip`, so a
   file written on Windows fails on Linux CI. iOS compilation resolves more that only macOS requests.
   `--dry-run` skips tasks and misses artifacts they fetch, such as `aapt2`, so run the real tasks.
-- Dependencies are also being removed on another branch, which would leave stale entries.
 
-Once that branch is merged, run these in order and commit the result. Gradle merges into an existing
-file, so each run adds only what the platform needs:
+The workflow runs these in order. Gradle merges into an existing file, so each run adds only what the
+platform needs:
 
 ```sh
 # On Linux, then again on macOS:

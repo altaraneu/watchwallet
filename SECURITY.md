@@ -58,8 +58,8 @@ and assets, same native code, same permissions (`scripts/compare_play_apk.py`). 
 Play sends to a device match too, as they are split differently and were not checked, and that anyone
 independent has repeated this. Resources were not compared, because Play rewrites them.
 
-Dependency checksums are not pinned: `gradle/verification-metadata.xml` is **not committed yet**, so a
-build does not verify that libraries downloaded from Maven are the expected ones.
+Dependency checksums are pinned in `gradle/verification-metadata.xml` since after tag `v1.1.0`, so the next
+tag is the first release built with them. They record what Maven served when written, not that it is honest.
 
 ## Reporting a vulnerability
 
