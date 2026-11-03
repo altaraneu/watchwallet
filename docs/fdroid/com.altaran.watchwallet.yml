@@ -4,7 +4,7 @@ AntiFeatures:
   NonFreeNet:
     en-US: Fiat values come from the proprietary CoinGecko, Binance and Kraken APIs. Balances use public blockchain servers.
 Categories:
-  - Money
+  - Finance Manager
 License: GPL-3.0-only
 SourceCode: https://github.com/altaraneu/watchwallet
 IssueTracker: https://github.com/altaraneu/watchwallet/issues
