@@ -19,7 +19,7 @@ jobs:
           persist-credentials: false
           path: app-source
       - name: Install the tools
-        run: pipx install git+https://gitlab.com/fdroid/fdroidserver.git
+        run: pipx install git+https://gitlab.com/fdroid/fdroidserver.git@cdfdce835a8231996b02392bc79c1879e6bef501
       - name: Prepare the layout
         run: |
           git clone --depth 1 https://gitlab.com/fdroid/fdroiddata.git data

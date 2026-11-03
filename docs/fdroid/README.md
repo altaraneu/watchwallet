@@ -1,8 +1,13 @@
 # F-Droid readiness
 
 State of the app against the [Inclusion Policy](https://f-droid.org/docs/Inclusion_Policy/). Nothing has
-been submitted. `com.altaran.watchwallet.yml` is a draft for fdroiddata; this folder does not ship in
-the app and nothing reads it.
+been submitted. `com.altaran.watchwallet.yml` is the recipe for fdroiddata, set to tag `v1.1.0`; this folder
+does not ship in the app and nothing reads it.
+
+`.github/workflows/fdroid-check.yml` runs F-Droid's current tools on the recipe in a copy of fdroiddata. At
+`a0d7b73`, `fdroid lint` and `fdroid scanner --exit-code` pass on the tag's commit, and `rewritemeta` changes
+only the two comment lines at the top, which go away when the file is submitted. **A real build by F-Droid's
+tools has not run**; that happens in fdroiddata's CI on the merge request.
 
 ## Verified against the build
 
@@ -78,11 +83,9 @@ The desktop builds of secp256k1 (Windows DLL, macOS dylib) that used to land in 
   the time of submission is unverified, and the `sudo:` lines in the draft are a guess. The Kotlin
   Gradle plugin may also fetch `kotlin-native-prebuilt` (Apache-2.0, Maven Central) for the declared iOS
   targets, though `:app:assembleRelease` does not compile them.
-- **Tools not run:** `fdroid scanner`, `lint` and `build` did not run here. `pip install fdroidserver`
-  fails on this Windows machine because of path length limits. The rules were read from
-  [`scanner.py`](https://gitlab.com/fdroid/fdroidserver/-/blob/master/fdroidserver/scanner.py) and applied
-  by hand. The `AntiFeatures` map in the draft is from memory of current fdroiddata files; the reference
-  page only documents a comma list. `fdroid rewritemeta` will show.
+- **Native stripping:** `fdroid scanner` listed NDK r27d, r29 and r30 on the hosted runner, while the owner's
+  machine has r28c. The stripped native libraries differ between those builds, so a match with F-Droid's
+  build, needed to share a signing key, may need a pinned `ndkVersion`. The cause was not proved.
 - **Metadata:** `python scripts/check_fastlane.py` checks the limits and the changelog of the current
   version. There are no screenshots yet (`fastlane/metadata/android/*/images/`); F-Droid does not
   require them, but the listing looks empty without them.
