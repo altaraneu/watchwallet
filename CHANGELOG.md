@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-03
+
 ### Security
 - `0x` and 64 hex characters is now rejected like any private key, everywhere. Sui and Aptos addresses
   have the same form and get a separate route: pick the chain, read the warning, confirm. Such a key
@@ -122,10 +124,11 @@ Fixes from the review in `docs/security/audit-2026-11-02.md`.
 
 - The Android HTTP engine really stops following redirects now; until this change it still followed
   them, despite the entry under Fixed. Every bundled and fixed endpoint was checked to answer without one.
-- Cardano stake wallets: a payment address from the server is offered only if it carries the wallet's
-  stake key, checked at sync and on every display; otherwise only the stake key is shown. The app cannot
-  check the payment part of that address, so the screen now says to compare it with your wallet app.
-  Such an address no longer counts as "contained" in the wallet when adding another one.
+- Cardano stake wallets no longer offer an address from a server to copy or as a QR code. The app could
+  check only its stake part, so a dishonest server could have put its own payment key there and received
+  the payment. These wallets now show the stake key alone, which cannot receive payments; take a receive
+  address from your wallet app. The app stops asking for such an address and removes stored ones at the
+  next sync. Such an address no longer counts as "contained" in the wallet when adding another one.
 - A backup can no longer be written empty, or empty an older file, after the device rotated or the app
   was killed in the file picker. Without its content nothing is written, the file the picker created is
   removed if empty, and the failure is shown. Cancelling the picker no longer reports a failure.
@@ -146,6 +149,12 @@ Fixes from the review in `docs/security/audit-2026-11-02.md`.
   apps would ignore.
 - Large exports go to the share sheet as a file instead of intent text, and imported files are read
   with a limit rather than read whole and then measured.
+- A file picked for import is no longer lost when the device rotates or the app is killed behind the
+  picker, and a file that is too large or cannot be read now says so.
+- The home-screen widget credits CoinGecko when its total uses CoinGecko prices.
+- A stored custom Bitcoin server that the rules no longer allow is still ignored, and Settings now says
+  so: until it is corrected, Bitcoin addresses go to the default servers.
+- Discreet mode draws the allocation donut with equal slices, so it no longer shows proportions.
 - A cost reference in a backup is checked: its asset id must look like one, and neither part may hide a
   seed phrase.
 - `PRIVACY.md` says that JSON backups hold cost basis with transaction references and subtract links.

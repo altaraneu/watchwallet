@@ -11,6 +11,8 @@ No key, password or fingerprint belongs in this repository. Keep this list in or
 4. `python scripts/check_fastlane.py`, `python scripts/check_strings.py`,
    `python scripts/fetch_logos.py --check`.
 5. Any new host: listed in `PRIVACY.md` in the same change.
+   The in-app privacy link opens `PRIVACY.md` at the tag of the installed version (`blob/v1.1.0/…`).
+   It gives a 404 until that tag is pushed, so push the tag before the build reaches any user.
 6. **Owner**, if servers changed or the signed list expires within two months: sign it on your own
    machine and push, as in [`endpoints-config.md`](endpoints-config.md):
    ```sh
@@ -92,8 +94,8 @@ Which key signs what:
 
 Android refuses to update across different signing certificates, so users cannot move between these
 channels without reinstalling, unless the keys are the same. Decide this before the first F-Droid
-release: see [`fdroid/README.md`](fdroid/README.md). `README.md` still says the fingerprint "will be
-published here"; replace that with the table's values on the first public release.
+release: see [`fdroid/README.md`](fdroid/README.md). `README.md` lists the Play certificate; add the
+certificate of the release key there when the first APK is published on GitHub Releases.
 
 ## After publishing
 

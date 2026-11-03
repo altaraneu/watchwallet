@@ -1,0 +1,1 @@
+Security and privacy fixes after an independent code review. Stricter seed and key detection, app lock on every start, checked backup import. Coin logos no longer contact GitHub by default. Cardano stake wallets no longer offer an address reported by a server: take a receive address from your wallet app. Better charts. Still an alpha.

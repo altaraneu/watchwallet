@@ -28,8 +28,8 @@ android {
 
     defaultConfig {
         applicationId = "com.altaran.watchwallet"
-        versionCode = 100
-        versionName = "1.0.0"
+        versionCode = 101
+        versionName = "1.1.0"
 
         val languages = supportedLanguages.joinToString(",")
         buildConfigField("String", "SUPPORTED_LANGUAGES", "\"$languages\"")

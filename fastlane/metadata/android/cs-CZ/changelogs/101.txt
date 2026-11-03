@@ -1,0 +1,1 @@
+Opravy bezpečnosti a soukromí po nezávislé kontrole kódu. Přísnější rozpoznání seedu a klíčů, zámek aplikace při každém spuštění, kontrola importu zálohy. Loga mincí ve výchozím stavu nekontaktují GitHub. Cardano stake peněženky už nenabízejí adresu ze serveru: adresu pro příjem vezmi ze své peněženky. Lepší grafy. Stále alfa verze.
