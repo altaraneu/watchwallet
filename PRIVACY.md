@@ -65,7 +65,7 @@ approve the new servers can a signed list replace them without an app update (se
 | `api.trongrid.io` | TRX, TRC-10, TRC-20 balances and history | The Tron address; TRC-10 token ids |
 | `toncenter.com/api/v3` | TON balance, jettons, history | The TON address |
 | `api.koios.rest` | Cardano balances, native tokens, history | The stake or payment address; transaction hashes |
-| `rest.cosmos.directory` | Cosmos Hub, Osmosis, Celestia, Injective balances, staking, history | The bech32 address |
+| `rest.cosmos.directory` | Cosmos Hub, Osmosis, Celestia, Injective balances, staking, history | The bech32 address. When you add a Cosmos wallet, also the same account's addresses on the other chains, derived on the device, to find where it has activity |
 | `polkadot-asset-hub-rpc.polkadot.io`, `kusama-asset-hub-rpc.polkadot.io`, `rpc.polkadot.io`, `kusama-rpc.polkadot.io` | Polkadot / Kusama balances (Asset Hub plus relay-chain leftovers) | A storage key containing the account id |
 | `horizon.stellar.org` | Stellar balances, trustlines, payments | The Stellar account |
 | `graphql.mainnet.sui.io` | Sui balances and history (GraphQL) | The Sui address, only through the separate route or a confirmed backup entry (see [Keys](#keys)) |

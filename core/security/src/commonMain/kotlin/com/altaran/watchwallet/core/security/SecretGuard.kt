@@ -242,7 +242,9 @@ object SecretGuard {
     private val MINI_KEY = Regex("""^S[1-9A-HJ-NP-Za-km-z]{21}$|^S[1-9A-HJ-NP-Za-km-z]{29}$""")
     private const val PRIVATE_KEY_BYTES = 32
     private const val KEYPAIR_BYTES = 64
-    private const val MIN_HEX_KEY_CHARS = 64
+
+    /** A key printed as a number loses its leading zeros: one in 256 is 62 characters or fewer. */
+    private const val MIN_HEX_KEY_CHARS = 60
 
     @Suppress("CyclomaticComplexMethod", "ReturnCount")
     private fun tokenSecret(token: String): SecretKind? {
@@ -267,7 +269,7 @@ object SecretGuard {
         if (XRP_SEED.matches(token)) return SecretKind.XRP_SEED
         if (isSeedQrDigits(token)) return SecretKind.MNEMONIC
 
-        // Hex: 64+ hex characters are always refused, with or without 0x. That covers NEAR implicit
+        // Hex: 60+ hex characters are always refused, with or without 0x. That covers NEAR implicit
         // accounts and, through checkDeliberateAddress only, Sui and Aptos addresses.
         val hexBody = token.removePrefix("0x").removePrefix("0X")
         if (HEX.matches(hexBody) && hexBody.length >= MIN_HEX_KEY_CHARS) return SecretKind.HEX_PRIVATE_KEY

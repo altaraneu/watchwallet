@@ -25,12 +25,16 @@
   var markerTimes = [], lineColors = null;
   // Own copy of the bars: series.data() rebuilds the whole array on every call.
   var bars = [];
+  // What the time scale holds, one entry per logical index. The library spaces entries evenly, so on
+  // value charts empty entries stand for the time between bars; candles have none (slots === bars).
+  var slots = [];
   // Data that arrived under the finger; applied when the gesture is over, so nothing moves meanwhile.
   var pendingData = null, pendingTimer = null;
   var priceDecimals = -1, priceFormatTimer = null, pinFrame = null, markersShown = false;
   // At full zoom about six bars fill the width, whatever the screen: single minutes can be read.
   var MIN_MAX_BAR_SPACING = 50, FULL_ZOOM_BARS = 6, INPUT_GRACE_MS = 600, MAX_DECIMALS = 12;
   var MARKERS_FROM_SPACING = 24, SECONDS_PER_DAY = 86400;
+  var MAX_SLOTS = 6000, MIN_SLOT_SECONDS = 60, MIN_BAR_SPACING = 0.2;
 
   function post(name, payload) {
     try {
@@ -74,7 +78,7 @@
     options = o;
     if (chart) { chart.remove(); chart = null; series = null; markersApi = null; }
     // A new chart starts with the default view and no selection; the app is told so.
-    pinnedTime = null; userMoved = false; lastWindowKey = null; bars = []; pendingData = null; priceDecimals = -1; markersShown = false;
+    pinnedTime = null; userMoved = false; lastWindowKey = null; bars = []; slots = []; pendingData = null; priceDecimals = -1; markersShown = false;
     post('onCrosshair', JSON.stringify(null));
     formatter = makeFormatter(o, o.minDecimals);
     var LWC = LightweightCharts;
@@ -89,7 +93,7 @@
       },
       grid: { vertLines: { color: o.colors.grid }, horzLines: { color: o.colors.grid } },
       rightPriceScale: { borderVisible: false, visible: !o.hideValues, mode: o.logScale ? 1 : 0, scaleMargins: { top: 0.12, bottom: 0.08 } },
-      timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false, rightOffset: 0, minBarSpacing: 0.2, maxBarSpacing: MIN_MAX_BAR_SPACING,
+      timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false, rightOffset: 0, minBarSpacing: MIN_BAR_SPACING, maxBarSpacing: MIN_MAX_BAR_SPACING,
         // Panning stops at the first and the latest bar: no empty space before or after the data.
         // The first bar is the start of the history (value charts have bars back to the first
         // activity), or the oldest loaded candle (more are requested before the view gets there).
@@ -132,7 +136,7 @@
       // put it back on the bar, so its lines stay exactly on the point and the header does not
       // start following whatever bar slid under the old position.
       if (pinnedTime !== null && param && param.point && !param.sourceEvent) { reapplyPin(); return; }
-      var d = param && param.time !== undefined ? param.seriesData.get(series) : null;
+      var d = barAt(param);
       if (!param || !param.point || !d) {
         // Finger lifted or off the data: a tapped bar stays selected (and shown in the header)
         // until the user taps it again or taps empty space.
@@ -140,28 +144,58 @@
         reapplyPin();
         return;
       }
-      postBar(param.time, d);
+      postBar(d.time, d);
     });
     // Tap selects a bar and shows its values; tapping the same bar (or empty space) clears it.
     chart.subscribeClick(function (param) {
-      var d = param && param.time !== undefined ? param.seriesData.get(series) : null;
-      if (!d || param.time === pinnedTime) { clearPin(); return; }
-      pinnedTime = param.time;
+      var d = barAt(param);
+      if (!d || d.time === pinnedTime) { clearPin(); return; }
+      pinnedTime = d.time;
       reapplyPin();
     });
   }
 
+  // The bar under a chart event: an empty slot means the closest bar.
+  function barAt(param) {
+    if (!param || param.time === undefined) return null;
+    var d = param.seriesData.get(series);
+    if (d && valueOf(d) !== undefined) return bars[nearestIndex(param.time)] || d;
+    var index = nearestIndex(param.time);
+    return index < 0 ? null : bars[index];
+  }
+
+  // Empty slots between bars, so that distance on the chart is proportional to time. Every bar is
+  // kept; bars closer together than a slot stay next to each other, which only shows when zoomed in
+  // far enough to see them, and there all bars have the same step.
+  function withTimeGaps(points) {
+    if (options.kind !== 'area' || points.length < 2) return points;
+    var span = points[points.length - 1].time - points[0].time;
+    var slot = Math.max(MIN_SLOT_SECONDS, span / MAX_SLOTS);
+    var result = [];
+    for (var i = 0; i < points.length; i++) {
+      var time = points[i].time;
+      result.push(points[i]);
+      if (i === points.length - 1) break;
+      var empty = Math.floor((points[i + 1].time - time) / slot) - 1;
+      for (var j = 1; j <= empty; j++) {
+        result.push({ time: Math.round(time + j * slot) });
+      }
+    }
+    return result;
+  }
+
   function reportVisibleRange(range) {
-    if (!range || !series || bars.length === 0) return;
-    var fromIndex = Math.min(bars.length - 1, Math.max(0, Math.ceil(range.from)));
-    var toIndex = Math.min(bars.length - 1, Math.max(fromIndex, Math.floor(range.to)));
-    var from = bars[fromIndex], to = bars[toIndex];
+    if (!range || !series || slots.length === 0) return;
+    var fromIndex = Math.min(slots.length - 1, Math.max(0, Math.ceil(range.from)));
+    var toIndex = Math.min(slots.length - 1, Math.max(fromIndex, Math.floor(range.to)));
+    var from = slots[fromIndex], to = slots[toIndex];
     post('onVisibleRange', JSON.stringify({ from: from.time, to: to.time, bars: toIndex - fromIndex + 1, barsBefore: fromIndex, userMoved: userMoved }));
     // A tapped (pinned) cursor stays inside the window while panning: when its bar leaves the view
     // it moves to the edge bar, and the header follows that bar.
     if (pinnedTime !== null) {
       var edge = pinnedTime < from.time ? from : (pinnedTime > to.time ? to : null);
       if (edge) {
+        // reapplyPin moves it from an empty slot to the closest bar.
         pinnedTime = edge.time;
         reapplyPin();
       }
@@ -238,13 +272,14 @@
   // Axis ticks exist only at multiples of the series' minimum move, so the format has to follow the
   // visible prices: a stablecoin moving by 0.2 % needs three decimals, SHIB nine, a portfolio two.
   function updatePriceFormat() {
-    if (!series || !options || options.hideValues || bars.length === 0) return;
+    if (!series || !options || options.hideValues || slots.length === 0) return;
     var range = chart.timeScale().getVisibleLogicalRange();
     var first = range ? Math.max(0, Math.ceil(range.from)) : 0;
-    var last = range ? Math.min(bars.length - 1, Math.floor(range.to)) : bars.length - 1;
+    var last = range ? Math.min(slots.length - 1, Math.floor(range.to)) : slots.length - 1;
     var lo = Infinity, hi = -Infinity;
     for (var i = first; i <= last; i++) {
-      var d = bars[i];
+      var d = slots[i];
+      if (valueOf(d) === undefined) continue;
       var low = d.low !== undefined ? d.low : d.value, high = d.high !== undefined ? d.high : d.value;
       if (low < lo) lo = low;
       if (high > hi) hi = high;
@@ -269,7 +304,8 @@
   function updatePointMarkers(range) {
     if (!series || !options || options.kind !== 'area' || !range) return;
     var width = chart.timeScale().width();
-    var show = width > 0 && width / Math.max(1, range.to - range.from) >= MARKERS_FROM_SPACING;
+    // Single points can be told apart only when bars are apart, whatever lies between them.
+    var show = width > 0 && slots.length === bars.length && width / Math.max(1, range.to - range.from) >= MARKERS_FROM_SPACING;
     if (show === markersShown) return;
     markersShown = show;
     series.applyOptions({ pointMarkersVisible: show });
@@ -289,7 +325,11 @@
   function updateMaxBarSpacing(count) {
     var width = document.getElementById('chart').clientWidth || window.innerWidth || 0;
     var fill = count > 0 ? Math.ceil(width / count) + 1 : 0;
-    chart.timeScale().applyOptions({ maxBarSpacing: Math.max(MIN_MAX_BAR_SPACING, Math.ceil(width / FULL_ZOOM_BARS), fill) });
+    chart.timeScale().applyOptions({
+      maxBarSpacing: Math.max(MIN_MAX_BAR_SPACING, Math.ceil(width / FULL_ZOOM_BARS), fill),
+      // The whole history must still fit the width when fully zoomed out.
+      minBarSpacing: count > 0 ? Math.min(MIN_BAR_SPACING, width / count * 0.8) : MIN_BAR_SPACING
+    });
   }
 
   function schedulePending() {
@@ -328,8 +368,9 @@
       keep = { from: keep.from + (newLast - oldLast), to: newLast };
     }
     bars = points;
-    updateMaxBarSpacing(points.length);
-    series.setData(points);
+    slots = withTimeGaps(points);
+    updateMaxBarSpacing(slots.length);
+    series.setData(slots);
     applyMarkers();
     if (keep) {
       chart.timeScale().setVisibleRange(keep);
@@ -337,7 +378,7 @@
       if (visibleFrom && points.length > 1 && points[0].time < visibleFrom) {
         chart.timeScale().setVisibleRange({ from: visibleFrom, to: points[points.length - 1].time });
       } else if (visibleBars && points.length > visibleBars) {
-        chart.timeScale().setVisibleLogicalRange({ from: points.length - visibleBars, to: points.length - 1 });
+        chart.timeScale().setVisibleLogicalRange({ from: slots.length - visibleBars, to: slots.length - 1 });
       } else {
         chart.timeScale().fitContent();
       }
@@ -354,8 +395,14 @@
     if (!series) return;
     try {
       series.update(point);
-      if (bars.length > 0 && bars[bars.length - 1].time === point.time) bars[bars.length - 1] = point;
-      else if (bars.length === 0 || bars[bars.length - 1].time < point.time) bars.push(point);
+      var sameArray = slots === bars;
+      if (bars.length > 0 && bars[bars.length - 1].time === point.time) {
+        bars[bars.length - 1] = point;
+        if (!sameArray) slots[slots.length - 1] = point;
+      } else if (bars.length === 0 || bars[bars.length - 1].time < point.time) {
+        bars.push(point);
+        if (!sameArray) slots.push(point);
+      }
     } catch (e) { /* out-of-order update: ignore */ }
     if (pinnedTime !== null && point.time === pinnedTime) reapplyPin();
   }

@@ -22,6 +22,8 @@ It recognises formats, so it has limits that no check can remove:
   a deliberate trade-off to support those chains, and it is documented in [PRIVACY.md](PRIVACY.md).
 - A base64 key made only of characters that are also base58, and decoding to 32 bytes as base58, has the
   form of a Solana address and passes as one.
+- Part of a phrase is not recognised. The watchlist search sends what you type to CoinGecko, up to 5 words,
+  so the first words of a phrase typed there do leave the device.
 - Fewer than 11 words pass, as does an unknown word list that reads like a sentence. Text that is
   really a list of 12 simple words on a BIP-39 list is rejected even if it is not a seed.
 - **11 or more words that are mostly misspelled pass.** A phrase is recognised when three quarters of

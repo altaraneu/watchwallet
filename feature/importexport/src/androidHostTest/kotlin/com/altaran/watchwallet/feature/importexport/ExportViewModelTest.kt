@@ -131,6 +131,9 @@ class ExportViewModelTest {
         vm.setPasswordConfirmation(password)
         val prepared = vm.built(share = false)
         assertTrue(ExportCrypto.isEncrypted(prepared.content))
+        // Naming the format, or adding a field to a real envelope, must not skip the secret check.
+        assertFalse(ExportCrypto.isEncrypted("\"watchwallet-encrypted\" abandon abandon abandon"))
+        assertFalse(ExportCrypto.isEncrypted(prepared.content.trim().dropLast(1) + ",\"note\":\"text\"}"))
         assertNotNull(ExportCrypto.decrypt(prepared.content, password))
         assertEquals("", vm.state.value.password)
         assertEquals("", vm.state.value.passwordConfirmation)

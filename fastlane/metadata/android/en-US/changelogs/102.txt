@@ -1,0 +1,1 @@
+Value charts now show time in proportion: old periods were squeezed before. Fixes the app freezing on wallets with many tokens. Stricter detection of hex keys and numbered seed phrases. Dependency checksums are pinned. Still an alpha.
