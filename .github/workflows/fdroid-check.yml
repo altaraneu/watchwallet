@@ -29,7 +29,10 @@ jobs:
         run: fdroid lint com.altaran.watchwallet
       - name: Show what rewritemeta would change
         working-directory: data
-        run: fdroid rewritemeta com.altaran.watchwallet && diff -u ../app-source/docs/fdroid/com.altaran.watchwallet.yml metadata/com.altaran.watchwallet.yml
+        run: fdroid rewritemeta com.altaran.watchwallet && (diff -u ../app-source/docs/fdroid/com.altaran.watchwallet.yml metadata/com.altaran.watchwallet.yml || true)
       - name: Run the scanner on the tag's source
-        working-directory: app-source
-        run: fdroid scanner --help > /dev/null && git fetch --depth=1 origin refs/tags/v1.1.0:refs/tags/v1.1.0 && git checkout -q v1.1.0 && cd .. && (cd data && fdroid scanner --exit-code ../app-source) || echo "scanner reported findings or could not run"
+        run: |
+          git -C app-source fetch --depth=1 origin refs/tags/v1.1.0:refs/tags/v1.1.0
+          git -C app-source checkout -q v1.1.0
+          cd data
+          fdroid scanner --exit-code ../app-source
