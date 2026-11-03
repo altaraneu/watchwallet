@@ -26,7 +26,7 @@ jobs:
           cp app-source/docs/fdroid/com.altaran.watchwallet.yml data/metadata/
       - name: Read the metadata
         working-directory: data
-        run: fdroid readmeta com.altaran.watchwallet
+        run: fdroid readmeta
       - name: Lint
         working-directory: data
         run: fdroid lint com.altaran.watchwallet

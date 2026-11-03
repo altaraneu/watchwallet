@@ -56,8 +56,7 @@ describing it.
 The universal APK that Play Console generates for v1.1.0 matches that CI build in the same way: same dex
 and assets, same native code, same permissions (`scripts/compare_play_apk.py`). **Not shown:** that the APKs
 Play sends to a device match too, as they are split differently and were not checked, and that anyone
-independent has repeated this. Resources were not compared, because Play rewrites them. Play re-signs and processes what it receives, and that APK has
-never been compared with a local build.
+independent has repeated this. Resources were not compared, because Play rewrites them.
 
 Dependency checksums are not pinned: `gradle/verification-metadata.xml` is **not committed yet**, so a
 build does not verify that libraries downloaded from Maven are the expected ones.
