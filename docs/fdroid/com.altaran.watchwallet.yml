@@ -1,6 +1,5 @@
-# DRAFT for fdroiddata (metadata/com.altaran.watchwallet.yml). Not submitted, and not read by anything
-# in this repository. Before submitting: replace every CHANGEME, run `fdroid readmeta`, `fdroid lint`,
-# `fdroid rewritemeta` and a test build in fdroiddata. See docs/fdroid/README.md.
+# Draft of metadata/com.altaran.watchwallet.yml in fdroiddata. Nothing in this repository reads it.
+# `.github/workflows/fdroid-check.yml` runs F-Droid's tools on it. See docs/fdroid/README.md.
 AntiFeatures:
   NonFreeNet:
     en-US: Fiat values come from the proprietary CoinGecko, Binance and Kraken APIs. Balances use public blockchain servers.
@@ -15,9 +14,9 @@ RepoType: git
 Repo: https://github.com/altaraneu/watchwallet.git
 
 Builds:
-  - versionName: CHANGEME
-    versionCode: 0 # CHANGEME
-    commit: CHANGEME # full hash of the signed tag's commit
+  - versionName: 1.1.0
+    versionCode: 101
+    commit: 57b15de9a953627318a63343eea3a3aa8e57defc
     subdir: app
     sudo:
       - apt-get update
@@ -29,5 +28,5 @@ Builds:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+$
 UpdateCheckData: app/build.gradle.kts|versionCode\s*=\s*(\d+)|.|versionName\s*=\s*"([^"]+)"
-CurrentVersion: CHANGEME
-CurrentVersionCode: 0 # CHANGEME
+CurrentVersion: 1.1.0
+CurrentVersionCode: 101

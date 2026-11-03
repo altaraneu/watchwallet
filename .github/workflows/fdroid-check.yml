@@ -1,0 +1,40 @@
+name: F-Droid metadata check
+
+# Runs F-Droid's own tools on the draft recipe in a throwaway fdroiddata layout. Windows cannot install
+# them, see docs/fdroid/README.md. The real test build happens in fdroiddata's CI.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          path: app-source
+      - name: Install the tools
+        run: pipx install fdroidserver
+      - name: Prepare the layout
+        run: |
+          mkdir -p data/metadata
+          cp app-source/docs/fdroid/com.altaran.watchwallet.yml data/metadata/
+          printf 'repo_url: https://example.invalid/repo\nrepo_name: test\nrepo_description: test\n' > data/config.yml
+          chmod 600 data/config.yml
+      - name: Read the metadata
+        working-directory: data
+        run: fdroid readmeta
+      - name: Lint
+        working-directory: data
+        run: fdroid lint com.altaran.watchwallet
+      - name: Show what rewritemeta would change
+        working-directory: data
+        run: fdroid rewritemeta com.altaran.watchwallet && diff -u ../app-source/docs/fdroid/com.altaran.watchwallet.yml metadata/com.altaran.watchwallet.yml
+      - name: Run the scanner on the tag's source
+        working-directory: app-source
+        run: fdroid scanner --help > /dev/null && git fetch --depth=1 origin refs/tags/v1.1.0:refs/tags/v1.1.0 && git checkout -q v1.1.0 && cd .. && (cd data && fdroid scanner --exit-code ../app-source) || echo "scanner reported findings or could not run"
