@@ -206,7 +206,7 @@ class SolanaAdapter(
                 // confirmed transaction fails the sync; skipping it would leave a permanent gap
                 // because later syncs stop at the newer signatures stored now.
                 if (!confirmed) return@flatMap emptyList()
-                throw ChainDataException("Solana transaction $signature not available")
+                throw ChainDataException("Solana transaction not available")
             }
             parseTransaction(signature, tx, address, tokenAssets, confirmed)
         }.toMutableList()

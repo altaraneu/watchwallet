@@ -278,7 +278,7 @@ class XrpAdapter(
     }
 
     private fun checkError(result: JsonElement) {
-        result.str("error")?.let { throw ChainDataException("XRPL error: $it") }
+        result.str("error")?.let { throw ChainDataException("XRPL error") }
     }
 
     private companion object {

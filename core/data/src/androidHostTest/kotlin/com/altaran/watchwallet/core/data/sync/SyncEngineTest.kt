@@ -239,7 +239,7 @@ class SyncEngineTest {
         val engine = engine(adapter)
         engine.syncWallet(id).join()
         assertEquals("4", balances()[AssetId.native(NET_A).value])
-        assertEquals("down", engine.state.value.errors[id])
+        assertEquals("ChainDataException", engine.state.value.errors[id])
         assertNull("not synced as a whole", dao.wallet(id)?.lastSyncedAt)
     }
 

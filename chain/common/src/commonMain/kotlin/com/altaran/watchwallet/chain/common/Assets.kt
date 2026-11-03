@@ -62,7 +62,7 @@ fun requireBigInteger(raw: String?, what: String): BigInteger =
 /** Like [parseDecimalUnits] for balances: a missing or malformed value is a failure, never zero. */
 fun requireDecimalUnits(value: String?, decimals: Int, what: String): BigInteger {
     val text = value?.trim()?.uppercase()?.takeIf { it.isNotEmpty() } ?: throw ChainDataException("$what: malformed answer")
-    return runCatching { TokenAmount.parseDecimal(text, decimals).raw }.getOrElse { throw ChainDataException("$what: malformed answer", it) }
+    return runCatching { TokenAmount.parseDecimal(text, decimals).raw }.getOrElse { throw ChainDataException("$what: malformed answer") }
 }
 
 /** Parses a decimal string such as `12.5` or `1.2e-7` into base units with [decimals]. */

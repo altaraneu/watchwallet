@@ -157,7 +157,7 @@ class NearAdapter(
         val inlineError = result.str("error")
         if (inlineError != null) {
             if ("does not exist" in inlineError || "UNKNOWN_ACCOUNT" in inlineError) return null
-            throw ChainDataException("NEAR RPC error: $inlineError")
+            throw ChainDataException("NEAR RPC error")
         }
         return result
     }

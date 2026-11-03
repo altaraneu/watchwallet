@@ -167,7 +167,7 @@ class SuiAdapter(
                 },
             )
         }.body()
-        response["errors"]?.let { throw ChainDataException("Sui GraphQL error: $it") }
+        response["errors"]?.let { throw ChainDataException("Sui GraphQL error") }
         response["data"] ?: JsonNull
     }
 

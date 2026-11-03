@@ -19,6 +19,7 @@ import com.altaran.watchwallet.core.model.AssetId
 import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.WatchTarget
+import com.altaran.watchwallet.core.network.safeDescription
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -43,7 +44,7 @@ data class SyncState(
     val manual: Boolean = false,
     /** Wallet ids currently syncing. */
     val syncingWallets: Set<Long> = emptySet(),
-    /** Wallet id → last error (cleared on success). Messages are technical, not shown verbatim. */
+    /** Wallet id → last error (cleared on success): type and HTTP status at most, never a URL or address. */
     val errors: Map<Long, String> = emptyMap(),
     /**
      * Wallet id → chains that could not be fully refreshed although the wallet as a whole could;
@@ -217,7 +218,8 @@ class SyncEngine(
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
             log.log("wallet=$walletId failed ${(Clock.System.now() - started).inWholeMilliseconds}ms ${e::class.simpleName}")
-            _state.update { it.copy(errors = it.errors + (walletId to (e.message ?: e::class.simpleName.orEmpty()))) }
+            // Never the message of a foreign exception: an HTTP client's holds the URL with the address.
+            _state.update { it.copy(errors = it.errors + (walletId to e.safeDescription())) }
         } finally {
             _state.update { it.copy(syncingWallets = it.syncingWallets - walletId) }
             withContext(NonCancellable) { inFlightLock.withLock { inFlight.remove(walletId) } }

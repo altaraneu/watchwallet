@@ -21,6 +21,7 @@ import com.altaran.watchwallet.core.model.DerivedAddress
 import com.altaran.watchwallet.core.model.TokenAmount
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.safeDescription
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.toBigInteger
 import io.ktor.client.HttpClient
@@ -243,9 +244,10 @@ class BitcoinAdapter(
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (
-        @Suppress("TooGenericExceptionCaught") e: Exception,
+        // Dropped on purpose: its message holds the URL with the address.
+        @Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception,
     ) {
-        throw ChainDataException("Bitcoin data source failed: ${e.message}", e)
+        throw ChainDataException("Bitcoin data source failed: ${e.safeDescription()}")
     }
 
     private companion object {

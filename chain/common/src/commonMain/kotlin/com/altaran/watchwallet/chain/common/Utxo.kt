@@ -15,6 +15,7 @@ import com.altaran.watchwallet.core.model.DerivedAddress
 import com.altaran.watchwallet.core.model.ScriptType
 import com.altaran.watchwallet.core.model.TokenAmount
 import com.altaran.watchwallet.core.model.WatchTarget
+import com.altaran.watchwallet.core.network.safeDescription
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.toBigInteger
 import fr.acinq.bitcoin.ByteVector
@@ -194,8 +195,11 @@ open class UtxoAdapter(
     private suspend fun discover(target: WatchTarget.ExtendedPublicKey): List<Scanned> {
         val derive = try {
             deriver(target)
-        } catch (e: IllegalArgumentException) {
-            throw ChainDataException("Invalid extended public key", e)
+        } catch (
+            // Dropped on purpose: its message could quote the key.
+            @Suppress("SwallowedException") e: IllegalArgumentException,
+        ) {
+            throw ChainDataException("Invalid extended public key: ${e.safeDescription()}")
         }
         return listOf(false, true).flatMap { change ->
             val result = mutableListOf<Scanned>()

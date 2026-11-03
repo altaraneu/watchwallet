@@ -3,6 +3,7 @@ package com.altaran.watchwallet.chain.common
 import com.altaran.watchwallet.chain.api.ChainDataException
 import com.altaran.watchwallet.core.network.HostHealth
 import com.altaran.watchwallet.core.network.Throttle
+import com.altaran.watchwallet.core.network.safeDescription
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ResponseException
@@ -33,9 +34,10 @@ suspend fun <T> chainCall(source: String, block: suspend () -> T): T = try {
 } catch (e: CancellationException) {
     throw e
 } catch (
-    @Suppress("TooGenericExceptionCaught") e: Exception,
+    // Dropped on purpose: its message holds the URL with the address.
+    @Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception,
 ) {
-    throw ChainDataException("$source data source failed: ${e.message}", e)
+    throw ChainDataException("$source data source failed: ${e.safeDescription()}")
 }
 
 /** `true` when the exception is an HTTP response with the given status (for example 404). */
@@ -112,8 +114,8 @@ class JsonRpcClient(
     }
 }
 
-/** A JSON-RPC error object returned by the node. */
-class RpcErrorException(method: String, val error: JsonElement) : Exception("RPC $method failed: $error") {
+/** A JSON-RPC error object returned by the node; it can quote the address, so it stays out of the message. */
+class RpcErrorException(method: String, val error: JsonElement) : Exception("RPC $method failed") {
     val code: Long? get() = ((error as? JsonObject)?.get("code") as? JsonPrimitive)?.longOrNull
     val text: String get() = error.toString()
 }
