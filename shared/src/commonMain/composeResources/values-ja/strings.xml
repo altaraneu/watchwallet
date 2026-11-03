@@ -14,9 +14,9 @@
     <string name="rate_action">評価する</string>
     <string name="rate_already">評価済み</string>
     <string name="rate_later">後で</string>
-    <string name="endpoints_changed_title">ブロックチェーンサーバーが変更されました</string>
-    <string name="endpoints_changed_message">今後、追跡中のアドレスは現在のリストのサーバーに送られます。設定 → ネットワークで確認したり、アプリ内蔵のサーバーのみを使用したりできます。</string>
-    <string name="endpoints_changed_added">新規: %1$s</string>
-    <string name="endpoints_changed_removed">使用終了: %1$s</string>
-    <string name="endpoints_changed_ok">OK</string>
+    <string name="endpoints_approval_title">新しいブロックチェーンサーバーを許可しますか？</string>
+    <string name="endpoints_approval_message">サーバーリストの署名付き更新に、アプリがまだ使用していないサーバーが含まれています。許可すると、次回のアプリ起動から、追跡中のアドレスがIPアドレスとともにそれらのサーバーに送られます。許可しない場合は何も変わりません。</string>
+    <string name="endpoints_approval_added">新しいサーバー: %1$s</string>
+    <string name="endpoints_approval_allow">許可</string>
+    <string name="endpoints_approval_decline">現在のサーバーのままにする</string>
 </resources>

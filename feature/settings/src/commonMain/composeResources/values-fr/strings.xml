@@ -52,7 +52,7 @@
     <string name="settings_esplora">Serveur Bitcoin (Esplora)</string>
     <string name="settings_esplora_hint">URL de base de votre propre serveur REST Esplora / electrs, par exemple https://my-node.local/api. Laissez vide pour utiliser mempool.space.</string>
     <string name="settings_endpoints_auto">Mettre à jour la liste des serveurs automatiquement</string>
-    <string name="settings_endpoints_auto_summary">Recherche chaque jour une liste signée de serveurs publics. Désactivé : uniquement les serveurs intégrés.</string>
+    <string name="settings_endpoints_auto_summary">Désactivé par défaut. Activé, recherche chaque jour une liste signée de serveurs publics, et les nouveaux serveurs demandent votre accord. Désactivé : uniquement les serveurs intégrés.</string>
     <string name="settings_default_server">Par défaut (mempool.space)</string>
     <string name="settings_coingecko_key">Clé API CoinGecko</string>
     <string name="settings_coingecko_hint">Clé de démo gratuite facultative pour des limites de requêtes de prix plus élevées et un historique des prix plus long.</string>
@@ -88,4 +88,7 @@
     <string name="settings_endpoints_hosts_hint">Ces serveurs reçoivent les adresses que vous suivez, et vous voyez ce qu’ils indiquent. Une nouvelle liste s’applique au prochain démarrage de l’application.</string>
     <string name="settings_endpoints_hosts_close">Fermer</string>
     <string name="settings_esplora_ignored">Cette adresse n’est pas autorisée et n’est donc pas utilisée : vos adresses Bitcoin vont aux serveurs par défaut. Saisissez une adresse https:// complète pour utiliser votre propre serveur.</string>
+    <string name="settings_endpoints_hint">Des serveurs blockchain publics échouent ici à répétition. Les mises à jour de la liste de serveurs peuvent les remplacer sans mettre à jour l’application. Les nouveaux serveurs demandent toujours votre accord.</string>
+    <string name="settings_endpoints_hint_enable">Activer</string>
+    <string name="settings_endpoints_hint_dismiss">Pas maintenant</string>
 </resources>

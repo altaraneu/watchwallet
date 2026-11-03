@@ -51,7 +51,7 @@
     <string name="settings_esplora">Bitcoin সার্ভার (Esplora)</string>
     <string name="settings_esplora_hint">আপনার নিজের Esplora / electrs REST সার্ভারের বেস URL, যেমন https://my-node.local/api। mempool.space-এর জন্য খালি রাখুন।</string>
     <string name="settings_endpoints_auto">সার্ভার তালিকা স্বয়ংক্রিয়ভাবে আপডেট করুন</string>
-    <string name="settings_endpoints_auto_summary">প্রতিদিন স্বাক্ষরিত পাবলিক সার্ভার তালিকা পরীক্ষা করে। বন্ধ থাকলে: শুধু অ্যাপে অন্তর্ভুক্ত সার্ভার।</string>
+    <string name="settings_endpoints_auto_summary">ডিফল্টভাবে বন্ধ। চালু থাকলে প্রতিদিন স্বাক্ষরিত পাবলিক সার্ভার তালিকা পরীক্ষা করে, আর নতুন সার্ভারের জন্য আপনার অনুমোদন লাগে। বন্ধ থাকলে: শুধু অ্যাপে অন্তর্ভুক্ত সার্ভার।</string>
     <string name="settings_default_server">ডিফল্ট (mempool.space)</string>
     <string name="settings_coingecko_key">CoinGecko API কি</string>
     <string name="settings_coingecko_hint">দামের অনুরোধের উচ্চতর সীমা ও দীর্ঘতর দামের ইতিহাসের জন্য ঐচ্ছিক বিনামূল্যের ডেমো কি।</string>
@@ -86,4 +86,7 @@
     <string name="settings_endpoints_hosts_hint">এই সার্ভারগুলো আপনার ট্র্যাক করা ঠিকানা পায় এবং তারা যা জানায় তা-ই আপনি দেখেন। নতুন তালিকা অ্যাপের পরবর্তী চালুতে কার্যকর হয়।</string>
     <string name="settings_endpoints_hosts_close">বন্ধ করুন</string>
     <string name="settings_esplora_ignored">এই ঠিকানাটি অনুমোদিত নয়, তাই এটি ব্যবহার করা হচ্ছে না: আপনার Bitcoin ঠিকানাগুলো ডিফল্ট সার্ভারে যাচ্ছে। নিজের সার্ভার ব্যবহার করতে একটি সম্পূর্ণ https:// ঠিকানা দিন।</string>
+    <string name="settings_endpoints_hint">এখানে পাবলিক ব্লকচেইন সার্ভার বারবার ব্যর্থ হচ্ছে। সার্ভার তালিকার আপডেট অ্যাপ আপডেট ছাড়াই সেগুলো বদলাতে পারে। নতুন সার্ভারের জন্য সবসময় আপনার অনুমোদন লাগে।</string>
+    <string name="settings_endpoints_hint_enable">চালু করুন</string>
+    <string name="settings_endpoints_hint_dismiss">এখন নয়</string>
 </resources>

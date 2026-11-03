@@ -14,9 +14,9 @@
     <string name="rate_action">تقييم</string>
     <string name="rate_already">قيّمته بالفعل</string>
     <string name="rate_later">ليس الآن</string>
-    <string name="endpoints_changed_title">تغيّرت خوادم البلوكتشين</string>
-    <string name="endpoints_changed_message">من الآن فصاعدًا تُرسل العناوين التي تتابعها إلى الخوادم في القائمة الحالية. يمكنك مراجعتها أو استخدام الخوادم المضمّنة في التطبيق فقط من الإعدادات ← الشبكة.</string>
-    <string name="endpoints_changed_added">جديدة: %1$s</string>
-    <string name="endpoints_changed_removed">لم تعد مستخدمة: %1$s</string>
-    <string name="endpoints_changed_ok">حسنًا</string>
+    <string name="endpoints_approval_title">هل تسمح بخوادم بلوكتشين جديدة؟</string>
+    <string name="endpoints_approval_message">يذكر تحديث موقّع لقائمة الخوادم خوادم لا يستخدمها التطبيق بعد. إذا سمحت بذلك، فستُرسل إليها العناوين التي تتابعها مع عنوان IP الخاص بك منذ بدء التشغيل التالي للتطبيق. وإلا فلن يتغير شيء.</string>
+    <string name="endpoints_approval_added">خوادم جديدة: %1$s</string>
+    <string name="endpoints_approval_allow">السماح</string>
+    <string name="endpoints_approval_decline">الإبقاء على الخوادم الحالية</string>
 </resources>

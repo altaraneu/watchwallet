@@ -14,9 +14,9 @@
     <string name="rate_action">去评分</string>
     <string name="rate_already">我已评分</string>
     <string name="rate_later">以后再说</string>
-    <string name="endpoints_changed_title">区块链服务器已更改</string>
-    <string name="endpoints_changed_message">从现在起，你跟踪的地址将发送到当前列表中的服务器。你可以在“设置 → 网络”中查看，或仅使用应用内置的服务器。</string>
-    <string name="endpoints_changed_added">新增：%1$s</string>
-    <string name="endpoints_changed_removed">不再使用：%1$s</string>
-    <string name="endpoints_changed_ok">知道了</string>
+    <string name="endpoints_approval_title">允许新的区块链服务器？</string>
+    <string name="endpoints_approval_message">服务器列表的一次已签名更新包含应用尚未使用的服务器。如果允许，从下次启动应用起，你跟踪的地址将连同你的 IP 地址发送给这些服务器。如果不允许，则不会有任何变化。</string>
+    <string name="endpoints_approval_added">新服务器：%1$s</string>
+    <string name="endpoints_approval_allow">允许</string>
+    <string name="endpoints_approval_decline">保留当前服务器</string>
 </resources>

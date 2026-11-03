@@ -1,12 +1,15 @@
 package com.altaran.watchwallet.core.data.repository
 
+import com.altaran.watchwallet.core.data.sync.ServerFailureCounts
 import com.altaran.watchwallet.core.datastore.SettingsDataSource
 import com.altaran.watchwallet.core.model.NetworkSettings
 import com.altaran.watchwallet.core.model.QuoteCurrency
 import com.altaran.watchwallet.core.model.ThemeMode
 import com.altaran.watchwallet.core.model.UserSettings
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
+@Suppress("TooManyFunctions") // One small accessor per stored value, as in SettingsDataSource.
 interface SettingsRepository {
     val settings: Flow<UserSettings>
 
@@ -32,6 +35,14 @@ interface SettingsRepository {
     suspend fun setRemoteIcons(enabled: Boolean)
     suspend fun setBackgroundRefresh(hours: Int, wifiOnly: Boolean)
     suspend fun setNetwork(network: NetworkSettings)
+
+    /**
+     * Public servers of a chain keep failing and the user has not decided about server list updates,
+     * which could replace them: worth a hint. Computed from the device's own sync results.
+     */
+    val suggestServerListUpdates: Flow<Boolean>
+
+    suspend fun declineServerListUpdates()
 
     /** Counts this app launch; returns the total number of launches. */
     suspend fun recordLaunch(): Int
@@ -65,6 +76,11 @@ internal class DefaultSettingsRepository(
     override suspend fun setRemoteIcons(enabled: Boolean) = dataSource.setRemoteIcons(enabled)
     override suspend fun setBackgroundRefresh(hours: Int, wifiOnly: Boolean) = dataSource.setBackgroundRefresh(hours, wifiOnly)
     override suspend fun setNetwork(network: NetworkSettings) = dataSource.setNetwork(network)
+    override val suggestServerListUpdates: Flow<Boolean> = combine(dataSource.endpointUpdatesChoice, dataSource.serverFailures) { choice, failures ->
+        choice == null && ServerFailureCounts.repeated(failures)
+    }
+
+    override suspend fun declineServerListUpdates() = dataSource.declineEndpointUpdates()
     override suspend fun recordLaunch(): Int = dataSource.recordLaunch()
     override val donateReminderDisabled: Flow<Boolean> = dataSource.donateReminderDisabled
     override suspend fun disableDonateReminder() = dataSource.disableDonateReminder()

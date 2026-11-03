@@ -52,7 +52,7 @@
     <string name="settings_esplora">Servidor Bitcoin (Esplora)</string>
     <string name="settings_esplora_hint">URL base do seu próprio servidor REST Esplora / electrs, por exemplo https://my-node.local/api. Deixe em branco para usar mempool.space.</string>
     <string name="settings_endpoints_auto">Atualizar a lista de servidores automaticamente</string>
-    <string name="settings_endpoints_auto_summary">Procura diariamente uma lista assinada de servidores públicos. Desativado: apenas os servidores incluídos no app.</string>
+    <string name="settings_endpoints_auto_summary">Desativado por padrão. Quando ativado, procura diariamente uma lista assinada de servidores públicos, e novos servidores precisam da sua aprovação. Desativado: apenas os servidores incluídos no app.</string>
     <string name="settings_default_server">Padrão (mempool.space)</string>
     <string name="settings_coingecko_key">Chave de API do CoinGecko</string>
     <string name="settings_coingecko_hint">Chave demo gratuita opcional para limites maiores de consultas de preços e histórico de preços mais longo.</string>
@@ -88,4 +88,7 @@
     <string name="settings_endpoints_hosts_hint">Estes servidores recebem os endereços que você acompanha, e o que você vê é o que eles informam. Uma nova lista vale a partir do próximo início do app.</string>
     <string name="settings_endpoints_hosts_close">Fechar</string>
     <string name="settings_esplora_ignored">Este endereço não é permitido, por isso não é usado: seus endereços de Bitcoin vão para os servidores padrão. Digite um endereço https:// completo para usar seu próprio servidor.</string>
+    <string name="settings_endpoints_hint">Servidores públicos de blockchain continuam falhando aqui. As atualizações da lista de servidores podem substituí-los sem atualizar o app. Novos servidores sempre precisam da sua aprovação.</string>
+    <string name="settings_endpoints_hint_enable">Ativar</string>
+    <string name="settings_endpoints_hint_dismiss">Agora não</string>
 </resources>

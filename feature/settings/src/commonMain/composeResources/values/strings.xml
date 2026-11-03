@@ -57,7 +57,7 @@
     <string name="settings_esplora">Bitcoin server (Esplora)</string>
     <string name="settings_esplora_hint">Base URL of your own Esplora / electrs REST server, for example https://my-node.local/api. Leave empty for mempool.space.</string>
     <string name="settings_endpoints_auto">Update server list automatically</string>
-    <string name="settings_endpoints_auto_summary">Checks daily for a signed list of public servers. Off: only the servers built into the app.</string>
+    <string name="settings_endpoints_auto_summary">Off by default. When on, checks daily for a signed list of public servers, and new servers need your approval. Off: only the servers built into the app.</string>
     <string name="settings_default_server">Default (mempool.space)</string>
     <string name="settings_coingecko_key">CoinGecko API key</string>
     <string name="settings_coingecko_hint">Optional free demo key for higher price-request limits and longer price history.</string>
@@ -98,4 +98,7 @@
     <string name="settings_endpoints_hosts_hint">These servers receive the addresses you track, and show you what they report. A new list applies at the next app start.</string>
     <string name="settings_endpoints_hosts_close">Close</string>
     <string name="settings_esplora_ignored">This address is not allowed, so it is not used: your Bitcoin addresses go to the default servers. Enter a full https:// address to use your own server.</string>
+    <string name="settings_endpoints_hint">Public blockchain servers keep failing here. Server list updates can replace them without an app update. New servers always need your approval.</string>
+    <string name="settings_endpoints_hint_enable">Turn on</string>
+    <string name="settings_endpoints_hint_dismiss">Not now</string>
 </resources>

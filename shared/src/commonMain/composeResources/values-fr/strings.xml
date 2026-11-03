@@ -14,9 +14,9 @@
     <string name="rate_action">Noter</string>
     <string name="rate_already">C’est déjà fait</string>
     <string name="rate_later">Pas maintenant</string>
-    <string name="endpoints_changed_title">Les serveurs blockchain ont changé</string>
-    <string name="endpoints_changed_message">Désormais, les adresses que vous suivez vont aux serveurs de la liste actuelle. Vous pouvez les consulter, ou n’utiliser que les serveurs intégrés à l’application, dans Paramètres → Réseau.</string>
-    <string name="endpoints_changed_added">Nouveaux : %1$s</string>
-    <string name="endpoints_changed_removed">Plus utilisés : %1$s</string>
-    <string name="endpoints_changed_ok">Compris</string>
+    <string name="endpoints_approval_title">Autoriser de nouveaux serveurs blockchain ?</string>
+    <string name="endpoints_approval_message">Une mise à jour signée de la liste de serveurs nomme des serveurs que l’application n’utilise pas encore. Si vous l’autorisez, les adresses que vous suivez leur seront envoyées dès le prochain démarrage de l’application, avec votre adresse IP. Sinon, rien ne change.</string>
+    <string name="endpoints_approval_added">Nouveaux serveurs : %1$s</string>
+    <string name="endpoints_approval_allow">Autoriser</string>
+    <string name="endpoints_approval_decline">Garder les serveurs actuels</string>
 </resources>

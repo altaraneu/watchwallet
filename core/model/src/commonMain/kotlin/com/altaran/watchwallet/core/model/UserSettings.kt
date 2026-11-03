@@ -13,7 +13,7 @@ data class NetworkSettings(
     /** Optional CoinGecko demo API key for higher rate limits. */
     val coinGeckoApiKey: String? = null,
     /** Use the signed server list from the project repository; off means bundled servers only. */
-    val autoUpdateEndpoints: Boolean = true,
+    val autoUpdateEndpoints: Boolean = false,
 )
 
 /**

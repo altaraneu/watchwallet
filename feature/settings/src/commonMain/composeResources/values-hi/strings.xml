@@ -51,7 +51,7 @@
     <string name="settings_esplora">Bitcoin सर्वर (Esplora)</string>
     <string name="settings_esplora_hint">आपके अपने Esplora / electrs REST सर्वर का बेस URL, जैसे https://my-node.local/api। mempool.space के लिए खाली छोड़ें।</string>
     <string name="settings_endpoints_auto">सर्वर सूची अपने आप अपडेट करें</string>
-    <string name="settings_endpoints_auto_summary">हस्ताक्षरित सार्वजनिक सर्वर सूची की रोज़ जाँच करता है। बंद होने पर: केवल ऐप में शामिल सर्वर।</string>
+    <string name="settings_endpoints_auto_summary">डिफ़ॉल्ट रूप से बंद। चालू होने पर हस्ताक्षरित सार्वजनिक सर्वर सूची की रोज़ जाँच करता है, और नए सर्वरों के लिए आपकी स्वीकृति चाहिए। बंद होने पर: केवल ऐप में शामिल सर्वर।</string>
     <string name="settings_default_server">डिफ़ॉल्ट (mempool.space)</string>
     <string name="settings_coingecko_key">CoinGecko API की</string>
     <string name="settings_coingecko_hint">कीमत अनुरोधों की ऊँची सीमा और लंबे कीमत इतिहास के लिए वैकल्पिक मुफ़्त डेमो की।</string>
@@ -86,4 +86,7 @@
     <string name="settings_endpoints_hosts_hint">ये सर्वर आपके ट्रैक किए गए पते प्राप्त करते हैं, और आपको वही दिखता है जो वे बताते हैं। नई सूची ऐप के अगले शुरू होने पर लागू होती है।</string>
     <string name="settings_endpoints_hosts_close">बंद करें</string>
     <string name="settings_esplora_ignored">यह पता अनुमत नहीं है, इसलिए इसका उपयोग नहीं हो रहा: आपके Bitcoin पते डिफ़ॉल्ट सर्वर पर जाते हैं। अपना सर्वर उपयोग करने के लिए पूरा https:// पता दर्ज करें।</string>
+    <string name="settings_endpoints_hint">यहाँ सार्वजनिक ब्लॉकचेन सर्वर बार-बार विफल हो रहे हैं। सर्वर सूची के अपडेट ऐप अपडेट के बिना उन्हें बदल सकते हैं। नए सर्वरों के लिए हमेशा आपकी स्वीकृति चाहिए।</string>
+    <string name="settings_endpoints_hint_enable">चालू करें</string>
+    <string name="settings_endpoints_hint_dismiss">अभी नहीं</string>
 </resources>

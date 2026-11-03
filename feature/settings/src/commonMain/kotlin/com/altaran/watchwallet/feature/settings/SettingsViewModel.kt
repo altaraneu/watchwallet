@@ -29,6 +29,8 @@ sealed interface SettingsUiState {
         val restartRequired: Boolean = false,
         /** The server list in force in this run of the app. */
         val serverList: EndpointListInfo? = null,
+        /** Public servers keep failing and the user has not decided about server list updates. */
+        val suggestServerListUpdates: Boolean = false,
     ) : SettingsUiState
 }
 
@@ -55,7 +57,8 @@ internal class SettingsViewModel(
     val uiState: StateFlow<SettingsUiState> = combine(
         settingsRepository.settings,
         languageController.selectedLanguageTag,
-    ) { settings, languageTag ->
+        settingsRepository.suggestServerListUpdates,
+    ) { settings, languageTag, suggestUpdates ->
         SettingsUiState.Ready(
             settings = settings,
             selectedLanguageTag = languageTag,
@@ -63,6 +66,7 @@ internal class SettingsViewModel(
             appInfo = appInfo,
             restartRequired = settings.network != activeNetwork,
             serverList = endpoints.info,
+            suggestServerListUpdates = suggestUpdates,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState.Loading)
 
@@ -102,6 +106,10 @@ internal class SettingsViewModel(
 
     fun setNetwork(network: com.altaran.watchwallet.core.model.NetworkSettings) {
         viewModelScope.launch { settingsRepository.setNetwork(network) }
+    }
+
+    fun declineServerListUpdates() {
+        viewModelScope.launch { settingsRepository.declineServerListUpdates() }
     }
 
     fun restart() = restarter.restart()

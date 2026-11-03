@@ -52,6 +52,7 @@ import com.altaran.watchwallet.core.data.repository.SettingsPriceSourceStore
 import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.repository.WalletRepository
 import com.altaran.watchwallet.core.data.sync.DataStoreWalletSyncStateStore
+import com.altaran.watchwallet.core.data.sync.SettingsServerFailureLog
 import com.altaran.watchwallet.core.data.sync.SyncEngine
 import com.altaran.watchwallet.core.data.sync.WalletSyncStateStore
 import com.altaran.watchwallet.core.database.DeletedDataScrubber
@@ -61,7 +62,7 @@ import com.altaran.watchwallet.core.datastore.dataStoreModule
 import com.altaran.watchwallet.core.endpoints.BundledEndpoints
 import com.altaran.watchwallet.core.endpoints.EndpointCatalog
 import com.altaran.watchwallet.core.endpoints.EndpointConfigUpdater
-import com.altaran.watchwallet.core.endpoints.EndpointHostNotice
+import com.altaran.watchwallet.core.endpoints.EndpointListApproval
 import com.altaran.watchwallet.core.endpoints.EndpointProtocol
 import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.NetworkSettings
@@ -91,7 +92,7 @@ val dataModule: Module = module {
         val network = get<NetworkSettings>()
         createHttpClient(proxy = if (network.proxyEnabled) ProxyConfig(network.proxyHost, network.proxyPort) else null)
     }
-    // Read once at startup too: a newly downloaded server list applies at the next app start.
+    // Read once at startup too: an approved server list applies at the next app start.
     single<EndpointCatalog> {
         val network = get<NetworkSettings>()
         val stored = runBlocking { get<SettingsDataSource>().endpointConfig.first() }
@@ -99,7 +100,7 @@ val dataModule: Module = module {
         val customServer = network.esploraUrl?.let(com.altaran.watchwallet.core.common.CustomServerUrl::validate)
         EndpointCatalog.resolve(stored, network.autoUpdateEndpoints, customServer, Clock.System.now().epochSeconds)
     }
-    single { EndpointHostNotice(get(), SettingsEndpointConfigStore(get())) }
+    single { EndpointListApproval(SettingsEndpointConfigStore(get())) }
     single {
         val debug = get<AppInfo>().isDebug
         EndpointConfigUpdater(
@@ -159,7 +160,13 @@ val dataModule: Module = module {
     single { PortfolioRepository(get(), get(), get()) }
     single { com.altaran.watchwallet.core.data.repository.CostBasisRepository(get(), get()) }
     single<WalletSyncStateStore> { DataStoreWalletSyncStateStore(get()) }
-    single { SyncEngine(get(), get(), get<PriceRepository>(), get(), getOrNull<SyncLog>() ?: SyncLog.None) }
+    single {
+        val settings = get<SettingsDataSource>()
+        val failures = SettingsServerFailureLog(settings, ownServerChains = {
+            if (settings.settings.first().network.esploraUrl != null) setOf(ChainId.BITCOIN.value) else emptySet()
+        })
+        SyncEngine(get(), get(), get<PriceRepository>(), get(), getOrNull<SyncLog>() ?: SyncLog.None, failures = failures)
+    }
     single { AddWalletService(get(), get(), get()) }
     single<AddWalletOperations> { get<AddWalletService>() }
     single { DemoWallets(get(), get()) }

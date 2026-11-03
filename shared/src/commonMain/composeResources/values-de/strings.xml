@@ -14,9 +14,9 @@
     <string name="rate_action">Bewerten</string>
     <string name="rate_already">Schon erledigt</string>
     <string name="rate_later">Nicht jetzt</string>
-    <string name="endpoints_changed_title">Blockchain-Server geändert</string>
-    <string name="endpoints_changed_message">Ab jetzt gehen deine beobachteten Adressen an die Server der aktuellen Liste. Unter Einstellungen → Netzwerk kannst du sie ansehen oder nur die in der App enthaltenen Server verwenden.</string>
-    <string name="endpoints_changed_added">Neu: %1$s</string>
-    <string name="endpoints_changed_removed">Nicht mehr verwendet: %1$s</string>
-    <string name="endpoints_changed_ok">Verstanden</string>
+    <string name="endpoints_approval_title">Neue Blockchain-Server zulassen?</string>
+    <string name="endpoints_approval_message">Eine signierte Aktualisierung der Serverliste nennt Server, die die App noch nicht verwendet. Wenn du sie zulässt, gehen deine beobachteten Adressen ab dem nächsten App-Start zusammen mit deiner IP-Adresse an diese Server. Wenn nicht, ändert sich nichts.</string>
+    <string name="endpoints_approval_added">Neue Server: %1$s</string>
+    <string name="endpoints_approval_allow">Zulassen</string>
+    <string name="endpoints_approval_decline">Aktuelle Server behalten</string>
 </resources>

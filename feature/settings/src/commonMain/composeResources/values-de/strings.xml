@@ -51,7 +51,7 @@
     <string name="settings_esplora">Bitcoin-Server (Esplora)</string>
     <string name="settings_esplora_hint">Basis-URL deines eigenen Esplora- / electrs-REST-Servers, zum Beispiel https://my-node.local/api. Leer lassen für mempool.space.</string>
     <string name="settings_endpoints_auto">Serverliste automatisch aktualisieren</string>
-    <string name="settings_endpoints_auto_summary">Prüft täglich auf eine signierte Liste öffentlicher Server. Aus: nur die in der App enthaltenen Server.</string>
+    <string name="settings_endpoints_auto_summary">Standardmäßig aus. Wenn an, prüft täglich auf eine signierte Liste öffentlicher Server; neue Server brauchen deine Zustimmung. Aus: nur die in der App enthaltenen Server.</string>
     <string name="settings_default_server">Standard (mempool.space)</string>
     <string name="settings_coingecko_key">CoinGecko-API-Schlüssel</string>
     <string name="settings_coingecko_hint">Optionaler kostenloser Demo-Schlüssel für höhere Limits bei Preisabfragen und einen längeren Preisverlauf.</string>
@@ -86,4 +86,7 @@
     <string name="settings_endpoints_hosts_hint">Diese Server erhalten die von dir beobachteten Adressen, und du siehst, was sie melden. Eine neue Liste gilt ab dem nächsten App-Start.</string>
     <string name="settings_endpoints_hosts_close">Schließen</string>
     <string name="settings_esplora_ignored">Diese Adresse ist nicht erlaubt und wird daher nicht verwendet: Deine Bitcoin-Adressen gehen an die Standardserver. Gib eine vollständige https://-Adresse ein, um deinen eigenen Server zu nutzen.</string>
+    <string name="settings_endpoints_hint">Öffentliche Blockchain-Server fallen hier wiederholt aus. Aktualisierungen der Serverliste können sie ohne App-Update ersetzen. Neue Server brauchen immer deine Zustimmung.</string>
+    <string name="settings_endpoints_hint_enable">Einschalten</string>
+    <string name="settings_endpoints_hint_dismiss">Nicht jetzt</string>
 </resources>

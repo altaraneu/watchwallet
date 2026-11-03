@@ -53,7 +53,7 @@
     <string name="settings_esplora">Сервер Bitcoin (Esplora)</string>
     <string name="settings_esplora_hint">Базовый URL вашего сервера Esplora / electrs REST, например https://my-node.local/api. Оставьте пустым, чтобы использовать mempool.space.</string>
     <string name="settings_endpoints_auto">Автоматически обновлять список серверов</string>
-    <string name="settings_endpoints_auto_summary">Раз в день проверяет подписанный список публичных серверов. Выключено: только встроенные в приложение серверы.</string>
+    <string name="settings_endpoints_auto_summary">По умолчанию выключено. Если включить, раз в день проверяет подписанный список публичных серверов, а новые серверы требуют вашего согласия. Выключено: только встроенные в приложение серверы.</string>
     <string name="settings_default_server">По умолчанию (mempool.space)</string>
     <string name="settings_coingecko_key">Ключ API CoinGecko</string>
     <string name="settings_coingecko_hint">Необязательный бесплатный демо-ключ для более высоких лимитов запросов цен и более длинной истории цен.</string>
@@ -90,4 +90,7 @@
     <string name="settings_endpoints_hosts_hint">Эти серверы получают отслеживаемые вами адреса, а вы видите то, что они сообщают. Новый список вступает в силу при следующем запуске приложения.</string>
     <string name="settings_endpoints_hosts_close">Закрыть</string>
     <string name="settings_esplora_ignored">Этот адрес не разрешён, поэтому не используется: ваши адреса Bitcoin отправляются на серверы по умолчанию. Чтобы использовать свой сервер, введите полный адрес https://.</string>
+    <string name="settings_endpoints_hint">Публичные серверы блокчейна здесь постоянно дают сбои. Обновления списка серверов могут заменить их без обновления приложения. Новые серверы всегда требуют вашего согласия.</string>
+    <string name="settings_endpoints_hint_enable">Включить</string>
+    <string name="settings_endpoints_hint_dismiss">Не сейчас</string>
 </resources>

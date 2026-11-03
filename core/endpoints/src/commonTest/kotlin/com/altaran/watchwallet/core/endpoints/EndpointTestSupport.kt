@@ -60,6 +60,11 @@ internal fun envelope(payload: String, signature: String = signature(payload)): 
 internal fun signed(version: Long = 5, expires: Long = LATER, entries: List<EndpointEntry> = listOf(entry())): String =
     envelope(payload(version, expires, entries = entries))
 
+/** Names only a server of the bundled list: it adds no host, so nobody has to be asked. */
+internal val QUIET = listOf(entry(urls = arrayOf("https://mempool.space/api")))
+
+internal fun quiet(version: Long = 5, expires: Long = LATER): String = signed(version, expires, QUIET)
+
 internal fun signedByRecovery(version: Long = 5, expires: Long = LATER, entries: List<EndpointEntry> = listOf(entry())): String {
     val text = payload(version, expires, entries = entries)
     return envelope(text, signature(text, TestKeys.OTHER_SECRET))

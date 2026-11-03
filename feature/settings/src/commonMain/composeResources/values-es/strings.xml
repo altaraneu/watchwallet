@@ -52,7 +52,7 @@
     <string name="settings_esplora">Servidor de Bitcoin (Esplora)</string>
     <string name="settings_esplora_hint">URL base de tu propio servidor REST de Esplora / electrs, por ejemplo https://my-node.local/api. Déjalo vacío para usar mempool.space.</string>
     <string name="settings_endpoints_auto">Actualizar la lista de servidores automáticamente</string>
-    <string name="settings_endpoints_auto_summary">Busca a diario una lista firmada de servidores públicos. Desactivado: solo los servidores incluidos en la app.</string>
+    <string name="settings_endpoints_auto_summary">Desactivado por defecto. Si se activa, busca a diario una lista firmada de servidores públicos, y los servidores nuevos necesitan tu aprobación. Desactivado: solo los servidores incluidos en la app.</string>
     <string name="settings_default_server">Predeterminado (mempool.space)</string>
     <string name="settings_coingecko_key">Clave de API de CoinGecko</string>
     <string name="settings_coingecko_hint">Clave de demostración gratuita opcional para tener límites más altos de consultas de precios y un historial de precios más largo.</string>
@@ -88,4 +88,7 @@
     <string name="settings_endpoints_hosts_hint">Estos servidores reciben las direcciones que sigues y lo que ves es lo que ellos informan. Una lista nueva se aplica al siguiente inicio de la app.</string>
     <string name="settings_endpoints_hosts_close">Cerrar</string>
     <string name="settings_esplora_ignored">Esta dirección no está permitida, así que no se usa: tus direcciones de Bitcoin van a los servidores predeterminados. Introduce una dirección https:// completa para usar tu propio servidor.</string>
+    <string name="settings_endpoints_hint">Los servidores públicos de blockchain fallan aquí repetidamente. Las actualizaciones de la lista de servidores pueden sustituirlos sin actualizar la app. Los servidores nuevos siempre necesitan tu aprobación.</string>
+    <string name="settings_endpoints_hint_enable">Activar</string>
+    <string name="settings_endpoints_hint_dismiss">Ahora no</string>
 </resources>

@@ -90,8 +90,7 @@ class EndpointCatalogTest {
         val catalog = resolve(null, custom = "http://umbrel.local:3006/api")
         assertTrue("umbrel.local" in catalog.info.hosts)
         assertFalse("mempool.space" in catalog.info.hosts)
-        assertFalse("umbrel.local" in catalog.listHosts)
-        assertTrue("mempool.space" in catalog.listHosts)
+        assertEquals(emptyList(), catalog.addedComparedTo(resolve(null)), "the user's own server needs no approval")
     }
 
     @Test

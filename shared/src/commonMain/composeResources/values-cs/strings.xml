@@ -14,9 +14,9 @@
     <string name="rate_action">Ohodnotit</string>
     <string name="rate_already">Už jsem hodnotil</string>
     <string name="rate_later">Teď ne</string>
-    <string name="endpoints_changed_title">Blockchainové servery se změnily</string>
-    <string name="endpoints_changed_message">Od této chvíle jdou sledované adresy na servery z aktuálního seznamu. Můžeš si je prohlédnout nebo používat jen servery vestavěné v aplikaci v Nastavení → Síť.</string>
-    <string name="endpoints_changed_added">Nové: %1$s</string>
-    <string name="endpoints_changed_removed">Už se nepoužívají: %1$s</string>
-    <string name="endpoints_changed_ok">Rozumím</string>
+    <string name="endpoints_approval_title">Povolit nové blockchainové servery?</string>
+    <string name="endpoints_approval_message">Podepsaná aktualizace seznamu serverů uvádí servery, které aplikace zatím nepoužívá. Když ji povolíš, půjdou na ně od příštího spuštění aplikace sledované adresy spolu s tvou IP adresou. Když ne, nic se nezmění.</string>
+    <string name="endpoints_approval_added">Nové servery: %1$s</string>
+    <string name="endpoints_approval_allow">Povolit</string>
+    <string name="endpoints_approval_decline">Nechat současné servery</string>
 </resources>

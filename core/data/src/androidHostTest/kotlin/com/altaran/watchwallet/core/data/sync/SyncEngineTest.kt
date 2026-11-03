@@ -89,6 +89,7 @@ private class MemoryStates : WalletSyncStateStore {
 /** SDK 34: newer Robolectric SDKs fail to start on this JDK (see MigrationTest). */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
+@Suppress("TooManyFunctions") // One test per behaviour of one class.
 class SyncEngineTest {
     private val db = Room.inMemoryDatabaseBuilder<WatchWalletDatabase>(RuntimeEnvironment.getApplication())
         .setDriver(BundledSQLiteDriver())
@@ -434,5 +435,84 @@ class SyncEngineTest {
         assertEquals(emptySet<String>(), adapter.lastOptions?.usedAddresses)
         engine.syncWallet(id).join()
         assertEquals(setOf("a"), adapter.lastOptions?.usedAddresses)
+    }
+
+    /** The message of an HTTP client's exception holds the URL with the address. */
+    @Test
+    fun aFailureKeepsItsTypeButNotItsMessage() = runBlocking {
+        val id = wallet()
+        val engine = engine(FakeAdapter { _, _, _ -> throw IllegalStateException("GET https://host.test/address/0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed") })
+        engine.syncAll().join()
+        assertEquals("IllegalStateException", engine.state.value.errors[id])
+    }
+
+    private class Rounds : ServerFailureLog {
+        val seen = mutableListOf<Pair<Set<String>, Boolean>>()
+
+        override suspend fun round(failed: Set<String>, connected: Boolean) {
+            seen += failed to connected
+        }
+    }
+
+    private fun counted(adapter: ChainAdapter, rounds: Rounds, prices: CurrentPriceRefresher = CurrentPriceRefresher { }) =
+        SyncEngine(dao, ChainRegistry(listOf(adapter)), prices, states, failures = rounds)
+
+    @Test
+    fun aRoundReportsChainsThatFailedOutright() = runBlocking {
+        wallet()
+        val rounds = Rounds()
+        val adapter = FakeAdapter { _, _, _ -> SyncResult(emptyList(), emptyList(), failedChains = listOf(NET_B)) }
+        counted(adapter, rounds).syncAll().join()
+        assertEquals(listOf(setOf(NET_B.value) to true), rounds.seen)
+    }
+
+    /** A token list over a limit or a failing explorer is no dead server: the native balance came through. */
+    @Test
+    fun aChainWithACurrentNativeBalanceIsNoServerFailure() = runBlocking {
+        wallet()
+        val rounds = Rounds()
+        val adapter = FakeAdapter { _, _, _ ->
+            SyncResult(emptyList(), emptyList(), failedChains = listOf(NET_A), allChainsFailed = true, nativeCurrentChains = listOf(NET_A))
+        }
+        counted(adapter, rounds).syncAll().join()
+        assertEquals(listOf(emptySet<String>() to true), rounds.seen)
+    }
+
+    /** One wallet, everything failing and no price either: that looks like no connection. */
+    @Test
+    fun aRoundWithNothingReachedIsNotConnected() = runBlocking {
+        wallet(activeChains = NET_A.value)
+        val rounds = Rounds()
+        counted(FakeAdapter { _, _, _ -> throw IllegalStateException("no route") }, rounds).syncAll().join()
+        assertEquals(listOf(setOf(NET_A.value) to false), rounds.seen)
+    }
+
+    /** A dead server of a single wallet: the prices arriving show that the device is online. */
+    @Test
+    fun aPriceThatArrivedProvesTheConnection() = runBlocking {
+        wallet(activeChains = NET_A.value)
+        val rounds = Rounds()
+        val prices = object : CurrentPriceRefresher {
+            override suspend fun refreshCurrentPrices() = Unit
+
+            override suspend fun reachedNetworkRecently() = true
+        }
+        counted(FakeAdapter { _, _, _ -> throw IllegalStateException("no route") }, rounds, prices).syncAll().join()
+        assertEquals(listOf(setOf(NET_A.value) to true), rounds.seen)
+    }
+
+    @Test
+    fun aSyncOfOneWalletIsNoRound() = runBlocking {
+        val id = wallet()
+        val rounds = Rounds()
+        counted(FakeAdapter { _, _, _ -> throw IllegalStateException("no route") }, rounds).syncWallet(id).join()
+        assertEquals(emptyList<Pair<Set<String>, Boolean>>(), rounds.seen)
+    }
+
+    @Test
+    fun aRoundWithoutWalletsClearsTheCounts() = runBlocking {
+        val rounds = Rounds()
+        counted(FakeAdapter { _, _, _ -> error("no wallets") }, rounds).syncAll().join()
+        assertEquals(listOf(emptySet<String>() to true), rounds.seen)
     }
 }

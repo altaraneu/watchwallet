@@ -50,7 +50,8 @@ class SettingsDataSource(
                 proxyPort = prefs[Keys.PROXY_PORT] ?: NetworkSettings().proxyPort,
                 esploraUrl = prefs[Keys.ESPLORA_URL]?.takeIf { it.isNotBlank() },
                 coinGeckoApiKey = prefs[Keys.COINGECKO_KEY]?.takeIf { it.isNotBlank() },
-                autoUpdateEndpoints = prefs[Keys.ENDPOINTS_AUTO_UPDATE] ?: true,
+                // Stored only by the switch. Off for everyone who never used it: see initializeDefaults.
+                autoUpdateEndpoints = prefs[Keys.ENDPOINTS_UPDATES] ?: false,
             ),
         )
     }
@@ -64,6 +65,9 @@ class SettingsDataSource(
             if (prefs[Keys.QUOTE_CURRENCY] == null) {
                 prefs[Keys.QUOTE_CURRENCY] = defaultQuoteCurrency().code
             }
+            // Test builds of 1.1 defaulted to on and stored "on" with any change of a network setting,
+            // so that value is no choice anybody made. What they downloaded was never approved.
+            Keys.LEGACY_ENDPOINT_KEYS.forEach { prefs.remove(it) }
         }
     }
 
@@ -92,23 +96,46 @@ class SettingsDataSource(
         it[Keys.PROXY_PORT] = network.proxyPort
         it[Keys.ESPLORA_URL] = network.esploraUrl.orEmpty()
         it[Keys.COINGECKO_KEY] = network.coinGeckoApiKey.orEmpty()
-        it[Keys.ENDPOINTS_AUTO_UPDATE] = network.autoUpdateEndpoints
+        // Only a real change is a choice: saving a proxy must not record one about server lists.
+        if ((it[Keys.ENDPOINTS_UPDATES] ?: false) != network.autoUpdateEndpoints) it[Keys.ENDPOINTS_UPDATES] = network.autoUpdateEndpoints
     }
 
-    /** The verified signed server list, exactly as downloaded (see `:core:endpoints`). */
-    val endpointConfig: Flow<String?> = dataStore.data.map { it[Keys.ENDPOINTS_CONFIG] }
+    /** What the user decided about server list updates; `null` as long as they never did. */
+    val endpointUpdatesChoice: Flow<Boolean?> = dataStore.data.map { it[Keys.ENDPOINTS_UPDATES] }
 
-    suspend fun setEndpointConfig(envelope: String) = edit { it[Keys.ENDPOINTS_CONFIG] = envelope }
+    /** "Not now" on the hint is an answer too, so that it does not come back. */
+    suspend fun declineEndpointUpdates() = edit { it[Keys.ENDPOINTS_UPDATES] = false }
+
+    /** The approved signed server list, exactly as downloaded (see `:core:endpoints`). */
+    val endpointConfig: Flow<String?> = dataStore.data.map { it[Keys.ENDPOINTS_APPLIED] }
+
+    /** A verified list that adds servers and waits for the user. It has no effect until approved. */
+    val endpointConfigPending: Flow<String?> = dataStore.data.map { it[Keys.ENDPOINTS_PENDING] }
+
+    /** The list last declined; its version is not offered again. */
+    val endpointConfigDeclined: Flow<String?> = dataStore.data.map { it[Keys.ENDPOINTS_DECLINED] }
+
+    suspend fun setEndpointConfigPending(envelope: String) = edit { it[Keys.ENDPOINTS_PENDING] = envelope }
+
+    suspend fun applyEndpointConfig(envelope: String) = edit {
+        it[Keys.ENDPOINTS_APPLIED] = envelope
+        it.remove(Keys.ENDPOINTS_PENDING)
+    }
+
+    suspend fun declineEndpointConfig(envelope: String) = edit {
+        it[Keys.ENDPOINTS_DECLINED] = envelope
+        it.remove(Keys.ENDPOINTS_PENDING)
+    }
 
     /** When the server list was last requested, in epoch seconds. */
     val endpointConfigLastCheck: Flow<Long?> = dataStore.data.map { it[Keys.ENDPOINTS_LAST_CHECK] }
 
     suspend fun setEndpointConfigLastCheck(seconds: Long) = edit { it[Keys.ENDPOINTS_LAST_CHECK] = seconds }
 
-    /** Hosts of the server list the user was last told about; `null` before the first start. */
-    val endpointHostsSeen: Flow<Set<String>?> = dataStore.data.map { it[Keys.ENDPOINTS_HOSTS_SEEN] }
+    /** Consecutive failures per chain, in the format of `ServerFailureCounts`; stays on the device. */
+    val serverFailures: Flow<Set<String>> = dataStore.data.map { it[Keys.SERVER_FAILURES].orEmpty() }
 
-    suspend fun setEndpointHostsSeen(hosts: Set<String>) = edit { it[Keys.ENDPOINTS_HOSTS_SEEN] = hosts }
+    suspend fun setServerFailures(failures: Set<String>) = edit { it[Keys.SERVER_FAILURES] = failures }
 
     /** Which stored prices came from which source, as marks of `:core:pricing`; stays on the device. */
     val priceSourceMarks: Flow<Set<String>> = dataStore.data.map { it[Keys.PRICE_SOURCE_MARKS].orEmpty() }
@@ -176,10 +203,17 @@ class SettingsDataSource(
         val PROXY_PORT = intPreferencesKey("proxy_port")
         val ESPLORA_URL = stringPreferencesKey("esplora_url")
         val COINGECKO_KEY = stringPreferencesKey("coingecko_api_key")
-        val ENDPOINTS_AUTO_UPDATE = booleanPreferencesKey("endpoints_auto_update")
-        val ENDPOINTS_CONFIG = stringPreferencesKey("endpoints_config")
+        val ENDPOINTS_UPDATES = booleanPreferencesKey("endpoints_updates_on")
+        val ENDPOINTS_APPLIED = stringPreferencesKey("endpoints_applied")
+        val ENDPOINTS_PENDING = stringPreferencesKey("endpoints_pending")
+        val ENDPOINTS_DECLINED = stringPreferencesKey("endpoints_declined")
         val ENDPOINTS_LAST_CHECK = longPreferencesKey("endpoints_last_check")
-        val ENDPOINTS_HOSTS_SEEN = stringSetPreferencesKey("endpoints_hosts_seen")
+        val SERVER_FAILURES = stringSetPreferencesKey("server_failures")
+        val LEGACY_ENDPOINT_KEYS = listOf(
+            booleanPreferencesKey("endpoints_auto_update"),
+            stringPreferencesKey("endpoints_config"),
+            stringSetPreferencesKey("endpoints_hosts_seen"),
+        )
         val PRICE_SOURCE_MARKS = stringSetPreferencesKey("price_source_marks")
         val LAUNCH_COUNT = intPreferencesKey("launch_count")
         val RATE_PROMPT_OFF = booleanPreferencesKey("rate_prompt_off")

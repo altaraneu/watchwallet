@@ -50,7 +50,7 @@
     <string name="settings_esplora">ビットコインサーバー (Esplora)</string>
     <string name="settings_esplora_hint">ご自身の Esplora / electrs REST サーバーのベース URL(例:https://my-node.local/api)。空欄の場合は mempool.space を使用します。</string>
     <string name="settings_endpoints_auto">サーバーリストを自動更新</string>
-    <string name="settings_endpoints_auto_summary">署名済みの公開サーバーリストを1日1回確認します。オフの場合はアプリに組み込まれたサーバーのみを使用します。</string>
+    <string name="settings_endpoints_auto_summary">既定ではオフです。オンにすると署名済みの公開サーバーリストを1日1回確認し、新しいサーバーにはあなたの承認が必要です。オフの場合はアプリに組み込まれたサーバーのみを使用します。</string>
     <string name="settings_default_server">デフォルト (mempool.space)</string>
     <string name="settings_coingecko_key">CoinGecko API キー</string>
     <string name="settings_coingecko_hint">任意の無料デモキー。価格リクエストの上限が上がり、より長い価格履歴を取得できます。</string>
@@ -84,4 +84,7 @@
     <string name="settings_endpoints_hosts_hint">これらのサーバーは追跡中のアドレスを受け取り、表示される内容はサーバーの報告に基づきます。新しいリストは次回のアプリ起動時に適用されます。</string>
     <string name="settings_endpoints_hosts_close">閉じる</string>
     <string name="settings_esplora_ignored">このアドレスは許可されていないため使用されません。Bitcoin アドレスは既定のサーバーに送られます。自分のサーバーを使うには、完全な https:// アドレスを入力してください。</string>
+    <string name="settings_endpoints_hint">公開ブロックチェーンサーバーで失敗が続いています。サーバーリストの更新により、アプリを更新せずに置き換えることができます。新しいサーバーには必ずあなたの承認が必要です。</string>
+    <string name="settings_endpoints_hint_enable">オンにする</string>
+    <string name="settings_endpoints_hint_dismiss">今はしない</string>
 </resources>

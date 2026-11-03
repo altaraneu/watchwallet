@@ -14,9 +14,9 @@
     <string name="rate_action">Beri nilai</string>
     <string name="rate_already">Sudah</string>
     <string name="rate_later">Nanti saja</string>
-    <string name="endpoints_changed_title">Server blockchain berubah</string>
-    <string name="endpoints_changed_message">Mulai sekarang, alamat yang Anda pantau dikirim ke server dalam daftar saat ini. Anda dapat meninjaunya, atau hanya memakai server bawaan aplikasi, di Pengaturan → Jaringan.</string>
-    <string name="endpoints_changed_added">Baru: %1$s</string>
-    <string name="endpoints_changed_removed">Tidak lagi digunakan: %1$s</string>
-    <string name="endpoints_changed_ok">Mengerti</string>
+    <string name="endpoints_approval_title">Izinkan server blockchain baru?</string>
+    <string name="endpoints_approval_message">Pembaruan daftar server yang ditandatangani menyebut server yang belum dipakai aplikasi. Jika Anda mengizinkannya, alamat yang Anda pantau dikirim ke server itu mulai aplikasi dibuka berikutnya, bersama alamat IP Anda. Jika tidak, tidak ada yang berubah.</string>
+    <string name="endpoints_approval_added">Server baru: %1$s</string>
+    <string name="endpoints_approval_allow">Izinkan</string>
+    <string name="endpoints_approval_decline">Pertahankan server saat ini</string>
 </resources>

@@ -123,6 +123,10 @@ class PriceRepository(
      */
     override suspend fun resetHostHealth() = provider.resetHostHealth()
 
+    override suspend fun reachedNetworkRecently(): Boolean = stateLock.withLock {
+        lastCurrentRefresh.values.any { it.succeeded && now() - it.at < RECENT_CONNECTION }
+    }
+
     override suspend fun refreshCurrentPrices() {
         try {
             val currency = settings.settings.first().quoteCurrency.code.lowercase()
@@ -286,6 +290,7 @@ class PriceRepository(
     companion object {
         private val CURRENT_FRESH = 30.seconds
         private val CURRENT_RETRY = 10.seconds
+        private val RECENT_CONNECTION = 300.seconds
         private const val RECENT_PARALLEL = 4
         private val FIRST_RETRY = 2.minutes
         private val SECOND_RETRY = 10.minutes

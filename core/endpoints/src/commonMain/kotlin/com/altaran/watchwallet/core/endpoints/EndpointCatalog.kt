@@ -14,14 +14,14 @@ data class EndpointListInfo(
 )
 
 /**
- * The servers this run of the app uses. Precedence, highest first: the user's custom server, a
- * stored remote file that is valid and not expired, the bundled defaults. Built once at startup, so
- * a newly downloaded file takes effect at the next app start.
+ * The servers this run of the app uses. Precedence, highest first: the user's custom server, an
+ * approved remote file that is valid and not expired, the bundled defaults. Built once at startup,
+ * so a newly applied file takes effect at the next app start.
  */
 class EndpointCatalog private constructor(
     private val table: Map<Pair<String, String>, List<String>>,
-    /** Hosts named by the bundled or signed list; a server the user entered is their own choice. */
-    val listHosts: Set<String>,
+    /** The bundled or signed list alone; a server the user entered is their own choice. */
+    private val listTable: Map<Pair<String, String>, List<String>>,
     private val file: EndpointFile?,
 ) {
     val info: EndpointListInfo
@@ -33,6 +33,15 @@ class EndpointCatalog private constructor(
             hosts = hostsOf(table.values.flatten()).sorted(),
         )
 
+    /**
+     * Hosts with port that serve a pair of chain and API type here but not in [current], sorted. What
+     * the app itself ships for that pair does not count: it went through a release.
+     */
+    internal fun addedComparedTo(current: EndpointCatalog): List<String> = listTable.flatMap { (pair, urls) ->
+        val known = (current.listTable[pair].orEmpty() + BUNDLED.listTable[pair].orEmpty()).map(::authorityOf).toSet()
+        urls.map(::authorityOf).filter { it !in known }
+    }.distinct().sorted()
+
     fun urls(chain: ChainId, protocol: String): List<String> = table[chain.value to protocol].orEmpty()
 
     fun firstOrNull(chain: ChainId, protocol: String): String? = urls(chain, protocol).firstOrNull()
@@ -42,13 +51,17 @@ class EndpointCatalog private constructor(
         requireNotNull(firstOrNull(chain, protocol)) { "No $protocol endpoint for ${chain.value}" }
 
     companion object {
-        val BUNDLED: EndpointCatalog = tableOf(BundledEndpoints.ENTRIES).let { EndpointCatalog(it, hostsOf(it.values.flatten()), null) }
+        val BUNDLED: EndpointCatalog = tableOf(BundledEndpoints.ENTRIES).let { EndpointCatalog(it, it, null) }
+
+        /** What [file] would put in force, whatever is in force now. */
+        internal fun of(file: EndpointFile): EndpointCatalog =
+            tableOf(BundledEndpoints.ENTRIES + file.entries).let { EndpointCatalog(it, it, file) }
 
         /**
          * After expiry the stored file no longer applies and the bundled defaults take over: see
          * "Expiry" in `docs/endpoints-config.md` for why that beats keeping the last valid list.
          *
-         * @param stored the stored envelope; verified again here, so a file signed with a key this
+         * @param stored the approved envelope; verified again here, so a file signed with a key this
          * build no longer pins stops applying.
          * @param autoUpdate `false` means bundled defaults only, whatever is stored.
          * @param customEsplora the user's own Bitcoin server. It may be plain http (for example on a
@@ -66,11 +79,13 @@ class EndpointCatalog private constructor(
             val table = tableOf(BundledEndpoints.ENTRIES + file?.entries.orEmpty())
             val bitcoin = ChainId.BITCOIN.value to EndpointProtocol.ESPLORA
             val final = if (customEsplora != null) table + (bitcoin to listOf(customEsplora)) else table
-            return EndpointCatalog(final, hostsOf(table.values.flatten()), file)
+            return EndpointCatalog(final, table, file)
         }
 
         private fun tableOf(entries: List<EndpointEntry>) = entries.associate { (it.chain to it.protocol) to it.urls }
 
-        private fun hostsOf(urls: List<String>) = urls.map { it.substringAfter("://").substringBefore('/').substringAfter('@').substringBefore(':') }.toSet()
+        private fun hostsOf(urls: List<String>) = urls.map { authorityOf(it).substringBefore(':') }.toSet()
+
+        private fun authorityOf(url: String) = url.substringAfter("://").substringBefore('/').substringAfter('@').lowercase()
     }
 }

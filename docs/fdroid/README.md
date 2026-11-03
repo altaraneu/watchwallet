@@ -59,7 +59,7 @@ The desktop builds of secp256k1 (Windows DLL, macOS dylib) that used to land in 
 | Flag | Applies? | Why |
 |---|---|---|
 | `NonFreeNet` | Yes, declared | "Promote or depend entirely on a proprietary network service". Balances use public servers on open protocols, but fiat values only come from CoinGecko, Binance and Kraken, whose APIs are proprietary. Frankfurter is the one open source. The strict reading could say "not entirely"; declaring is the honest choice. |
-| `Tracking` | Probably not; expect the question | Off-by-default logo downloads are opt-in, which the definition exempts. But the signed server list is fetched from GitHub or jsDelivr daily **by default**, and the definition's examples include "checking for updates without your knowledge". It is documented in `PRIVACY.md`, sends nothing about the user and can be turned off, yet it is not opt-in. If a reviewer objects, make the F-Droid build default it to off. |
+| `Tracking` | No | Logo downloads and the signed server list are both off by default and opt-in, which the definition exempts: without the user turning it on, nothing is requested from GitHub or jsDelivr (`EndpointUpdatesChoiceTest`, `EndpointConfigUpdaterTest.disabledMakesNoRequest`). The hint that offers the server list makes no request either. Once on, the daily check is what the user asked for, and new servers need their approval first. |
 | `NonFreeAssets` | Reviewer's call | See logos above. |
 | `TetheredNet` | No | Several replaceable sources; a failure of one does not end the app. |
 | `NonFreeDep`, `Ads`, `KnownVuln`, `NonFreeAdd`, `NoSourceSince` | No | No proprietary software needed, no ads, source public, no known vulnerability flagged. Not checked with a vulnerability scanner. |

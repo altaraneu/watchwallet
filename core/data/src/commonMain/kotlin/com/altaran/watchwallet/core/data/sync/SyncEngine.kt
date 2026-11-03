@@ -71,6 +71,25 @@ fun interface CurrentPriceRefresher {
 
     /** Forgets remembered host failures: the user asked to try everything again. */
     suspend fun resetHostHealth() = Unit
+
+    /** A price host answered moments ago, so the device has a working connection. */
+    suspend fun reachedNetworkRecently(): Boolean = false
+}
+
+/** What one sync of all wallets found out about the servers. */
+private class SyncRound {
+    private val lock = Mutex()
+    private val failed = HashSet<String>()
+    private var reached = false
+
+    suspend fun add(failedChains: Collection<String>, reachedServer: Boolean) = lock.withLock {
+        failed += failedChains
+        reached = reached || reachedServer
+    }
+
+    suspend fun failed(): Set<String> = lock.withLock { failed.toSet() }
+
+    suspend fun reached(): Boolean = lock.withLock { reached }
 }
 
 /**
@@ -85,6 +104,7 @@ class SyncEngine(
     private val syncStates: WalletSyncStateStore,
     private val log: SyncLog = SyncLog.None,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob()),
+    private val failures: ServerFailureLog = ServerFailureLog.None,
 ) {
     private val mutex = Mutex()
 
@@ -122,16 +142,19 @@ class SyncEngine(
                 }
                 // Archived wallets keep theirs: only bookkeeping of deleted wallets goes away.
                 syncStates.retain(walletDao.allWalletIds().toSet())
+                val round = SyncRound()
                 coroutineScope {
                     // Cached prices are on screen already; fresh ones do not wait for the wallets.
                     launch { prices.refreshCurrentPrices() }
                     // Wallets sync in parallel (bounded) so one large wallet does not block the others;
                     // each result is stored as soon as it is ready.
                     val gate = Semaphore(PARALLEL_WALLETS)
-                    wallets.forEach { wallet -> launch { gate.withPermit { syncOne(wallet, manual) } } }
+                    wallets.forEach { wallet -> launch { gate.withPermit { syncOne(wallet, manual, round) } } }
                 }
                 // New assets may have appeared; prices fetched moments ago are not fetched again.
                 prices.refreshCurrentPrices()
+                // No wallets means nothing can have failed: what was counted for old ones goes away.
+                failures.round(round.failed(), wallets.isEmpty() || round.reached() || prices.reachedNetworkRecently())
             } finally {
                 // syncingWallets is maintained by syncOne itself (a single-wallet sync may still run).
                 _state.update { it.copy(running = false, manual = false) }
@@ -175,7 +198,7 @@ class SyncEngine(
         confirmed = confirmed,
     )
 
-    private suspend fun syncOne(snapshot: WalletEntity, manual: Boolean) {
+    private suspend fun syncOne(snapshot: WalletEntity, manual: Boolean, round: SyncRound? = null) {
         val target = snapshot.toTarget() ?: return
         val adapter = registry.adapter(target) ?: return
         // The same wallet never syncs twice at once (syncAll and syncWallet can overlap).
@@ -192,6 +215,9 @@ class SyncEngine(
                 return
             }
             val result = runAdapter(wallet, target, adapter, manual)
+            // A chain whose native balance came through has a working server, whatever else failed.
+            val unreachable = result.failedChains - result.nativeCurrentChains.toSet()
+            round?.add(unreachable.map { it.value }, reachedServer = !result.allChainsFailed || unreachable.size < result.failedChains.size)
             _state.update { state ->
                 val failed = result.failedChains.map { it.value }.toSet()
                 // The only networks failed, but their native balances are current: no failed sync.
@@ -218,6 +244,12 @@ class SyncEngine(
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
             log.log("wallet=$walletId failed ${(Clock.System.now() - started).inWholeMilliseconds}ms ${e::class.simpleName}")
+            round?.add(
+                adapter.chains.singleOrNull()?.let {
+                    listOf(it.id.value)
+                } ?: snapshot.activeChains.split(',').filter { it.isNotBlank() },
+                reachedServer = false,
+            )
             // Never the message of a foreign exception: an HTTP client's holds the URL with the address.
             _state.update { it.copy(errors = it.errors + (walletId to e.safeDescription())) }
         } finally {

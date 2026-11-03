@@ -106,6 +106,7 @@ internal fun SettingsRoute(
         onRemoteIconsChange = viewModel::setRemoteIcons,
         onBackgroundRefreshChange = viewModel::setBackgroundRefresh,
         onNetworkChange = viewModel::setNetwork,
+        onDeclineServerListUpdates = viewModel::declineServerListUpdates,
         onRestart = viewModel::restart,
     )
 }
@@ -130,6 +131,7 @@ internal fun SettingsScreen(
     onRemoteIconsChange: (Boolean) -> Unit = {},
     onBackgroundRefreshChange: (Int, Boolean) -> Unit = { _, _ -> },
     onNetworkChange: (com.altaran.watchwallet.core.model.NetworkSettings) -> Unit = {},
+    onDeclineServerListUpdates: () -> Unit = {},
     onRestart: () -> Unit = {},
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -226,6 +228,7 @@ internal fun SettingsScreen(
                 onSecureScreenChange = onSecureScreenChange,
                 onBackgroundRefreshChange = onBackgroundRefreshChange,
                 onNetworkChange = onNetworkChange,
+                onDeclineServerListUpdates = onDeclineServerListUpdates,
                 onRestart = onRestart,
             )
 

@@ -12,23 +12,39 @@ import kotlin.time.Clock
 
 /** Persistence of the remote server list; implemented over the settings DataStore. */
 interface EndpointConfigStore {
+    /** `false` until the user turns updates on: nothing is requested before that. */
     suspend fun autoUpdateEnabled(): Boolean
 
+    /** The list in force. Only this one ever reaches [EndpointCatalog]. */
     suspend fun storedEnvelope(): String?
 
-    suspend fun saveEnvelope(envelope: String)
+    /** A verified list waiting for the user's answer. */
+    suspend fun pendingEnvelope(): String?
+
+    /** The list the user last declined, kept so its version is not offered again. */
+    suspend fun declinedEnvelope(): String?
+
+    suspend fun savePendingEnvelope(envelope: String)
+
+    /** Makes [envelope] the list in force and clears what was waiting, in one write. */
+    suspend fun applyEnvelope(envelope: String)
+
+    /** Records [envelope] as declined and clears what was waiting, in one write. */
+    suspend fun declineEnvelope(envelope: String)
 
     suspend fun lastCheckSeconds(): Long?
 
     suspend fun saveLastCheckSeconds(seconds: Long)
 }
 
-enum class EndpointUpdateResult { DISABLED, NOT_DUE, UPDATED, UNCHANGED, FAILED }
+enum class EndpointUpdateResult { DISABLED, NOT_DUE, UPDATED, AWAITING_APPROVAL, UNCHANGED, FAILED }
 
 /**
  * Downloads the signed server list at most once a day. Runs in the background through the shared
- * HTTP client, so it honours the proxy; nothing waits for it. A file is stored only after full
- * verification and takes effect at the next app start (see [EndpointCatalog]).
+ * HTTP client, so it honours the proxy; nothing waits for it. Off unless the user turned it on.
+ *
+ * A file is kept only after full verification. One that adds a server waits for the user (see
+ * [EndpointListApproval]); any other takes effect at the next app start (see [EndpointCatalog]).
  *
  * A failed download or a discarded file changes nothing and is only reported to [debugLog].
  */
@@ -61,8 +77,12 @@ class EndpointConfigUpdater(
         // Recorded before the request and whatever its outcome: at most one attempt a day, always.
         store.saveLastCheckSeconds(now)
 
-        // An expired stored file still counts here, or an old signed file could be replayed after it.
-        val current = store.storedEnvelope()?.let { verifier.open(it) as? EndpointFileResult.Valid }?.file
+        // Expired, waiting and declined files all count here, or an older signed file could be
+        // replayed after them, and a declined one could be offered again.
+        val applied = store.storedEnvelope()
+        val current = listOfNotNull(applied, store.pendingEnvelope(), store.declinedEnvelope())
+            .mapNotNull { (verifier.open(it) as? EndpointFileResult.Valid)?.file }
+            .maxWithOrNull(compareBy({ it.signedByRecoveryKey }, { it.version }))
         for (url in urls) {
             val envelope = download(url) ?: continue
             when (val result = check(envelope, current, now)) {
@@ -72,7 +92,11 @@ class EndpointConfigUpdater(
 
                 is EndpointFileResult.Valid -> {
                     if (result.file.sameRankAs(current) && result.file.version == current?.version) return EndpointUpdateResult.UNCHANGED
-                    store.saveEnvelope(envelope)
+                    if (hostsAddedBy(result.file, applied, now, verifier).isNotEmpty()) {
+                        store.savePendingEnvelope(envelope)
+                        return EndpointUpdateResult.AWAITING_APPROVAL
+                    }
+                    store.applyEnvelope(envelope)
                     return EndpointUpdateResult.UPDATED
                 }
             }

@@ -10,17 +10,33 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-private class FakeStore(
+internal class FakeStore(
     var enabled: Boolean = true,
     var envelope: String? = null,
     var lastCheck: Long? = null,
+    var pending: String? = null,
+    var declined: String? = null,
 ) : EndpointConfigStore {
     override suspend fun autoUpdateEnabled() = enabled
 
     override suspend fun storedEnvelope() = envelope
 
-    override suspend fun saveEnvelope(envelope: String) {
+    override suspend fun pendingEnvelope() = pending
+
+    override suspend fun declinedEnvelope() = declined
+
+    override suspend fun savePendingEnvelope(envelope: String) {
+        pending = envelope
+    }
+
+    override suspend fun applyEnvelope(envelope: String) {
         this.envelope = envelope
+        pending = null
+    }
+
+    override suspend fun declineEnvelope(envelope: String) {
+        declined = envelope
+        pending = null
     }
 
     override suspend fun lastCheckSeconds() = lastCheck
@@ -50,8 +66,8 @@ class EndpointConfigUpdaterTest {
     @Test
     fun storesValidFile() = runTest {
         val store = FakeStore()
-        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to signed())).updateIfDue())
-        assertEquals(signed(), store.envelope)
+        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to quiet())).updateIfDue())
+        assertEquals(quiet(), store.envelope)
         assertEquals(NOW, store.lastCheck)
         assertEquals(listOf(PRIMARY), requests)
     }
@@ -71,7 +87,7 @@ class EndpointConfigUpdaterTest {
         assertEquals(emptyList(), requests)
 
         store.lastCheck = NOW - EndpointConfigUpdater.CHECK_INTERVAL_SECONDS
-        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to signed())).updateIfDue())
+        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to quiet())).updateIfDue())
     }
 
     @Test
@@ -87,7 +103,7 @@ class EndpointConfigUpdaterTest {
     @Test
     fun lastCheckInTheFutureDoesNotBlockUpdates() = runTest {
         val store = FakeStore(lastCheck = NOW + 1_000)
-        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to signed())).updateIfDue())
+        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to quiet())).updateIfDue())
     }
 
     @Test
@@ -102,8 +118,8 @@ class EndpointConfigUpdaterTest {
     @Test
     fun fallsBackWhenPrimaryIsDown() = runTest {
         val store = FakeStore()
-        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(FALLBACK to signed())).updateIfDue())
-        assertEquals(signed(), store.envelope)
+        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(FALLBACK to quiet())).updateIfDue())
+        assertEquals(quiet(), store.envelope)
     }
 
     @Test
@@ -111,8 +127,8 @@ class EndpointConfigUpdaterTest {
         val text = payload()
         val tampered = envelope(text.replace("new.test", "evil.test"), signature(text))
         val store = FakeStore()
-        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to tampered, FALLBACK to signed())).updateIfDue())
-        assertEquals(signed(), store.envelope)
+        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to tampered, FALLBACK to quiet())).updateIfDue())
+        assertEquals(quiet(), store.envelope)
     }
 
     @Test
@@ -152,9 +168,9 @@ class EndpointConfigUpdaterTest {
 
     @Test
     fun higherVersionReplaces() = runTest {
-        val store = FakeStore(envelope = signed(version = 5))
-        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to signed(version = 6))).updateIfDue())
-        assertEquals(signed(version = 6), store.envelope)
+        val store = FakeStore(envelope = quiet(version = 5))
+        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to quiet(version = 6))).updateIfDue())
+        assertEquals(quiet(version = 6), store.envelope)
     }
 
     @Test
@@ -175,7 +191,7 @@ class EndpointConfigUpdaterTest {
     @Test
     fun fileAtTheValidityLimitIsAccepted() = runTest {
         val store = FakeStore()
-        val longest = signed(expires = NOW + EndpointFile.MAX_VALIDITY_SECONDS)
+        val longest = quiet(expires = NOW + EndpointFile.MAX_VALIDITY_SECONDS)
         assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to longest)).updateIfDue())
     }
 
@@ -183,7 +199,7 @@ class EndpointConfigUpdaterTest {
     @Test
     fun recoveryFileBeatsAHigherVersionOfTheNormalKey() = runTest {
         val store = FakeStore(envelope = signed(version = Long.MAX_VALUE))
-        val rescue = signedByRecovery(version = 2)
+        val rescue = signedByRecovery(version = 2, entries = QUIET)
         assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to rescue), recoverableVerifier).updateIfDue())
         assertEquals(rescue, store.envelope)
     }
@@ -191,7 +207,7 @@ class EndpointConfigUpdaterTest {
     @Test
     fun recoveryFileOfTheSameVersionStillReplacesTheNormalOne() = runTest {
         val store = FakeStore(envelope = signed(version = 5))
-        val rescue = signedByRecovery(version = 5)
+        val rescue = signedByRecovery(version = 5, entries = QUIET)
         assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to rescue), recoverableVerifier).updateIfDue())
         assertEquals(rescue, store.envelope)
     }
@@ -207,12 +223,15 @@ class EndpointConfigUpdaterTest {
 
     @Test
     fun recoveryFilesAreVersionedAmongThemselves() = runTest {
-        val store = FakeStore(envelope = signedByRecovery(version = 5))
+        val store = FakeStore(envelope = signedByRecovery(version = 5, entries = QUIET))
         assertEquals(EndpointUpdateResult.FAILED, updater(store, mapOf(PRIMARY to signedByRecovery(version = 4)), recoverableVerifier).updateIfDue())
         store.lastCheck = null
         assertEquals(EndpointUpdateResult.UNCHANGED, updater(store, mapOf(PRIMARY to signedByRecovery(version = 5)), recoverableVerifier).updateIfDue())
         store.lastCheck = null
-        assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to signedByRecovery(version = 6)), recoverableVerifier).updateIfDue())
+        assertEquals(
+            EndpointUpdateResult.UPDATED,
+            updater(store, mapOf(PRIMARY to signedByRecovery(version = 6, entries = QUIET)), recoverableVerifier).updateIfDue(),
+        )
     }
 
     /** A release ends the recovery phase by raising the floor above the recovery file. */
@@ -220,7 +239,7 @@ class EndpointConfigUpdaterTest {
     fun aHigherFloorDropsTheRecoveryFileSoTheNormalKeyWorksAgain() = runTest {
         val floored = EndpointFileVerifier(TestKeys.PUBLIC, TestKeys.OTHER_PUBLIC, minVersion = 3)
         val store = FakeStore(envelope = signedByRecovery(version = 2))
-        val next = signed(version = 3)
+        val next = quiet(version = 3)
         assertEquals(EndpointUpdateResult.UPDATED, updater(store, mapOf(PRIMARY to next), floored).updateIfDue())
         assertEquals(next, store.envelope)
     }

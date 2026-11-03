@@ -26,10 +26,36 @@ An entry replaces the bundled URLs for that pair; pairs not in the file stay as 
 custom Bitcoin server always wins. With "Update server list automatically" off (Settings → Network)
 the app makes no request and uses bundled servers only.
 
-**The toggle is on by default.** This is the project owner's decision: a dead or misbehaving public
-server should not need a new release to be replaced. What it costs is described under "Key
-compromised". Settings → Network shows the list in force (version, signing date, expiry) and every
-host in use, and the app says once when the hosts change.
+## Off by default, and consent before use
+
+**The toggle is off by default.** The key holder could otherwise redirect every address lookup, and the
+user would only learn of it afterwards, so a dead server now waits for a release unless the user opted
+in. New installs and everyone who never used the switch make no request to GitHub or jsDelivr.
+
+- **The choice is stored explicitly** (`endpoints_updates_on`), only by the switch or the hint, never as
+  a side effect of saving another network setting. No key means no choice, which is off.
+- **Who is affected on updating.** Version 1.0 has neither the feature nor a key, so 1.0 users start off.
+  Test builds of 1.1 had the key `endpoints_auto_update`, defaulted to on and wrote it with *any* saved
+  network setting, so its value proves nothing. It is ignored and removed at start, with the list and the
+  seen hosts stored under the old keys: those test users are off too, and must turn it on again if they
+  want it. An old file was never approved, so it must not apply.
+- **The hint.** When a chain failed in three sync rounds in a row, at least six hours apart, and the user
+  has not decided, Settings → Network offers to turn updates on; **Not now** stores "off" and ends it. A
+  round counts only if something else was reached (another chain or a price host), so being offline does
+  not count; a chain whose native balance arrived does not count; and the user's own server does not
+  count, because a list could not replace it. Counting is local and makes no request.
+- **Consent before use.** A verified list that adds a server waits, without effect, for a dialog listing
+  what it adds. "Adds" means a host with port that does not serve that pair of chain and API type yet: a
+  host known from another chain still asks, as it would learn other addresses. Hosts the build ships for
+  that pair never ask, so going back to them needs no approval. Until the user answers, the current hosts
+  stay in force, also after restarts. Closing the dialog without an answer asks again at the next start.
+- **Declined** lists are kept, without effect, so that their version is not offered again and older files
+  stay rejected. Only a higher version can ask again.
+- **No prompt:** a list that only removes hosts or changes none applies directly at the next start.
+- **An answer belongs to what was shown.** If a newer list arrived behind the dialog, the answer does
+  nothing and the newer list asks for itself.
+
+Settings → Network shows the list in force (version, signing date, expiry) and every host in use.
 
 | Protocol | Chains | URLs used |
 |---|---|---|
@@ -77,8 +103,12 @@ Trust Wallet logos, block explorer links and the two download URLs of the file i
 3. Verify: `python scripts/sign_endpoints.py --check` (needs no key).
 4. Commit `endpoints.source.json` and `endpoints.json` and push to `main`.
 
-Apps fetch the file at most once a day at app start and apply it at the **next** app start. The
-jsDelivr fallback may lag behind GitHub by some hours.
+Apps with updates on fetch the file at most once a day at app start and apply it at the **next** app
+start, after the user's approval if it adds a server. The jsDelivr fallback may lag behind GitHub by
+some hours.
+
+**A list that adds a server reaches only those who say yes.** Anyone who declines stays on what they
+have, so plan for both, and do not rely on a new host for a fix to reach everyone.
 
 **Re-sign before expiry.** `expires_in_days` (180, at most 200) sets the expiry when signing. Raise
 `version` and sign again well before that date, even if nothing changed.
@@ -91,12 +121,13 @@ is `{"format":1,"version":N,"signed":<epoch seconds>,"expires":<epoch seconds>,"
 is not parsed before the signature is checked. The whole file may have at most 256 KB; a larger download is cut off at
 that limit. A file failing any check is discarded and only noted in the debug log.
 
-The verified file is stored as downloaded in the settings DataStore and verified again at each start.
+The verified file is stored as downloaded in the settings DataStore, one key each for applied, waiting
+and declined, and verified again at each start. Only the applied one reaches `EndpointCatalog`.
 
 ## Replay protection and expiry
 
-`version` must never go down: a lower version than the stored one is rejected, and so is an expired
-file, or one expiring more than 200 days ahead (`EndpointFile.MAX_VALIDITY_SECONDS`). The same version
+`version` must never go down: a lower version than any stored one, whether applied, waiting or declined,
+is rejected, and so is an expired file, or one expiring more than 200 days ahead (`EndpointFile.MAX_VALIDITY_SECONDS`). The same version
 changes nothing. `EndpointFileVerifier.MIN_ACCEPTED_VERSION` is a floor per build: raise it in a
 release to drop every older file, including one stored on the device.
 
@@ -106,8 +137,10 @@ a list turned out to name a bad server. Keeping the last list would let whoever 
 the device on it indefinitely, and that list decides who receives the user's addresses. The bundled
 defaults went through a release and are the safer place to end up; the cost is at worst some dead
 servers, which is visible and recoverable, while silently leaking addresses is neither. The expired
-file stays stored, without being applied, so its `version` still rejects older files. As soon as a
-newer valid file arrives it applies again.
+file stays stored, without being applied, so its `version` still rejects older files. A newer valid
+file is compared with what is then in force, the bundled defaults, so hosts of the expired list need
+approval again. A list that expires while waiting for an answer is dropped from the question and kept
+as declined, for its version.
 
 Limits: expiry depends on the device clock, so someone who controls the clock can stretch it, and a
 fresh install only has the floor of its build, so it accepts any unexpired signed file above that.
@@ -137,10 +170,10 @@ the old key, which also resets its stored `version`.
 
 ### Key compromised
 
-An attacker with the key can point every server of every app with the toggle on, which is the
-default, at their own hosts. They would still need GitHub or jsDelivr to serve their file at the two
-URLs the app fetches, for example through access to this repository. From the next app start their
-servers:
+An attacker with the key can offer their own hosts to every app with the toggle on, which is not the
+default. They would still need GitHub or jsDelivr to serve their file at the two URLs the app fetches,
+for example through access to this repository, and each user has to approve the hosts in the dialog,
+which names them but cannot say who runs them. From the next app start after approval their servers:
 
 - learn every tracked address, with the IP address of each device (or its proxy), and can link the
   addresses of one extended key, because the app asks about them from one IP address close together;
@@ -154,9 +187,13 @@ stake wallet shows its stake key alone, with a note that it cannot receive payme
 asks a server for a payment address, because it could check only the stake part: a dishonest server
 could name an address with its own payment key and the wallet's stake part.
 
+Without approval they can still publish a list that adds nothing: it can drop bundled hosts or move a
+chain to a fallback already in use, which can make that chain fail, but sends no address anywhere new.
+
 Prices, logos and the two download URLs are not in the list. The hosts in force are visible in
-Settings → Network and the app announces a change once, which is detection, not prevention: the
-addresses have already been sent by the time it appears.
+Settings → Network. The dialog is prevention, unlike the notice it replaced: nothing is sent to a new
+host before the user agrees. It protects only as far as users read it, so a convincing host name is
+still a risk.
 
 1. Rotate at once as under "Key lost" and release. If a recovery key is pinned, use it first, see
    below. Old builds without one cannot be fixed remotely.
@@ -188,15 +225,17 @@ given in `--pubkey`, so `--offline` avoids a warning about the file signed by th
 
 ## F-Droid
 
-Not yet checked: whether F-Droid's review considers this list an issue. It is signed data, not code,
-it can be turned off, and the default URLs are in the source. Ask before submitting, and consider
-whether the toggle should default to off in that build.
+Not yet checked with F-Droid's reviewers. It is signed data, not code, off by default so opt-in, and the
+default URLs are in the source, so `docs/fdroid/README.md` does not expect the `Tracking` flag.
 
 ## Tests
 
 - `python scripts/test_sign_endpoints.py`: the tool, including all official BIP-340 vectors
   (`scripts/testdata/bip340-test-vectors.csv`, from the BIPs repository, BSD-2-Clause).
-- `./gradlew :core:endpoints:jvmTest`: verification, overlay, updater, consistency of source file,
-  defaults, pinned key and `PRIVACY.md`, and a file signed by the Python tool.
+- `./gradlew :core:endpoints:jvmTest`: verification, overlay, updater, consent (`EndpointListApprovalTest`:
+  waiting, approving, declining, expiry, restart, a newer list behind the dialog), consistency of source
+  file, defaults, pinned key and `PRIVACY.md`, and a file signed by the Python tool.
+- `:core:datastore:testAndroidHostTest` (`EndpointUpdatesChoiceTest`) and `:core:data:testAndroidHostTest`
+  (`ServerFailureCountsTest`, `SyncEngineTest`): the stored choice and the hint.
 
 All of them use public test keys only.

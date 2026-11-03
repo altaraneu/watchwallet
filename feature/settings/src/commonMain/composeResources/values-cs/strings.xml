@@ -56,7 +56,7 @@
     <string name="settings_esplora">Bitcoin server (Esplora)</string>
     <string name="settings_esplora_hint">Základní URL vlastního Esplora / electrs REST serveru, např. https://muj-uzel.local/api. Prázdné = mempool.space.</string>
     <string name="settings_endpoints_auto">Automaticky aktualizovat seznam serverů</string>
-    <string name="settings_endpoints_auto_summary">Jednou denně zkontroluje podepsaný seznam veřejných serverů. Vypnuto: jen servery zabudované v aplikaci.</string>
+    <string name="settings_endpoints_auto_summary">Ve výchozím stavu vypnuto. Zapnuté jednou denně zkontroluje podepsaný seznam veřejných serverů a nové servery potřebují tvůj souhlas. Vypnuto: jen servery zabudované v aplikaci.</string>
     <string name="settings_default_server">Výchozí (mempool.space)</string>
     <string name="settings_coingecko_key">API klíč CoinGecko</string>
     <string name="settings_coingecko_hint">Volitelný bezplatný demo klíč pro vyšší limity dotazů na ceny a delší historii cen.</string>
@@ -93,4 +93,7 @@
     <string name="settings_endpoints_hosts_hint">Tyto servery dostávají adresy, které sleduješ, a zobrazuje se ti to, co nahlásí. Nový seznam začne platit při dalším spuštění aplikace.</string>
     <string name="settings_endpoints_hosts_close">Zavřít</string>
     <string name="settings_esplora_ignored">Tato adresa není povolená, takže se nepoužívá: tvoje bitcoinové adresy jdou na výchozí servery. Pro vlastní server zadej celou adresu https://.</string>
+    <string name="settings_endpoints_hint">Veřejné blockchainové servery tady opakovaně selhávají. Aktualizace seznamu serverů je může nahradit bez aktualizace aplikace. Nové servery vždy potřebují tvůj souhlas.</string>
+    <string name="settings_endpoints_hint_enable">Zapnout</string>
+    <string name="settings_endpoints_hint_dismiss">Teď ne</string>
 </resources>

@@ -14,9 +14,9 @@
     <string name="rate_action">Оценить</string>
     <string name="rate_already">Уже оценил(а)</string>
     <string name="rate_later">Не сейчас</string>
-    <string name="endpoints_changed_title">Серверы блокчейна изменились</string>
-    <string name="endpoints_changed_message">Теперь отслеживаемые адреса отправляются на серверы из текущего списка. В разделе «Настройки → Сеть» можно их просмотреть или использовать только серверы, встроенные в приложение.</string>
-    <string name="endpoints_changed_added">Новые: %1$s</string>
-    <string name="endpoints_changed_removed">Больше не используются: %1$s</string>
-    <string name="endpoints_changed_ok">Понятно</string>
+    <string name="endpoints_approval_title">Разрешить новые серверы блокчейна?</string>
+    <string name="endpoints_approval_message">В подписанном обновлении списка серверов есть серверы, которые приложение ещё не использует. Если разрешить, со следующего запуска приложения отслеживаемые адреса будут отправляться на них вместе с вашим IP-адресом. Если нет, ничего не изменится.</string>
+    <string name="endpoints_approval_added">Новые серверы: %1$s</string>
+    <string name="endpoints_approval_allow">Разрешить</string>
+    <string name="endpoints_approval_decline">Оставить текущие серверы</string>
 </resources>

@@ -50,7 +50,7 @@
     <string name="settings_esplora">Server Bitcoin (Esplora)</string>
     <string name="settings_esplora_hint">URL dasar server REST Esplora / electrs Anda sendiri, misalnya https://my-node.local/api. Kosongkan untuk menggunakan mempool.space.</string>
     <string name="settings_endpoints_auto">Perbarui daftar server secara otomatis</string>
-    <string name="settings_endpoints_auto_summary">Memeriksa daftar server publik yang ditandatangani setiap hari. Nonaktif: hanya server bawaan aplikasi.</string>
+    <string name="settings_endpoints_auto_summary">Nonaktif secara bawaan. Jika aktif, memeriksa daftar server publik yang ditandatangani setiap hari, dan server baru memerlukan persetujuan Anda. Nonaktif: hanya server bawaan aplikasi.</string>
     <string name="settings_default_server">Default (mempool.space)</string>
     <string name="settings_coingecko_key">Kunci API CoinGecko</string>
     <string name="settings_coingecko_hint">Kunci demo gratis opsional untuk batas permintaan harga yang lebih tinggi dan riwayat harga yang lebih panjang.</string>
@@ -84,4 +84,7 @@
     <string name="settings_endpoints_hosts_hint">Server ini menerima alamat yang Anda pantau, dan Anda melihat apa yang mereka laporkan. Daftar baru berlaku saat aplikasi dimulai berikutnya.</string>
     <string name="settings_endpoints_hosts_close">Tutup</string>
     <string name="settings_esplora_ignored">Alamat ini tidak diizinkan sehingga tidak digunakan: alamat Bitcoin Anda dikirim ke server default. Masukkan alamat https:// lengkap untuk memakai server Anda sendiri.</string>
+    <string name="settings_endpoints_hint">Server blockchain publik terus gagal di sini. Pembaruan daftar server dapat menggantinya tanpa memperbarui aplikasi. Server baru selalu memerlukan persetujuan Anda.</string>
+    <string name="settings_endpoints_hint_enable">Aktifkan</string>
+    <string name="settings_endpoints_hint_dismiss">Jangan sekarang</string>
 </resources>

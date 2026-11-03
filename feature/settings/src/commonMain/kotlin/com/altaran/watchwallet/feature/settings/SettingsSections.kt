@@ -42,6 +42,9 @@ import com.altaran.watchwallet.core.ui.secret.SensitiveInput
 import com.altaran.watchwallet.core.ui.secret.rememberSecretFieldGuard
 import com.altaran.watchwallet.feature.settings.generated.resources.*
 import com.altaran.watchwallet.feature.settings.generated.resources.Res
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_endpoints_hint
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_endpoints_hint_dismiss
+import com.altaran.watchwallet.feature.settings.generated.resources.settings_endpoints_hint_enable
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
@@ -58,6 +61,7 @@ internal fun AdvancedSettingsSections(
     onSecureScreenChange: (Boolean) -> Unit,
     onBackgroundRefreshChange: (hours: Int, wifiOnly: Boolean) -> Unit,
     onNetworkChange: (NetworkSettings) -> Unit,
+    onDeclineServerListUpdates: () -> Unit,
     onRestart: () -> Unit,
 ) {
     val settings = state.settings
@@ -125,6 +129,23 @@ internal fun AdvancedSettingsSections(
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
         )
+    }
+    // Only an offer: nothing was or will be requested until the user turns updates on.
+    if (state.suggestServerListUpdates) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(Res.string.settings_endpoints_hint), style = MaterialTheme.typography.bodyMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(onClick = { onNetworkChange(network.copy(autoUpdateEndpoints = true)) }) {
+                        Text(stringResource(Res.string.settings_endpoints_hint_enable))
+                    }
+                    TextButton(onClick = onDeclineServerListUpdates) { Text(stringResource(Res.string.settings_endpoints_hint_dismiss)) }
+                }
+            }
+        }
     }
     SettingsSwitchItem(
         title = stringResource(Res.string.settings_endpoints_auto),

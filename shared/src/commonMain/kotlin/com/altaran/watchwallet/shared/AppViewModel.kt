@@ -8,9 +8,10 @@ import com.altaran.watchwallet.core.data.repository.SettingsRepository
 import com.altaran.watchwallet.core.data.repository.WalletRepository
 import com.altaran.watchwallet.core.data.repository.decreases
 import com.altaran.watchwallet.core.data.sync.SyncEngine
+import com.altaran.watchwallet.core.endpoints.EndpointApprovalRequest
 import com.altaran.watchwallet.core.endpoints.EndpointConfigUpdater
-import com.altaran.watchwallet.core.endpoints.EndpointHostChange
-import com.altaran.watchwallet.core.endpoints.EndpointHostNotice
+import com.altaran.watchwallet.core.endpoints.EndpointListApproval
+import com.altaran.watchwallet.core.endpoints.EndpointUpdateResult
 import com.altaran.watchwallet.core.model.UserSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,7 +46,7 @@ class AppViewModel(
     private val priceRepository: PriceRepository,
     private val appInfo: AppInfo,
     private val endpointUpdater: EndpointConfigUpdater,
-    private val endpointHostNotice: EndpointHostNotice,
+    private val endpointListApproval: EndpointListApproval,
     walletRepository: WalletRepository,
 ) : ViewModel() {
     /** A wallet was removed; the screens clear what is cached outside the database. */
@@ -70,14 +71,19 @@ class AppViewModel(
         if (forever) viewModelScope.launch { settingsRepository.disableDonateReminder() }
     }
 
-    private val _endpointHostChange = MutableStateFlow<EndpointHostChange?>(null)
+    private val _endpointApproval = MutableStateFlow<EndpointApprovalRequest?>(null)
 
-    /** The servers that receive the user's addresses changed since they last saw them. */
-    val endpointHostChange: StateFlow<EndpointHostChange?> = _endpointHostChange.asStateFlow()
+    /** A signed server list adds servers; it has no effect unless the user approves it. */
+    val endpointApproval: StateFlow<EndpointApprovalRequest?> = _endpointApproval.asStateFlow()
 
-    fun acknowledgeEndpointHostChange() {
-        _endpointHostChange.value = null
-        viewModelScope.launch { endpointHostNotice.acknowledge() }
+    fun answerEndpointApproval(request: EndpointApprovalRequest, approved: Boolean) {
+        _endpointApproval.value = null
+        viewModelScope.launch { if (approved) endpointListApproval.approve(request) else endpointListApproval.decline(request) }
+    }
+
+    /** No answer: nothing changes, and it asks again at the next app start. */
+    fun postponeEndpointApproval() {
+        _endpointApproval.value = null
     }
 
     private val _showRatePrompt = MutableStateFlow(false)
@@ -109,10 +115,12 @@ class AppViewModel(
                 scheduleRatePrompt(launches)
             }
         }
-        viewModelScope.launch { _endpointHostChange.value = endpointHostNotice.pending() }
         syncEngine.syncAll()
-        // Nothing waits for this; a new server list applies at the next app start.
-        viewModelScope.launch(Dispatchers.Default) { endpointUpdater.updateIfDue() }
+        // Nothing waits for this; an approved or harmless server list applies at the next app start.
+        viewModelScope.launch(Dispatchers.Default) {
+            _endpointApproval.value = endpointListApproval.pending()
+            if (endpointUpdater.updateIfDue() == EndpointUpdateResult.AWAITING_APPROVAL) _endpointApproval.value = endpointListApproval.pending()
+        }
         viewModelScope.launch {
             settingsRepository.settings
                 .map { it.quoteCurrency }
