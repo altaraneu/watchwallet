@@ -80,8 +80,8 @@ approve the new servers can a signed list replace them without an app update (se
 
 These services do not get your addresses, but **they see which coins you hold or watch, together with
 your IP address**, because the app asks them for exactly those prices. The same goes for the logo host
-below, and **logos are loaded from it by default**: turn them off in Settings → Privacy if you do not
-want that. A proxy or Tor hides your IP address from them.
+below, but only if you turn that setting on: **it is off by default**. A proxy or Tor hides your IP
+address from them.
 
 | Service | Used for | Data sent |
 |---|---|---|

@@ -60,7 +60,7 @@
     <string name="deliberate_warning_message">Die App kann eine Adresse nicht vom privaten Schlüssel von Ethereum oder einer anderen Chain unterscheiden: Beide bestehen aus 0x und 64 Hexadezimalzeichen. Was du hier eingibst, wird an den öffentlichen %1$s-Server gesendet. Fahre nur mit einer öffentlichen Adresse fort, die du aus dem Empfangsbildschirm deiner Wallet kopiert hast. Gib niemals einen privaten Schlüssel ein.</string>
     <string name="deliberate_accept">Verstanden, das ist eine öffentliche Adresse</string>
     <string name="deliberate_entry_title">Gib oben die %1$s-Adresse ein</string>
-    <string name="deliberate_entry_message">Nur hier wird ein Wert dieser Form akzeptiert. Beim Hinzufügen wird er an den öffentlichen Server dieses Netzwerks gesendet.</string>
+    <string name="deliberate_entry_message">Nur hier wird ein Wert dieser Form akzeptiert. Sobald Sie ihn bestätigen, wird er an den öffentlichen Server dieses Netzwerks gesendet.</string>
     <string name="deliberate_entry_invalid">Das ist keine gültige Adresse in diesem Netzwerk.</string>
     <string name="secret_hex_hint">War das eine Sui- oder Aptos-Adresse, nutze unten „Sui- oder Aptos-Adresse hinzufügen“.</string>
 </resources>

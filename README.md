@@ -17,7 +17,7 @@ send anything; input that looks like one is rejected ([limits](SECURITY.md)).
 - **Paste and done** – paste an address, an xpub or a name; WatchWallet detects the chain.
 - **Unlimited** – no limit on wallets, addresses, groups or chains.
 
-> **Status:** alpha. Version 1.0.0 is in a closed test on Google Play. Expect bugs, and do not rely
+> **Status:** alpha. Version 1.1.0 is in a closed test on Google Play. Expect bugs, and do not rely
 > on it as your only record of your funds. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Features

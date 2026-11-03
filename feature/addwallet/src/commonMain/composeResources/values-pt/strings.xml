@@ -62,7 +62,7 @@
     <string name="deliberate_warning_message">A app não consegue distinguir um endereço da chave privada da Ethereum ou de outra rede: ambos são 0x e 64 caracteres hexadecimais. O que introduzir aqui é enviado para o servidor público de %1$s. Continue apenas com um endereço público copiado do ecrã de receção da sua carteira. Nunca introduza uma chave privada.</string>
     <string name="deliberate_accept">Compreendo, é um endereço público</string>
     <string name="deliberate_entry_title">Introduza acima o endereço %1$s</string>
-    <string name="deliberate_entry_message">Só aqui é aceite um valor com esta forma. É enviado para o servidor público dessa rede quando o adicionar.</string>
+    <string name="deliberate_entry_message">Só aqui é aceite um valor com esta forma. É enviado para o servidor público dessa rede assim que o confirmar.</string>
     <string name="deliberate_entry_invalid">Não é um endereço válido nessa rede.</string>
     <string name="secret_hex_hint">Se era um endereço Sui ou Aptos, use “Adicionar um endereço Sui ou Aptos” abaixo.</string>
 </resources>

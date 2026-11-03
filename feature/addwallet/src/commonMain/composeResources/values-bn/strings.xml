@@ -60,7 +60,7 @@
     <string name="deliberate_warning_message">অ্যাপ কোনো ঠিকানাকে Ethereum বা অন্য চেইনের প্রাইভেট কী থেকে আলাদা করতে পারে না: দুটোই 0x এবং ৬৪টি হেক্সাডেসিমেল অক্ষর। এখানে যা লিখবেন তা %1$s-এর পাবলিক সার্ভারে পাঠানো হবে। শুধু আপনার ওয়ালেটের রিসিভ স্ক্রিন থেকে কপি করা পাবলিক ঠিকানা নিয়েই এগোন। কখনও প্রাইভেট কী লিখবেন না।</string>
     <string name="deliberate_accept">বুঝেছি, এটি একটি পাবলিক ঠিকানা</string>
     <string name="deliberate_entry_title">ওপরে %1$s ঠিকানা লিখুন</string>
-    <string name="deliberate_entry_message">শুধু এখানেই এই ফরম্যাটের মান গ্রহণ করা হয়। যোগ করলে তা ওই নেটওয়ার্কের পাবলিক সার্ভারে পাঠানো হয়।</string>
+    <string name="deliberate_entry_message">শুধু এখানেই এই ফরম্যাটের মান গ্রহণ করা হয়। নিশ্চিত করার সঙ্গে সঙ্গেই এটি সেই নেটওয়ার্কের পাবলিক সার্ভারে পাঠানো হয়।</string>
     <string name="deliberate_entry_invalid">এটি ওই নেটওয়ার্কের বৈধ ঠিকানা নয়।</string>
     <string name="secret_hex_hint">এটি Sui বা Aptos ঠিকানা হলে নিচের “Sui বা Aptos ঠিকানা যোগ করুন” ব্যবহার করুন।</string>
 </resources>

@@ -64,7 +64,7 @@
     <string name="deliberate_warning_message">Aplikace nerozezná adresu od privátního klíče Etherea nebo jiného řetězce: obojí je 0x a 64 hexadecimálních znaků. Co sem zadáš, se odešle na veřejný server sítě %1$s. Pokračuj jen s veřejnou adresou zkopírovanou z obrazovky pro příjem ve své peněžence. Privátní klíč nikdy nezadávej.</string>
     <string name="deliberate_accept">Rozumím, je to veřejná adresa</string>
     <string name="deliberate_entry_title">Zadej adresu %1$s výše</string>
-    <string name="deliberate_entry_message">Jen tady se hodnota tohoto tvaru přijme. Po přidání se odešle na veřejný server dané sítě.</string>
+    <string name="deliberate_entry_message">Jen tady se hodnota tohoto tvaru přijme. Hned po potvrzení se odešle na veřejný server dané sítě.</string>
     <string name="deliberate_entry_invalid">Tohle není platná adresa v dané síti.</string>
     <string name="secret_hex_hint">Pokud to byla adresa Sui nebo Aptos, použij níže „Přidat adresu Sui nebo Aptos“.</string>
 </resources>

@@ -76,7 +76,7 @@ internal class EvmRpcClient(private val http: HttpClient, private val health: Ho
                 },
             )
         }.body()
-        val result = response["result"]?.jsonPrimitive?.contentOrNull ?: error("eth_call failed: ${response["error"]}")
+        val result = response["result"]?.jsonPrimitive?.contentOrNull ?: error("eth_call failed")
         result.removePrefix("0x")
     }
 
@@ -86,7 +86,7 @@ internal class EvmRpcClient(private val http: HttpClient, private val health: Ho
             contentType(ContentType.Application.Json)
             setBody(RpcRequest(method = method, params = listOf(address, "latest")))
         }.body()
-        parseHex(response.result ?: error("RPC $method failed: ${response.error}"))
+        parseHex(response.result ?: error("RPC $method failed"))
     }
 
     private companion object {

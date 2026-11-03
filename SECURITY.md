@@ -20,6 +20,8 @@ It recognises formats, so it has limits that no check can remove:
   after the user picks the chain and accepts a warning, and a backup entry needs the same confirmation.
   **A private key entered through that route reaches that chain's public server and is stored.** This is
   a deliberate trade-off to support those chains, and it is documented in [PRIVACY.md](PRIVACY.md).
+- A base64 key made only of characters that are also base58, and decoding to 32 bytes as base58, has the
+  form of a Solana address and passes as one.
 - Fewer than 11 words pass, as does an unknown word list that reads like a sentence. Text that is
   really a list of 12 simple words on a BIP-39 list is rejected even if it is not a seed.
 - **11 or more words that are mostly misspelled pass.** A phrase is recognised when three quarters of

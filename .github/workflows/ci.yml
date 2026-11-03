@@ -30,6 +30,8 @@ jobs:
         run: python3 scripts/check_fastlane.py
       - name: Check that bundled logos match their lock file
         run: python3 scripts/fetch_logos.py --check
+      - name: Check that every host in the code is listed in PRIVACY.md
+        run: python3 scripts/check_privacy_hosts.py
       - name: Test the server list signing tool
         run: python3 scripts/test_sign_endpoints.py
       - name: Build, test and lint

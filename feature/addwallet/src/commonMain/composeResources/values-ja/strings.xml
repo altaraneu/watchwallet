@@ -58,7 +58,7 @@
     <string name="deliberate_warning_message">アプリはアドレスと Ethereum などの秘密鍵を区別できません。どちらも 0x と 16 進数 64 文字です。ここに入力した内容は %1$s の公開サーバーに送信されます。ウォレットの受取画面からコピーした公開アドレスの場合のみ続行してください。秘密鍵は絶対に入力しないでください。</string>
     <string name="deliberate_accept">理解しました。これは公開アドレスです</string>
     <string name="deliberate_entry_title">上に %1$s のアドレスを入力</string>
-    <string name="deliberate_entry_message">この形式の値を受け付けるのはここだけです。追加すると、そのネットワークの公開サーバーに送信されます。</string>
+    <string name="deliberate_entry_message">この形式の値を受け付けるのはここだけです。確認するとすぐに、そのネットワークの公開サーバーに送信されます。</string>
     <string name="deliberate_entry_invalid">そのネットワークの有効なアドレスではありません。</string>
     <string name="secret_hex_hint">Sui または Aptos のアドレスだった場合は、下の「Sui または Aptos のアドレスを追加」を使ってください。</string>
 </resources>

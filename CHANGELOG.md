@@ -19,6 +19,10 @@ All notable changes to this project are documented here. The format follows
   rename dialog, watchlist search and settings fields. The clipboard is cleared when it holds the same
   text, however it was pasted, and those fields ask the keyboard not to learn.
 - Watchlist search sends nothing that looks like an address, a key or a sentence.
+- Base64 keys are also rejected when they have no `+`, `/` or `=`, or use the URL-safe alphabet, unless
+  the value has the form of a Solana address.
+- Errors from EVM servers no longer keep the server's reply, which could repeat the address.
+- The Sui and Aptos route now says that the value is sent as soon as it is confirmed.
 - SeedQR (digits, and raw bytes from the scanner) is rejected. Byte arrays of 32 or 64 numbers are found
   inside longer text. Extended private keys are recognised by their content under any prefix, and an
   unknown version of that form is refused.

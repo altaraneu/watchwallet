@@ -58,7 +58,7 @@
     <string name="deliberate_warning_message">Aplikasi tidak bisa membedakan alamat dari kunci pribadi Ethereum atau chain lain: keduanya 0x dan 64 karakter heksadesimal. Yang Anda masukkan di sini dikirim ke server publik %1$s. Lanjutkan hanya dengan alamat publik yang disalin dari layar terima dompet Anda. Jangan pernah memasukkan kunci pribadi.</string>
     <string name="deliberate_accept">Saya mengerti, ini alamat publik</string>
     <string name="deliberate_entry_title">Masukkan alamat %1$s di atas</string>
-    <string name="deliberate_entry_message">Hanya di sini nilai berbentuk ini diterima. Nilai dikirim ke server publik jaringan itu saat Anda menambahkannya.</string>
+    <string name="deliberate_entry_message">Hanya di sini nilai berbentuk ini diterima. Nilai dikirim ke server publik jaringan itu begitu Anda mengonfirmasinya.</string>
     <string name="deliberate_entry_invalid">Ini bukan alamat yang valid di jaringan itu.</string>
     <string name="secret_hex_hint">Jika ini alamat Sui atau Aptos, gunakan “Tambahkan alamat Sui atau Aptos” di bawah.</string>
 </resources>

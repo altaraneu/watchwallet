@@ -64,7 +64,7 @@
     <string name="deliberate_warning_message">The app cannot tell an address from the private key of Ethereum or another chain: both are 0x and 64 hexadecimal characters. What you enter here is sent to the public %1$s server. Continue only with a public address copied from the receive screen of your wallet. Never enter a private key.</string>
     <string name="deliberate_accept">I understand, this is a public address</string>
     <string name="deliberate_entry_title">Enter the %1$s address above</string>
-    <string name="deliberate_entry_message">Only here a value of this form is accepted. It is sent to that network’s public server when you add it.</string>
+    <string name="deliberate_entry_message">Only here a value of this form is accepted. It is sent to that network’s public server as soon as you confirm it.</string>
     <string name="deliberate_entry_invalid">This is not a valid address on that network.</string>
     <string name="secret_hex_hint">If this was a Sui or Aptos address, use “Add a Sui or Aptos address” below.</string>
 </resources>

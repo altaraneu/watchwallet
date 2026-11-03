@@ -68,7 +68,7 @@
     <string name="deliberate_warning_message">لا يستطيع التطبيق التمييز بين العنوان والمفتاح الخاص لـ Ethereum أو سلسلة أخرى: كلاهما 0x و64 محرفًا سداسيًا عشريًا. ما تدخله هنا يُرسل إلى خادم %1$s العام. تابع فقط بعنوان عام منسوخ من شاشة الاستلام في محفظتك. لا تدخل مفتاحًا خاصًا أبدًا.</string>
     <string name="deliberate_accept">أفهم ذلك، هذا عنوان عام</string>
     <string name="deliberate_entry_title">أدخل عنوان %1$s أعلاه</string>
-    <string name="deliberate_entry_message">هنا فقط تُقبل قيمة بهذا التنسيق. تُرسل إلى الخادم العام لتلك الشبكة عند إضافتها.</string>
+    <string name="deliberate_entry_message">هنا فقط تُقبل قيمة بهذا التنسيق. تُرسل إلى الخادم العام لتلك الشبكة فور تأكيدها.</string>
     <string name="deliberate_entry_invalid">هذا ليس عنوانًا صالحًا على تلك الشبكة.</string>
     <string name="secret_hex_hint">إذا كان هذا عنوان Sui أو Aptos، فاستخدم «إضافة عنوان Sui أو Aptos» أدناه.</string>
 </resources>

@@ -60,7 +60,7 @@
     <string name="deliberate_warning_message">ऐप किसी पते को Ethereum या अन्य चेन की निजी कुंजी से अलग नहीं कर सकता: दोनों 0x और 64 हेक्साडेसिमल अक्षर होते हैं। यहाँ जो आप दर्ज करेंगे, वह %1$s के सार्वजनिक सर्वर पर भेजा जाएगा। केवल अपने वॉलेट की रिसीव स्क्रीन से कॉपी किए गए सार्वजनिक पते के साथ आगे बढ़ें। निजी कुंजी कभी दर्ज न करें।</string>
     <string name="deliberate_accept">मैं समझता/समझती हूँ, यह सार्वजनिक पता है</string>
     <string name="deliberate_entry_title">ऊपर %1$s पता दर्ज करें</string>
-    <string name="deliberate_entry_message">केवल यहीं इस रूप का मान स्वीकार होता है। जोड़ने पर यह उस नेटवर्क के सार्वजनिक सर्वर पर भेजा जाता है।</string>
+    <string name="deliberate_entry_message">केवल यहीं इस रूप का मान स्वीकार होता है। पुष्टि करते ही यह उस नेटवर्क के सार्वजनिक सर्वर पर भेज दिया जाता है।</string>
     <string name="deliberate_entry_invalid">यह उस नेटवर्क का मान्य पता नहीं है।</string>
     <string name="secret_hex_hint">यदि यह Sui या Aptos पता था, तो नीचे “Sui या Aptos पता जोड़ें” का उपयोग करें।</string>
 </resources>

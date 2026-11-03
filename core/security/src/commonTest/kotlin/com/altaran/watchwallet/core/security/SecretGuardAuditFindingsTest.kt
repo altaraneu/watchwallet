@@ -168,6 +168,27 @@ class SecretGuardAuditFindingsTest {
         secret(hexKey.map { Char(it.code + 0xFEE0) }.joinToString(""), "fullwidth hex")
     }
 
+    @Test
+    fun base64KeysWithoutSymbolsAreRejected() {
+        // Legacy Sui keystore form: flag byte and 32 key bytes, 44 characters, none of + / =.
+        val symbolFree33Bytes = "AL" + "0Oa1Il".repeat(7)
+        secret(symbolFree33Bytes, "33 bytes without symbols")
+        secret("note $symbolFree33Bytes", "inside longer text")
+        secret("b0Oa1IlZ".repeat(5) + "b0O", "32 bytes without padding")
+        secret("b0Oa1IlZ".repeat(10) + "b0Oa1I", "64 bytes without padding")
+        secret("b0Oa-Il_".repeat(5) + "b0O", "url-safe alphabet")
+    }
+
+    @Test
+    fun addressesOfTheSameLengthAreNotMistakenForBase64Keys() {
+        listOf(
+            "So11111111111111111111111111111111111111112",
+            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+            "ltc1qw508d6qejxtdg4y5r3zarvary0c5xw7kgmn4n9",
+            "osmo1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu",
+        ).forEach { assertEquals(SecretCheck.Clean, SecretGuard.check(it), it) }
+    }
+
     private companion object {
         const val BIP32_SIZE = 78
         const val KEY_OFFSET = 45

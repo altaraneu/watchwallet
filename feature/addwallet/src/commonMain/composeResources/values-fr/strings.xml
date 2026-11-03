@@ -62,7 +62,7 @@
     <string name="deliberate_warning_message">L’application ne peut pas distinguer une adresse de la clé privée d’Ethereum ou d’une autre chaîne : les deux sont 0x et 64 caractères hexadécimaux. Ce que vous saisissez ici est envoyé au serveur public de %1$s. Continuez uniquement avec une adresse publique copiée depuis l’écran de réception de votre portefeuille. Ne saisissez jamais de clé privée.</string>
     <string name="deliberate_accept">J’ai compris, c’est une adresse publique</string>
     <string name="deliberate_entry_title">Saisissez l’adresse %1$s ci-dessus</string>
-    <string name="deliberate_entry_message">Seul cet écran accepte une valeur de cette forme. Elle est envoyée au serveur public de ce réseau lorsque vous l’ajoutez.</string>
+    <string name="deliberate_entry_message">Seul cet écran accepte une valeur de cette forme. Elle est envoyée au serveur public de ce réseau dès que vous la confirmez.</string>
     <string name="deliberate_entry_invalid">Ce n’est pas une adresse valide sur ce réseau.</string>
     <string name="secret_hex_hint">S’il s’agissait d’une adresse Sui ou Aptos, utilisez « Ajouter une adresse Sui ou Aptos » ci-dessous.</string>
 </resources>

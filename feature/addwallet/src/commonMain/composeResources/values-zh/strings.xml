@@ -58,7 +58,7 @@
     <string name="deliberate_warning_message">应用无法区分地址与以太坊或其他链的私钥:两者都是 0x 加 64 个十六进制字符。您在此输入的内容会发送到 %1$s 的公共服务器。只有当它是从钱包收款页面复制的公开地址时才继续。切勿输入私钥。</string>
     <string name="deliberate_accept">我明白,这是公开地址</string>
     <string name="deliberate_entry_title">在上方输入 %1$s 地址</string>
-    <string name="deliberate_entry_message">只有此处接受这种形式的值。添加时会发送到该网络的公共服务器。</string>
+    <string name="deliberate_entry_message">只有此处接受这种形式的值。确认后会立即发送到该网络的公共服务器。</string>
     <string name="deliberate_entry_invalid">这不是该网络上的有效地址。</string>
     <string name="secret_hex_hint">如果这是 Sui 或 Aptos 地址,请使用下方的“添加 Sui 或 Aptos 地址”。</string>
 </resources>

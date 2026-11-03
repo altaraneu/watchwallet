@@ -75,8 +75,9 @@ sealed interface SecretCheck {
  * same form: only [checkDeliberateAddress], the deliberately chosen route for those two chains,
  * lets it through.
  *
- * What no check can do: a 32-byte Solana secret in base58 is the same form as a Solana address, and
- * a raw key behind that route is the same form as a Sui or Aptos address.
+ * What no check can do: a 32-byte Solana secret in base58 is the same form as a Solana address, so is
+ * the rare base64 key made only of base58 characters, and a raw key behind that route is the same form
+ * as a Sui or Aptos address.
  */
 object SecretGuard {
     fun check(input: String): SecretCheck {
@@ -301,17 +302,33 @@ object SecretGuard {
     }
 
     private val BASE64 = Regex("""^[A-Za-z0-9+/]+={0,2}$""")
+    private val PLAIN_BASE64 = Regex("""^[A-Za-z0-9_-]+$""")
+
+    /** Characters of unpadded or symbol-free base64 of 32, 33 and 64 bytes. */
+    private val PLAIN_BASE64_KEY_LENGTHS = setOf(43, 44, 86)
 
     /**
-     * Base64 that decodes to a typical key length. It must contain `+`, `/` or `=`: base58
-     * addresses (Solana, Tron…) never do, so they are not mistaken for keys.
+     * Base64 that decodes to a typical key length. With `+`, `/` or `=` it cannot be a base58 address
+     * (Solana, Tron…). Without them it is refused too, unless it could be a Solana address.
      */
     @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     private fun isBase64Key(token: String): Boolean {
+        if (isPlainBase64Key(token)) return true
         if (!BASE64.matches(token) || token.none { it == '+' || it == '/' || it == '=' }) return false
         val size = runCatching { kotlin.io.encoding.Base64.decode(token).size }.getOrDefault(-1)
         return size == PRIVATE_KEY_BYTES || size == PRIVATE_KEY_BYTES + 1 || size == KEYPAIR_BYTES
     }
+
+    /**
+     * Both letter cases keep bech32 addresses of the same length (`ltc1q…`, `osmo1…`) out, as they
+     * use one case only. A key whose characters all happen to be valid base58 of 32 bytes still
+     * passes, as it has the form of a Solana address.
+     */
+    private fun isPlainBase64Key(token: String): Boolean = token.length in PLAIN_BASE64_KEY_LENGTHS &&
+        PLAIN_BASE64.matches(token) &&
+        token.any { it in 'a'..'z' } &&
+        token.any { it in 'A'..'Z' } &&
+        base58Length(token) != PRIVATE_KEY_BYTES
 
     private fun base58Length(value: String): Int =
         if (BASE58.matches(value)) runCatching { Base58.decode(value).size }.getOrDefault(-1) else -1
