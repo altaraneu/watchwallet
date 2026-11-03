@@ -6,6 +6,24 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-03
+
+### Security
+- A hex key of 60 to 63 characters, as printed without leading zeros, is now rejected.
+- A seed phrase with numbers stuck between its words (`1abandon2ability`) is now recognised.
+- The import field skips its secret check only for a complete encrypted backup, not for any text that
+  names the format.
+
+### Fixed
+- Value charts: distance on the time axis now matches time. Old periods were squeezed and recent ones
+  stretched, because bars were spaced evenly whatever the time between them.
+- The app could stop responding with many tokens, for example on an address full of spam tokens: totals
+  are no longer calculated on the main thread.
+
+### Build
+- Checksums of all dependencies are pinned, and the Google repository of the build logic is limited to
+  Google's groups.
+
 ## [1.1.0] - 2026-11-03
 
 ### Security

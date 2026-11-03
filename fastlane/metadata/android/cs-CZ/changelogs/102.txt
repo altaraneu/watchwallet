@@ -1,0 +1,1 @@
+Grafy hodnoty teď ukazují čas ve správném poměru, dřív se starší období smrskávalo. Oprava zamrzání u peněženek s mnoha tokeny. Přísnější rozpoznání hex klíčů a číslovaných seed frází. Připnuté kontrolní součty závislostí. Stále alfa verze.

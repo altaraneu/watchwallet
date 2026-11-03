@@ -169,6 +169,21 @@ class SecretGuardAuditFindingsTest {
     }
 
     @Test
+    fun hexKeysThatLostLeadingZerosAreRejected() {
+        secret(hexKey.drop(1), "63 characters")
+        secret("0x" + hexKey.drop(4), "60 characters with prefix")
+        assertEquals(SecretCheck.Clean, SecretGuard.check("0x" + hexKey.take(40)), "EVM address")
+    }
+
+    @Test
+    fun wordsJoinedByTheirNumbersAreCaught() {
+        val words = "abandon ability able about above absent absorb abstract absurd abuse access accident".split(' ')
+        secret(words.mapIndexed { i, word -> "${i + 1}$word" }.joinToString(""), "numbers before words")
+        secret(words.mapIndexed { i, word -> "$word${i + 1}" }.joinToString(""), "numbers after words")
+        assertEquals(SecretCheck.Clean, SecretGuard.check("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"), "address with digits")
+    }
+
+    @Test
     fun base64KeysWithoutSymbolsAreRejected() {
         // Legacy Sui keystore form: flag byte and 32 key bytes, 44 characters, none of + / =.
         val symbolFree33Bytes = "AL" + "0Oa1Il".repeat(7)

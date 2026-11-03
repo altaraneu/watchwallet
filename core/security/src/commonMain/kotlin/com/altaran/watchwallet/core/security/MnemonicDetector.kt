@@ -36,6 +36,7 @@ internal object MnemonicDetector {
     private const val MIN_LIST_WORD_LENGTH = 3
     private const val MAX_SENTENCE_MARKERS = 1
     private const val MAX_NUMBERING_DIGITS = 2
+    private val INNER_NUMBER = Regex("""(?<!\d)\d{1,2}(?!\d)""")
 
     /** Word to the bit set of lists that contain it. Built on first use: ordinary input stays cheap. */
     private val exact: Map<String, Int> by lazy {
@@ -189,6 +190,11 @@ internal object MnemonicDetector {
 
     private fun addRun(run: String, into: MutableList<Word?>) {
         if (run.all { it.isDigit() }) return // Numbering of the list; says nothing either way.
+        val glued = gluedWords(run)
+        if (glued != null) {
+            glued.forEach { into += Word(it) }
+            return
+        }
         val letters = run.trimStart { it.isDigit() }.trimEnd { it.isDigit() }
         val numbering = run.length - letters.length
         if (numbering > MAX_NUMBERING_DIGITS || !letters.all(SecretText::isWordChar)) {
@@ -203,6 +209,16 @@ internal object MnemonicDetector {
                 start = i
             }
         }
+    }
+
+    /**
+     * Words joined by their numbers ("1abandon2ability"). Every part must be on a list, because
+     * addresses mix letters and digits too.
+     */
+    private fun gluedWords(run: String): List<String>? {
+        val parts = run.split(INNER_NUMBER).filter { it.isNotEmpty() }
+        if (parts.size < 2 || parts.any { it.length < MIN_LIST_WORD_LENGTH }) return null
+        return parts.takeIf { list -> list.all { SecretText.foldWord(it) in exact } }
     }
 
     fun detect(text: String): Boolean {

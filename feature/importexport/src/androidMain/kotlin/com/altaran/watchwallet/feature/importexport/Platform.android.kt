@@ -139,6 +139,11 @@ internal actual fun rememberDocumentActions(
 
 internal actual object ExportCrypto {
     private const val FORMAT = "watchwallet-encrypted"
+    private const val KDF = "PBKDF2-HMAC-SHA256"
+    private const val CIPHER = "AES-256-GCM"
+    private val ENVELOPE_KEYS = setOf("format", "version", "kdf", "iterations", "cipher", "salt", "iv", "ciphertext")
+    private val BASE64_FIELDS = listOf("salt", "iv", "ciphertext")
+    private val BASE64_TEXT = Regex("""^[A-Za-z0-9+/]+=*$""")
     private const val ITERATIONS = 600_000
     private const val KEY_BITS = 256
     private const val SALT_BYTES = 16
@@ -160,9 +165,9 @@ internal actual object ExportCrypto {
         return JSONObject()
             .put("format", FORMAT)
             .put("version", 1)
-            .put("kdf", "PBKDF2-HMAC-SHA256")
+            .put("kdf", KDF)
             .put("iterations", ITERATIONS)
-            .put("cipher", "AES-256-GCM")
+            .put("cipher", CIPHER)
             .put("salt", b64(salt))
             .put("iv", b64(iv))
             .put("ciphertext", b64(ciphertext))
@@ -184,7 +189,18 @@ internal actual object ExportCrypto {
         cipher.doFinal(data).decodeToString()
     }.getOrNull()
 
-    actual fun isEncrypted(text: String): Boolean = text.contains("\"$FORMAT\"")
+    /**
+     * Only a whole envelope counts: this skips the secret check of the import field, because its
+     * ciphertext can look like a key, so mentioning the format in other text must not do the same.
+     */
+    actual fun isEncrypted(text: String): Boolean = runCatching {
+        val json = JSONObject(text.trim())
+        json.keys().asSequence().toSet() == ENVELOPE_KEYS &&
+            json.getString("format") == FORMAT &&
+            json.getString("kdf") == KDF &&
+            json.getString("cipher") == CIPHER &&
+            BASE64_FIELDS.all { BASE64_TEXT.matches(json.getString(it)) }
+    }.getOrDefault(false)
 
     private fun key(password: String, salt: ByteArray, iterations: Int): SecretKeySpec {
         val spec = PBEKeySpec(password.toCharArray(), salt, iterations, KEY_BITS)

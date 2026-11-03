@@ -114,7 +114,8 @@ class PortfolioRepository(
                     )
                 }.sortedBy { it.symbol.lowercase() },
             )
-        }
+            // Thousands of spam tokens are normal on a well-known address: never on the main thread.
+        }.conflate().flowOn(Dispatchers.Default)
 
     /** Current value of every wallet (visible assets only). */
     fun walletValues(currency: QuoteCurrency): Flow<Map<Long, Double>> =
@@ -122,7 +123,7 @@ class PortfolioRepository(
             balances.filter { isVisible(it, prices) }.groupBy { it.walletId }.mapValues { (_, rows) ->
                 rows.sumOf { row -> row.asset.priceId?.let { prices[it]?.price }?.let { it * row.amount.toDouble() } ?: 0.0 }
             }
-        }
+        }.conflate().flowOn(Dispatchers.Default)
 
     /** Assets with stored prices from CoinGecko, see [usesCoinGecko]. */
     val coinGeckoPriceIds: Flow<Set<String>> get() = priceRepository.coinGeckoPriceIds
@@ -132,7 +133,7 @@ class PortfolioRepository(
         combine(walletRepository.balances, priceRepository.currentPrices(currency), coinGeckoPriceIds) { balances, prices, ids ->
             balances.filter { row -> isVisible(row, prices) && row.asset.priceId?.let { it in ids } == true }
                 .mapTo(HashSet()) { it.walletId }
-        }
+        }.conflate().flowOn(Dispatchers.Default)
 
     /**
      * Total value over time for the range (all wallets or a subset), downsampled for rendering.
