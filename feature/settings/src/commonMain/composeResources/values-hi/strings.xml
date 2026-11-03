@@ -85,4 +85,5 @@
     <string name="settings_endpoints_hosts_title">उपयोग में ब्लॉकचेन सर्वर</string>
     <string name="settings_endpoints_hosts_hint">ये सर्वर आपके ट्रैक किए गए पते प्राप्त करते हैं, और आपको वही दिखता है जो वे बताते हैं। नई सूची ऐप के अगले शुरू होने पर लागू होती है।</string>
     <string name="settings_endpoints_hosts_close">बंद करें</string>
+    <string name="settings_esplora_ignored">यह पता अनुमत नहीं है, इसलिए इसका उपयोग नहीं हो रहा: आपके Bitcoin पते डिफ़ॉल्ट सर्वर पर जाते हैं। अपना सर्वर उपयोग करने के लिए पूरा https:// पता दर्ज करें।</string>
 </resources>

@@ -37,9 +37,9 @@ import com.altaran.watchwallet.core.designsystem.component.SingleChoiceDialog
 import com.altaran.watchwallet.core.endpoints.EndpointListInfo
 import com.altaran.watchwallet.core.model.NetworkSettings
 import com.altaran.watchwallet.core.network.proxySupported
+import com.altaran.watchwallet.core.ui.format.DateFormatter
 import com.altaran.watchwallet.core.ui.secret.SensitiveInput
 import com.altaran.watchwallet.core.ui.secret.rememberSecretFieldGuard
-import com.altaran.watchwallet.core.ui.format.DateFormatter
 import com.altaran.watchwallet.feature.settings.generated.resources.*
 import com.altaran.watchwallet.feature.settings.generated.resources.Res
 import org.jetbrains.compose.resources.pluralStringResource
@@ -118,6 +118,14 @@ internal fun AdvancedSettingsSections(
         summary = network.esploraUrl ?: stringResource(Res.string.settings_default_server),
         onClick = { dialog = NetworkDialog.ESPLORA },
     )
+    if (CustomServerUrl.isIgnored(network.esploraUrl)) {
+        Text(
+            stringResource(Res.string.settings_esplora_ignored),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        )
+    }
     SettingsSwitchItem(
         title = stringResource(Res.string.settings_endpoints_auto),
         summary = stringResource(Res.string.settings_endpoints_auto_summary),

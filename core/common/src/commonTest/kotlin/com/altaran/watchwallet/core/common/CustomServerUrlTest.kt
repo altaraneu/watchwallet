@@ -32,6 +32,15 @@ class CustomServerUrlTest {
     }
 
     @Test
+    fun onlyAStoredValueThatFailsTheRulesCountsAsIgnored() {
+        assertEquals(false, CustomServerUrl.isIgnored(null))
+        assertEquals(false, CustomServerUrl.isIgnored("https://mempool.example/api"))
+        assertEquals(false, CustomServerUrl.isIgnored("http://192.168.1.10:3006/api"))
+        assertEquals(true, CustomServerUrl.isIgnored("http://mempool.space/api"))
+        assertEquals(true, CustomServerUrl.isIgnored("mempool.space"))
+    }
+
+    @Test
     fun everythingElseIsRejected() {
         listOf(
             "http://mempool.space/api",

@@ -85,4 +85,5 @@
     <string name="settings_endpoints_hosts_title">ব্যবহৃত ব্লকচেইন সার্ভার</string>
     <string name="settings_endpoints_hosts_hint">এই সার্ভারগুলো আপনার ট্র্যাক করা ঠিকানা পায় এবং তারা যা জানায় তা-ই আপনি দেখেন। নতুন তালিকা অ্যাপের পরবর্তী চালুতে কার্যকর হয়।</string>
     <string name="settings_endpoints_hosts_close">বন্ধ করুন</string>
+    <string name="settings_esplora_ignored">এই ঠিকানাটি অনুমোদিত নয়, তাই এটি ব্যবহার করা হচ্ছে না: আপনার Bitcoin ঠিকানাগুলো ডিফল্ট সার্ভারে যাচ্ছে। নিজের সার্ভার ব্যবহার করতে একটি সম্পূর্ণ https:// ঠিকানা দিন।</string>
 </resources>

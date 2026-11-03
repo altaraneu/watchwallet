@@ -93,4 +93,5 @@
     <string name="settings_endpoints_hosts_title">خوادم البلوكتشين المستخدمة</string>
     <string name="settings_endpoints_hosts_hint">تتلقى هذه الخوادم العناوين التي تتابعها وتعرض لك ما تبلّغ عنه. تُطبَّق القائمة الجديدة عند تشغيل التطبيق التالي.</string>
     <string name="settings_endpoints_hosts_close">إغلاق</string>
+    <string name="settings_esplora_ignored">هذا العنوان غير مسموح به، لذا لا يُستخدم: تذهب عناوين Bitcoin الخاصة بك إلى الخوادم الافتراضية. أدخل عنوان https:// كاملًا لاستخدام خادمك.</string>
 </resources>

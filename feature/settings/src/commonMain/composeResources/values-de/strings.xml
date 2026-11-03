@@ -85,4 +85,5 @@
     <string name="settings_endpoints_hosts_title">Verwendete Blockchain-Server</string>
     <string name="settings_endpoints_hosts_hint">Diese Server erhalten die von dir beobachteten Adressen, und du siehst, was sie melden. Eine neue Liste gilt ab dem nächsten App-Start.</string>
     <string name="settings_endpoints_hosts_close">Schließen</string>
+    <string name="settings_esplora_ignored">Diese Adresse ist nicht erlaubt und wird daher nicht verwendet: Deine Bitcoin-Adressen gehen an die Standardserver. Gib eine vollständige https://-Adresse ein, um deinen eigenen Server zu nutzen.</string>
 </resources>

@@ -97,4 +97,5 @@
     <string name="settings_endpoints_hosts_title">Blockchain servers in use</string>
     <string name="settings_endpoints_hosts_hint">These servers receive the addresses you track, and show you what they report. A new list applies at the next app start.</string>
     <string name="settings_endpoints_hosts_close">Close</string>
+    <string name="settings_esplora_ignored">This address is not allowed, so it is not used: your Bitcoin addresses go to the default servers. Enter a full https:// address to use your own server.</string>
 </resources>

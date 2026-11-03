@@ -315,6 +315,9 @@ private fun HoldingAssetRow(holding: Holding, currency: QuoteCurrency, onOpen: (
 
 private const val MAX_SLICES = 6
 
+/** Equal slices in discreet mode: their sizes would show the proportions the hidden percentages do. */
+internal fun donutValues(values: List<Double>, discreet: Boolean): List<Double> = if (discreet) values.map { 1.0 } else values
+
 @Composable
 private fun Allocation(holdings: List<Holding>, total: Double) {
     if (total <= 0) return
@@ -325,7 +328,9 @@ private fun Allocation(holdings: List<Holding>, total: Double) {
     val entries = top.map { it.symbol to (it.value ?: 0.0) } + if (otherValue > 0) listOf(otherLabel to otherValue) else emptyList()
     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
         DonutChart(
-            slices = entries.mapIndexed { i, (_, value) -> DonutSlice(value, AllocationPalette[i % AllocationPalette.size]) },
+            slices = donutValues(entries.map { it.second }, LocalDiscreetMode.current).mapIndexed { i, value ->
+                DonutSlice(value, AllocationPalette[i % AllocationPalette.size])
+            },
             modifier = Modifier.size(140.dp),
         )
         Spacer(Modifier.width(24.dp))

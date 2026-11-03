@@ -83,4 +83,5 @@
     <string name="settings_endpoints_hosts_title">Server blockchain yang digunakan</string>
     <string name="settings_endpoints_hosts_hint">Server ini menerima alamat yang Anda pantau, dan Anda melihat apa yang mereka laporkan. Daftar baru berlaku saat aplikasi dimulai berikutnya.</string>
     <string name="settings_endpoints_hosts_close">Tutup</string>
+    <string name="settings_esplora_ignored">Alamat ini tidak diizinkan sehingga tidak digunakan: alamat Bitcoin Anda dikirim ke server default. Masukkan alamat https:// lengkap untuk memakai server Anda sendiri.</string>
 </resources>

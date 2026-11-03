@@ -22,6 +22,12 @@ object CustomServerUrl {
         return text.takeIf { secure || isCleartextAllowedHost(host) }
     }
 
+    /**
+     * A stored value the rules no longer allow. The app does not use it, so Bitcoin addresses go to
+     * the default servers, and the user must be told.
+     */
+    fun isIgnored(stored: String?): Boolean = stored != null && validate(stored) == null
+
     /** `null` for user info (`user@host` can disguise the real host) and malformed hosts or ports. */
     private fun hostOf(authority: String): String? {
         if ('@' in authority) return null

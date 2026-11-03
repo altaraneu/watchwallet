@@ -87,4 +87,5 @@
     <string name="settings_endpoints_hosts_title">Servidores de blockchain em uso</string>
     <string name="settings_endpoints_hosts_hint">Estes servidores recebem os endereços que você acompanha, e o que você vê é o que eles informam. Uma nova lista vale a partir do próximo início do app.</string>
     <string name="settings_endpoints_hosts_close">Fechar</string>
+    <string name="settings_esplora_ignored">Este endereço não é permitido, por isso não é usado: seus endereços de Bitcoin vão para os servidores padrão. Digite um endereço https:// completo para usar seu próprio servidor.</string>
 </resources>

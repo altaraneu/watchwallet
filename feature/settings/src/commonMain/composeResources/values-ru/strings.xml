@@ -89,4 +89,5 @@
     <string name="settings_endpoints_hosts_title">Используемые серверы блокчейна</string>
     <string name="settings_endpoints_hosts_hint">Эти серверы получают отслеживаемые вами адреса, а вы видите то, что они сообщают. Новый список вступает в силу при следующем запуске приложения.</string>
     <string name="settings_endpoints_hosts_close">Закрыть</string>
+    <string name="settings_esplora_ignored">Этот адрес не разрешён, поэтому не используется: ваши адреса Bitcoin отправляются на серверы по умолчанию. Чтобы использовать свой сервер, введите полный адрес https://.</string>
 </resources>
