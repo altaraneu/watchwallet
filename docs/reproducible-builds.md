@@ -82,12 +82,36 @@ daemon may not have picked those up). All three APKs and `mapping.txt` files wer
 **Not tested:**
 
 - **Other JDKs, and other machines building on Linux.** Use Linux with Temurin 21 as the reference.
-- **Why native libraries differ between systems.** For `v1.1.0` the workflow (Linux, Temurin 21) passed,
-  its two builds being identical. Compared with a Windows build by `scripts/compare_apks.py`, 1604 of 1612
-  entries are identical, including all `classes*.dex`. The 8 that differ are `libsqliteJni.so` and
-  `libdatastore_shared_counter.so` for each of the four ABIs. The cause was not looked into.
-- **The APK on Google Play.** It has never been compared with a local build.
+- **Why stripping differs between systems.** For `v1.1.0` the workflow (Linux, Temurin 21) passed, its two
+  builds being identical. Compared with a Windows build by `scripts/compare_apks.py`, 1604 of 1612 entries
+  are identical, including all `classes*.dex`. The 8 that differ are `libsqliteJni.so` and
+  `libdatastore_shared_counter.so` for each of the four ABIs. Their loaded segments are the same apart from
+  the ELF header fields describing the section table; the files differ in stripped debug data. Why the
+  strip step gives different output on the two systems was not looked into.
+- **The APKs Play sends to a device.** Only the universal APK from Play Console was compared, see below.
 - **Bundles.** The AAB and Play's processing of it are outside this check.
+
+## Comparing with Google Play
+
+Play rewrites resources and the manifest, so a whole-file or per-entry comparison fails. Compare what runs:
+
+```sh
+adb shell pm path com.altaran.watchwallet       # then adb pull each path listed
+python scripts/compare_play_apk.py app-release-unsigned.apk base.apk split_config.*.apk
+aapt2 dump permissions base.apk
+```
+
+A device only gets the native libraries and languages of its own configuration, so entries are reported as
+missing there. Results for `v1.1.0`, using the universal APK from Play Console against the CI build:
+
+- 221 entries identical: the dex file, 204 assets and 16 native libraries.
+- 8 native libraries with the same loaded code, stripped differently.
+- Same permissions. Play's manifest adds four `meta-data` entries: `com.android.dynamic.apk.fused.modules`,
+  `com.android.stamp.source`, `com.android.stamp.type` and `com.android.vending.splits`.
+- Not compared: resources.
+
+Only the owner can download that universal APK, so an outsider has to use a device. A match shows what Play
+delivered then; Play could deliver something else to someone else.
 
 A match shows the APK came from this source and these dependencies. It says nothing about whether the
 dependencies are honest, and the prebuilt native libraries in particular are not rebuilt.

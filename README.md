@@ -87,11 +87,12 @@ Check it with `apksigner verify --print-certs` on the APK from your device. Play
 post-quantum signature; on an older Java, `apksigner` stops with "ML-DSA KeyFactory not available".
 
 **What this does and does not prove.** The fingerprint shows who signed the app. It does not prove
-that the app was built from this source code, and so far nobody independent has confirmed that. For
-v1.1.0 the public CI build on Linux and a local build on Windows match in all compiled app code: 1604 of
-1612 APK entries are identical, and the other 8 are prebuilt native libraries, for a reason not yet
-looked into. Still unproven: whether the APK on Play matches a build from this source, which has never
-been compared. Dependency checksums are not pinned either:
+that the app was built from this source code, so for v1.1.0 the owner compared them. The universal APK
+that Play Console generates and the public CI build from the tag have the same dex file and the same 204
+assets. Of 24 native libraries 16 are identical, and 8 have the same loaded code and differ in stripped
+debug data. Permissions are the same, and Play's manifest only adds four entries of its own. Resources
+were not compared, as Play rewrites them. That is the owner's comparison, not an independent one:
+anyone can repeat it on their own device with `scripts/compare_play_apk.py`. Dependency checksums are not pinned either:
 `gradle/verification-metadata.xml` is not committed yet. See
 [docs/reproducible-builds.md](docs/reproducible-builds.md). A build verified across machines and F-Droid
 are the planned ways to close this gap.

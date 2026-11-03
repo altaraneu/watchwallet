@@ -50,8 +50,13 @@ Runtime 21), three local builds of the same commit, from fresh exports, were byt
 ([details](docs/reproducible-builds.md)). For v1.1.0 the workflow building tagged releases ran on Linux with
 Temurin 21: two builds from two paths matched each other, and against a Windows build 1604 of 1612 APK
 entries are identical, including all `classes*.dex`. The other 8 are the native libraries in `lib/`.
-**Not shown:** that those 8 differ harmlessly, as the cause was not looked into, and that the APK on Google
-Play matches this source. Play re-signs and processes what it receives, and that APK has
+Those 8 have the same loaded code, and differ only in stripped debug data and the ELF header fields
+describing it.
+
+The universal APK that Play Console generates for v1.1.0 matches that CI build in the same way: same dex
+and assets, same native code, same permissions (`scripts/compare_play_apk.py`). **Not shown:** that the APKs
+Play sends to a device match too, as they are split differently and were not checked, and that anyone
+independent has repeated this. Resources were not compared, because Play rewrites them. Play re-signs and processes what it receives, and that APK has
 never been compared with a local build.
 
 Dependency checksums are not pinned: `gradle/verification-metadata.xml` is **not committed yet**, so a
