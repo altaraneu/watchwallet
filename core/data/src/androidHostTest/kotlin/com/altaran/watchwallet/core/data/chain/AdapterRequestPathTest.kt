@@ -26,6 +26,7 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.engine.mock.respondError
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.headersOf
@@ -65,7 +66,12 @@ class AdapterRequestPathTest {
         val seen = mutableListOf<Url>()
         val engine = MockEngine { request ->
             seen += request.url
-            respondError(HttpStatusCode.NotFound)
+            // The EVM adapter asks the explorer, where the address is in the path, only after its node answered.
+            if (case.name == "evm" && request.method == HttpMethod.Post) {
+                respond(EVM_NODE_ANSWER, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+            } else {
+                respondError(HttpStatusCode.NotFound)
+            }
         }
         val target = WatchTarget.Address(case.family, ChainId(case.chain), value)
         val adapter = case.adapter(createHttpClient(engine = engine))
@@ -137,7 +143,8 @@ class AdapterRequestPathTest {
             "tron" to "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb",
             "cosmos" to "cosmos1fl48vsnmsdzcv85q5d2q4z5ajdha8yu34mf0eh",
             "stellar" to "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
-            "aptos" to "0x1",
+            // The adapter pads a short form, so the full one is what appears in the path.
+            "aptos" to "0x0000000000000000000000000000000000000000000000000000000000000001",
             "hedera" to "0.0.2",
             "algorand" to "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ",
             "tezos" to "tz1burnburnburnburnburnburnburjAYjjX",
@@ -170,5 +177,6 @@ class AdapterRequestPathTest {
 
     private companion object {
         const val BASE = "https://node.test/api"
+        const val EVM_NODE_ANSWER = """{"jsonrpc":"2.0","id":1,"result":"0x1"}"""
     }
 }
