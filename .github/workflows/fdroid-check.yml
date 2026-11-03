@@ -19,14 +19,11 @@ jobs:
           persist-credentials: false
           path: app-source
       - name: Install the tools
-        run: pipx install fdroidserver
+        run: pipx install git+https://gitlab.com/fdroid/fdroidserver.git
       - name: Prepare the layout
         run: |
           git clone --depth 1 https://gitlab.com/fdroid/fdroiddata.git data
           cp app-source/docs/fdroid/com.altaran.watchwallet.yml data/metadata/
-      - name: Read the metadata
-        working-directory: data
-        run: fdroid readmeta
       - name: Lint
         working-directory: data
         run: fdroid lint com.altaran.watchwallet
