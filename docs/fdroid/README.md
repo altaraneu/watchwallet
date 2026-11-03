@@ -72,8 +72,9 @@ The desktop builds of secp256k1 (Windows DLL, macOS dylib) that used to land in 
 ## Open points
 
 - **Application id:** the policy asks for an id based on a domain the developer owns, and
-  `com.altaran.watchwallet` implies `altaran.com`. The owner must confirm that. Play has already
-  published this id, so changing it means a new app.
+  `com.altaran.watchwallet` implies `altaran.com`, which **the owner does not own**; it is registered to
+  someone else and parked. Say so in the merge request. Play has already published this id, so changing it
+  means a new app. If a reviewer insists, `io.github.altaraneu.watchwallet` is the alternative.
 - **Signing:** by default F-Droid signs with its own key, so its users cannot update from the Play or
   GitHub version. To share a key, add the release certificate as `AllowedAPKSigningKeys`, publish signed
   APKs as `Binaries`, and F-Droid will ship yours only when its build matches. Google holds the Play
