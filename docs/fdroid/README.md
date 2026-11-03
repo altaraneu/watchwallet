@@ -1,7 +1,7 @@
 # F-Droid readiness
 
 State of the app against the [Inclusion Policy](https://f-droid.org/docs/Inclusion_Policy/). Nothing has
-been submitted. `com.altaran.watchwallet.yml` is the recipe for fdroiddata, set to tag `v1.1.0`; this folder
+been submitted, see the age of the project under Open points. `com.altaran.watchwallet.yml` is the recipe for fdroiddata, set to tag `v1.1.0`; this folder
 does not ship in the app and nothing reads it.
 
 `.github/workflows/fdroid-check.yml` runs F-Droid's current tools on the recipe in a copy of fdroiddata. At
@@ -71,10 +71,17 @@ The desktop builds of secp256k1 (Windows DLL, macOS dylib) that used to land in 
 
 ## Open points
 
-- **Application id:** the policy asks for an id based on a domain the developer owns, and
+- **Age of the project, the blocking point:** the policy says an app "should have been actively developed for
+  at least 3 months", unless it has proven users, its author already maintains apps on F-Droid, or it is for
+  an event. The merge request template points at this rule. Development started on 2026-11-01, so do not
+  submit before **2027-02-01**, unless one of those exceptions applies by then.
+- **Application id:** the policy advises an id based on a domain the developer owns, and
   `com.altaran.watchwallet` implies `altaran.com`, which **the owner does not own**; it is registered to
   someone else and parked. Say so in the merge request. Play has already published this id, so changing it
   means a new app. If a reviewer insists, `io.github.altaraneu.watchwallet` is the alternative.
+- **Merge request needs:** `AuthorName`, which the recipe still lacks, and screenshots in
+  `fastlane/metadata/android/*/images/`. The template asks to enable reproducible builds or give a reason. A
+  fork exists at `gitlab.com/altaraneu/fdroiddata`; sync it first.
 - **Signing:** by default F-Droid signs with its own key, so its users cannot update from the Play or
   GitHub version. To share a key, add the release certificate as `AllowedAPKSigningKeys`, publish signed
   APKs as `Binaries`, and F-Droid will ship yours only when its build matches. Google holds the Play
