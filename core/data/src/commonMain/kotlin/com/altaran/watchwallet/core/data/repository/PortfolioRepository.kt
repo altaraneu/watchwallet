@@ -159,14 +159,14 @@ class PortfolioRepository(
                 val histories = buildHistories(input.rows, input.transactions, history, input.prices, input.wallets)
                 val first = (input.transactions.map { it.timestamp } + histories.mapNotNull { it.startsAt }).minOrNull()
                 val (samples, rangeStart) = displaySamples(range, first)
-                val flows = cumulativeFlows(input.transactions, input.rows, history, input.wallets, samples)
+                val flows = cumulativeFlows(input.transactions, input.rows, history, input.wallets, samples, input.prices)
                 val values = Timeline.portfolio(histories, samples).mapIndexed { i, point -> point.copy(flow = flows[i]) }
                 val base = displayDownsample(values, rangeStart)
                 val grid = fine?.let { refinedGrid(it.detail, samples) }.orEmpty()
                 if (fine == null || grid.isEmpty()) return@combine base
                 // The same rows, balance starts and deposits as the base series, only with finer prices.
                 val refined = buildHistories(input.rows, input.transactions, fine.over(history), input.prices, input.wallets)
-                val gridFlows = cumulativeFlows(input.transactions, input.rows, history, input.wallets, grid)
+                val gridFlows = cumulativeFlows(input.transactions, input.rows, history, input.wallets, grid, input.prices)
                 val detailValues = Timeline.portfolio(refined, grid, lastIsLive = fine.detail.live).mapIndexed { i, point -> point.copy(flow = gridFlows[i]) }
                 ChartDetailPlanner.mergePoints(base, detailValues)
             }.conflate()

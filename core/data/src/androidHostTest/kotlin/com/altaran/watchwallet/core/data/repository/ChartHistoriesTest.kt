@@ -6,6 +6,7 @@ import com.altaran.watchwallet.core.model.ChainId
 import com.altaran.watchwallet.core.model.TxDirection
 import com.altaran.watchwallet.core.model.Wallet
 import com.altaran.watchwallet.core.model.WalletTransaction
+import com.altaran.watchwallet.core.pricing.CurrentPrice
 import com.altaran.watchwallet.core.timeline.TimedPrice
 import com.altaran.watchwallet.core.timeline.Timeline
 import com.ionspin.kotlin.bignum.integer.BigInteger
@@ -163,5 +164,131 @@ class ChartHistoriesTest {
         val grid = listOf(t0 + 1.days, t0 + 2.days)
         assertEquals(listOf(0.0, 0.0), Timeline.balances(history, grid, lastIsLive = false))
         assertEquals(listOf(0.0, 0.0), Timeline.portfolio(listOf(history), grid, lastIsLive = false).map { it.value })
+    }
+
+    // ---- What "excluding deposits and withdrawals" is, against a recomputation from transactions alone.
+
+    private val noPriceBefore = t1
+
+    /** The header: change of value minus change of net deposits, between the first and the last point. */
+    private fun header(
+        rows: List<ChartRow>,
+        txs: List<WalletTransaction>,
+        history: Map<String, List<TimedPrice>>,
+        grid: List<Instant>,
+        wallet: Wallet = wallet(),
+    ): Double {
+        val wallets = mapOf(1L to wallet)
+        val values = Timeline.portfolio(buildHistories(rows, txs, history, emptyMap(), wallets), grid)
+        val flows = cumulativeFlows(txs, rows, history, wallets, grid)
+        return values.last().value - values.first().value - (flows.last() - flows.first())
+    }
+
+    /** Sums priced transactions at the last price at or before them; everything else is skipped. */
+    private fun recomputedNetFlows(txs: List<WalletTransaction>, history: Map<String, List<TimedPrice>>): Double = txs.sumOf { tx ->
+        val prices = history["solana"].orEmpty().filter { it.time <= tx.timestamp }
+        val price = prices.lastOrNull()?.price
+        if (price == null || tx.direction == TxDirection.SELF) {
+            0.0
+        } else {
+            (tx.delta.longValue(exactRequired = false) + if (tx.delta.isNegative) (tx.fee?.longValue(exactRequired = false) ?: 0L) else 0L) * price
+        }
+    }
+
+    /** Both leave fees out of the flows, so they are a loss in both and explain no difference. */
+    @Test
+    fun aFeeIsALossAndCountsTheSameInBothCalculations() {
+        val price = mapOf("solana" to listOf(TimedPrice(t0, 100.0)))
+        val txs = listOf(tx("in", t0, sol, 10), tx("out", t1, sol, -5, fee = 1, direction = TxDirection.OUT))
+        val rows = listOf(row(sol, 5))
+        assertEquals("exactly the fee, at its price", -100.0, header(rows, txs, price, samples), 0.0)
+        assertEquals(-100.0, 5 * 100.0 - recomputedNetFlows(txs, price), 0.0)
+    }
+
+    /** Priced the same to the cent: a flow uses the price at the transaction, not at a sample. */
+    @Test
+    fun theSamplingOfTheChartDoesNotChangeTheFlows() {
+        val txs = listOf(tx("in", t0 + 1.days, sol, 10), tx("out", t1 + 1.days, sol, -4, direction = TxDirection.OUT))
+        val rows = listOf(row(sol, 6))
+        val coarse = cumulativeFlows(txs, rows, prices, mapOf(1L to wallet()), listOf(t0, now)).last()
+        val fine = cumulativeFlows(txs, rows, prices, mapOf(1L to wallet()), samples).last()
+        assertEquals(fine, coarse, 0.0)
+        assertEquals(recomputedNetFlows(txs, prices), fine, 0.0)
+    }
+
+    /**
+     * A transaction older than the first known price: the app takes the first price, as it does for
+     * the value at that time, so it is no phantom gain. A recomputation that skips it differs by
+     * amount times first price.
+     */
+    @Test
+    fun aTransactionOlderThanThePriceHistoryIsCountedAtTheFirstPrice() {
+        val late = mapOf("solana" to listOf(TimedPrice(noPriceBefore, 100.0)))
+        val txs = listOf(tx("old", t0, sol, 3))
+        val flows = cumulativeFlows(txs, listOf(row(sol, 3)), late, mapOf(1L to wallet()), samples).last()
+        assertEquals(300.0, flows, 0.0)
+        assertEquals(0.0, recomputedNetFlows(txs, late), 0.0)
+        assertEquals("no gain out of nothing", 0.0, header(listOf(row(sol, 3)), txs, late, listOf(t0, now)), 0.0)
+    }
+
+    /** A balance on a chain without any transaction is a deposit, which transactions alone cannot show. */
+    @Test
+    fun aBalanceWithoutTransactionsIsADepositARecomputationDoesNotSee() {
+        val rows = listOf(row(reward, 2))
+        val flows = cumulativeFlows(emptyList(), rows, prices, mapOf(1L to wallet(createdAt = t1)), samples).last()
+        assertEquals(400.0, flows, 0.0)
+        assertEquals(0.0, recomputedNetFlows(emptyList(), prices), 0.0)
+    }
+
+    /**
+     * Balances are rebuilt backwards from the current one. Coins the known history does not explain
+     * are in the first value of the chart, and the header compares with that. Value minus net
+     * deposits does not subtract them.
+     */
+    @Test
+    fun coinsTheHistoryDoesNotExplainAreInTheStartingValue() {
+        val rows = listOf(row(sol, 12))
+        val txs = listOf(tx("in", t1, sol, 10))
+        val grid = listOf(t1 - 1.days, now)
+        val shown = header(rows, txs, prices, grid)
+        val recomputed = 12 * 200.0 - recomputedNetFlows(txs, prices)
+        assertEquals("2 unexplained coins at 100 in the start", 200.0, recomputed - shown, 0.0)
+    }
+
+    /** What the rows leave out (a hidden or spam asset) is out of value and flows alike. */
+    @Test
+    fun anAssetThatIsNotChartedCountsForNeitherValueNorFlows() {
+        val txs = listOf(tx("in", t0, sol, 10), tx("spam", t0, reward, 5))
+        val rows = listOf(row(sol, 10))
+        assertEquals(1000.0, cumulativeFlows(txs, rows, prices, mapOf(1L to wallet()), samples).last(), 0.0)
+    }
+
+    /** A flow without price history uses the current price, as the value does: otherwise a deposit reads as a gain. */
+    @Test
+    fun aDepositOfAnAssetWithoutPriceHistoryIsNoGain() {
+        val current = mapOf("solana" to CurrentPrice("solana", "usd", 50.0, null))
+        val txs = listOf(tx("in", t1, sol, 10))
+        val rows = listOf(row(sol, 10))
+        val wallets = mapOf(1L to wallet())
+        val flows = cumulativeFlows(txs, rows, emptyMap(), wallets, listOf(t0, now), current)
+        val values = Timeline.portfolio(buildHistories(rows, txs, emptyMap(), current, wallets), listOf(t0, now))
+        assertEquals(500.0, flows.last(), 0.0)
+        assertEquals("nothing but the deposit", 0.0, values.last().value - values.first().value - (flows.last() - flows.first()), 0.0)
+    }
+
+    /** All the differences at once add up exactly, so no further term is hiding in this calculation. */
+    @Test
+    fun theDifferenceToARecomputationIsExactlyTheSumOfItsTerms() {
+        val late = mapOf("solana" to listOf(TimedPrice(t1, 100.0), TimedPrice(now, 200.0)))
+        val older = 3L // before the first price: at 100 in the app, skipped by the recomputation
+        val unexplained = 2L // held, but in no known transaction: part of the first value of the chart
+        val txs = listOf(tx("old", t0, sol, older), tx("in", t1, sol, 10), tx("out", t1 + 5.days, sol, -2, fee = 1, direction = TxDirection.OUT))
+        val balance = older + 10 - 2 + unexplained
+        val rows = listOf(row(sol, balance))
+        val shown = header(rows, txs, late, listOf(t0, now))
+        val recomputed = balance * 200.0 - recomputedNetFlows(txs, late)
+        assertEquals(1200.0, shown, 0.0)
+        assertEquals(1700.0, recomputed, 0.0)
+        assertEquals(older * 100.0 + unexplained * 100.0, recomputed - shown, 0.0)
     }
 }

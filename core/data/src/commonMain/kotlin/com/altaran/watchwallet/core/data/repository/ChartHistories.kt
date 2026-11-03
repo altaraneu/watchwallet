@@ -82,7 +82,8 @@ internal fun buildHistories(
 /**
  * Net deposits up to each sample: incoming transfers add their value at that time, outgoing ones
  * subtract it (fees excluded: they are a cost, not a withdrawal). Transfers between the user's own
- * wallets cancel out. Only charted assets are counted.
+ * wallets cancel out. Only charted assets are counted. Prices as in the value of the same time: the
+ * last at or before it, the first one for earlier times, and without any history the current price.
  */
 internal fun cumulativeFlows(
     transactions: List<WalletTransaction>,
@@ -90,13 +91,15 @@ internal fun cumulativeFlows(
     history: Map<String, List<TimedPrice>>,
     wallets: Map<Long, Wallet>,
     samples: List<Instant>,
+    currentPrices: Map<String, CurrentPrice> = emptyMap(),
 ): DoubleArray {
+    fun priceOf(priceId: String?, time: Instant) = priceId?.let { Timeline.priceAt(history[it].orEmpty(), time) ?: currentPrices[it]?.price }
+
     // Exactly the (wallet, asset) pairs that are charted, so values and flows stay consistent.
     val assets = rows.associate { (it.walletId to it.asset.id) to it.asset }
     val transfers = transactions.filter { it.confirmed && it.direction != TxDirection.SELF }.mapNotNull { tx ->
         val asset = assets[tx.walletId to tx.assetId] ?: return@mapNotNull null
-        val prices = history[asset.priceId ?: return@mapNotNull null].orEmpty()
-        val price = Timeline.priceAt(prices, tx.timestamp) ?: return@mapNotNull null
+        val price = priceOf(asset.priceId, tx.timestamp) ?: return@mapNotNull null
         val scale = 10.0.pow(asset.decimals)
         val fee = tx.fee?.takeIf { tx.delta.isNegative }?.doubleValue(exactRequired = false) ?: 0.0
         tx.timestamp to (tx.delta.doubleValue(exactRequired = false) + fee) / scale * price
@@ -105,7 +108,7 @@ internal fun cumulativeFlows(
     val firstSeen = rows.mapNotNull { row ->
         val origin = balanceOrigin(row, byWallet[row.walletId].orEmpty(), wallets[row.walletId])
         val start = origin.startsAt?.takeIf { origin.countsAsDeposit } ?: return@mapNotNull null
-        val price = Timeline.priceAt(history[row.asset.priceId].orEmpty(), start) ?: return@mapNotNull null
+        val price = priceOf(row.asset.priceId, start) ?: return@mapNotNull null
         start to row.balance.doubleValue(exactRequired = false) / 10.0.pow(row.decimals) * price
     }
     val events = (transfers + firstSeen).sortedBy { it.first }
