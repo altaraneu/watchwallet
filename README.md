@@ -76,6 +76,13 @@ The Google Play version is distributed as App Bundles, signed by Google with thi
 SHA-256: AD:53:D1:37:FC:94:B5:7F:13:5E:12:6F:35:38:D9:61:B5:47:91:9D:86:24:C9:22:E1:F4:34:3E:AB:BC:F2:01
 ```
 
+APKs on [GitHub Releases](https://github.com/altaraneu/watchwallet/releases) are signed with a different
+certificate, so Android will not update one from the other without a reinstall:
+
+```
+SHA-256: 56:95:FF:47:15:4E:0D:4F:A3:F0:21:C8:A6:8E:4E:97:E8:F0:99:70:F6:48:F6:92:15:99:C2:50:7B:D6:76:F8
+```
+
 Check it with `apksigner verify --print-certs` on the APK from your device. Play builds also carry a
 post-quantum signature; on an older Java, `apksigner` stops with "ML-DSA KeyFactory not available".
 
@@ -85,9 +92,8 @@ builds of one commit were byte-identical, but on one Windows machine with one JD
 whether another operating system or JDK gives the same bytes, and whether the APK on Play matches a
 local build, which has never been compared. Dependency checksums are not pinned either:
 `gradle/verification-metadata.xml` is not committed yet. See
-[docs/reproducible-builds.md](docs/reproducible-builds.md). No APK is published on GitHub Releases yet;
-signed APKs with SHA-256 checksums, a build verified across machines and F-Droid are the planned ways to
-close this gap.
+[docs/reproducible-builds.md](docs/reproducible-builds.md). A build verified across machines and F-Droid
+are the planned ways to close this gap.
 
 ## Support the project
 
