@@ -81,10 +81,11 @@ daemon may not have picked those up). All three APKs and `mapping.txt` files wer
 
 **Not tested:**
 
-- **Other operating systems or JDKs.** The workflow builds on Linux with Temurin 21, and its two builds
-  are compared with each other. Whether that output equals a Windows build is unknown until a tag runs.
-  Different `aapt2` binaries or JDKs may give different bytes. Use Linux with Temurin 21 as the reference.
-- **The workflow itself.** It has not run yet, because the branch has not been pushed.
+- **Other JDKs, and other machines building on Linux.** Use Linux with Temurin 21 as the reference.
+- **Why native libraries differ between systems.** For `v1.1.0` the workflow (Linux, Temurin 21) passed,
+  its two builds being identical. Compared with a Windows build by `scripts/compare_apks.py`, 1604 of 1612
+  entries are identical, including all `classes*.dex`. The 8 that differ are `libsqliteJni.so` and
+  `libdatastore_shared_counter.so` for each of the four ABIs. The cause was not looked into.
 - **The APK on Google Play.** It has never been compared with a local build.
 - **Bundles.** The AAB and Play's processing of it are outside this check.
 

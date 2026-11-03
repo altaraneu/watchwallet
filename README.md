@@ -87,10 +87,11 @@ Check it with `apksigner verify --print-certs` on the APK from your device. Play
 post-quantum signature; on an older Java, `apksigner` stops with "ML-DSA KeyFactory not available".
 
 **What this does and does not prove.** The fingerprint shows who signed the app. It does not prove
-that the app was built from this source code, and today nobody else can confirm that. Three local
-builds of one commit were byte-identical, but on one Windows machine with one JDK. Still unproven:
-whether another operating system or JDK gives the same bytes, and whether the APK on Play matches a
-local build, which has never been compared. Dependency checksums are not pinned either:
+that the app was built from this source code, and so far nobody independent has confirmed that. For
+v1.1.0 the public CI build on Linux and a local build on Windows match in all compiled app code: 1604 of
+1612 APK entries are identical, and the other 8 are prebuilt native libraries, for a reason not yet
+looked into. Still unproven: whether the APK on Play matches a build from this source, which has never
+been compared. Dependency checksums are not pinned either:
 `gradle/verification-metadata.xml` is not committed yet. See
 [docs/reproducible-builds.md](docs/reproducible-builds.md). A build verified across machines and F-Droid
 are the planned ways to close this gap.

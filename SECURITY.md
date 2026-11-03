@@ -47,9 +47,11 @@ view of the app, not the data at rest: the database is not encrypted by it.
 
 What is shown so far is limited. On one Windows 11 machine with one JDK (Android Studio's JetBrains
 Runtime 21), three local builds of the same commit, from fresh exports, were byte-identical
-([details](docs/reproducible-builds.md)). **Not shown:** that a build on another operating system or JDK
-gives the same bytes, that the workflow building tagged releases works (it has not run yet), and that the
-APK on Google Play matches this source. Play re-signs and processes what it receives, and that APK has
+([details](docs/reproducible-builds.md)). For v1.1.0 the workflow building tagged releases ran on Linux with
+Temurin 21: two builds from two paths matched each other, and against a Windows build 1604 of 1612 APK
+entries are identical, including all `classes*.dex`. The other 8 are the native libraries in `lib/`.
+**Not shown:** that those 8 differ harmlessly, as the cause was not looked into, and that the APK on Google
+Play matches this source. Play re-signs and processes what it receives, and that APK has
 never been compared with a local build.
 
 Dependency checksums are not pinned: `gradle/verification-metadata.xml` is **not committed yet**, so a
