@@ -1,6 +1,6 @@
 name: F-Droid metadata check
 
-# Runs F-Droid's own tools on the draft recipe in a throwaway fdroiddata layout. Windows cannot install
+# Runs F-Droid's own tools on the draft recipe in a copy of fdroiddata. Windows cannot install
 # them, see docs/fdroid/README.md. The real test build happens in fdroiddata's CI.
 
 on:
@@ -22,13 +22,11 @@ jobs:
         run: pipx install fdroidserver
       - name: Prepare the layout
         run: |
-          mkdir -p data/metadata
+          git clone --depth 1 https://gitlab.com/fdroid/fdroiddata.git data
           cp app-source/docs/fdroid/com.altaran.watchwallet.yml data/metadata/
-          printf 'repo_url: https://example.invalid/repo\nrepo_name: test\nrepo_description: test\n' > data/config.yml
-          chmod 600 data/config.yml
       - name: Read the metadata
         working-directory: data
-        run: fdroid readmeta
+        run: fdroid readmeta com.altaran.watchwallet
       - name: Lint
         working-directory: data
         run: fdroid lint com.altaran.watchwallet
