@@ -85,6 +85,7 @@ daemon may not have picked those up). All three APKs and `mapping.txt` files wer
   are compared with each other. Whether that output equals a Windows build is unknown until a tag runs.
   Different `aapt2` binaries or JDKs may give different bytes. Use Linux with Temurin 21 as the reference.
 - **The workflow itself.** It has not run yet, because the branch has not been pushed.
+- **The APK on Google Play.** It has never been compared with a local build.
 - **Bundles.** The AAB and Play's processing of it are outside this check.
 
 A match shows the APK came from this source and these dependencies. It says nothing about whether the

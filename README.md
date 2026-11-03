@@ -10,7 +10,8 @@ send anything; input that looks like one is rejected ([limits](SECURITY.md)).
   Wallets, labels and settings stay on your device. To read balances and prices the app contacts
   public blockchain and price services directly, and they can see the addresses or coins requested
   and your IP address. Every endpoint is listed in [PRIVACY.md](PRIVACY.md). You can use your own
-  Bitcoin server and a SOCKS5 proxy, and turn off server list updates.
+  Bitcoin server and a SOCKS5 proxy. Server list updates are off unless you turn them on, and new
+  servers need your approval first.
 - **Multichain, one design** – Bitcoin, Ethereum and EVM networks, Solana, XRP and more in one
   consistent interface.
 - **Paste and done** – paste an address, an xpub or a name; WatchWallet detects the chain.
@@ -79,9 +80,14 @@ Check it with `apksigner verify --print-certs` on the APK from your device. Play
 post-quantum signature; on an older Java, `apksigner` stops with "ML-DSA KeyFactory not available".
 
 **What this does and does not prove.** The fingerprint shows who signed the app. It does not prove
-that the app was built from this source code. Builds are not reproducible yet, so today nobody else
-can confirm that. No APK is published on GitHub Releases yet; signed APKs with SHA-256 checksums,
-reproducible builds and F-Droid are the planned ways to close this gap.
+that the app was built from this source code, and today nobody else can confirm that. Three local
+builds of one commit were byte-identical, but on one Windows machine with one JDK. Still unproven:
+whether another operating system or JDK gives the same bytes, and whether the APK on Play matches a
+local build, which has never been compared. Dependency checksums are not pinned either:
+`gradle/verification-metadata.xml` is not committed yet. See
+[docs/reproducible-builds.md](docs/reproducible-builds.md). No APK is published on GitHub Releases yet;
+signed APKs with SHA-256 checksums, a build verified across machines and F-Droid are the planned ways to
+close this gap.
 
 ## Support the project
 

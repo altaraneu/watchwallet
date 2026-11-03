@@ -57,10 +57,14 @@ All notable changes to this project are documented here. The format follows
   Kraken pairs (for example Tether) serve 720 candles per interval: at that limit the chart moves
   to a coarser interval, which reaches further back.
 - While a past point is selected, the header also shows the current value.
-- Server list updates: public blockchain servers can change without a new release, through a data
-  file signed with BIP-340 Schnorr in the public repository. Data only, https only, known API types
-  only; bundled servers always work offline and a custom server always wins. Can be turned off in
-  Settings → Network. See `docs/endpoints-config.md`.
+- Server list updates, off unless you turn them on in Settings → Network: public blockchain servers can
+  change without a new release, through a data file signed with BIP-340 Schnorr in the public repository.
+  Data only, https only, known API types only; bundled servers always work offline and a custom server
+  always wins. With updates off the app requests nothing from GitHub or jsDelivr. If servers of a chain
+  keep failing, Settings → Network offers to turn them on. See `docs/endpoints-config.md`.
+- A signed list that adds a server has no effect until you approve it in a dialog listing those servers.
+  Until then the current servers stay in use; a declined list does not ask again for that version.
+- `PRIVACY.md` lists every permission of the release build and where it comes from.
 - `scripts/sign_endpoints.py` to sign and verify that file.
 - "Powered by CoinGecko" on the Markets list, coin details and watchlist search, only while something
   displayed there really came from CoinGecko, as its API terms require.
@@ -132,11 +136,16 @@ Fixes from the review in `docs/security/audit-2026-11-02.md`.
 - A backup can no longer be written empty, or empty an older file, after the device rotated or the app
   was killed in the file picker. Without its content nothing is written, the file the picker created is
   removed if empty, and the failure is shown. Cancelling the picker no longer reports a failure.
-- Server list: Settings → Network shows the version, dates and every host in use, and the app says once
-  when the hosts change. A list valid for more than 200 days is ignored, each build has a version floor,
-  and the verifier can pin an offline recovery key. The documents now state what a stolen signing key
-  could do, and that updates stay on by default by the owner's decision.
+- Server list: Settings → Network shows the version, dates and every host in use. A list valid for more
+  than 200 days is ignored, each build has a version floor, and the verifier can pin an offline recovery
+  key. The documents state what a stolen signing key could do.
   **Before release:** the owner must generate that recovery key and enter it; none is set.
+- Errors no longer hold addresses. The message of a failed request held its URL, and so the address, and
+  stayed in memory and in debug logs. Now only the type of the failure and the HTTP status are kept, for
+  every chain, and server error texts and causes are dropped too.
+- The button on a Cardano stake wallet says "Copy stake key", which is what it copies.
+- "Excluding deposits and withdrawals" no longer reads a deposit as a gain when an asset has no price
+  history at all: such a transfer now counts at the current price, as its value already did.
 - CSV exports: cells a spreadsheet could run as a formula are marked as text; import restores the
   original and negative amounts stay numbers.
 - Export password: must be repeated and have at least 12 characters.

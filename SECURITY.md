@@ -22,6 +22,11 @@ It recognises formats, so it has limits that no check can remove:
   a deliberate trade-off to support those chains, and it is documented in [PRIVACY.md](PRIVACY.md).
 - Fewer than 11 words pass, as does an unknown word list that reads like a sentence. Text that is
   really a list of 12 simple words on a BIP-39 list is rejected even if it is not a seed.
+- **11 or more words that are mostly misspelled pass.** A phrase is recognised when three quarters of
+  its words are exact words of a list, or all but one match a word of that list in their first four
+  letters. Below both limits it looks like ordinary text.
+- **A key split across two fields passes.** Each field is checked on its own, and half of a hexadecimal
+  key (32 characters) is too short to count as a key. Nothing joins the name and the note of a wallet.
 - The keyboard and the clipboard are outside the app. The field asks the keyboard not to learn, which a
   keyboard can ignore. The clipboard is cleared only if it holds the rejected text.
 - Passwords for encrypted backups and the numeric cost basis field are not checked; neither is stored
@@ -35,6 +40,18 @@ authentication. The lock also forces screenshot and task switcher protection on 
 the widget. If the device has no biometrics or screen lock left, nobody could ever authenticate, so the
 app opens without asking; removing a screen lock already takes the credential. The lock protects the
 view of the app, not the data at rest: the database is not encrypted by it.
+
+## Build integrity
+
+What is shown so far is limited. On one Windows 11 machine with one JDK (Android Studio's JetBrains
+Runtime 21), three local builds of the same commit, from fresh exports, were byte-identical
+([details](docs/reproducible-builds.md)). **Not shown:** that a build on another operating system or JDK
+gives the same bytes, that the workflow building tagged releases works (it has not run yet), and that the
+APK on Google Play matches this source. Play re-signs and processes what it receives, and that APK has
+never been compared with a local build.
+
+Dependency checksums are not pinned: `gradle/verification-metadata.xml` is **not committed yet**, so a
+build does not verify that libraries downloaded from Maven are the expected ones.
 
 ## Reporting a vulnerability
 

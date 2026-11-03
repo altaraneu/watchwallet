@@ -46,9 +46,10 @@ exception is your own server, which may use plain HTTP on `.onion`, localhost or
 host. Responses are not cached on disk by the HTTP client. Redirects are not followed, so a service
 moving elsewhere cannot lead the app to a host that is not listed here.
 
-The servers listed below are those built into the app. A signed server list can replace them
-without an app update (see [Server list updates](#server-list-updates)); its current content is
-public in [`config/endpoints.source.json`](config/endpoints.source.json).
+The servers listed below are those built into the app. Only if you turn on server list updates and
+approve the new servers can a signed list replace them without an app update (see
+[Server list updates](#server-list-updates)); its current content is public in
+[`config/endpoints.source.json`](config/endpoints.source.json).
 
 ### Blockchain data (sends the individual addresses you track)
 
@@ -60,7 +61,7 @@ public in [`config/endpoints.source.json`](config/endpoints.source.json).
 | `litecoinspace.org/api` (Esplora) | Litecoin balances and history | Individual Litecoin addresses. Xpub-derived addresses go out up to 4 at a time from the same IP address, so the server can link them, as with Bitcoin. |
 | `dogecoin.atomicwallet.io`, `blockbook.bch.zelcore.io` (public Blockbook instances, address endpoint only) | Dogecoin and Bitcoin Cash | Individual addresses; the xpub endpoint is never used. Xpub-derived addresses go out up to 3 at a time from the same IP address, so the server can link them, as with Bitcoin. |
 | `api.mainnet-beta.solana.com` | Solana SOL and SPL/Token-2022 balances, history | The Solana address and transaction signatures |
-| `xrplcluster.com` (fallback `s1.ripple.com`) | XRP balance, trust lines, history, reserve | The XRP account |
+| `xrplcluster.com` (fallback `s1.ripple.com:51234`) | XRP balance, trust lines, history, reserve | The XRP account |
 | `api.trongrid.io` | TRX, TRC-10, TRC-20 balances and history | The Tron address; TRC-10 token ids |
 | `toncenter.com/api/v3` | TON balance, jettons, history | The TON address |
 | `api.koios.rest` | Cardano balances, native tokens, history | The stake or payment address; transaction hashes |
@@ -88,7 +89,7 @@ want that. A proxy or Tor hides your IP address from them.
 | `api.coingecko.com/api/v3/search` | Watchlist search in Markets | What you type in the search field, once it has passed a check: nothing that looks like a seed phrase, key or address, and at most 5 words and 40 characters |
 | `api.coingecko.com` with your own API key | Higher rate limits, only if you enter an optional demo key in Settings → Network | The key, in a request header, with every request to CoinGecko. It is stored on the device like other settings. |
 | `raw.githubusercontent.com` (Trust Wallet assets repository) | **Off unless you turn it on** in Settings → Privacy. Logos of tokens that are not built into the app, cached on the device. Native coins of the supported chains and well-known tokens have built-in logos and cause no request, whatever this setting says. With it off, other tokens show a letter. | Which token logo is needed (coin name or token contract), so GitHub can see your IP address (or your proxy's) and which tokens you hold or view. Never your addresses. |
-| `api.binance.com`, fallback `data-api.binance.vision` (public market data, no account) | Current prices and price history of well-known coins and tokens (tried before CoinGecko), minute and hourly prices for the part of a value chart on screen, candle charts of pairs listed there | Coin symbols only (for example `BTCUSDT`) and the requested time span, which shows which period you are looking at, not what you hold beyond the coins asked for; candle charts also open a WebSocket to `stream.binance.com` for the viewed pair |
+| `api.binance.com`, fallback `data-api.binance.vision` (public market data, no account) | Current prices and price history of well-known coins and tokens (tried before CoinGecko), minute and hourly prices for the part of a value chart on screen, candle charts of pairs listed there | Coin symbols only (for example `BTCUSDT`) and the requested time span, which shows which period you are looking at, not what you hold beyond the coins asked for; candle charts also open a WebSocket to `stream.binance.com:9443` for the viewed pair |
 | `api.kraken.com`, `ws.kraken.com` | Candlestick charts and live price updates of pairs Binance does not list (for example Tether) or quoted in BTC or ETH | Trading pair (for example `BTC/EUR`) and candle interval |
 | `api.frankfurter.dev` | ECB reference exchange rates for currencies the exchanges do not quote (CZK, PLN…) | Currency codes |
 
@@ -96,30 +97,41 @@ want that. A proxy or Tor hides your IP address from them.
 
 | Service | Used for | Data sent |
 |---|---|---|
-| `raw.githubusercontent.com` (`altaraneu/watchwallet`), fallback `cdn.jsdelivr.net` when it fails | Signed list of public blockchain servers, at most once a day at app start | Nothing about you or your wallets: a plain download of a public file. As with any download, GitHub or jsDelivr see your IP address (or your proxy's) and the time. |
+| `raw.githubusercontent.com` (`altaraneu/watchwallet`), fallback `cdn.jsdelivr.net` when it fails | **Off unless you turn it on** in Settings → Network. Signed list of public blockchain servers, at most once a day at app start | Nothing about you or your wallets: a plain download of a public file. As with any download, GitHub or jsDelivr see your IP address (or your proxy's) and the time. |
+
+**Off by default.** Until you turn on **Update server list automatically**, the app makes no request to
+GitHub or jsDelivr for this and uses only the servers built into it. If public servers of a chain keep
+failing, Settings → Network offers to turn updates on. That is only a note on your device, worked out
+from its own sync results: the app counts failures per chain locally, sends nothing for this and
+requests nothing until you agree. **Not now** ends the note for good.
 
 The list lets the project replace a public server that died or went bad without an app update. It
 contains only chain names, API types and https addresses of servers, never code. The app accepts it
-only with a valid signature of the project's key, and only for API types it already knows. Once
-applied, the addresses you track go to the servers it names instead of those in the table above,
-for the same purpose and with the same data. The history of the list is public in this repository.
-If the list expires, the app returns to its built-in servers; it ignores a list valid for more than
-200 days. Details: [`docs/endpoints-config.md`](docs/endpoints-config.md).
+only with a valid signature of the project's key, and only for API types it already knows. The history
+of the list is public in this repository. If the list expires, the app returns to its built-in servers;
+it ignores a list valid for more than 200 days. Details:
+[`docs/endpoints-config.md`](docs/endpoints-config.md).
 
-**What you are trusting.** This is on by default, because the project owner decided that replacing a
-dead server should not need an app update. It means you trust the project's signing key. If that key
-were stolen and the thief could also publish the file (for example through access to this
-repository), then from your next app start their servers would learn every address you track
-together with your IP address, and could show you false balances, transactions and token names.
-They could not run code or reach any key, and they cannot change an address the app offers for
-receiving money: those are what you entered or what the app derived on your device. A Cardano stake
-wallet shows only its stake key, which cannot receive payments; take a receive address from your
-wallet app.
-Settings → Network shows the list version, its dates and every host in use, and the app tells you once
-when the hosts change; by then your addresses may already have been sent to them.
+**You decide before anything is sent.** A verified list that names a server not yet used for that chain
+has no effect until you approve it in a dialog listing those servers. Until then the current servers
+stay in use, also after restarts. If you keep the current servers, you are not asked again about that
+version of the list. A list that only removes servers or changes none needs no approval. Once you
+approve, from the next app start the addresses you track go to the servers it names instead of those in
+the table above, for the same purpose and with the same data.
 
-To turn this off, disable **Update server list automatically** in Settings → Network and restart the
-app: it then makes no such request and uses only the built-in servers.
+**What you are trusting, if you turn it on.** You trust the project's signing key for what the dialog
+cannot show you, namely who runs a server. If that key were stolen and the thief could also publish the
+file (for example through access to this repository), they could offer you their own servers, and if you
+approved, those servers would learn every address you track together with your IP address, and could
+show you false balances, transactions and token names. A list without new servers needs no approval, so
+it can also drop built-in servers or move a chain to a fallback already in use, which can make a chain
+stop working. They could not run code or reach any key, and they cannot change an address the app offers
+for receiving money: those are what you entered or what the app derived on your device. A Cardano stake
+wallet shows only its stake key, which cannot receive payments; take a receive address from your wallet
+app. Settings → Network shows the list version, its dates and every host in use.
+
+To turn this off again, disable the switch and restart the app: it then makes no such request and uses
+only the built-in servers.
 
 ### Your own server and proxy
 
@@ -134,6 +146,25 @@ app: it then makes no such request and uses only the built-in servers.
   routed through a SOCKS5 proxy, for example Orbot on `127.0.0.1:9050` for Tor. Host names are
   resolved by the proxy, not on the device. The option is not offered on platforms whose network
   stack cannot honour it yet.
+
+## Permissions
+
+The release build asks for these, checked against its merged manifest. Only the first two come from the
+app itself; the others are added by the libraries named.
+
+| Permission | Added by | What it is for |
+|---|---|---|
+| `INTERNET` | the app | Reading balances and prices from the services listed above. |
+| `CAMERA` | the app | Scanning a QR code. Android asks when you first tap scan; the camera is optional and images stay on the device. |
+| `USE_BIOMETRIC`, `USE_FINGERPRINT` | `androidx.biometric` | The app lock, if you turn it on. |
+| `ACCESS_NETWORK_STATE` | `androidx.work` (WorkManager) | Background refresh, if you turn it on, waits for a connection, or for Wi-Fi only. |
+| `WAKE_LOCK` | `androidx.work` | Keeps the device awake while scheduled work runs: background refresh, if you turn it on, and the updates of the home-screen widget (Glance runs them through WorkManager), if you place one. |
+| `RECEIVE_BOOT_COMPLETED` | `androidx.work` | WorkManager restores scheduled work after the device restarts. Its boot receiver is disabled in the manifest and WorkManager enables it only while work is scheduled. |
+| `FOREGROUND_SERVICE` | `androidx.work` | WorkManager declares a foreground service for long jobs. The app's own code never asks for one. |
+| `com.altaran.watchwallet.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | `androidx.core` | The app's own, not a system permission: it keeps other apps from sending to receivers registered at run time. It gives no access to anything. |
+
+There is no access to storage, contacts, location or notifications. Exports and imports use the system
+file picker and share sheet, which need no permission.
 
 ## Block explorer links
 
