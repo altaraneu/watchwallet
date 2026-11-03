@@ -53,4 +53,6 @@
     </plurals>
     <string name="export_password_confirm">パスワードを再入力</string>
     <string name="export_password_mismatch">パスワードが一致しません。</string>
+    <string name="import_file_too_large">このファイルは大きすぎてインポートできません。上限は %1$d MB です。</string>
+    <string name="import_file_unreadable">このファイルを読み取れませんでした。</string>
 </resources>

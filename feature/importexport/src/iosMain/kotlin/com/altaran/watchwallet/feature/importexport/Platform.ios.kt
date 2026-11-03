@@ -6,12 +6,17 @@ import androidx.compose.runtime.rememberUpdatedState
 
 // TODO(iOS): UIDocumentPickerViewController and UIActivityViewController.
 @Composable
-internal actual fun rememberDocumentActions(takeSaveContent: () -> String?, onSaveFinished: (SaveOutcome) -> Unit): DocumentActions {
+internal actual fun rememberDocumentActions(
+    takeSaveContent: () -> String?,
+    onSaveFinished: (SaveOutcome) -> Unit,
+    onOpenFinished: (OpenOutcome) -> Unit,
+): DocumentActions {
     val finished = rememberUpdatedState(onSaveFinished)
     val take = rememberUpdatedState(takeSaveContent)
+    val opened = rememberUpdatedState(onOpenFinished)
     return remember {
         object : DocumentActions {
-            override fun openText(onResult: (String?) -> Unit) = onResult(null)
+            override fun openText() = opened.value(OpenOutcome.Failed)
 
             override fun createDocument(fileName: String, mimeType: String) {
                 take.value()

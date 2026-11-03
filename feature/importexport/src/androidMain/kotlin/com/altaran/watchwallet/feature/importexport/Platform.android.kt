@@ -18,6 +18,7 @@ import androidx.core.content.FileProvider
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.InputStream
 import java.security.SecureRandom
 import javax.crypto.Cipher
@@ -26,7 +27,6 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
-private const val MAX_IMPORT_BYTES = 5 * 1024 * 1024
 private const val READ_BUFFER_BYTES = 8 * 1024
 private const val EXPORT_DIRECTORY = "exports"
 private const val EXPORT_AUTHORITY_SUFFIX = ".exports"
@@ -76,32 +76,38 @@ private class SharedExports(private val context: Context) {
 }
 
 @Composable
-internal actual fun rememberDocumentActions(takeSaveContent: () -> String?, onSaveFinished: (SaveOutcome) -> Unit): DocumentActions {
+internal actual fun rememberDocumentActions(
+    takeSaveContent: () -> String?,
+    onSaveFinished: (SaveOutcome) -> Unit,
+    onOpenFinished: (OpenOutcome) -> Unit,
+): DocumentActions {
     val context = LocalContext.current
-    val holder = remember { Holder() }
     val sharedExports = remember(context) { SharedExports(context).also { runCatching { it.deleteOld() } } }
     val finished = rememberUpdatedState(onSaveFinished)
     val take = rememberUpdatedState(takeSaveContent)
+    val opened = rememberUpdatedState(onOpenFinished)
 
+    // Registered with a saved key, so the results also arrive after rotation or process death: then
+    // these callbacks belong to a new composition and possibly to a new view model.
     val openLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-        val text = uri?.let {
-            runCatching {
-                context.contentResolver.openInputStream(it)?.use { input -> readBounded(input, MAX_IMPORT_BYTES)?.decodeToString() }
-            }.getOrNull()
+        val source = uri?.let {
+            OpenSource { limit ->
+                val input = context.contentResolver.openInputStream(it) ?: throw FileNotFoundException()
+                input.use { stream -> readBounded(stream, limit) }
+            }
         }
-        holder.onOpen?.invoke(text)
-        holder.onOpen = null
+        onOpenFinished(finishOpen(source))
     }
-    // Registered with a saved key, so the result also arrives after rotation or process death: then
-    // this callback belongs to a new composition and possibly to a new view model without content.
     val saveLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { uri: Uri? ->
         onSaveFinished(finishSave(uri?.let { DocumentSaveTarget(context.contentResolver, it) }, takeSaveContent()))
     }
     return remember {
         object : DocumentActions {
-            override fun openText(onResult: (String?) -> Unit) {
-                holder.onOpen = onResult
-                openLauncher.launch(arrayOf("text/*", "application/json", "text/csv", "text/comma-separated-values", "application/octet-stream"))
+            override fun openText() {
+                // No app handles the request on some stripped-down systems.
+                runCatching {
+                    openLauncher.launch(arrayOf("text/*", "application/json", "text/csv", "text/comma-separated-values", "application/octet-stream"))
+                }.onFailure { opened.value(OpenOutcome.Failed) }
             }
 
             override fun createDocument(fileName: String, mimeType: String) {
@@ -129,10 +135,6 @@ internal actual fun rememberDocumentActions(takeSaveContent: () -> String?, onSa
             }.isSuccess
         }
     }
-}
-
-private class Holder {
-    var onOpen: ((String?) -> Unit)? = null
 }
 
 internal actual object ExportCrypto {

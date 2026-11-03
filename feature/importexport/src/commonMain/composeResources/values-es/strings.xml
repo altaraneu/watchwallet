@@ -55,4 +55,6 @@
     </plurals>
     <string name="export_password_confirm">Repite la contraseña</string>
     <string name="export_password_mismatch">Las contraseñas no coinciden.</string>
+    <string name="import_file_too_large">Este archivo es demasiado grande para importarlo. El límite es de %1$d MB.</string>
+    <string name="import_file_unreadable">No se ha podido leer este archivo.</string>
 </resources>

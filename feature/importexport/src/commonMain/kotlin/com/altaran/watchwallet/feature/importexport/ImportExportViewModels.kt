@@ -91,7 +91,11 @@ data class ImportUiState(
     val groupName: String = "",
     /** The group name was refused as key material and cleared. */
     val groupRejected: Boolean = false,
+    /** Why the file picked last was not read. */
+    val fileProblem: ImportFileProblem? = null,
 )
+
+enum class ImportFileProblem { TOO_LARGE, UNREADABLE }
 
 internal class ImportViewModel(
     private val walletRepository: WalletRepository,
@@ -121,7 +125,7 @@ internal class ImportViewModel(
             _state.value = ImportUiState(phase = ImportPhase.SecretRejected(secret.kind, secret.line))
             return true
         }
-        _state.update { it.copy(text = value, phase = ImportPhase.Input) }
+        _state.update { it.copy(text = value, phase = ImportPhase.Input, fileProblem = null) }
         return false
     }
 
@@ -132,8 +136,21 @@ internal class ImportViewModel(
         return secret
     }
 
+    /** Works without earlier state: after process death this view model is new. */
+    fun onFileOpened(outcome: OpenOutcome) {
+        when (outcome) {
+            is OpenOutcome.Loaded -> parse(outcome.text)
+            OpenOutcome.Cancelled -> Unit
+            OpenOutcome.TooLarge -> showFileProblem(ImportFileProblem.TOO_LARGE)
+            OpenOutcome.Failed -> showFileProblem(ImportFileProblem.UNREADABLE)
+        }
+    }
+
+    private fun showFileProblem(problem: ImportFileProblem) = _state.update { it.copy(phase = ImportPhase.Input, fileProblem = problem) }
+
     /** Parses pasted or loaded text. Secrets abort the import and the input is discarded. */
     fun parse(text: String = _state.value.text) {
+        _state.update { it.copy(fileProblem = null) }
         if (ExportCrypto.isEncrypted(text)) {
             encrypted = text
             _state.update { it.copy(text = "", phase = ImportPhase.NeedsPassword) }

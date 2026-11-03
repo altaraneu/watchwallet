@@ -54,4 +54,6 @@
     </plurals>
     <string name="export_password_confirm">पासवर्ड दोबारा लिखें</string>
     <string name="export_password_mismatch">पासवर्ड मेल नहीं खाते।</string>
+    <string name="import_file_too_large">यह फ़ाइल आयात करने के लिए बहुत बड़ी है। सीमा %1$d MB है।</string>
+    <string name="import_file_unreadable">यह फ़ाइल पढ़ी नहीं जा सकी।</string>
 </resources>

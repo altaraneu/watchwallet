@@ -53,4 +53,6 @@
     </plurals>
     <string name="export_password_confirm">Ulangi kata sandi</string>
     <string name="export_password_mismatch">Kata sandi tidak cocok.</string>
+    <string name="import_file_too_large">File ini terlalu besar untuk diimpor. Batasnya %1$d MB.</string>
+    <string name="import_file_unreadable">File ini tidak dapat dibaca.</string>
 </resources>

@@ -56,4 +56,6 @@
     </plurals>
     <string name="export_password_confirm">Повторите пароль</string>
     <string name="export_password_mismatch">Пароли не совпадают.</string>
+    <string name="import_file_too_large">Этот файл слишком большой для импорта. Предел — %1$d МБ.</string>
+    <string name="import_file_unreadable">Не удалось прочитать этот файл.</string>
 </resources>

@@ -56,4 +56,6 @@
     </plurals>
     <string name="export_password_confirm">Zopakuj heslo</string>
     <string name="export_password_mismatch">Hesla se neshodují.</string>
+    <string name="import_file_too_large">Tento soubor je na import příliš velký. Limit je %1$d MB.</string>
+    <string name="import_file_unreadable">Tento soubor se nepodařilo přečíst.</string>
 </resources>

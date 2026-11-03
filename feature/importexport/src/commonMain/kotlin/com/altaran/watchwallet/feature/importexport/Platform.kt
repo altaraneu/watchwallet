@@ -7,8 +7,12 @@ import androidx.compose.runtime.Composable
  * and the share sheet. Exports are never written to shared storage silently.
  */
 interface DocumentActions {
-    /** Lets the user pick a text file; `null` when cancelled or unreadable. */
-    fun openText(onResult: (String?) -> Unit)
+    /**
+     * Lets the user pick a text file. The picker can outlive this screen, or even the process, so
+     * no callback is passed here: the result arrives through `onOpenFinished` of
+     * [rememberDocumentActions], also in a new composition.
+     */
+    fun openText()
 
     /**
      * Lets the user choose where to save a file. The picker can outlive this screen, or even the
@@ -29,9 +33,45 @@ interface DocumentActions {
 internal expect fun rememberDocumentActions(
     takeSaveContent: () -> String? = { null },
     onSaveFinished: (SaveOutcome) -> Unit = {},
+    onOpenFinished: (OpenOutcome) -> Unit = {},
 ): DocumentActions
 
 internal enum class SaveOutcome { SAVED, FAILED, CANCELLED }
+
+internal sealed interface OpenOutcome {
+    data class Loaded(val text: String) : OpenOutcome
+
+    data object Cancelled : OpenOutcome
+
+    data object TooLarge : OpenOutcome
+
+    data object Failed : OpenOutcome
+}
+
+/** Larger files are refused instead of filling the memory. */
+internal const val MAX_IMPORT_MEGABYTES = 5
+
+internal const val MAX_IMPORT_BYTES = MAX_IMPORT_MEGABYTES * 1024 * 1024
+
+/** The file the user picked. */
+internal fun interface OpenSource {
+    /** Its bytes, or `null` as soon as it turns out to be longer than [limit]. May throw. */
+    fun read(limit: Int): ByteArray?
+}
+
+/** Ends a pick: no source means the picker was cancelled. */
+internal fun finishOpen(source: OpenSource?, limit: Int = MAX_IMPORT_BYTES): OpenOutcome = when {
+    source == null -> {
+        OpenOutcome.Cancelled
+    }
+
+    else -> {
+        runCatching { source.read(limit) }.fold(
+            onSuccess = { bytes -> bytes?.let { OpenOutcome.Loaded(it.decodeToString()) } ?: OpenOutcome.TooLarge },
+            onFailure = { OpenOutcome.Failed },
+        )
+    }
+}
 
 /** The file the user chose in the system picker. */
 internal interface SaveTarget {

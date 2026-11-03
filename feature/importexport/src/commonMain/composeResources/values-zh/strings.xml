@@ -53,4 +53,6 @@
     </plurals>
     <string name="export_password_confirm">再次输入密码</string>
     <string name="export_password_mismatch">两次输入的密码不一致。</string>
+    <string name="import_file_too_large">此文件过大，无法导入。上限为 %1$d MB。</string>
+    <string name="import_file_unreadable">无法读取此文件。</string>
 </resources>

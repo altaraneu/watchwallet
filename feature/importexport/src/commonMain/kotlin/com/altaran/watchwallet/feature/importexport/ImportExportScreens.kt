@@ -84,7 +84,7 @@ private fun ScreenScaffold(title: String, onNavigateUp: () -> Unit, content: @Co
 @Composable
 internal fun ImportRoute(onNavigateUp: () -> Unit, onDone: () -> Unit, viewModel: ImportViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val documents = rememberDocumentActions()
+    val documents = rememberDocumentActions(onOpenFinished = viewModel::onFileOpened)
     val scrubClipboard = rememberClipboardScrubber()
     ScreenScaffold(stringResource(Res.string.import_title), onNavigateUp) { modifier ->
         when (val phase = state.phase) {
@@ -94,6 +94,16 @@ internal fun ImportRoute(onNavigateUp: () -> Unit, onDone: () -> Unit, viewModel
             ) {
                 Text(stringResource(Res.string.import_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (phase is ImportPhase.SecretRejected) SecretCard(phase.kind)
+                state.fileProblem?.let { problem ->
+                    Text(
+                        when (problem) {
+                            ImportFileProblem.TOO_LARGE -> stringResource(Res.string.import_file_too_large, MAX_IMPORT_MEGABYTES)
+                            ImportFileProblem.UNREADABLE -> stringResource(Res.string.import_file_unreadable)
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
                 SensitiveInput {
                     OutlinedTextField(
                         value = state.text,
@@ -106,7 +116,7 @@ internal fun ImportRoute(onNavigateUp: () -> Unit, onDone: () -> Unit, viewModel
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    FilledTonalButton(onClick = { documents.openText { text -> text?.let(viewModel::parse) } }) {
+                    FilledTonalButton(onClick = documents::openText) {
                         Text(stringResource(Res.string.import_choose_file))
                     }
                     Button(onClick = { viewModel.parse() }, enabled = state.text.isNotBlank()) { Text(stringResource(Res.string.import_preview)) }

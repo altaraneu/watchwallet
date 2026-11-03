@@ -58,4 +58,6 @@
     </plurals>
     <string name="export_password_confirm">أعد كتابة كلمة المرور</string>
     <string name="export_password_mismatch">كلمتا المرور غير متطابقتين.</string>
+    <string name="import_file_too_large">هذا الملف كبير جدًا للاستيراد. الحد الأقصى %1$d ميجابايت.</string>
+    <string name="import_file_unreadable">تعذّرت قراءة هذا الملف.</string>
 </resources>

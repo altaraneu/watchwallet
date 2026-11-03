@@ -62,4 +62,6 @@
     <!-- Label of the field where the backup password is typed a second time -->
     <string name="export_password_confirm">Repeat password</string>
     <string name="export_password_mismatch">The passwords do not match.</string>
+    <string name="import_file_too_large">This file is too large to import. The limit is %1$d MB.</string>
+    <string name="import_file_unreadable">This file could not be read.</string>
 </resources>

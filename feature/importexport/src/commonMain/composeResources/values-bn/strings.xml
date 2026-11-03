@@ -54,4 +54,6 @@
     </plurals>
     <string name="export_password_confirm">পাসওয়ার্ড আবার লিখুন</string>
     <string name="export_password_mismatch">পাসওয়ার্ড দুটি মিলছে না।</string>
+    <string name="import_file_too_large">এই ফাইলটি ইমপোর্ট করার জন্য খুব বড়। সীমা %1$d MB।</string>
+    <string name="import_file_unreadable">এই ফাইলটি পড়া যায়নি।</string>
 </resources>
