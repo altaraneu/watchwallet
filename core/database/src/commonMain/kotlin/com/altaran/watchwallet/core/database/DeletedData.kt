@@ -1,5 +1,6 @@
 package com.altaran.watchwallet.core.database
 
+import androidx.room.RoomDatabase
 import androidx.room.useWriterConnection
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteDriver
@@ -24,7 +25,7 @@ fun interface DeletedDataScrubber {
  * `secure_delete` was on, and empties the write-ahead log, which otherwise keeps old page copies.
  * A reader in progress can make the checkpoint leave the log as it is; the next one catches up.
  */
-suspend fun WatchWalletDatabase.scrubDeletedData() {
+suspend fun RoomDatabase.scrubDeletedData() {
     useWriterConnection { connection ->
         connection.usePrepared("VACUUM") { it.step() }
         connection.usePrepared("PRAGMA wal_checkpoint(TRUNCATE)") { it.step() }
