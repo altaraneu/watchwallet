@@ -39,4 +39,5 @@
     <string name="detail_subtracted_from">Wird von %1$s abgezogen, damit nichts doppelt gezählt wird.</string>
     <string name="detail_contains_tracked">Ohne separat verfolgte Adressen: %1$s.</string>
     <string name="detail_stop_subtract">Nicht mehr abziehen</string>
+    <string name="detail_stake_key_copy">Stake-Key kopieren</string>
 </resources>

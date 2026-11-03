@@ -39,4 +39,5 @@
     <string name="detail_subtracted_from">দুবার গণনা এড়াতে %1$s থেকে বিয়োগ করা হয়েছে।</string>
     <string name="detail_contains_tracked">আলাদাভাবে ট্র্যাক করা ঠিকানা বাদে: %1$s।</string>
     <string name="detail_stop_subtract">বিয়োগ করা বন্ধ করুন</string>
+    <string name="detail_stake_key_copy">স্টেক কী কপি করুন</string>
 </resources>

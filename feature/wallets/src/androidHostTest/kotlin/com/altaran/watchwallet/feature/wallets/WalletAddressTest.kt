@@ -9,10 +9,12 @@ import com.altaran.watchwallet.core.model.DerivedAddress
 import com.altaran.watchwallet.core.model.ScriptType
 import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.feature.wallets.generated.resources.Res
+import com.altaran.watchwallet.feature.wallets.generated.resources.address_copy
 import com.altaran.watchwallet.feature.wallets.generated.resources.address_next_receive
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_address
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_address_evm_hint
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_stake_key
+import com.altaran.watchwallet.feature.wallets.generated.resources.detail_stake_key_copy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -38,6 +40,7 @@ class WalletAddressTest {
         assertEquals(stake, shown.value)
         assertEquals(Res.string.detail_stake_key, shown.label)
         assertFalse("a stake key cannot receive, so no QR is offered", shown.canReceive)
+        assertEquals("the button says what it copies", Res.string.detail_stake_key_copy, shown.copyLabel)
     }
 
     /** Even one carrying the wallet's stake key: its payment key may be anybody's. */
@@ -101,5 +104,11 @@ class WalletAddressTest {
     fun onlyACardanoWalletCountsAsAStakeWallet() {
         val target = WatchTarget.Address(ChainFamily.COSMOS, ChainId("cosmos"), "stake1something")
         assertEquals(Res.string.detail_address, shownAddress(target, emptyList())!!.label)
+    }
+
+    @Test
+    fun anAddressThatCanReceiveIsCopiedAsAnAddress() {
+        val shown = shownAddress(WatchTarget.Address(ChainFamily.CARDANO, ChainId("cardano"), base), emptyList())!!
+        assertEquals(Res.string.address_copy, shown.copyLabel)
     }
 }

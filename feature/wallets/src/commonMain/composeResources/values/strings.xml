@@ -40,4 +40,5 @@
     <string name="detail_subtracted_from">Subtracted from %1$s so it is not counted twice.</string>
     <string name="detail_contains_tracked">Excludes addresses tracked separately: %1$s.</string>
     <string name="detail_stop_subtract">Stop subtracting</string>
+    <string name="detail_stake_key_copy">Copy stake key</string>
 </resources>

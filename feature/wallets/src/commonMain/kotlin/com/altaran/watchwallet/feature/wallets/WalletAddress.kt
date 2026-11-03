@@ -41,6 +41,7 @@ import com.altaran.watchwallet.feature.wallets.generated.resources.detail_addres
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_qr_description
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_show_qr
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_stake_key
+import com.altaran.watchwallet.feature.wallets.generated.resources.detail_stake_key_copy
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_stake_key_hint
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -52,6 +53,8 @@ internal data class ShownAddress(
     val hint: StringResource? = null,
     /** `false` for values that cannot receive payments (a Cardano stake key). */
     val canReceive: Boolean = true,
+    /** Says what the button really copies. */
+    val copyLabel: StringResource = Res.string.address_copy,
 )
 
 /**
@@ -67,7 +70,13 @@ internal fun shownAddress(target: WatchTarget, derived: List<DerivedAddress>): S
     }
 
     is WatchTarget.Address if target.family == ChainFamily.CARDANO && target.address.startsWith("stake1") -> {
-        ShownAddress(target.address, Res.string.detail_stake_key, Res.string.detail_stake_key_hint, canReceive = false)
+        ShownAddress(
+            target.address,
+            Res.string.detail_stake_key,
+            Res.string.detail_stake_key_hint,
+            canReceive = false,
+            copyLabel = Res.string.detail_stake_key_copy,
+        )
     }
 
     is WatchTarget.Address -> {
@@ -92,7 +101,7 @@ internal fun WalletAddress(target: WatchTarget, derived: List<DerivedAddress>, m
             Text(stringResource(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CopyButton(text = shown.value, sensitive = true, label = stringResource(Res.string.address_copy), tonal = false)
+            CopyButton(text = shown.value, sensitive = true, label = stringResource(shown.copyLabel), tonal = false)
             if (modules != null) {
                 TextButton(onClick = { qrOpen = true }) { Text(stringResource(Res.string.detail_show_qr)) }
             }
@@ -112,7 +121,7 @@ internal fun WalletAddress(target: WatchTarget, derived: List<DerivedAddress>, m
                 shown.hint?.let {
                     Text(stringResource(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                CopyButton(text = shown.value, sensitive = true, label = stringResource(Res.string.address_copy))
+                CopyButton(text = shown.value, sensitive = true, label = stringResource(shown.copyLabel))
             }
         }
     }

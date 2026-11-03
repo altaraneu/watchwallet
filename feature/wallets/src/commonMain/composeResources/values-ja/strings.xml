@@ -39,4 +39,5 @@
     <string name="detail_subtracted_from">二重計上を防ぐため %1$s から差し引いています。</string>
     <string name="detail_contains_tracked">別途追跡中のアドレスを除く: %1$s。</string>
     <string name="detail_stop_subtract">差し引きをやめる</string>
+    <string name="detail_stake_key_copy">ステークキーをコピー</string>
 </resources>

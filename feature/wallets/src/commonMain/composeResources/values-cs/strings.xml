@@ -39,4 +39,5 @@
     <string name="detail_subtracted_from">Odečítá se od peněženky %1$s, aby se nezapočítala dvakrát.</string>
     <string name="detail_contains_tracked">Bez adres sledovaných zvlášť: %1$s.</string>
     <string name="detail_stop_subtract">Přestat odečítat</string>
+    <string name="detail_stake_key_copy">Kopírovat stake klíč</string>
 </resources>

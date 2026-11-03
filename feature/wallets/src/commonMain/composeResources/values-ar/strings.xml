@@ -39,4 +39,5 @@
     <string name="detail_subtracted_from">يُطرح من %1$s حتى لا يُحتسب مرتين.</string>
     <string name="detail_contains_tracked">باستثناء العناوين المتابَعة على حدة: %1$s.</string>
     <string name="detail_stop_subtract">إيقاف الطرح</string>
+    <string name="detail_stake_key_copy">نسخ مفتاح Stake</string>
 </resources>

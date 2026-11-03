@@ -39,4 +39,5 @@
     <string name="detail_subtracted_from">已从 %1$s 中扣除，以免重复计算。</string>
     <string name="detail_contains_tracked">不含单独跟踪的地址：%1$s。</string>
     <string name="detail_stop_subtract">停止扣除</string>
+    <string name="detail_stake_key_copy">复制质押密钥</string>
 </resources>
