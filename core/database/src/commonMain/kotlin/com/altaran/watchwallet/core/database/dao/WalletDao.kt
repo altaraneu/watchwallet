@@ -66,7 +66,8 @@ abstract class WalletDao {
 
     /**
      * The wallet that derives [address] from its extended key, if any. Stake wallets are left out:
-     * their row is what a server reported, and a balance must not be subtracted on that basis.
+     * a row of theirs from version 1.0 is what a server reported, and a balance must not be
+     * subtracted on that basis.
      */
     @Query(
         """SELECT w.* FROM wallet w JOIN derived_address d ON d.wallet_id = w.id

@@ -32,7 +32,6 @@
     <string name="detail_show_qr">Mostrar QR code</string>
     <string name="detail_qr_description">QR code deste endereço</string>
     <string name="detail_address_evm_hint">O mesmo endereço funciona em todas as redes EVM. Verifique se o remetente está usando a rede correta.</string>
-    <string name="detail_address_cardano_hint">Informado por um servidor como endereço desta carteira; o app não consegue verificá-lo por completo. Compare-o com seu app de carteira antes de pedir a alguém que pague para ele.</string>
     <string name="detail_stake_key">Chave de staking</string>
     <string name="detail_stake_key_hint">Uma chave de staking não pode receber pagamentos. Use um endereço de pagamento do seu app de carteira.</string>
     <string name="wallets_ungrouped">Outras carteiras</string>

@@ -32,7 +32,6 @@
     <string name="detail_show_qr">Zobrazit QR kód</string>
     <string name="detail_qr_description">QR kód této adresy</string>
     <string name="detail_address_evm_hint">Stejná adresa funguje na všech sítích EVM. Ověř, že odesílatel používá správnou síť.</string>
-    <string name="detail_address_cardano_hint">Tuto adresu peněženky nahlásil server a aplikace ji nedokáže plně ověřit. Než o platbu na ni někoho požádáš, porovnej ji se svou peněženkou.</string>
     <string name="detail_stake_key">Stake klíč</string>
     <string name="detail_stake_key_hint">Na stake klíč nejde přijímat platby. Použij platební adresu ze své peněženky.</string>
     <string name="wallets_ungrouped">Ostatní peněženky</string>

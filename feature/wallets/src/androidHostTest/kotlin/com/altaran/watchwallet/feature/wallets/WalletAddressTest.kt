@@ -11,7 +11,6 @@ import com.altaran.watchwallet.core.model.WatchTarget
 import com.altaran.watchwallet.feature.wallets.generated.resources.Res
 import com.altaran.watchwallet.feature.wallets.generated.resources.address_next_receive
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_address
-import com.altaran.watchwallet.feature.wallets.generated.resources.detail_address_cardano_hint
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_address_evm_hint
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_stake_key
 import org.junit.Assert.assertEquals
@@ -41,18 +40,16 @@ class WalletAddressTest {
         assertFalse("a stake key cannot receive, so no QR is offered", shown.canReceive)
     }
 
+    /** Even one carrying the wallet's stake key: its payment key may be anybody's. */
     @Test
-    fun aStakeWalletShowsItsOwnPaymentAddress() {
-        val shown = shownAddress(stakeTarget, listOf(row(base)))!!
-        assertEquals(base, shown.value)
-        assertEquals(Res.string.detail_address, shown.label)
-        assertEquals(Res.string.detail_address_cardano_hint, shown.hint)
-        assertTrue(shown.canReceive)
+    fun aServerAddressIsNeverOfferedEvenWithTheRightStakeKey() {
+        assertOnlyStakeKeyShown(listOf(row(base)))
     }
 
     @Test
     fun aStoredAddressOfAnotherWalletIsNotOffered() {
         assertOnlyStakeKeyShown(listOf(row(foreign)))
+        assertOnlyStakeKeyShown(listOf(row(foreign), row(base)))
     }
 
     @Test
@@ -65,11 +62,6 @@ class WalletAddressTest {
     @Test
     fun withoutARowOnlyTheStakeKeyIsShown() {
         assertOnlyStakeKeyShown(emptyList())
-    }
-
-    @Test
-    fun aValidRowIsFoundBehindABadOne() {
-        assertEquals(base, shownAddress(stakeTarget, listOf(row(foreign), row(base)))!!.value)
     }
 
     @Test

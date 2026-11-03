@@ -48,66 +48,25 @@ class CardanoTest {
         assertEquals(null, CardanoAddresses.stakeAddressOf(enterprise))
     }
 
-    /** Same payment key as [base], but the stake part of somebody else. */
-    private val foreign = run {
-        val (_, bytes) = assertNotNull(Bech32Codec.decodeBytes(base))
-        Bech32Codec.encodeBytes("addr", bytes.copyOfRange(0, 29) + ByteArray(28) { 0x11 })
-    }
-
-    /** What a sync of the stake wallet reports when Koios answers `account_addresses` with [addresses]. */
-    private suspend fun reportedAddress(addresses: String): List<String> {
+    /** Nothing a server says can become an address offered for receiving money. */
+    @Test
+    fun aStakeWalletNeverAsksForOrReportsAPaymentAddress() = runTest {
+        val paths = mutableListOf<String>()
         val engine = MockEngine { request ->
             val json = headersOf(HttpHeaders.ContentType, "application/json")
-            when (request.url.encodedPath.substringAfterLast('/')) {
+            val path = request.url.encodedPath.substringAfterLast('/')
+            paths += path
+            when (path) {
                 "account_info" -> respond("""[{"total_balance":"5"}]""", HttpStatusCode.OK, json)
-                "account_addresses" -> respond("""[{"stake_address":"$stake","addresses":$addresses}]""", HttpStatusCode.OK, json)
+                "account_addresses" -> respond("""[{"stake_address":"$stake","addresses":["$base"]}]""", HttpStatusCode.OK, json)
                 else -> respond("[]", HttpStatusCode.OK, json)
             }
         }
         val adapter = CardanoAdapter(createHttpClient(engine = engine), "https://koios.test/api/v1")
-        return adapter.sync(assertNotNull(CardanoAddresses.parse(stake)), emptySet()).derivedAddresses.map { it.address }
-    }
-
-    @Test
-    fun aPaymentAddressOfTheStakeKeyIsAccepted() = runTest {
-        assertEquals(listOf(base), reportedAddress("""["$base"]"""))
-        assertEquals(listOf(base), reportedAddress("""["${base.uppercase()}"]"""))
-    }
-
-    @Test
-    fun aServerCannotSupplyAPaymentAddressOfAnotherWallet() = runTest {
-        assertEquals(stake, CardanoAddresses.stakeAddressOf(base), "the fixture is the wallet's own address")
-        assertTrue(CardanoAddresses.stakeAddressOf(foreign) != stake, "the fixture belongs to someone else")
-        listOf(
-            """["$foreign"]""",
-            """["$enterprise"]""",
-            """["$stake"]""",
-            """["${base.dropLast(1)}y"]""",
-            """["addr_test1qz2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgs68faae"]""",
-            """["bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"]""",
-            """["not an address"]""",
-            """[1]""",
-            """[null]""",
-            """[]""",
-            """{}""",
-        ).forEach { answer -> assertEquals(emptyList(), reportedAddress(answer), answer) }
-    }
-
-    /**
-     * A known limit, not a wanted result: a base address is two independent hashes, so somebody
-     * else's payment key combined with this stake key passes. Only the wallet's keys could tell.
-     */
-    @Test
-    fun theCheckCannotTellWhoHoldsThePaymentKey() = runTest {
-        val (_, bytes) = assertNotNull(Bech32Codec.decodeBytes(base))
-        val otherPayment = Bech32Codec.encodeBytes("addr", bytes.copyOfRange(0, 1) + ByteArray(28) { 0x22 } + bytes.copyOfRange(29, 57))
-        assertEquals(stake, CardanoAddresses.stakeAddressOf(otherPayment))
-        assertEquals(listOf(otherPayment), reportedAddress("""["$otherPayment"]"""))
-    }
-
-    @Test
-    fun onlyAnAddressOfTheKeyIsReportedFromAMixedAnswer() = runTest {
-        assertEquals(listOf(base), reportedAddress("""["$foreign","$base"]"""))
+        val result = adapter.sync(assertNotNull(CardanoAddresses.parse(stake)), emptySet())
+        assertEquals(emptyList(), result.derivedAddresses)
+        assertTrue("account_info" in paths, "the sync did run")
+        assertTrue("account_addresses" !in paths, "not requested at all")
     }
 
     private val hunt = "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535"
@@ -124,7 +83,7 @@ class CardanoTest {
                     respond("""[{"total_balance":"5"}]""", HttpStatusCode.OK, json)
                 }
 
-                "account_assets", "account_addresses" -> {
+                "account_assets" -> {
                     respond("[]", HttpStatusCode.OK, json)
                 }
 

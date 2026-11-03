@@ -13,6 +13,7 @@ import com.altaran.watchwallet.chain.api.SyncPartSink
 import com.altaran.watchwallet.chain.api.SyncResult
 import com.altaran.watchwallet.core.data.chain.ChainRegistry
 import com.altaran.watchwallet.core.database.WatchWalletDatabase
+import com.altaran.watchwallet.core.database.entity.DerivedAddressEntity
 import com.altaran.watchwallet.core.database.entity.WalletEntity
 import com.altaran.watchwallet.core.model.Asset
 import com.altaran.watchwallet.core.model.AssetId
@@ -379,6 +380,27 @@ class SyncEngineTest {
         assertEquals(1, chainResets)
         assertEquals(1, priceResets)
         assertNotNull(dao.wallet(id))
+    }
+
+    @Test
+    fun aServerCannotAddAddressesToAnAddressWalletAndOldRowsGo() = runBlocking {
+        val id = wallet()
+        dao.storeSync(
+            walletId = id,
+            assets = emptyList(),
+            balances = emptyList(),
+            transactions = emptyList(),
+            derived = listOf(DerivedAddressEntity(id, "addr1fromversion1", false, 0, true)),
+            activeChains = "",
+            syncedAt = 0,
+            truncated = false,
+            balanceChains = null,
+            refreshedAssets = null,
+        )
+        assertEquals(1, dao.observeDerivedAddresses(id).first().size)
+        val result = SyncResult(emptyList(), emptyList(), derivedAddresses = listOf(DerivedAddress("addr1fromserver", false, 0, used = true)))
+        engine(FakeAdapter { _, _, _ -> result }).syncWallet(id).join()
+        assertEquals(emptyList<DerivedAddressEntity>(), dao.observeDerivedAddresses(id).first())
     }
 
     @Test

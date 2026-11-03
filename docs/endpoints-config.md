@@ -148,12 +148,11 @@ servers:
   rely on it for a decision, for example to confirm a payment arrived, while this may be going on;
 - can answer wrongly or not at all, which looks like a dead server.
 
-They cannot run code, reach keys (the app has none) or sign anything. Receive addresses the user
-entered or the app derived on the device are out of their reach. **The exception is a Cardano stake
-wallet:** the address it shows comes from the server. The app checks that the address carries the
-wallet's stake key, but it cannot check the payment part without the wallet's keys, so a dishonest
-server can name an address with its own payment key and the wallet's stake part, and a payment sent
-there goes to that server's owner.
+They cannot run code, reach keys (the app has none) or sign anything. They cannot change a receive
+address either: the app offers only what the user entered or what it derived on the device. A Cardano
+stake wallet shows its stake key alone, with a note that it cannot receive payments. The app no longer
+asks a server for a payment address, because it could check only the stake part: a dishonest server
+could name an address with its own payment key and the wallet's stake part.
 
 Prices, logos and the two download URLs are not in the list. The hosts in force are visible in
 Settings → Network and the app announces a change once, which is detection, not prevention: the

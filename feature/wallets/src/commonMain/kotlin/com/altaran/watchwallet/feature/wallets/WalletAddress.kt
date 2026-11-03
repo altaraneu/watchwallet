@@ -29,7 +29,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import com.altaran.watchwallet.core.data.chain.ChainParsers
 import com.altaran.watchwallet.core.model.ChainFamily
 import com.altaran.watchwallet.core.model.DerivedAddress
 import com.altaran.watchwallet.core.model.WatchTarget
@@ -38,7 +37,6 @@ import com.altaran.watchwallet.feature.wallets.generated.resources.Res
 import com.altaran.watchwallet.feature.wallets.generated.resources.address_copy
 import com.altaran.watchwallet.feature.wallets.generated.resources.address_next_receive
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_address
-import com.altaran.watchwallet.feature.wallets.generated.resources.detail_address_cardano_hint
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_address_evm_hint
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_qr_description
 import com.altaran.watchwallet.feature.wallets.generated.resources.detail_show_qr
@@ -57,10 +55,11 @@ internal data class ShownAddress(
 )
 
 /**
- * What is offered for receiving money: what the user entered, what was derived on this device from
- * the extended key, or a Cardano address carrying the wallet's stake key. The last one comes from a
- * server, and a row stored by an older version was never checked, so it is checked on every display.
- * That check cannot cover the address's payment part, see `CardanoAddresses.ownedPaymentAddress`.
+ * What is offered for receiving money: what the user entered, or what was derived on this device
+ * from the extended key. Never an address from a server. A Cardano stake wallet would need one, but
+ * a payment address is two independent hashes: the app can check the stake part, while a dishonest
+ * server can put its own payment key in the other. So such a wallet shows its stake key only, and
+ * rows stored by version 1.0 are ignored here until the next sync removes them.
  */
 internal fun shownAddress(target: WatchTarget, derived: List<DerivedAddress>): ShownAddress? = when (target) {
     is WatchTarget.ExtendedPublicKey -> {
@@ -68,9 +67,7 @@ internal fun shownAddress(target: WatchTarget, derived: List<DerivedAddress>): S
     }
 
     is WatchTarget.Address if target.family == ChainFamily.CARDANO && target.address.startsWith("stake1") -> {
-        derived.firstNotNullOfOrNull { ChainParsers.cardanoPaymentAddress(it.address, target.address) }
-            ?.let { ShownAddress(it, Res.string.detail_address, Res.string.detail_address_cardano_hint) }
-            ?: ShownAddress(target.address, Res.string.detail_stake_key, Res.string.detail_stake_key_hint, canReceive = false)
+        ShownAddress(target.address, Res.string.detail_stake_key, Res.string.detail_stake_key_hint, canReceive = false)
     }
 
     is WatchTarget.Address -> {

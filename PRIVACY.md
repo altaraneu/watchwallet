@@ -111,9 +111,10 @@ dead server should not need an app update. It means you trust the project's sign
 were stolen and the thief could also publish the file (for example through access to this
 repository), then from your next app start their servers would learn every address you track
 together with your IP address, and could show you false balances, transactions and token names.
-They could not run code or reach any key. Addresses you entered or the app derived on your device
-stay as they are; the address shown for a Cardano stake wallet comes from the server, and the app can
-check only its stake part, so compare it with your wallet before you ask anyone to pay to it.
+They could not run code or reach any key, and they cannot change an address the app offers for
+receiving money: those are what you entered or what the app derived on your device. A Cardano stake
+wallet shows only its stake key, which cannot receive payments; take a receive address from your
+wallet app.
 Settings → Network shows the list version, its dates and every host in use, and the app tells you once
 when the hosts change; by then your addresses may already have been sent to them.
 

@@ -32,7 +32,6 @@
     <string name="detail_show_qr">QR कोड दिखाएँ</string>
     <string name="detail_qr_description">इस पते का QR कोड</string>
     <string name="detail_address_evm_hint">यही पता हर EVM नेटवर्क पर काम करता है। जाँच लें कि भेजने वाला सही नेटवर्क का उपयोग कर रहा है।</string>
-    <string name="detail_address_cardano_hint">एक सर्वर ने इसे इस वॉलेट का पता बताया है; ऐप इसकी पूरी जांच नहीं कर सकता। किसी से इस पर भुगतान करने को कहने से पहले इसे अपने वॉलेट ऐप से मिला लें।</string>
     <string name="detail_stake_key">स्टेक कुंजी</string>
     <string name="detail_stake_key_hint">स्टेक कुंजी पर भुगतान प्राप्त नहीं किए जा सकते। अपने वॉलेट ऐप से भुगतान पते का उपयोग करें।</string>
     <string name="wallets_ungrouped">अन्य वॉलेट</string>
