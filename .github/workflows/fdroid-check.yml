@@ -30,9 +30,6 @@ jobs:
       - name: Show what rewritemeta would change
         working-directory: data
         run: fdroid rewritemeta com.altaran.watchwallet && (diff -u ../app-source/docs/fdroid/com.altaran.watchwallet.yml metadata/com.altaran.watchwallet.yml || true)
-      - name: Run the scanner on the tag's source
-        run: |
-          git -C app-source fetch --depth=1 origin refs/tags/v1.1.0:refs/tags/v1.1.0
-          git -C app-source checkout -q v1.1.0
-          cd data
-          fdroid scanner --exit-code ../app-source
+      - name: Run the scanner on the recipe's commit
+        working-directory: data
+        run: fdroid scanner --exit-code com.altaran.watchwallet
